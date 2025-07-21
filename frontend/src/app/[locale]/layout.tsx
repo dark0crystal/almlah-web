@@ -27,7 +27,7 @@ export default async function RootLayout({
     notFound();
   }
   return (
-    <html lang="en">
+    <html lang="en" dir="ltr">
       <body
         className={`antialiased`}
       >
