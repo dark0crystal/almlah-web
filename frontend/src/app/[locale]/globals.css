@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+
+@font-face {
+  font-family: 'TheYearofHandicrafts';
+  src: url('/fonts/TheYearofHandicrafts-SemiBold.otf') format('otf');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* body {
+  font-family: 'TheYearofHandicrafts', sans-serif;
+} */
