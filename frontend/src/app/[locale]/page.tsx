@@ -1,6 +1,15 @@
+import CategoryCard from '@/components/cards/categoryCards/CategoryCard';
 import {getTranslations} from 'next-intl/server';
  
 export default async function HomePage() {
   const t = await getTranslations('HomePage');
-  return <h1>{t('title')}</h1>;
+  return (
+    <div>
+      <CategoryCard />
+      
+      <h1 className='text-3xl font-bold'>
+        {t('title')}
+      </h1>
+    </div>
+    )
 }
