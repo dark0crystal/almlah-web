@@ -1,26 +1,37 @@
-# To run backend in dev (prod for production)
-MODE=dev go run cmd/main.go
+# 🎬 Almlah Backend
 
-# Clean Architecture
+This is the backend service for the **Almlah** application, written in Go using [Fiber v3](https://github.com/gofiber/fiber) and PostgreSQL.
 
-## /internal/domain — Core Business Logic
-- Entities: Data types and core logic
-- Interfaces: Abstract definitions (e.g., repository interface)
+---
 
-## /internal/usecases — Application Logic
-- Coordinates logic using domain interfaces.
-- Implements workflows and use cases like “rate movie” or “search movie”.
+## 🚀 Running the Backend
 
-## /internal/adapters — Implementation Layer
-- Adapts real-world services to interface contracts (DB, APIs).
-- Concrete implementations of interfaces declared in domain or usecases.
+To run the backend in development or production:
 
-## /internal/interfaces — Entry Points (Controllers)
-- Entry points into the system: HTTP handlers, CLI, gRPC.
-- Accept requests, parse input, call use cases, return output.
+```bash
+MODE=dev go run cmd/main.go   # Use MODE=prod for production
+```
 
-## /internal/infrastructure — App Setup Helpers
-- Configuration
-- Logging setup
-- Middleware
-- DB pool, caching clients, etc.
+## 🧱 Migration Tool
+
+We use [`golang-migrate`](https://github.com/golang-migrate/migrate) for managing PostgreSQL schema changes.
+
+---
+
+### Installation
+
+```bash
+go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+```
+
+### Create migration:
+
+```bash
+migrate create -ext sql -dir migrations create_users_table
+```
+
+### Keep up with current migrations:
+
+```bash
+migrate -path ./migrations -database "postgres://user:pass@localhost:5432/almlah_db?sslmode=disable" up
+```

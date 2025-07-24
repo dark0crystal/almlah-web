@@ -1,33 +1,30 @@
 package main
 
 import (
+	"os"
 	"time"
 
-	// "net/http"
-	"os"
-	// "time"
-
-	"github.com/dark0crystal/almlah-web/backend/internals/adapters"
-	"github.com/dark0crystal/almlah-web/backend/internals/infrastructure"
-	"github.com/dark0crystal/almlah-web/backend/internals/interfaces"
-	"github.com/dark0crystal/almlah-web/backend/internals/usecases"
+	"github.com/dark0crystal/almlah-web/backend/internals/config"
+	"github.com/dark0crystal/almlah-web/backend/internals/constants"
+	"github.com/dark0crystal/almlah-web/backend/internals/database"
+	"github.com/dark0crystal/almlah-web/backend/internals/routing"
 	"github.com/gofiber/fiber/v3"
 )
 
 func main() {
-	infrastructure.LoadEnv()
-	db := infrastructure.NewPostgresDB()
-	repo := adapters.NewPostgresUserRepo(db)
-	service := usecases.NewUserService(repo)
-	handler := interfaces.NewBookHandler(service)
+	config.LoadEnv()
+	config.RegisterNewValidator()
+
+	// this will initialize database.ConnPool
+	database.MountPostgresDB()
 
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  2 * time.Second,
 		WriteTimeout: 2 * time.Second,
 	})
 
-	interfaces.HandleRoutes(app)
+	routing.SetupHTTPRoutes(app)
 
-	addr := os.Getenv("SERVER_ADDR")
+	addr := os.Getenv(constants.ServerAddr)
 	app.Listen(addr)
 }
