@@ -1,12 +1,8 @@
 import type { Metadata } from "next";
-import {NextIntlClientProvider, hasLocale} from 'next-intl';
-import {notFound} from 'next/navigation';
-import {routing} from '@/i18n/routing';
-
-
+import { NextIntlClientProvider, hasLocale } from 'next-intl';
+import { notFound } from 'next/navigation';
+import { routing } from '@/i18n/routing';
 import "./globals.css";
-
-
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -20,17 +16,15 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: Promise<{locale: string}>;
 }>) {
-
-   // Ensure that the incoming `locale` is valid
+  // Ensure that the incoming `locale` is valid
   const {locale} = await params;
   if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
+  
   return (
-    <html lang="en" dir="ltr">
-      <body
-        className={`antialiased`}
-      >
+    <html lang="ar" dir="ltr">
+      <body className="antialiased font-handicrafts">
         <NextIntlClientProvider>
           {children}
         </NextIntlClientProvider>

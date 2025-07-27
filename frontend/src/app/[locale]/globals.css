@@ -1,13 +1,29 @@
+
 @import "tailwindcss";
 
 
+
+/* Define custom font */
 @font-face {
   font-family: 'TheYearofHandicrafts';
-  src: url('/fonts/TheYearofHandicrafts-SemiBold.otf') format('otf');
-  font-weight: normal;
+  src: url('/fonts/TheYearofHandicrafts-SemiBold.otf') format('opentype');
+  font-weight: 600;
   font-style: normal;
+  font-display: swap;
 }
 
-/* body {
-  font-family: 'TheYearofHandicrafts', sans-serif;
-} */
+/* Tailwind v4 CSS Variables for Custom Font */
+@theme {
+  --font-family-handicrafts: 'TheYearofHandicrafts', ui-sans-serif, system-ui, sans-serif;
+  --font-family-sans: 'TheYearofHandicrafts', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Set as default font for the entire application */
+* {
+  font-family: var(--font-family-sans);
+}
+
+/* Ensure body uses the custom font */
+body {
+  font-family: var(--font-family-handicrafts);
+}

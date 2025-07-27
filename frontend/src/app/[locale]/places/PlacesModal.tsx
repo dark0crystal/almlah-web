@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { MapPin, Star, Clock, ChevronDown, ChevronUp, X } from "lucide-react";
 import PlaceCard from "./PlacesCard";
-
+import img1 from "../../../../public/img1.jpeg"
 
 // Interface defining props for the PlacesModal component
 interface PlacesModalProps {
@@ -20,7 +20,7 @@ export default function PlacesModal({  isExpanded, onToggleExpand }: PlacesModal
     {
       id: 1,
       name: "Santorini, Greece",
-      image: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=400&h=250&fit=crop&crop=center",
+      image: img1,
       rating: 4.9,
       duration: "3-5 days",
       description: "A stunning Greek island known for its white-washed buildings, blue domes, and breathtaking sunsets over the Aegean Sea.",
@@ -29,7 +29,7 @@ export default function PlacesModal({  isExpanded, onToggleExpand }: PlacesModal
     {
       id: 2,
       name: "Kyoto, Japan",
-      image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&h=250&fit=crop&crop=center",
+      image: img1,
       rating: 4.8,
       duration: "4-6 days",
       description: "Ancient capital of Japan featuring thousands of temples, traditional wooden houses, and beautiful cherry blossoms.",
@@ -38,7 +38,7 @@ export default function PlacesModal({  isExpanded, onToggleExpand }: PlacesModal
     {
       id: 3,
       name: "Bali, Indonesia",
-      image: "https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=400&h=250&fit=crop&crop=center",
+      image: img1,
       rating: 4.7,
       duration: "5-7 days",
       description: "Tropical paradise with lush rice terraces, ancient temples, pristine beaches, and vibrant cultural experiences.",
@@ -47,7 +47,7 @@ export default function PlacesModal({  isExpanded, onToggleExpand }: PlacesModal
     {
       id: 4,
       name: "Patagonia, Chile",
-      image: "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=400&h=250&fit=crop&crop=center",
+      image: img1,
       rating: 4.9,
       duration: "7-10 days",
       description: "Wild and rugged landscape featuring glaciers, mountains, and pristine wilderness perfect for adventure seekers.",

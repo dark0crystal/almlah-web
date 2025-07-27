@@ -3,6 +3,7 @@
 // import { useState } from "react";
 // import { MapPin, Star, Clock, ChevronDown, ChevronUp, X } from "lucide-react";
 import PlaceCard from "./PlacesCard";
+import img1 from "../../../../public/img1.jpeg"
 
 
 
@@ -15,10 +16,10 @@ interface PlacesModalProps {
 export const places = [
     {
       id: 1,
-      name: "Santorini, Greece",
+      name: "الموالح رفيق",
       lat: 36.3932,
       lng: 25.4615,
-      image: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=400&h=250&fit=crop&crop=center",
+      image: img1,
       rating: 4.9,
       duration: "3-5 days",
       type: "destination",
@@ -30,7 +31,7 @@ export const places = [
       name: "Kyoto, Japan",
       lat: 35.0116,
       lng: 135.7681,
-      image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&h=250&fit=crop&crop=center",
+      image: img1,
       rating: 4.8,
       duration: "4-6 days",
       type: "destination",
@@ -42,7 +43,7 @@ export const places = [
       name: "Bali, Indonesia",
       lat: -8.4095,
       lng: 115.1889,
-      image: "https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=400&h=250&fit=crop&crop=center",
+      image: img1,
       rating: 4.7,
       duration: "5-7 days",
       type: "destination",
@@ -54,7 +55,7 @@ export const places = [
       name: "Patagonia, Chile",
       lat: -50.9423,
       lng: -73.4068,
-      image: "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=400&h=250&fit=crop&crop=center",
+      image: img1,
       rating: 4.9,
       duration: "7-10 days",
       type: "destination",

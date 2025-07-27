@@ -19,11 +19,11 @@ export default function Places() {
         {/* Devide the section into two , For big screens */}
         <div className="grid grid-cols-2  w-screen h-screen">
 
-            <div className="bg-green-200 w-fill h-screen">
+            <div className="bg-white w-fill h-screen">
                 <PlacesMap/>
             </div>
 
-            <div className="bg-amber-200 w-fill h-screen">
+            <div className="bg-amber-200 w-full h-screen">
                 <PlacesCardsWrapper/>
             </div>
             
