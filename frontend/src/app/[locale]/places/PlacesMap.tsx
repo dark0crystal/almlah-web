@@ -18,7 +18,7 @@ export default function PlacesMap() {
         }
 
         // Set your Mapbox access token here
-        mapboxgl.accessToken = process.env.MAPBOX_ACCESS_TOCKEN
+        mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOCKEN
 
         map.current = new mapboxgl.Map({
             container: mapContainer.current,

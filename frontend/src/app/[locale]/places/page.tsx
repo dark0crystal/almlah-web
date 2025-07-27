@@ -19,7 +19,7 @@ export default function Places() {
         {/* Devide the section into two , For big screens */}
         <div className="grid grid-cols-2  w-screen h-screen">
 
-            <div className="bg-white w-fill h-screen">
+            <div className="bg-white w-fill h-screen ">
                 <PlacesMap/>
             </div>
 
