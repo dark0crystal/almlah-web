@@ -18,7 +18,7 @@ export default function PlacesMap() {
         }
 
         // Set your Mapbox access token here
-        mapboxgl.accessToken = '----'
+        mapboxgl.accessToken = process.env.MAPBOX_ACCESS_TOCKEN
 
         map.current = new mapboxgl.Map({
             container: mapContainer.current,
@@ -45,7 +45,7 @@ export default function PlacesMap() {
     }, [])
 
     return (
-        <div className="w-full h-full relative">
+        <div className="w-full h-full relative p-10 flex justify-center items-center">
             {/* Load Mapbox GL JS and CSS */}
             <link
                 href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
@@ -56,7 +56,7 @@ export default function PlacesMap() {
             {/* Map container */}
             <div
                 ref={mapContainer}
-                className="w-full h-full min-h-[400px]"
+                className="w-full h-full min-h-[400px] rounded-3xl absolute"
                 style={{ minHeight: '400px' }}
             />
         </div>
