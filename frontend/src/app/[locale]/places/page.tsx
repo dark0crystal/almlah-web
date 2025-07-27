@@ -17,35 +17,17 @@ export default function Places() {
   const [showPlacesList, setShowPlacesList] = useState(false);
 
   return (
-    <div className="w-screen min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 relative">
-      
-      {/* Mobile Layout - Stack vertically, map takes priority */}
-      <div className="lg:hidden w-full h-screen relative">
-        {/* Full screen map for mobile */}
-        <div className="w-full h-full">
-          <PlacesMap />
-        </div>
-        
-        {/* Mobile toggle button - floating */}
-        <button
-          onClick={() => setShowPlacesList(!showPlacesList)}
-          className="absolute top-4 right-4 z-50 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
-        >
-          <List className="w-6 h-6 text-gray-700" />
-        </button>
-        
-        {/* Mobile places list overlay */}
-        {showPlacesList && (
-          <div className="absolute inset-0 z-40 bg-white">
-            {/* Header with close button */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
-              <h2 className="text-xl font-bold text-gray-800">Places to Visit</h2>
-              <button
-                onClick={() => setShowPlacesList(false)}
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-              >
-                <X className="w-6 h-6 text-gray-600" />
-              </button>
+    <div className="w-screen h-screen bg-gradient-to-br from-blue-50 to-indigo-100 relative overflow-hidden">
+
+        {/* Devide the section into two , For big screens */}
+        <div className="grid grid-cols-2  w-screen h-screen">
+
+            <div className="bg-white w-fill h-screen">
+                <PlacesMap/>
+            </div>
+
+            <div className="bg-amber-200 w-full h-screen">
+                <PlacesCardsWrapper/>
             </div>
             
             {/* Places content */}
