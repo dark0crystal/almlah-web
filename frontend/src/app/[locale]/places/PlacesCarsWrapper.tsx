@@ -61,7 +61,103 @@ export const places = [
       type: "destination",
       description: "Wild and rugged landscape featuring glaciers, mountains, and pristine wilderness perfect for adventure seekers.",
       highlights: ["Torres del Paine", "Glacier Trekking", "Wildlife Watching", "Epic Landscapes"]
-    }
+    },
+    {
+      id: 5,
+      name: "الموالح رفيق",
+      lat: 36.3932,
+      lng: 25.4615,
+      image: img1,
+      rating: 4.9,
+      duration: "3-5 days",
+      type: "destination",
+      description: "A stunning Greek island known for its white-washed buildings, blue domes, and breathtaking sunsets over the Aegean Sea.",
+      highlights: ["Oia Village", "Red Beach", "Wine Tasting", "Volcanic Views"]
+    },
+    {
+      id: 6,
+      name: "الموالح رفيق",
+      lat: 36.3932,
+      lng: 25.4615,
+      image: img1,
+      rating: 4.9,
+      duration: "3-5 days",
+      type: "destination",
+      description: "A stunning Greek island known for its white-washed buildings, blue domes, and breathtaking sunsets over the Aegean Sea.",
+      highlights: ["Oia Village", "Red Beach", "Wine Tasting", "Volcanic Views"]
+    },
+    {
+      id: 7,
+      name: "الموالح رفيق",
+      lat: 36.3932,
+      lng: 25.4615,
+      image: img1,
+      rating: 4.9,
+      duration: "3-5 days",
+      type: "destination",
+      description: "A stunning Greek island known for its white-washed buildings, blue domes, and breathtaking sunsets over the Aegean Sea.",
+      highlights: ["Oia Village", "Red Beach", "Wine Tasting", "Volcanic Views"]
+    },
+    {
+      id: 8,
+      name: "الموالح رفيق",
+      lat: 36.3932,
+      lng: 25.4615,
+      image: img1,
+      rating: 4.9,
+      duration: "3-5 days",
+      type: "destination",
+      description: "A stunning Greek island known for its white-washed buildings, blue domes, and breathtaking sunsets over the Aegean Sea.",
+      highlights: ["Oia Village", "Red Beach", "Wine Tasting", "Volcanic Views"]
+    },
+    {
+      id: 5,
+      name: "الموالح رفيق",
+      lat: 36.3932,
+      lng: 25.4615,
+      image: img1,
+      rating: 4.9,
+      duration: "3-5 days",
+      type: "destination",
+      description: "A stunning Greek island known for its white-washed buildings, blue domes, and breathtaking sunsets over the Aegean Sea.",
+      highlights: ["Oia Village", "Red Beach", "Wine Tasting", "Volcanic Views"]
+    },
+    {
+      id: 6,
+      name: "الموالح رفيق",
+      lat: 36.3932,
+      lng: 25.4615,
+      image: img1,
+      rating: 4.9,
+      duration: "3-5 days",
+      type: "destination",
+      description: "A stunning Greek island known for its white-washed buildings, blue domes, and breathtaking sunsets over the Aegean Sea.",
+      highlights: ["Oia Village", "Red Beach", "Wine Tasting", "Volcanic Views"]
+    },
+    {
+      id: 7,
+      name: "الموالح رفيق",
+      lat: 36.3932,
+      lng: 25.4615,
+      image: img1,
+      rating: 4.9,
+      duration: "3-5 days",
+      type: "destination",
+      description: "A stunning Greek island known for its white-washed buildings, blue domes, and breathtaking sunsets over the Aegean Sea.",
+      highlights: ["Oia Village", "Red Beach", "Wine Tasting", "Volcanic Views"]
+    },
+    {
+      id: 8,
+      name: "الموالح رفيق",
+      lat: 36.3932,
+      lng: 25.4615,
+      image: img1,
+      rating: 4.9,
+      duration: "3-5 days",
+      type: "destination",
+      description: "A stunning Greek island known for its white-washed buildings, blue domes, and breathtaking sunsets over the Aegean Sea.",
+      highlights: ["Oia Village", "Red Beach", "Wine Tasting", "Volcanic Views"]
+    },
   ];
 
 export default function PlacesCardsWrapper(){
@@ -69,7 +165,7 @@ export default function PlacesCardsWrapper(){
     
     return(
         <div>
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className=" p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {places.map((place) => (
                         <PlaceCard key={place.id} place={place} isExpanded={true} />
