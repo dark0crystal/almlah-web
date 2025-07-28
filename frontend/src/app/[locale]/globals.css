@@ -1,7 +1,9 @@
 
 @import "tailwindcss";
 
-
+@theme {
+  --breakpoint-large: 59.375rem; /* 950px */
+}
 
 /* Define custom font */
 @font-face {

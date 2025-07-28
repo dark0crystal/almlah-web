@@ -19,7 +19,7 @@ export default async function NavBar({ style }: NavBarProps) {
 
   return (
     <div dir={t("dir")} className="sticky top-0 z-50 bg-white ">
-      <nav className={`${style} flex items-center justify-between p-2 lg:p-2 border-b border-gray-200 w-[90vw] md:w-[70vw] lg:w-full h-[12vh] mx-auto`}>
+      <nav className={`${style} flex items-center justify-between p-2 lg:p-2 border-b border-gray-200  lg:w-full h-[12vh] mx-auto`}>
         <div className="flex items-center">
           <Brand />
         </div>
