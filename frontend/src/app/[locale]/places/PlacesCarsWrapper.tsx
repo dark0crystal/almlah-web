@@ -4,6 +4,9 @@
 // import { MapPin, Star, Clock, ChevronDown, ChevronUp, X } from "lucide-react";
 import PlaceCard from "./PlacesCard";
 import img1 from "../../../../public/img1.jpeg"
+import SearchBar from "./SearchBar";
+import img2 from "../../../../public/img2.jpeg"
+import img3 from "../../../../public/img3.jpeg"
 
 
 
@@ -31,7 +34,7 @@ export const places = [
       name: "Kyoto, Japan",
       lat: 35.0116,
       lng: 135.7681,
-      image: img1,
+      image: img2,
       rating: 4.8,
       duration: "4-6 days",
       type: "destination",
@@ -43,7 +46,7 @@ export const places = [
       name: "Bali, Indonesia",
       lat: -8.4095,
       lng: 115.1889,
-      image: img1,
+      image: img3,
       rating: 4.7,
       duration: "5-7 days",
       type: "destination",
@@ -79,7 +82,7 @@ export const places = [
       name: "الموالح رفيق",
       lat: 36.3932,
       lng: 25.4615,
-      image: img1,
+      image: img2,
       rating: 4.9,
       duration: "3-5 days",
       type: "destination",
@@ -91,7 +94,7 @@ export const places = [
       name: "الموالح رفيق",
       lat: 36.3932,
       lng: 25.4615,
-      image: img1,
+      image: img3,
       rating: 4.9,
       duration: "3-5 days",
       type: "destination",
@@ -166,7 +169,8 @@ export default function PlacesCardsWrapper(){
     return(
         <div>
             <div className=" p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <SearchBar/>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {places.map((place) => (
                         <PlaceCard key={place.id} place={place} isExpanded={true} />
                     ))}

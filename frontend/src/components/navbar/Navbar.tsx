@@ -21,7 +21,7 @@ export default async function NavBar({ style }: NavBarProps) {
 
   return (
     <div dir={t("dir")}>
-      <nav className={`${style} flex items-center justify-between p-2 lg:p-2 border border-gray-300 rounded-full w-[90vw] md:w-[70vw] lg:w-full h-[12vh]`}>
+      <nav className={`${style} flex items-center justify-between p-2 lg:p-2 border-b border-gray-300  w-[90vw] md:w-[70vw] lg:w-full h-[12vh]`}>
         <div className="flex items-center">
           <Brand />
         </div>
