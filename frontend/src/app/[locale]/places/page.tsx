@@ -18,10 +18,10 @@ export default function Places() {
 
   return (
 
-    <div className="w-screen bg-gradient-to-br from-blue-50 to-indigo-100 relative">
+    <div className="w-screen bg-white relative">
       
       {/* Mobile Layout - Stack vertically, map takes priority */}
-      <div className="lg:hidden w-full h-screen relative">
+      <div className="md:hidden w-full h-screen relative">
         {/* Full screen map for mobile */}
         <div className="w-full h-full">
           <PlacesMap />
@@ -58,20 +58,25 @@ export default function Places() {
         )}
       </div>
 
-      {/* Desktop Layout - Two column grid */}
-      <div className="hidden lg:grid lg:grid-cols-2 w-screen h-screen">
-        {/* Places cards section - left side */}
-        <div className="w-full h-screen overflow-hidden">
-          <div className="h-full overflow-y-auto">
+        {/* -------------------------------------- */}
+       {/* Desktop Layout - Airbnb style: Places cards take 4/7, Map takes 3/7 */}
+      <div className="hidden lg:grid lg:grid-cols-7 w-screen h-screen">
+        {/* Places cards section - left side (4/7 of screen like Airbnb) */}
+        <div className="lg:col-span-4 w-full h-screen overflow-hidden bg-white">
+          <div className="h-full overflow-y-auto p-4">
             <PlacesCardsWrapper />
           </div>
         </div>
-        {/* Map section - right side */}
-        <div className="bg-white w-full h-[88vh] relative">
-          <PlacesMap />
+
+        {/* Map section - right side (3/7 of screen like Airbnb) */}
+        <div className="lg:col-span-3 bg-white w-full h-[88vh] relative">
+          <div className="h-full w-full">
+            <PlacesMap />
+          </div>
         </div>
       </div>
 
+       {/* -------------------------------------- */}
       {/* Tablet Layout - Adjustments for medium screens */}
       <div className="hidden md:block lg:hidden w-full h-screen">
         <div className="grid grid-cols-1 md:grid-cols-3 w-full h-screen">

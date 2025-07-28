@@ -45,7 +45,7 @@ export default function PlacesMap() {
     }, [])
 
     return (
-        <div className="w-full h-full relative p-10 flex justify-center items-center">
+        <div className="w-full h-full relative p-8 flex justify-center items-center">
             {/* Load Mapbox GL JS and CSS */}
             <link
                 href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
