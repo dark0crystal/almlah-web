@@ -60,38 +60,42 @@ export default function Places() {
 
         {/* -------------------------------------- */}
        {/* Desktop Layout - Airbnb style: Places cards take 4/7, Map takes 3/7 */}
-      <div className="hidden lg:grid lg:grid-cols-7 w-screen h-screen">
-        {/* Places cards section - left side (4/7 of screen like Airbnb) */}
-        <div className="lg:col-span-4 w-full h-screen overflow-hidden bg-white">
-          <div className="h-full overflow-y-auto p-4">
-            <PlacesCardsWrapper />
+        <div className="hidden lg:flex min-h-screen">
+          {/* Places List Section */}
+          <div className="w-3/5 bg-white">
+            <div className="p-6">
+              <PlacesCardsWrapper />
+            </div>
+          </div>
+  
+          {/* Map Section - Sticky */}
+          <div className="w-2/5 bg-white border-l border-gray-200">
+            <div className="sticky top-20 h-[88vh]">
+              <PlacesMap/>
+            </div>
           </div>
         </div>
-
-        {/* Map section - right side (3/7 of screen like Airbnb) */}
-        <div className="lg:col-span-3 bg-white w-full h-[88vh] relative">
-          <div className="h-full w-full">
-            <PlacesMap />
-          </div>
-        </div>
-      </div>
 
        {/* -------------------------------------- */}
       {/* Tablet Layout - Adjustments for medium screens */}
       <div className="hidden md:block lg:hidden w-full h-screen">
         <div className="grid grid-cols-1 md:grid-cols-3 w-full h-screen">
-          {/* Map takes 2/3 of the screen on tablets */}
-          <div className="md:col-span-2 bg-white w-full h-screen">
-            <PlacesMap />
-          </div>
-          
           {/* Places list takes 1/3 on tablets */}
           <div className="md:col-span-1 w-full h-screen overflow-hidden border-l border-gray-200">
             <div className="h-full overflow-y-auto">
               <PlacesCardsWrapper />
             </div>
           </div>
+          {/* Map takes 2/3 of the screen on tablets */}
+          <div className="md:col-span-2 bg-white w-full h-screen">
+            <PlacesMap />
+          </div>
+          
         </div>
+      </div>
+
+      <div className="bg-amber-100 h-[50vh] w-screen">
+        Footer
       </div>
     </div>
   );
