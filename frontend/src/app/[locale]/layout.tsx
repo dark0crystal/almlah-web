@@ -24,7 +24,7 @@ export default async function RootLayout({
   }
   
   return (
-    <html lang="ar" dir="ltr">
+    <html lang="ar" dir="rtl">
       <body className="antialiased font-handicrafts">
         <NextIntlClientProvider>
          <NavBar style=""/>

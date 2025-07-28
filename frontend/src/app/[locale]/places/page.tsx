@@ -18,7 +18,7 @@ export default function Places() {
 
   return (
 
-    <div className="w-screen min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 relative">
+    <div className="w-screen bg-gradient-to-br from-blue-50 to-indigo-100 relative">
       
       {/* Mobile Layout - Stack vertically, map takes priority */}
       <div className="lg:hidden w-full h-screen relative">
@@ -60,16 +60,15 @@ export default function Places() {
 
       {/* Desktop Layout - Two column grid */}
       <div className="hidden lg:grid lg:grid-cols-2 w-screen h-screen">
-        {/* Map section - left side */}
-        <div className="bg-white w-full h-screen relative">
-          <PlacesMap />
-        </div>
-
-        {/* Places cards section - right side */}
+        {/* Places cards section - left side */}
         <div className="w-full h-screen overflow-hidden">
           <div className="h-full overflow-y-auto">
             <PlacesCardsWrapper />
           </div>
+        </div>
+        {/* Map section - right side */}
+        <div className="bg-white w-full h-[88vh] relative">
+          <PlacesMap />
         </div>
       </div>
 
