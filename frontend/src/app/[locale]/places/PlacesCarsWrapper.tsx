@@ -164,13 +164,11 @@ export const places = [
   ];
 
 export default function PlacesCardsWrapper(){
-
-    
     return(
         <div>
-            <div className=" p-6">
+            <div className="">
               <SearchBar/>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {places.map((place) => (
                         <PlaceCard key={place.id} place={place} isExpanded={true} />
                     ))}

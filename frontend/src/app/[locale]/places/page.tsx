@@ -18,10 +18,10 @@ export default function Places() {
 
   return (
 
-    <div className="w-screen bg-gradient-to-br from-blue-50 to-indigo-100 relative">
+    <div className="w-screen bg-white relative">
       
       {/* Mobile Layout - Stack vertically, map takes priority */}
-      <div className="lg:hidden w-full h-screen relative">
+      <div className="md:hidden w-full h-screen relative">
         {/* Full screen map for mobile */}
         <div className="w-full h-full">
           <PlacesMap />
@@ -58,35 +58,44 @@ export default function Places() {
         )}
       </div>
 
-      {/* Desktop Layout - Two column grid */}
-      <div className="hidden lg:grid lg:grid-cols-2 w-screen h-screen">
-        {/* Places cards section - left side */}
-        <div className="w-full h-screen overflow-hidden">
-          <div className="h-full overflow-y-auto">
-            <PlacesCardsWrapper />
+        {/* -------------------------------------- */}
+       {/* Desktop Layout - Airbnb style: Places cards take 4/7, Map takes 3/7 */}
+        <div className="hidden large:flex min-h-screen">
+          {/* Places List Section */}
+          <div className="w-3/5 bg-white">
+            <div className="p-6">
+              <PlacesCardsWrapper />
+            </div>
+          </div>
+  
+          {/* Map Section - Sticky */}
+          <div className="w-2/5 bg-white border-l border-gray-200">
+            <div className="sticky top-20 h-[88vh]">
+              <PlacesMap/>
+            </div>
           </div>
         </div>
-        {/* Map section - right side */}
-        <div className="bg-white w-full h-[88vh] relative">
-          <PlacesMap />
-        </div>
-      </div>
 
+       {/* -------------------------------------- */}
       {/* Tablet Layout - Adjustments for medium screens */}
-      <div className="hidden md:block lg:hidden w-full h-screen">
-        <div className="grid grid-cols-1 md:grid-cols-3 w-full h-screen">
-          {/* Map takes 2/3 of the screen on tablets */}
-          <div className="md:col-span-2 bg-white w-full h-screen">
-            <PlacesMap />
-          </div>
-          
+      <div className="hidden md:flex  w-full h-screen">
+        <div className=" w-full h-screen">
           {/* Places list takes 1/3 on tablets */}
-          <div className="md:col-span-1 w-full h-screen overflow-hidden border-l border-gray-200">
+          <div className="w-full h-screen overflow-hidden border-l border-gray-200">
             <div className="h-full overflow-y-auto">
               <PlacesCardsWrapper />
             </div>
           </div>
+          {/* Map takes 2/3 of the screen on tablets */}
+          <div className=" bg-white w-full sticky top-20 h-[88vh]">
+            <PlacesMap />
+          </div>
+          
         </div>
+      </div>
+
+      <div className="bg-amber-100 h-[50vh] w-screen">
+        Footer
       </div>
     </div>
   );
