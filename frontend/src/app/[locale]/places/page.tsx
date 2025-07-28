@@ -78,7 +78,7 @@ export default function Places() {
 
        {/* -------------------------------------- */}
       {/* Tablet Layout - Adjustments for medium screens */}
-      <div className="hidden md:flex  w-full h-screen">
+      <div className="hidden md:flex large:hidden  w-full h-screen">
         <div className=" w-full h-screen">
           {/* Places list takes 1/3 on tablets */}
           <div className="w-full h-screen overflow-hidden border-l border-gray-200">
