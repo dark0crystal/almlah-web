@@ -2,5 +2,11 @@
   "HomePage": {
     "title": "Hello world!",
     "about": "Go to the about page"
+  },
+  "Links":{
+    "brand":"الملاح",
+    "map":"الخريطة",
+    "about":"من نحن",
+    "dir":"ltr"
   }
 }

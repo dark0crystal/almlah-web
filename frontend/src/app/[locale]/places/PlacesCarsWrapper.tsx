@@ -19,7 +19,7 @@ interface PlacesModalProps {
 export const places = [
     {
       id: 1,
-      name: "الموالح رفيق",
+      name: "نوثــق",
       lat: 36.3932,
       lng: 25.4615,
       image: img1,
@@ -31,7 +31,7 @@ export const places = [
     },
     {
       id: 2,
-      name: "Kyoto, Japan",
+      name: "مــكان",
       lat: 35.0116,
       lng: 135.7681,
       image: img2,
