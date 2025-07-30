@@ -1,4 +1,5 @@
 import CategoryCard from '@/components/cards/categoryCards/CategoryCard';
+import VerticalCard from '@/components/cards/verticalCards/VerticalCard';
 import Heading from '@/components/hero/Heading';
 import {getTranslations} from 'next-intl/server';
  
@@ -15,6 +16,8 @@ export default async function HomePage() {
         <h1 className='text-3xl font-bold'>
           {t('title')}
         </h1>
+
+        <VerticalCard/>
       </div>
     </div>
     )
