@@ -59,7 +59,7 @@ export default function PlaceCard({ place, isExpanded }) {
           {place.name}
         </h3>
         <p className="text-white/90 text-sm font-medium drop-shadow-md">
-          {place.wilayah || place.location || 'Oman'}
+          {place.wilayah || place.location || 'صور، جنوب الشرقية '}
         </p>
       </div>
     </div>
