@@ -5,7 +5,7 @@ import DestinationCard from './DestinationCard';
 
 export default function DestinationCardWrapper({ destinations }) {
   return (
-    <div className="w-80 h-full overflow-y-auto bg-gray-50 p-4">
+    <div className="w-80 md:w-100 h-full overflow-y-auto bg-gray-50 p-4">
       {/* <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 text-right mb-2">
           تعرف على الوجهات

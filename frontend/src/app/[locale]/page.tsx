@@ -21,6 +21,8 @@ export default async function HomePage() {
 
         <VerticalCard/>
         <Destination/>
+
+        <div className='h-screen'/>
       </div>
     </div>
     )
