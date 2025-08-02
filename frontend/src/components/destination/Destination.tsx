@@ -48,24 +48,22 @@ const destinations = [
 
 export default function Destination() {
   const [destinationList, setDestinationList] = useState(destinations);
-
-
-
-  return (
-    <div className="flex h-[80vh] w-full border p-8 mx-[10px] md:mx-[100px] ">
      
+  return (
+    <div className="w-[88vw]">
+      <div className="flex h-[80vh] border p-8">
         {/* Destinations Sidebar */}
-        <div>
-            <DestinationCardWrapper 
+        <div className="flex-shrink-0">
+          <DestinationCardWrapper 
             destinations={destinationList}
-        />
-      </div>
-       {/* Map Section */}
-      <div className="w-[50vw] h-full ">
-        {/* Map Container */}
+          />
+        </div>
+
+        {/* Map Section */}
+        <div className="flex-1 ml-4">
           <DestinationsMap/>
+        </div>
       </div>
-      
     </div>
   );
 }
