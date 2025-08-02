@@ -1,5 +1,7 @@
 import CategoryCard from '@/components/cards/categoryCards/CategoryCard';
 import VerticalCard from '@/components/cards/verticalCards/VerticalCard';
+import Destination from '@/components/destination/Destination';
+import Header from '@/components/Header';
 import Heading from '@/components/hero/Heading';
 import {getTranslations} from 'next-intl/server';
  
@@ -9,7 +11,7 @@ export default async function HomePage() {
     <div>
       <div className='flex items-center flex-col'>
 
-      
+        <Header/>
         <Heading/>
         <CategoryCard />
         
@@ -18,6 +20,9 @@ export default async function HomePage() {
         </h1>
 
         <VerticalCard/>
+        <Destination/>
+
+        <div className='h-screen'/>
       </div>
     </div>
     )
