@@ -111,20 +111,20 @@ const destinations = [
 
 export default function Destination() {
   const [destinationList, setDestinationList] = useState(destinations);
-     
+  
   return (
     <div className="w-[88vw]">
-      <div className="flex h-[80vh] border">
-        {/* Destinations Cards Wrapper */}
-        <div className="flex-shrink-0">
+      <div className="flex flex-col md:flex-row h-[80vh] border">
+        {/* Map Section - Top on mobile, Right on desktop */}
+        <div className="flex-1 order-1 md:order-2 md:mx-4">
+          <DestinationsMap/>
+        </div>
+
+        {/* Destinations Cards Wrapper - Bottom on mobile, Left on desktop */}
+        <div className="flex-shrink-0 order-2 md:order-1">
           <DestinationCardWrapper 
             destinations={destinationList}
           />
-        </div>
-
-        {/* Map Section */}
-        <div className="flex-1 mx-4">
-          <DestinationsMap/>
         </div>
       </div>
     </div>
