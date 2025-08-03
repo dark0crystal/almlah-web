@@ -114,8 +114,8 @@ export default function Destination() {
      
   return (
     <div className="w-[88vw]">
-      <div className="flex h-[80vh] border p-8">
-        {/* Destinations Sidebar */}
+      <div className="flex h-[80vh] border">
+        {/* Destinations Cards Wrapper */}
         <div className="flex-shrink-0">
           <DestinationCardWrapper 
             destinations={destinationList}
@@ -123,7 +123,7 @@ export default function Destination() {
         </div>
 
         {/* Map Section */}
-        <div className="flex-1 ml-4">
+        <div className="flex-1 mx-4">
           <DestinationsMap/>
         </div>
       </div>
