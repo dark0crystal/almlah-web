@@ -15,12 +15,12 @@ export default function Header({
   backgroundImage, 
 }: HeaderProps) {
   return (
-    <div className="w-full bg-gray-50">
+    <div className="w-full bg-gray-50 mt-6">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         {/* Background with gradient */}
         <div 
-          className="relative min-h-[300px] rounded-3xl mx-6 mb-6 bg-gradient-to-br from-emerald-900 via-emerald-800 to-black"
+          className="relative min-h-[400px] rounded-3xl mx-6 mb-6 bg-gradient-to-br from-emerald-900 via-emerald-800 to-black"
           style={backgroundImage ? {
             backgroundImage: `url(${backgroundImage})`,
             backgroundSize: 'cover',
@@ -36,7 +36,7 @@ export default function Header({
           
 
           {/* Content */}
-          <div className="relative z-10 flex items-center justify-between h-full p-8 md:p-12" dir="rtl">
+          <div className="relative z-10 flex items-center justify-between h-full p-8 md:p-12" >
             {/* Text Content */}
             <div className="text-white max-w-lg">
               <h2 className="text-3xl md:text-4xl font-bold mb-2 leading-tight">
@@ -51,8 +51,6 @@ export default function Header({
               <h3 className="text-2xl md:text-3xl font-bold mb-6">
                 {subtitle}
               </h3>
-              
-          
               
             </div>
 
