@@ -11,15 +11,15 @@ export default async function HomePage() {
     <div>
       <div className='flex items-center flex-col'>
 
-        <Header/>
+        {/* <Header/> */}
         <Heading/>
-        <CategoryCard />
+        {/* <CategoryCard /> */}
         
         <h1 className='text-3xl font-bold'>
           {t('title')}
         </h1>
 
-        <VerticalCard/>
+        {/* <VerticalCard/> */}
         <Destination/>
 
         <div className='h-screen'/>

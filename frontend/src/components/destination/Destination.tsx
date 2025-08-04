@@ -114,7 +114,7 @@ export default function Destination() {
   
   return (
     <div className="w-[88vw]">
-      <div className="flex flex-col md:flex-row h-[80vh] border">
+      <div className="flex flex-col md:flex-row h-[80vh] ">
         {/* Map Section - Top on mobile, Right on desktop */}
         <div className="flex-1 order-1 md:order-2 md:mx-4">
           <DestinationsMap/>
