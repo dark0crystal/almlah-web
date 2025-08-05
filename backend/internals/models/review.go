@@ -23,7 +23,7 @@ type Review struct {
 	DeletedAt    gorm.DeletedAt `json:"-" gorm:"index"`
 
 	// Relationships
-	Place  Place         `json:"place" gorm:"foreignKey:PlaceID"`
-	User   User          `json:"user" gorm:"foreignKey:UserID"`
-	Images []ReviewImage `json:"images"`
+	Place  Place         `json:"place" gorm:"foreignKey:PlaceID;references:ID"`
+	User   User          `json:"user" gorm:"foreignKey:UserID;references:ID"`
+	Images []ReviewImage `json:"images" gorm:"foreignKey:ReviewID;references:ID"`
 }
