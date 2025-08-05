@@ -1,14 +1,13 @@
-// services/place_service.go
 package services
 
 import (
-	"almlah/internals/config"
+	"almlah/config"
 	"almlah/internals/dto"
-	"almlah/internals/models"
+	"almlah/internals/domain"
 )
 
 func CreatePlace(req dto.CreatePlaceRequest, userID uint) (*dto.PlaceResponse, error) {
-	place := models.Place{
+	place := domain.Place{
 		Name:        req.Name,
 		Description: req.Description,
 		Address:     req.Address,
@@ -30,16 +29,16 @@ func CreatePlace(req dto.CreatePlaceRequest, userID uint) (*dto.PlaceResponse, e
 
 	// Create categories
 	for _, categoryName := range req.CategoryNames {
-		category := models.Category{
+		category := domain.Category{
 			Name:    categoryName,
 			PlaceID: place.ID,
 		}
 		config.DB.Create(&category)
 	}
 
-	// Add properties
+	// Add properties (if you have Property model implemented)
 	for _, propertyID := range req.PropertyIDs {
-		placeProperty := models.PlaceProperty{
+		placeProperty := domain.PlaceProperty{
 			PlaceID:    place.ID,
 			PropertyID: propertyID,
 		}
@@ -50,8 +49,8 @@ func CreatePlace(req dto.CreatePlaceRequest, userID uint) (*dto.PlaceResponse, e
 }
 
 func GetPlaces() ([]dto.PlaceResponse, error) {
-	var places []models.Place
-	
+	var places []domain.Place
+
 	if err := config.DB.Preload("Categories").Preload("Properties.Property").Preload("Images").Find(&places).Error; err != nil {
 		return nil, err
 	}
@@ -66,14 +65,14 @@ func GetPlaces() ([]dto.PlaceResponse, error) {
 }
 
 func GetPlaceByID(id uint) (*dto.PlaceResponse, error) {
-	var place models.Place
-	
+	var place domain.Place
+
 	if err := config.DB.Preload("Categories").Preload("Properties.Property").Preload("Images").Preload("Reviews").First(&place, id).Error; err != nil {
 		return nil, err
 	}
 
 	response := mapPlaceToResponse(place)
-	
+
 	// Calculate rating
 	if len(place.Reviews) > 0 {
 		var totalRating int
@@ -87,7 +86,7 @@ func GetPlaceByID(id uint) (*dto.PlaceResponse, error) {
 	return &response, nil
 }
 
-func mapPlaceToResponse(place models.Place) dto.PlaceResponse {
+func mapPlaceToResponse(place domain.Place) dto.PlaceResponse {
 	var categories []dto.CategoryResponse
 	for _, category := range place.Categories {
 		categories = append(categories, dto.CategoryResponse{
@@ -110,10 +109,10 @@ func mapPlaceToResponse(place models.Place) dto.PlaceResponse {
 	var images []dto.ImageResponse
 	for _, img := range place.Images {
 		images = append(images, dto.ImageResponse{
-			ID:          img.ID,
-			URL:         img.ImageURL,
-			AltText:     img.AltText,
-			IsPrimary:   img.IsPrimary,
+			ID:           img.ID,
+			URL:          img.ImageURL,
+			AltText:      img.AltText,
+			IsPrimary:    img.IsPrimary,
 			DisplayOrder: img.DisplayOrder,
 		})
 	}
