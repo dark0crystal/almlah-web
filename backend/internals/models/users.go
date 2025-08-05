@@ -21,9 +21,9 @@ type User struct {
 	UpdatedAt    time.Time      `json:"updated_at"`
 	DeletedAt    gorm.DeletedAt `json:"-" gorm:"index"`
 	
-	// Relationships
-	Places    []Place        `json:"places" gorm:"foreignKey:CreatedBy"`
-	Reviews   []Review       `json:"reviews"`
-	Recipes   []Recipe       `json:"recipes"`
-	Favorites []UserFavorite `json:"favorites"`
+	// Relationships - Fix foreign key references
+	Places    []Place        `json:"places" gorm:"foreignKey:CreatedBy;references:ID"`
+	Reviews   []Review       `json:"reviews" gorm:"foreignKey:UserID;references:ID"`
+	Recipes   []Recipe       `json:"recipes" gorm:"foreignKey:CreatedBy;references:ID"`
+	Favorites []UserFavorite `json:"favorites" gorm:"foreignKey:UserID;references:ID"`
 }
