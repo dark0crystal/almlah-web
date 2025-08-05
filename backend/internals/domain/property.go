@@ -1,5 +1,5 @@
 // models/property.go
-package models
+package domain
 
 import "time"
 

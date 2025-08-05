@@ -1,6 +1,6 @@
 
 // models/review.go
-package models
+package domain
 
 import (
 	"time"

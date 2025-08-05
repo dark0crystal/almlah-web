@@ -1,5 +1,5 @@
 // models/place.go
-package models
+package domain
 
 import (
 	"time"
@@ -26,11 +26,11 @@ type Place struct {
 	UpdatedAt   time.Time      `json:"updated_at"`
 	DeletedAt   gorm.DeletedAt `json:"-" gorm:"index"`
 
-	// Relationships
-	Creator    User            `json:"creator" gorm:"foreignKey:CreatedBy"`
-	Categories []Category      `json:"categories"`
-	Properties []PlaceProperty `json:"properties"`
-	Images     []PlaceImage    `json:"images"`
-	Reviews    []Review        `json:"reviews"`
-	Favorites  []UserFavorite  `json:"favorites"`
+// Relationships
+Creator    User            `json:"creator" gorm:"foreignKey:CreatedBy;references:ID"`
+Categories []Category      `json:"categories" gorm:"foreignKey:PlaceID;references:ID"`
+Properties []PlaceProperty `json:"properties" gorm:"foreignKey:PlaceID;references:ID"`
+Images     []PlaceImage    `json:"images" gorm:"foreignKey:PlaceID;references:ID"`
+Reviews    []Review        `json:"reviews" gorm:"foreignKey:PlaceID;references:ID"`
+Favorites  []UserFavorite  `json:"favorites" gorm:"foreignKey:PlaceID;references:ID"`
 }

@@ -1,5 +1,5 @@
 // models/user.go
-package models
+package domain
 
 import (
 	"time"

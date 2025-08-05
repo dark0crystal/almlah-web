@@ -1,6 +1,6 @@
 
 // models/image.go
-package models
+package domain
 
 import "time"
 
