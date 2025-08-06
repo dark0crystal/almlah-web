@@ -66,3 +66,43 @@ func (h *PlaceHandler) GetPlace(ctx *fiber.Ctx) error {
 
 	return ctx.JSON(utils.SuccessResponse("Place retrieved successfully", place))
 }
+
+
+// handlers/place_handler.go - Add these functions if missing
+
+func (h *PlaceHandler) UpdatePlace(ctx *fiber.Ctx) error {
+    idStr := ctx.Params("id")
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
+    }
+
+    var req dto.UpdatePlaceRequest
+    if err := ctx.BodyParser(&req); err != nil {
+        return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body"))
+    }
+
+    userID := ctx.Locals("userID").(uint)
+    place, err := services.UpdatePlace(uint(id), req, userID)
+    if err != nil {
+        return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
+    }
+
+    return ctx.JSON(utils.SuccessResponse("Place updated successfully", place))
+}
+
+func (h *PlaceHandler) DeletePlace(ctx *fiber.Ctx) error {
+    idStr := ctx.Params("id")
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
+    }
+
+    userID := ctx.Locals("userID").(uint)
+    err = services.DeletePlace(uint(id), userID)
+    if err != nil {
+        return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
+    }
+
+    return ctx.JSON(utils.SuccessResponse("Place deleted successfully", nil))
+}
