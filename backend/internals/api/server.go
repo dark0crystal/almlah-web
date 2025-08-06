@@ -66,4 +66,5 @@ func setupRoutes(rh *rest.RestHandler) {
 	// Setup route handlers
 	handlers.SetupUserRoutes(rh)
 	handlers.SetupPlaceRoutes(rh)
+	handlers.SetupCategoryRoutes(rh)
 }
