@@ -7,9 +7,9 @@ import (
 	"almlah/internals/services"
 	"almlah/internals/utils"
 	"net/http"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type PlaceHandler struct{}
@@ -23,6 +23,8 @@ func SetupPlaceRoutes(rh *rest.RestHandler) {
 	places.Get("/", handler.GetPlaces)
 	places.Get("/:id", handler.GetPlace)
 	places.Post("/", middleware.AuthRequired, handler.CreatePlace)
+	places.Put("/:id", middleware.AuthRequired, handler.UpdatePlace)
+	places.Delete("/:id", middleware.AuthRequired, handler.DeletePlace)
 }
 
 func (h *PlaceHandler) CreatePlace(ctx *fiber.Ctx) error {
@@ -35,7 +37,7 @@ func (h *PlaceHandler) CreatePlace(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	userID := ctx.Locals("userID").(uint)
+	userID := ctx.Locals("userID").(uuid.UUID)
 	response, err := services.CreatePlace(req, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
@@ -54,12 +56,13 @@ func (h *PlaceHandler) GetPlaces(ctx *fiber.Ctx) error {
 }
 
 func (h *PlaceHandler) GetPlace(ctx *fiber.Ctx) error {
-	id, err := strconv.Atoi(ctx.Params("id"))
+	idStr := ctx.Params("id")
+	id, err := uuid.Parse(idStr)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
 	}
 
-	place, err := services.GetPlaceByID(uint(id))
+	place, err := services.GetPlaceByID(id)
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(utils.ErrorResponse("Place not found"))
 	}
@@ -67,42 +70,39 @@ func (h *PlaceHandler) GetPlace(ctx *fiber.Ctx) error {
 	return ctx.JSON(utils.SuccessResponse("Place retrieved successfully", place))
 }
 
-
-// handlers/place_handler.go - Add these functions if missing
-
 func (h *PlaceHandler) UpdatePlace(ctx *fiber.Ctx) error {
-    idStr := ctx.Params("id")
-    id, err := strconv.Atoi(idStr)
-    if err != nil {
-        return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
-    }
+	idStr := ctx.Params("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
+	}
 
-    var req dto.UpdatePlaceRequest
-    if err := ctx.BodyParser(&req); err != nil {
-        return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body"))
-    }
+	var req dto.UpdatePlaceRequest
+	if err := ctx.BodyParser(&req); err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body"))
+	}
 
-    userID := ctx.Locals("userID").(uint)
-    place, err := services.UpdatePlace(uint(id), req, userID)
-    if err != nil {
-        return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
-    }
+	userID := ctx.Locals("userID").(uuid.UUID)
+	place, err := services.UpdatePlace(id, req, userID)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
+	}
 
-    return ctx.JSON(utils.SuccessResponse("Place updated successfully", place))
+	return ctx.JSON(utils.SuccessResponse("Place updated successfully", place))
 }
 
 func (h *PlaceHandler) DeletePlace(ctx *fiber.Ctx) error {
-    idStr := ctx.Params("id")
-    id, err := strconv.Atoi(idStr)
-    if err != nil {
-        return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
-    }
+	idStr := ctx.Params("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
+	}
 
-    userID := ctx.Locals("userID").(uint)
-    err = services.DeletePlace(uint(id), userID)
-    if err != nil {
-        return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
-    }
+	userID := ctx.Locals("userID").(uuid.UUID)
+	err = services.DeletePlace(id, userID)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
+	}
 
-    return ctx.JSON(utils.SuccessResponse("Place deleted successfully", nil))
+	return ctx.JSON(utils.SuccessResponse("Place deleted successfully", nil))
 }
