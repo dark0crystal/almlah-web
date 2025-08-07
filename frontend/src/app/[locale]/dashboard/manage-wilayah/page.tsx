@@ -1,4 +1,4 @@
-export default function ManageProperties(){
+export default function ManageWilayah(){
     return(
         <div>
             

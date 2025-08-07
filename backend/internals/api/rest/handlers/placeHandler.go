@@ -188,6 +188,7 @@ func (h *PlaceHandler) CreateContentSection(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
 	}
+	
 
 	var req dto.CreateContentSectionRequest
 	if err := ctx.BodyParser(&req); err != nil {
