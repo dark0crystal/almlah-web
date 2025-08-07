@@ -1,4 +1,4 @@
-
+// models/category.go
 package domain
 
 import (
@@ -51,3 +51,5 @@ func (c *Category) GetDescription(lang string) string {
 	}
 	return c.DescriptionEn
 }
+
+

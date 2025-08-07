@@ -1,3 +1,4 @@
+
 package utils
 
 import (
@@ -6,15 +7,15 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 type Claims struct {
-	UserID uint `json:"user_id"`
+	UserID uuid.UUID `json:"user_id"`
 	jwt.RegisteredClaims
 }
 
-
-func GenerateJWT(userID uint) (string, error) {
+func GenerateJWT(userID uuid.UUID) (string, error) {
 	cfg, _ := config.SetupEnv()
 
 	claims := Claims{
@@ -29,7 +30,7 @@ func GenerateJWT(userID uint) (string, error) {
 	return token.SignedString([]byte(cfg.JWTSecret))
 }
 
-func ValidateJWT(tokenString string) (uint, error) {
+func ValidateJWT(tokenString string) (uuid.UUID, error) {
 	cfg, _ := config.SetupEnv()
 
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
@@ -37,12 +38,14 @@ func ValidateJWT(tokenString string) (uint, error) {
 	})
 
 	if err != nil {
-		return 0, err
+		return uuid.Nil, err
 	}
 
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 		return claims.UserID, nil
 	}
 
-	return 0, errors.New("invalid token")
+	return uuid.Nil, errors.New("invalid token")
 }
+
+

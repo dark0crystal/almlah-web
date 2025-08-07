@@ -38,7 +38,7 @@ func Register(req dto.RegisterRequest) (*dto.AuthResponse, error) {
 		return nil, err
 	}
 
-	// Generate JWT
+	// Generate JWT - pass UUID directly
 	token, err := utils.GenerateJWT(user.ID)
 	if err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func Login(req dto.LoginRequest) (*dto.AuthResponse, error) {
 		return nil, errors.New("invalid credentials")
 	}
 
-	// Generate JWT
+	// Generate JWT - pass UUID directly
 	token, err := utils.GenerateJWT(user.ID)
 	if err != nil {
 		return nil, err
@@ -86,4 +86,3 @@ func Login(req dto.LoginRequest) (*dto.AuthResponse, error) {
 		},
 	}, nil
 }
-

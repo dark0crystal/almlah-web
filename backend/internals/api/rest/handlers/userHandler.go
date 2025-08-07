@@ -10,7 +10,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-
 type UserHandler struct{}
 
 func SetupUserRoutes(rh *rest.RestHandler) {

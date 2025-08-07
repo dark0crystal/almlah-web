@@ -1,88 +1,121 @@
-// dtos/place_dto.go
 package dto
 
+import "github.com/google/uuid"
+
 type CreatePlaceRequest struct {
-    Name         string   `json:"name" validate:"required"`
-    Description  string   `json:"description"`
-    Address      string   `json:"address" validate:"required"`
-    City         string   `json:"city" validate:"required"`
-    Country      string   `json:"country" validate:"required"`
-    Latitude     float64  `json:"latitude"`
-    Longitude    float64  `json:"longitude"`
-    Phone        string   `json:"phone"`
-    Email        string   `json:"email"`
-    Website      string   `json:"website"`
-    PriceRange   string   `json:"price_range"`
-    CategoryIDs  []uint   `json:"category_ids"`  // Changed from CategoryNames to IDs
-    PropertyIDs  []uint   `json:"property_ids"`
+	NameAr        string                         `json:"name_ar" validate:"required,min=2,max=200"`
+	NameEn        string                         `json:"name_en" validate:"required,min=2,max=200"`
+	DescriptionAr string                         `json:"description_ar"`
+	DescriptionEn string                         `json:"description_en"`
+	SubtitleAr    string                         `json:"subtitle_ar"`
+	SubtitleEn    string                         `json:"subtitle_en"`
+	GovernateID   *uuid.UUID                     `json:"governate_id"`
+	WilayahID     *uuid.UUID                     `json:"wilayah_id"`
+	Latitude      float64                        `json:"latitude"`
+	Longitude     float64                        `json:"longitude"`
+	Phone         string                         `json:"phone"`
+	Email         string                         `json:"email"`
+	Website       string                         `json:"website"`
+	CategoryIDs   []uuid.UUID                    `json:"category_ids"`
+	PropertyIDs   []uuid.UUID                    `json:"property_ids"`
+	ContentSections []CreateContentSectionRequest `json:"content_sections,omitempty"`
 }
 
 type UpdatePlaceRequest struct {
-    Name        string   `json:"name" validate:"omitempty"`
-    Description string   `json:"description"`
-    Address     string   `json:"address" validate:"omitempty"`
-    City        string   `json:"city" validate:"omitempty"`
-    Country     string   `json:"country" validate:"omitempty"`
-    Latitude    float64  `json:"latitude"`
-    Longitude   float64  `json:"longitude"`
-    Phone       string   `json:"phone"`
-    Email       string   `json:"email"`
-    Website     string   `json:"website"`
-    PriceRange  string   `json:"price_range"`
-    CategoryIDs []uint   `json:"category_ids"`
-    PropertyIDs []uint   `json:"property_ids"`
-    IsActive    *bool    `json:"is_active"`
+	NameAr        string                         `json:"name_ar" validate:"omitempty,min=2,max=200"`
+	NameEn        string                         `json:"name_en" validate:"omitempty,min=2,max=200"`
+	DescriptionAr string                         `json:"description_ar"`
+	DescriptionEn string                         `json:"description_en"`
+	SubtitleAr    string                         `json:"subtitle_ar"`
+	SubtitleEn    string                         `json:"subtitle_en"`
+	GovernateID   *uuid.UUID                     `json:"governate_id"`
+	WilayahID     *uuid.UUID                     `json:"wilayah_id"`
+	Latitude      float64                        `json:"latitude"`
+	Longitude     float64                        `json:"longitude"`
+	Phone         string                         `json:"phone"`
+	Email         string                         `json:"email"`
+	Website       string                         `json:"website"`
+	CategoryIDs   []uuid.UUID                    `json:"category_ids"`
+	PropertyIDs   []uuid.UUID                    `json:"property_ids"`
+	IsActive      *bool                          `json:"is_active"`
+}
+
+type CreateContentSectionRequest struct {
+	SectionType string                              `json:"section_type" validate:"required"`
+	TitleAr     string                              `json:"title_ar" validate:"required"`
+	TitleEn     string                              `json:"title_en" validate:"required"`
+	ContentAr   string                              `json:"content_ar"`
+	ContentEn   string                              `json:"content_en"`
+	SortOrder   int                                 `json:"sort_order"`
+	Images      []CreateContentSectionImageRequest  `json:"images,omitempty"`
+}
+
+type UpdateContentSectionRequest struct {
+	ID          uuid.UUID `json:"id"`
+	SectionType string    `json:"section_type"`
+	TitleAr     string    `json:"title_ar"`
+	TitleEn     string    `json:"title_en"`
+	ContentAr   string    `json:"content_ar"`
+	ContentEn   string    `json:"content_en"`
+	SortOrder   int       `json:"sort_order"`
+	IsActive    *bool     `json:"is_active"`
+}
+
+type CreateContentSectionImageRequest struct {
+	ImageURL   string `json:"image_url" validate:"required"`
+	AltTextAr  string `json:"alt_text_ar"`
+	AltTextEn  string `json:"alt_text_en"`
+	CaptionAr  string `json:"caption_ar"`
+	CaptionEn  string `json:"caption_en"`
+	SortOrder  int    `json:"sort_order"`
 }
 
 type PlaceResponse struct {
-    ID          uint                      `json:"id"`
-    Name        string                    `json:"name"`
-    Description string                    `json:"description"`
-    Address     string                    `json:"address"`
-    City        string                    `json:"city"`
-    Country     string                    `json:"country"`
-    Latitude    float64                   `json:"latitude"`
-    Longitude   float64                   `json:"longitude"`
-    Phone       string                    `json:"phone"`
-    Email       string                    `json:"email"`
-    Website     string                    `json:"website"`
-    PriceRange  string                    `json:"price_range"`
-    Rating      float64                   `json:"rating"`
-    ReviewCount int                       `json:"review_count"`
-    IsActive    bool                      `json:"is_active"`
-    Categories  []SimpleCategoryResponse  `json:"categories"`  // Use SimpleCategoryResponse
-    Properties  []PropertyResponse        `json:"properties"`
-    Images      []ImageResponse           `json:"images"`
-    CreatedAt   string                    `json:"created_at"`
-    UpdatedAt   string                    `json:"updated_at"`
+	ID              uuid.UUID                      `json:"id"`
+	NameAr          string                         `json:"name_ar"`
+	NameEn          string                         `json:"name_en"`
+	DescriptionAr   string                         `json:"description_ar"`
+	DescriptionEn   string                         `json:"description_en"`
+	SubtitleAr      string                         `json:"subtitle_ar"`
+	SubtitleEn      string                         `json:"subtitle_en"`
+	Governate       *SimpleGovernateResponse       `json:"governate,omitempty"`
+	Wilayah         *SimpleWilayahResponse         `json:"wilayah,omitempty"`
+	Latitude        float64                        `json:"latitude"`
+	Longitude       float64                        `json:"longitude"`
+	Phone           string                         `json:"phone"`
+	Email           string                         `json:"email"`
+	Website         string                         `json:"website"`
+	Rating          float64                        `json:"rating"`
+	ReviewCount     int                            `json:"review_count"`
+	IsActive        bool                           `json:"is_active"`
+	Categories      []SimpleCategoryResponse       `json:"categories"`
+	Properties      []PropertyResponse             `json:"properties"`
+	Images          []ImageResponse                `json:"images"`
+	ContentSections []ContentSectionResponse       `json:"content_sections"`
+	CreatedAt       string                         `json:"created_at"`
+	UpdatedAt       string                         `json:"updated_at"`
 }
 
-type PropertyResponse struct {
-    ID    uint   `json:"id"`
-    Name  string `json:"name"`
-    Value string `json:"value,omitempty"`
-    Icon  string `json:"icon"`
-    Type  string `json:"property_type"`
+type ContentSectionResponse struct {
+	ID          uuid.UUID                     `json:"id"`
+	SectionType string                        `json:"section_type"`
+	TitleAr     string                        `json:"title_ar"`
+	TitleEn     string                        `json:"title_en"`
+	ContentAr   string                        `json:"content_ar"`
+	ContentEn   string                        `json:"content_en"`
+	SortOrder   int                           `json:"sort_order"`
+	IsActive    bool                          `json:"is_active"`
+	Images      []ContentSectionImageResponse `json:"images"`
+	CreatedAt   string                        `json:"created_at"`
+	UpdatedAt   string                        `json:"updated_at"`
 }
 
-type ImageResponse struct {
-    ID           uint   `json:"id"`
-    URL          string `json:"url"`
-    AltText      string `json:"alt_text"`
-    IsPrimary    bool   `json:"is_primary"`
-    DisplayOrder int    `json:"display_order"`
-}
-
-// Place listing response (simplified)
-type PlaceListResponse struct {
-    ID          uint                     `json:"id"`
-    Name        string                   `json:"name"`
-    Description string                   `json:"description"`
-    City        string                   `json:"city"`
-    Country     string                   `json:"country"`
-    PriceRange  string                   `json:"price_range"`
-    Rating      float64                  `json:"rating"`
-    ReviewCount int                      `json:"review_count"`
-    Categories  []SimpleCategoryResponse `json:"categories"`
-    PrimaryImage *ImageResponse          `json:"primary_image"`
+type ContentSectionImageResponse struct {
+	ID        uuid.UUID `json:"id"`
+	ImageURL  string    `json:"image_url"`
+	AltTextAr string    `json:"alt_text_ar"`
+	AltTextEn string    `json:"alt_text_en"`
+	CaptionAr string    `json:"caption_ar"`
+	CaptionEn string    `json:"caption_en"`
+	SortOrder int       `json:"sort_order"`
 }

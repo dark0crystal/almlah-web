@@ -1,17 +1,16 @@
-
-// models/review.go
 package domain
 
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type Review struct {
-	ID           uint           `json:"id" gorm:"primaryKey"`
-	PlaceID      uint           `json:"place_id" gorm:"not null"`
-	UserID       uint           `json:"user_id" gorm:"not null"`
+	ID           uuid.UUID      `json:"id" gorm:"type:uuid;primaryKey"`
+	PlaceID      uuid.UUID      `json:"place_id" gorm:"type:uuid;not null"`
+	UserID       uuid.UUID      `json:"user_id" gorm:"type:uuid;not null"`
 	Rating       int            `json:"rating" gorm:"not null;check:rating >= 1 AND rating <= 5"`
 	Title        string         `json:"title"`
 	ReviewText   string         `json:"review_text"`
@@ -26,4 +25,12 @@ type Review struct {
 	Place  Place         `json:"place" gorm:"foreignKey:PlaceID;references:ID"`
 	User   User          `json:"user" gorm:"foreignKey:UserID;references:ID"`
 	Images []ReviewImage `json:"images" gorm:"foreignKey:ReviewID;references:ID"`
+}
+
+// BeforeCreate hook to generate UUID
+func (r *Review) BeforeCreate(tx *gorm.DB) error {
+	if r.ID == uuid.Nil {
+		r.ID = uuid.New()
+	}
+	return nil
 }

@@ -4,9 +4,11 @@ import (
 	"almlah/config"
 	"almlah/internals/dto"
 	"almlah/internals/domain"
+
+	"github.com/google/uuid"
 )
 
-func CreateRecipe(req dto.CreateRecipeRequest, userID uint) (*dto.RecipeResponse, error) {
+func CreateRecipe(req dto.CreateRecipeRequest, userID uuid.UUID) (*dto.RecipeResponse, error) {
 	recipe := domain.Recipe{
 		Title:        req.Title,
 		Description:  req.Description,
@@ -44,7 +46,7 @@ func GetRecipes() ([]dto.RecipeResponse, error) {
 	return response, nil
 }
 
-func GetRecipeByID(id uint) (*dto.RecipeResponse, error) {
+func GetRecipeByID(id uuid.UUID) (*dto.RecipeResponse, error) {
 	var recipe domain.Recipe
 
 	if err := config.DB.Preload("Creator").Preload("Images").First(&recipe, id).Error; err != nil {

@@ -4,15 +4,18 @@ import (
 	"almlah/config"
 	"almlah/internals/dto"
 	"almlah/internals/domain"
+
+	"github.com/google/uuid"
 )
 
-func CreateReview(req dto.CreateReviewRequest, userID uint) (*dto.ReviewResponse, error) {
+func CreateReview(req dto.CreateReviewRequest, userID uuid.UUID) (*dto.ReviewResponse, error) {
 	review := domain.Review{
 		PlaceID:      req.PlaceID,
 		UserID:       userID,
 		Rating:       req.Rating,
 		Title:        req.Title,
 		ReviewText:   req.ReviewText,
+		VisitDate:    req.VisitDate,
 		IsVerified:   false,
 		HelpfulCount: 0,
 	}
@@ -24,7 +27,7 @@ func CreateReview(req dto.CreateReviewRequest, userID uint) (*dto.ReviewResponse
 	return GetReviewByID(review.ID)
 }
 
-func GetReviewsByPlaceID(placeID uint) ([]dto.ReviewResponse, error) {
+func GetReviewsByPlaceID(placeID uuid.UUID) ([]dto.ReviewResponse, error) {
 	var reviews []domain.Review
 
 	if err := config.DB.Where("place_id = ?", placeID).Preload("User").Preload("Images").Find(&reviews).Error; err != nil {
@@ -39,7 +42,7 @@ func GetReviewsByPlaceID(placeID uint) ([]dto.ReviewResponse, error) {
 	return response, nil
 }
 
-func GetReviewByID(id uint) (*dto.ReviewResponse, error) {
+func GetReviewByID(id uuid.UUID) (*dto.ReviewResponse, error) {
 	var review domain.Review
 
 	if err := config.DB.Preload("User").Preload("Images").First(&review, id).Error; err != nil {

@@ -77,6 +77,21 @@ const generateSlug = (name) => {
     .replace(/^-+|-+$/g, '');
 };
 
+// Helper function to ensure array format
+const ensureArray = (data) => {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  if (typeof data === 'object') {
+    // Handle different possible object structures
+    if (data.primary) return data.primary;
+    if (data.categories) return data.categories;
+    if (data.data) return ensureArray(data.data);
+    // If it's a single object, wrap it in an array
+    return [data];
+  }
+  return [];
+};
+
 // Category Form Modal Component
 const CategoryFormModal = ({ isOpen, onClose, category, primaryCategories, onSave }) => {
   const [formData, setFormData] = useState({
@@ -181,9 +196,12 @@ const CategoryFormModal = ({ isOpen, onClose, category, primaryCategories, onSav
         submitData.sort_order = 0;
       }
       
-      // Convert parent_id to number if it's not null
+      // Keep parent_id as string (UUID) - don't convert to number
       if (submitData.parent_id !== null && submitData.parent_id !== '') {
-        submitData.parent_id = parseInt(submitData.parent_id, 10);
+        // Ensure it's a string and not empty
+        submitData.parent_id = submitData.parent_id.toString();
+      } else {
+        submitData.parent_id = null;
       }
       
       // Remove empty strings, convert to null
@@ -331,7 +349,7 @@ const CategoryFormModal = ({ isOpen, onClose, category, primaryCategories, onSav
                 }`}
               >
                 <option value="">Select parent category</option>
-                {primaryCategories.map(cat => (
+                {ensureArray(primaryCategories).map(cat => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
                   </option>
@@ -384,7 +402,8 @@ const CategoryFormModal = ({ isOpen, onClose, category, primaryCategories, onSav
 const DeleteConfirmModal = ({ isOpen, onClose, category, onConfirm, loading }) => {
   if (!isOpen || !category) return null;
 
-  const subcategoryCount = category.subcategories ? category.subcategories.length : 0;
+  const subcategories = ensureArray(category.subcategories);
+  const subcategoryCount = subcategories.length;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -409,7 +428,7 @@ const DeleteConfirmModal = ({ isOpen, onClose, category, onConfirm, loading }) =
                 🗂️ This will also permanently delete all {subcategoryCount} subcategories:
               </p>
               <ul className="mt-2 text-red-600 text-sm list-disc list-inside max-h-24 overflow-y-auto">
-                {category.subcategories.map(sub => (
+                {subcategories.map(sub => (
                   <li key={sub.id}>{sub.name}</li>
                 ))}
               </ul>
@@ -458,7 +477,8 @@ const DeleteConfirmModal = ({ isOpen, onClose, category, onConfirm, loading }) =
 
 // Category Item Component
 const CategoryItem = ({ category, level = 0, onEdit, onDelete, expandedCategories, onToggleExpand }) => {
-  const hasSubcategories = category.subcategories && category.subcategories.length > 0;
+  const subcategories = ensureArray(category.subcategories || category.children);
+  const hasSubcategories = subcategories.length > 0;
   const isExpanded = expandedCategories.has(category.id);
 
   return (
@@ -513,7 +533,7 @@ const CategoryItem = ({ category, level = 0, onEdit, onDelete, expandedCategorie
               <div className="text-sm text-gray-500 mt-1">
                 <span className="font-mono bg-gray-100 px-1 rounded">{category.slug}</span>
                 {hasSubcategories && (
-                  <span className="ml-2">• {category.subcategories.length} subcategories</span>
+                  <span className="ml-2">• {subcategories.length} subcategories</span>
                 )}
                 {category.places && category.places.length > 0 && (
                   <span className="ml-2">• {category.places.length} places</span>
@@ -546,7 +566,7 @@ const CategoryItem = ({ category, level = 0, onEdit, onDelete, expandedCategorie
 
       {hasSubcategories && isExpanded && (
         <div>
-          {category.subcategories.map(subcategory => (
+          {subcategories.map(subcategory => (
             <CategoryItem
               key={subcategory.id}
               category={subcategory}
@@ -589,16 +609,14 @@ export default function ManageCategories() {
       
       console.log('Loaded categories data:', data);
       
-      if (viewMode === 'hierarchy') {
-        // Handle hierarchy data structure
-        setCategories(data.primary || data || []);
-      } else {
-        // Handle flat list data structure  
-        setCategories(data || []);
-      }
+      // Ensure we always have an array
+      const categoryArray = ensureArray(data);
+      setCategories(categoryArray);
+      
     } catch (err) {
       setError(err.message);
       console.error('Error loading categories:', err);
+      setCategories([]); // Set to empty array on error
     } finally {
       setLoading(false);
     }
@@ -607,9 +625,10 @@ export default function ManageCategories() {
   const loadPrimaryCategories = async () => {
     try {
       const data = await categoryAPI.getPrimary();
-      setPrimaryCategories(data || []);
+      setPrimaryCategories(ensureArray(data));
     } catch (err) {
       console.error('Failed to load primary categories:', err);
+      setPrimaryCategories([]); // Set to empty array on error
     }
   };
 
@@ -654,14 +673,12 @@ export default function ManageCategories() {
   const expandAll = () => {
     const allIds = new Set();
     const addIds = (categories) => {
-      categories.forEach(cat => {
-        if (cat.subcategories && cat.subcategories.length > 0) {
+      const categoryArray = ensureArray(categories);
+      categoryArray.forEach(cat => {
+        const subcategories = ensureArray(cat.subcategories || cat.children);
+        if (subcategories.length > 0) {
           allIds.add(cat.id);
-          addIds(cat.subcategories);
-        }
-        if (cat.children && cat.children.length > 0) {
-          allIds.add(cat.id);
-          addIds(cat.children);
+          addIds(subcategories);
         }
       });
     };
@@ -677,10 +694,12 @@ export default function ManageCategories() {
   const countTotalCategories = (categories) => {
     let total = 0;
     const count = (cats) => {
-      cats.forEach(cat => {
+      const categoryArray = ensureArray(cats);
+      categoryArray.forEach(cat => {
         total++;
-        if (cat.subcategories && cat.subcategories.length > 0) {
-          count(cat.subcategories);
+        const subcategories = ensureArray(cat.subcategories || cat.children);
+        if (subcategories.length > 0) {
+          count(subcategories);
         }
       });
     };
