@@ -8,32 +8,26 @@ import (
 )
 
 type Governate struct {
-	ID               uuid.UUID      `json:"id" gorm:"type:uuid;primaryKey"`
-	NameAr           string         `json:"name_ar" gorm:"not null"`
-	NameEn           string         `json:"name_en" gorm:"not null"`
-	Slug             string         `json:"slug" gorm:"unique;not null"`
-	DescriptionAr    string         `json:"description_ar" gorm:"type:text"`
-	DescriptionEn    string         `json:"description_en" gorm:"type:text"`
-	Capital          string         `json:"capital"`
-	Area             float64        `json:"area"` // in square kilometers
-	Population       int64          `json:"population"`
-	Latitude         float64        `json:"latitude"`
-	Longitude        float64        `json:"longitude"`
-	TimeZone         string         `json:"time_zone"`
-	PostalCodePrefix string         `json:"postal_code_prefix"`
-	PhoneCode        string         `json:"phone_code"`
-	IsActive         bool           `json:"is_active" gorm:"default:true"`
-	SortOrder        int            `json:"sort_order" gorm:"default:0"`
-	CreatedBy        uuid.UUID      `json:"created_by" gorm:"type:uuid"`
-	CreatedAt        time.Time      `json:"created_at"`
-	UpdatedAt        time.Time      `json:"updated_at"`
-	DeletedAt        gorm.DeletedAt `json:"-" gorm:"index"`
+	ID            uuid.UUID      `json:"id" gorm:"type:uuid;primaryKey"`
+	NameAr        string         `json:"name_ar" gorm:"not null"`
+	NameEn        string         `json:"name_en" gorm:"not null"`
+	Slug          string         `json:"slug" gorm:"unique;not null"`
+	DescriptionAr string         `json:"description_ar" gorm:"type:text"`
+	DescriptionEn string         `json:"description_en" gorm:"type:text"`
+	Latitude      float64        `json:"latitude"`
+	Longitude     float64        `json:"longitude"`
+	IsActive      bool           `json:"is_active" gorm:"default:true"`
+	SortOrder     int            `json:"sort_order" gorm:"default:0"`
+	CreatedBy     uuid.UUID      `json:"created_by" gorm:"type:uuid"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	DeletedAt     gorm.DeletedAt `json:"-" gorm:"index"`
 
 	// Relationships
-	Creator   User              `json:"creator" gorm:"foreignKey:CreatedBy;references:ID"`
-	Wilayahs  []Wilayah         `json:"wilayahs" gorm:"foreignKey:GovernateID;references:ID"`
-	Images    []GovernateImage  `json:"images" gorm:"foreignKey:GovernateID;references:ID"`
-	Places    []Place           `json:"places,omitempty" gorm:"foreignKey:GovernateID;references:ID"`
+	Creator  User             `json:"creator" gorm:"foreignKey:CreatedBy;references:ID"`
+	Wilayahs []Wilayah        `json:"wilayahs" gorm:"foreignKey:GovernateID;references:ID"`
+	Images   []GovernateImage `json:"images" gorm:"foreignKey:GovernateID;references:ID"`
+	Places   []Place          `json:"places,omitempty" gorm:"foreignKey:GovernateID;references:ID"`
 }
 
 // BeforeCreate hook to generate UUID
