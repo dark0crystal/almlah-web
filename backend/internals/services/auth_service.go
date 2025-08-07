@@ -11,7 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -20,6 +20,21 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
+
+// Initialize auth configuration (called from StartServer)
+func InitAuthConfig() error {
+	// Just verify we can load config - no need to store it globally
+	_, err := config.SetupEnv()
+	return err
+}
+
+// Helper function to get environment variables with defaults
+func getEnvWithDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
 
 // Email/Password Authentication
 func Register(req dto.RegisterRequest) (*dto.AuthResponse, error) {
@@ -45,7 +60,7 @@ func Register(req dto.RegisterRequest) (*dto.AuthResponse, error) {
 	}
 
 	passwordHashStr := string(hashedPassword)
-	
+
 	// Create user
 	user := domain.User{
 		Username:          req.Username,
@@ -64,9 +79,8 @@ func Register(req dto.RegisterRequest) (*dto.AuthResponse, error) {
 		return nil, errors.New("failed to create user")
 	}
 
-	// Send verification email (implement this based on your email service)
+	// Send verification email
 	if err := sendVerificationEmail(user.Email, verificationToken); err != nil {
-		// Log error but don't fail registration
 		fmt.Printf("Failed to send verification email: %v\n", err)
 	}
 
@@ -231,20 +245,20 @@ func GoogleAuth(accessToken string) (*dto.AuthResponse, error) {
 	// Check if user exists
 	var user domain.User
 	err = config.DB.Where("email = ?", googleUser.Email).First(&user).Error
-	
+
 	if err != nil {
 		// User doesn't exist, create new user
 		user = domain.User{
-			Username:    generateUsernameFromEmail(googleUser.Email),
-			Email:       googleUser.Email,
-			FirstName:   googleUser.GivenName,
-			LastName:    googleUser.FamilyName,
-			ProfilePic:  googleUser.Picture,
-			UserType:    "regular",
-			Provider:    "google",
-			GoogleID:    &googleUser.ID,
-			IsActive:    true,
-			IsVerified:  googleUser.VerifiedEmail,
+			Username:   generateUsernameFromEmail(googleUser.Email),
+			Email:      googleUser.Email,
+			FirstName:  googleUser.GivenName,
+			LastName:   googleUser.FamilyName,
+			ProfilePic: googleUser.Picture,
+			UserType:   "regular",
+			Provider:   "google",
+			GoogleID:   &googleUser.ID,
+			IsActive:   true,
+			IsVerified: googleUser.VerifiedEmail,
 		}
 
 		if err := config.DB.Create(&user).Error; err != nil {
@@ -262,7 +276,7 @@ func GoogleAuth(accessToken string) (*dto.AuthResponse, error) {
 		if !user.IsVerified && googleUser.VerifiedEmail {
 			user.IsVerified = true
 		}
-		
+
 		if err := config.DB.Save(&user).Error; err != nil {
 			return nil, errors.New("failed to update user")
 		}
@@ -409,7 +423,7 @@ func generateRandomToken() (string, error) {
 func generateUsernameFromEmail(email string) string {
 	parts := strings.Split(email, "@")
 	username := parts[0]
-	
+
 	// Check if username exists, if so append random number
 	var user domain.User
 	if err := config.DB.Where("username = ?", username).First(&user).Error; err == nil {
@@ -417,13 +431,13 @@ func generateUsernameFromEmail(email string) string {
 		timestamp := time.Now().Unix()
 		username = fmt.Sprintf("%s%d", username, timestamp)
 	}
-	
+
 	return username
 }
 
 func getGoogleUserInfo(accessToken string) (*dto.GoogleUserInfo, error) {
 	url := fmt.Sprintf("https://www.googleapis.com/oauth2/v2/userinfo?access_token=%s", accessToken)
-	
+
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -443,12 +457,10 @@ func getGoogleUserInfo(accessToken string) (*dto.GoogleUserInfo, error) {
 }
 
 func getGoogleOAuthConfig() *oauth2.Config {
-	cfg, _ := config.SetupEnv()
-	
 	return &oauth2.Config{
-		ClientID:     cfg.GoogleClientID,
-		ClientSecret: cfg.GoogleClientSecret,
-		RedirectURL:  cfg.GoogleRedirectURL,
+		ClientID:     getEnvWithDefault("GOOGLE_CLIENT_ID", ""),
+		ClientSecret: getEnvWithDefault("GOOGLE_CLIENT_SECRET", ""),
+		RedirectURL:  getEnvWithDefault("GOOGLE_REDIRECT_URL", "http://localhost:9000/api/v1/auth/google/callback"),
 		Scopes: []string{
 			"https://www.googleapis.com/auth/userinfo.email",
 			"https://www.googleapis.com/auth/userinfo.profile",
@@ -457,35 +469,25 @@ func getGoogleOAuthConfig() *oauth2.Config {
 	}
 }
 
-// Email service functions (implement based on your email provider)
+// Email service functions
 func sendVerificationEmail(email, token string) error {
-	// Implementation depends on your email service (SendGrid, AWS SES, etc.)
-	// For now, just log the verification link
-	cfg, _ := config.SetupEnv()
-	verificationLink := fmt.Sprintf("%s/verify-email?token=%s", cfg.FrontendURL, token)
-	
-	fmt.Printf("Verification email for %s: %s\n", email, verificationLink)
-	
+	frontendURL := getEnvWithDefault("FRONTEND_URL", "http://localhost:3000")
+	verificationLink := fmt.Sprintf("%s/verify-email?token=%s", frontendURL, token)
+
+	fmt.Printf("📧 Verification email for %s: %s\n", email, verificationLink)
+
 	// TODO: Implement actual email sending
-	// Example structure:
-	// subject := "Verify your email address"
-	// body := fmt.Sprintf("Click this link to verify your email: %s", verificationLink)
-	// return emailService.SendEmail(email, subject, body)
-	
+
 	return nil
 }
 
 func sendPasswordResetEmail(email, token string) error {
-	// Implementation depends on your email service
-	cfg, _ := config.SetupEnv()
-	resetLink := fmt.Sprintf("%s/reset-password?token=%s", cfg.FrontendURL, token)
-	
-	fmt.Printf("Password reset email for %s: %s\n", email, resetLink)
-	
+	frontendURL := getEnvWithDefault("FRONTEND_URL", "http://localhost:3000")
+	resetLink := fmt.Sprintf("%s/reset-password?token=%s", frontendURL, token)
+
+	fmt.Printf("🔐 Password reset email for %s: %s\n", email, resetLink)
+
 	// TODO: Implement actual email sending
-	// subject := "Reset your password"
-	// body := fmt.Sprintf("Click this link to reset your password: %s", resetLink)
-	// return emailService.SendEmail(email, subject, body)
-	
+
 	return nil
 }
