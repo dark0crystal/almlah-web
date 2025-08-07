@@ -12,11 +12,26 @@ type AppConfig struct {
 	ServerPort  string
 	DatabaseURL string
 	JWTSecret   string
+
+	// Added auth-related fields to your existing config
+	GoogleClientID     string
+	GoogleClientSecret string
+	GoogleRedirectURL  string
+	FrontendURL        string
+	EmailProvider      string
+	SMTPHost           string
+	SMTPPort           string
+	SMTPUser           string
+	SMTPPassword       string
+	SendGridAPIKey     string
+	AWSRegion          string
+	AWSAccessKeyID     string
+	AWSSecretKey       string
 }
 
 func SetupEnv() (cfg AppConfig, err error) {
 	log.Println("Loading environment variables...")
-	
+
 	if os.Getenv("APP_ENV") == "dev" {
 		err := godotenv.Load()
 		if err != nil {
@@ -46,11 +61,36 @@ func SetupEnv() (cfg AppConfig, err error) {
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if len(jwtSecret) < 1 {
 		jwtSecret = "default-secret-key" // fallback
+		log.Println("Warning: Using default JWT secret. Set JWT_SECRET environment variable for production!")
 	}
 
 	return AppConfig{
+		// Your existing config
 		ServerPort:  ":" + httpPort,
 		DatabaseURL: databaseURL,
 		JWTSecret:   jwtSecret,
+
+		// New auth-related config with defaults
+		GoogleClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
+		GoogleClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
+		GoogleRedirectURL:  getEnv("GOOGLE_REDIRECT_URL", "http://localhost:9000/api/v1/auth/google/callback"),
+		FrontendURL:        getEnv("FRONTEND_URL", "http://localhost:3000"),
+		EmailProvider:      getEnv("EMAIL_PROVIDER", "smtp"),
+		SMTPHost:           getEnv("SMTP_HOST", ""),
+		SMTPPort:           getEnv("SMTP_PORT", "587"),
+		SMTPUser:           getEnv("SMTP_USER", ""),
+		SMTPPassword:       getEnv("SMTP_PASSWORD", ""),
+		SendGridAPIKey:     getEnv("SENDGRID_API_KEY", ""),
+		AWSRegion:          getEnv("AWS_REGION", ""),
+		AWSAccessKeyID:     getEnv("AWS_ACCESS_KEY_ID", ""),
+		AWSSecretKey:       getEnv("AWS_SECRET_ACCESS_KEY", ""),
 	}, nil
+}
+
+// Helper function to get environment variables with defaults
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }

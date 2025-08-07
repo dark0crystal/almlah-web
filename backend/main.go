@@ -48,20 +48,18 @@ package main
 import (
 	"almlah/config"
 	"almlah/internals/api"
-	
+
 	"log"
 )
 
+func main() {
 
-func main(){
-
-	cfg , err := config.SetupEnv()
+	cfg, err := config.SetupEnv()
 
 	if err != nil {
-		log.Fatalf("config file is not loaded !!" ,err)
-	
-	}
+		log.Fatalf("config file is not loaded !!", err)
 
+	}
 
 	api.StartServer(cfg)
 }
