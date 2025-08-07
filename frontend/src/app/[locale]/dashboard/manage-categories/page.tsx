@@ -1,27 +1,30 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, ChevronDown, ChevronRight, Folder, Tag, Settings, Save, X, AlertTriangle } from 'lucide-react';
+import { Plus, Edit, Trash2, ChevronDown, ChevronRight, Folder, Tag, Settings, Save, X, AlertTriangle, Globe } from 'lucide-react';
 
 // API service functions with host
 const API_HOST = 'http://127.0.0.1:9000';
 
 const categoryAPI = {
-  getAll: async () => {
-    const response = await fetch(`${API_HOST}/api/v1/categories`);
+  getAll: async (lang = null) => {
+    const url = lang ? `${API_HOST}/api/v1/categories?lang=${lang}` : `${API_HOST}/api/v1/categories`;
+    const response = await fetch(url);
     const data = await response.json();
     if (!data.success) throw new Error(data.error || 'Failed to fetch categories');
     return data.data;
   },
 
-  getHierarchy: async () => {
-    const response = await fetch(`${API_HOST}/api/v1/categories/hierarchy`);
+  getHierarchy: async (lang = null) => {
+    const url = lang ? `${API_HOST}/api/v1/categories/hierarchy?lang=${lang}` : `${API_HOST}/api/v1/categories/hierarchy`;
+    const response = await fetch(url);
     const data = await response.json();
     if (!data.success) throw new Error(data.error || 'Failed to fetch hierarchy');
     return data.data;
   },
 
-  getPrimary: async () => {
-    const response = await fetch(`${API_HOST}/api/v1/categories/primary`);
+  getPrimary: async (lang = null) => {
+    const url = lang ? `${API_HOST}/api/v1/categories/primary?lang=${lang}` : `${API_HOST}/api/v1/categories/primary`;
+    const response = await fetch(url);
     const data = await response.json();
     if (!data.success) throw new Error(data.error || 'Failed to fetch primary categories');
     return data.data;
@@ -82,22 +85,34 @@ const ensureArray = (data) => {
   if (!data) return [];
   if (Array.isArray(data)) return data;
   if (typeof data === 'object') {
-    // Handle different possible object structures
     if (data.primary) return data.primary;
     if (data.categories) return data.categories;
     if (data.data) return ensureArray(data.data);
-    // If it's a single object, wrap it in an array
     return [data];
   }
   return [];
 };
 
+// Helper function to get display name based on current language
+const getDisplayName = (category, currentLang) => {
+  if (category.name) return category.name; // Localized response
+  return currentLang === 'ar' ? category.name_ar : category.name_en;
+};
+
+// Helper function to get display description based on current language
+const getDisplayDescription = (category, currentLang) => {
+  if (category.description) return category.description; // Localized response
+  return currentLang === 'ar' ? category.description_ar : category.description_en;
+};
+
 // Category Form Modal Component
-const CategoryFormModal = ({ isOpen, onClose, category, primaryCategories, onSave }) => {
+const CategoryFormModal = ({ isOpen, onClose, category, primaryCategories, onSave, currentLang }) => {
   const [formData, setFormData] = useState({
-    name: '',
+    name_ar: '',
+    name_en: '',
     slug: '',
-    description: '',
+    description_ar: '',
+    description_en: '',
     icon: '',
     type: 'primary',
     parent_id: null,
@@ -109,9 +124,11 @@ const CategoryFormModal = ({ isOpen, onClose, category, primaryCategories, onSav
   useEffect(() => {
     if (category) {
       setFormData({
-        name: category.name || '',
+        name_ar: category.name_ar || '',
+        name_en: category.name_en || '',
         slug: category.slug || '',
-        description: category.description || '',
+        description_ar: category.description_ar || '',
+        description_en: category.description_en || '',
         icon: category.icon || '',
         type: category.type || 'primary',
         parent_id: category.parent_id || null,
@@ -119,9 +136,11 @@ const CategoryFormModal = ({ isOpen, onClose, category, primaryCategories, onSav
       });
     } else {
       setFormData({
-        name: '',
+        name_ar: '',
+        name_en: '',
         slug: '',
-        description: '',
+        description_ar: '',
+        description_en: '',
         icon: '',
         type: 'primary',
         parent_id: null,
@@ -135,11 +154,11 @@ const CategoryFormModal = ({ isOpen, onClose, category, primaryCategories, onSav
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value === '' ? null : value
+      [name]: value === '' ? '' : value
     }));
 
-    // Auto-generate slug from name
-    if (name === 'name' && !category) {
+    // Auto-generate slug from English name
+    if (name === 'name_en' && !category) {
       setFormData(prev => ({
         ...prev,
         slug: generateSlug(value)
@@ -164,7 +183,8 @@ const CategoryFormModal = ({ isOpen, onClose, category, primaryCategories, onSav
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.name_ar.trim()) newErrors.name_ar = 'Arabic name is required';
+    if (!formData.name_en.trim()) newErrors.name_en = 'English name is required';
     if (!formData.slug.trim()) newErrors.slug = 'Slug is required';
     if (!formData.type) newErrors.type = 'Type is required';
     if (formData.type === 'secondary' && !formData.parent_id) {
@@ -196,22 +216,18 @@ const CategoryFormModal = ({ isOpen, onClose, category, primaryCategories, onSav
         submitData.sort_order = 0;
       }
       
-      // Keep parent_id as string (UUID) - don't convert to number
+      // Keep parent_id as string (UUID) or null
       if (submitData.parent_id !== null && submitData.parent_id !== '') {
-        // Ensure it's a string and not empty
         submitData.parent_id = submitData.parent_id.toString();
       } else {
         submitData.parent_id = null;
       }
       
-      // Remove empty strings, convert to null
+      // Trim string values and handle empty strings
       Object.keys(submitData).forEach(key => {
-        if (submitData[key] === '') {
-          submitData[key] = null;
-        }
-        // Trim string values
         if (typeof submitData[key] === 'string') {
           submitData[key] = submitData[key].trim();
+          // Keep empty strings as empty strings, not null for text fields
         }
       });
 
@@ -235,7 +251,7 @@ const CategoryFormModal = ({ isOpen, onClose, category, primaryCategories, onSav
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">
             {category ? 'Edit Category' : 'Add New Category'}
@@ -255,21 +271,42 @@ const CategoryFormModal = ({ isOpen, onClose, category, primaryCategories, onSav
         )}
 
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Name *
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder="Category name"
-            />
-            {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+          {/* Bilingual Name Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Arabic Name *
+              </label>
+              <input
+                type="text"
+                name="name_ar"
+                value={formData.name_ar}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.name_ar ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="الاسم بالعربية"
+                dir="rtl"
+              />
+              {errors.name_ar && <p className="text-red-500 text-sm mt-1">{errors.name_ar}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                English Name *
+              </label>
+              <input
+                type="text"
+                name="name_en"
+                value={formData.name_en}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.name_en ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Category name in English"
+              />
+              {errors.name_en && <p className="text-red-500 text-sm mt-1">{errors.name_en}</p>}
+            </div>
           </div>
 
           <div>
@@ -289,18 +326,36 @@ const CategoryFormModal = ({ isOpen, onClose, category, primaryCategories, onSav
             {errors.slug && <p className="text-red-500 text-sm mt-1">{errors.slug}</p>}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Category description"
-            />
+          {/* Bilingual Description Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Arabic Description
+              </label>
+              <textarea
+                name="description_ar"
+                value={formData.description_ar}
+                onChange={handleInputChange}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="الوصف بالعربية"
+                dir="rtl"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                English Description
+              </label>
+              <textarea
+                name="description_en"
+                value={formData.description_en}
+                onChange={handleInputChange}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Category description in English"
+              />
+            </div>
           </div>
 
           <div>
@@ -351,7 +406,7 @@ const CategoryFormModal = ({ isOpen, onClose, category, primaryCategories, onSav
                 <option value="">Select parent category</option>
                 {ensureArray(primaryCategories).map(cat => (
                   <option key={cat.id} value={cat.id}>
-                    {cat.name}
+                    {getDisplayName(cat, currentLang)}
                   </option>
                 ))}
               </select>
@@ -399,10 +454,10 @@ const CategoryFormModal = ({ isOpen, onClose, category, primaryCategories, onSav
 };
 
 // Delete Confirmation Modal
-const DeleteConfirmModal = ({ isOpen, onClose, category, onConfirm, loading }) => {
+const DeleteConfirmModal = ({ isOpen, onClose, category, onConfirm, loading, currentLang }) => {
   if (!isOpen || !category) return null;
 
-  const subcategories = ensureArray(category.subcategories);
+  const subcategories = ensureArray(category.subcategories || category.children);
   const subcategoryCount = subcategories.length;
 
   return (
@@ -415,7 +470,7 @@ const DeleteConfirmModal = ({ isOpen, onClose, category, onConfirm, loading }) =
         
         <div className="mb-6">
           <p className="text-gray-600 mb-3">
-            Are you sure you want to delete <strong>"{category.name}"</strong>?
+            Are you sure you want to delete <strong>"{getDisplayName(category, currentLang)}"</strong>?
           </p>
           
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-3">
@@ -429,16 +484,16 @@ const DeleteConfirmModal = ({ isOpen, onClose, category, onConfirm, loading }) =
               </p>
               <ul className="mt-2 text-red-600 text-sm list-disc list-inside max-h-24 overflow-y-auto">
                 {subcategories.map(sub => (
-                  <li key={sub.id}>{sub.name}</li>
+                  <li key={sub.id}>{getDisplayName(sub, currentLang)}</li>
                 ))}
               </ul>
             </div>
           )}
 
-          {category.places && category.places.length > 0 && (
+          {category.place_count && category.place_count > 0 && (
             <div className="bg-orange-50 border border-orange-200 rounded-md p-3 mt-3">
               <p className="text-orange-700 text-sm">
-                📍 This category is associated with {category.places.length} places. The places will remain but lose this category association.
+                📍 This category is associated with {category.place_count} places. The places will remain but lose this category association.
               </p>
             </div>
           )}
@@ -476,7 +531,7 @@ const DeleteConfirmModal = ({ isOpen, onClose, category, onConfirm, loading }) =
 };
 
 // Category Item Component
-const CategoryItem = ({ category, level = 0, onEdit, onDelete, expandedCategories, onToggleExpand }) => {
+const CategoryItem = ({ category, level = 0, onEdit, onDelete, expandedCategories, onToggleExpand, currentLang }) => {
   const subcategories = ensureArray(category.subcategories || category.children);
   const hasSubcategories = subcategories.length > 0;
   const isExpanded = expandedCategories.has(category.id);
@@ -485,7 +540,7 @@ const CategoryItem = ({ category, level = 0, onEdit, onDelete, expandedCategorie
     <div className="border-b border-gray-100 last:border-b-0">
       <div 
         className={`flex items-center p-4 hover:bg-gray-50 ${
-          level > 0 ? `border-l-4 border-blue-200 ml-${level * 4} bg-gray-50` : ''
+          level > 0 ? `border-l-4 border-blue-200 bg-gray-50` : ''
         }`}
         style={{ marginLeft: level > 0 ? `${level * 20}px` : '0' }}
       >
@@ -511,7 +566,9 @@ const CategoryItem = ({ category, level = 0, onEdit, onDelete, expandedCategorie
             
             <div className="min-w-0 flex-1">
               <div className="flex items-center flex-wrap gap-2">
-                <span className="font-medium text-gray-900">{category.name}</span>
+                <span className="font-medium text-gray-900">
+                  {getDisplayName(category, currentLang)}
+                </span>
                 {category.icon && (
                   <span className="text-lg">{category.icon}</span>
                 )}
@@ -535,12 +592,21 @@ const CategoryItem = ({ category, level = 0, onEdit, onDelete, expandedCategorie
                 {hasSubcategories && (
                   <span className="ml-2">• {subcategories.length} subcategories</span>
                 )}
-                {category.places && category.places.length > 0 && (
-                  <span className="ml-2">• {category.places.length} places</span>
+                {category.place_count && category.place_count > 0 && (
+                  <span className="ml-2">• {category.place_count} places</span>
                 )}
               </div>
-              {category.description && (
-                <div className="text-sm text-gray-600 mt-1 italic">{category.description}</div>
+              {getDisplayDescription(category, currentLang) && (
+                <div className="text-sm text-gray-600 mt-1 italic">
+                  {getDisplayDescription(category, currentLang)}
+                </div>
+              )}
+              {/* Show both languages in admin view */}
+              {currentLang === 'both' && (
+                <div className="text-xs text-gray-500 mt-1 space-y-1">
+                  <div><strong>AR:</strong> {category.name_ar}</div>
+                  <div><strong>EN:</strong> {category.name_en}</div>
+                </div>
               )}
             </div>
           </div>
@@ -575,6 +641,7 @@ const CategoryItem = ({ category, level = 0, onEdit, onDelete, expandedCategorie
               onDelete={onDelete}
               expandedCategories={expandedCategories}
               onToggleExpand={onToggleExpand}
+              currentLang={currentLang}
             />
           ))}
         </div>
@@ -594,29 +661,30 @@ export default function ManageCategories() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [expandedCategories, setExpandedCategories] = useState(new Set());
   const [viewMode, setViewMode] = useState('hierarchy'); // 'hierarchy' or 'flat'
+  const [currentLang, setCurrentLang] = useState('en'); // 'en', 'ar', or 'both'
 
   useEffect(() => {
     loadCategories();
     loadPrimaryCategories();
-  }, [viewMode]);
+  }, [viewMode, currentLang]);
 
   const loadCategories = async () => {
     try {
       setLoading(true);
+      const langParam = currentLang === 'both' ? null : currentLang;
       const data = viewMode === 'hierarchy' 
-        ? await categoryAPI.getHierarchy()
-        : await categoryAPI.getAll();
+        ? await categoryAPI.getHierarchy(langParam)
+        : await categoryAPI.getAll(langParam);
       
       console.log('Loaded categories data:', data);
       
-      // Ensure we always have an array
       const categoryArray = ensureArray(data);
       setCategories(categoryArray);
       
     } catch (err) {
       setError(err.message);
       console.error('Error loading categories:', err);
-      setCategories([]); // Set to empty array on error
+      setCategories([]);
     } finally {
       setLoading(false);
     }
@@ -628,7 +696,7 @@ export default function ManageCategories() {
       setPrimaryCategories(ensureArray(data));
     } catch (err) {
       console.error('Failed to load primary categories:', err);
-      setPrimaryCategories([]); // Set to empty array on error
+      setPrimaryCategories([]);
     }
   };
 
@@ -737,12 +805,18 @@ export default function ManageCategories() {
             <div className="flex items-center">
               <AlertTriangle className="text-red-500 mr-2" size={16} />
               <span className="text-red-700">{error}</span>
+              <button 
+                onClick={() => setError('')}
+                className="ml-auto text-red-500 hover:text-red-700"
+              >
+                <X size={16} />
+              </button>
             </div>
           </div>
         )}
 
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
+          <div className="flex items-center space-x-4 flex-wrap gap-2">
             <div className="flex items-center space-x-2">
               <label className="text-sm font-medium text-gray-700">View:</label>
               <select
@@ -752,6 +826,20 @@ export default function ManageCategories() {
               >
                 <option value="hierarchy">Hierarchy</option>
                 <option value="flat">Flat List</option>
+              </select>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Globe className="text-gray-500" size={16} />
+              <label className="text-sm font-medium text-gray-700">Language:</label>
+              <select
+                value={currentLang}
+                onChange={(e) => setCurrentLang(e.target.value)}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="en">English</option>
+                <option value="ar">العربية</option>
+                <option value="both">Both Languages</option>
               </select>
             </div>
             
@@ -799,6 +887,7 @@ export default function ManageCategories() {
                 }}
                 expandedCategories={expandedCategories}
                 onToggleExpand={handleToggleExpand}
+                currentLang={currentLang}
               />
             ))}
           </div>
@@ -820,6 +909,7 @@ export default function ManageCategories() {
         category={selectedCategory}
         primaryCategories={primaryCategories}
         onSave={handleSaveCategory}
+        currentLang={currentLang}
       />
 
       <DeleteConfirmModal
@@ -831,6 +921,7 @@ export default function ManageCategories() {
         category={selectedCategory}
         onConfirm={handleDeleteCategory}
         loading={loading}
+        currentLang={currentLang}
       />
     </div>
   );
