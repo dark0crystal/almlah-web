@@ -51,22 +51,16 @@ func CreateGovernate(req dto.CreateGovernateRequest, userID uuid.UUID) (*dto.Gov
 	}
 
 	governate := domain.Governate{
-		NameAr:           req.NameAr,
-		NameEn:           req.NameEn,
-		Slug:             req.Slug,
-		DescriptionAr:    req.DescriptionAr,
-		DescriptionEn:    req.DescriptionEn,
-		Capital:          req.Capital,
-		Area:             req.Area,
-		Population:       req.Population,
-		Latitude:         req.Latitude,
-		Longitude:        req.Longitude,
-		TimeZone:         req.TimeZone,
-		PostalCodePrefix: req.PostalCodePrefix,
-		PhoneCode:        req.PhoneCode,
-		SortOrder:        req.SortOrder,
-		CreatedBy:        userID,
-		IsActive:         true,
+		NameAr:        req.NameAr,
+		NameEn:        req.NameEn,
+		Slug:          req.Slug,
+		DescriptionAr: req.DescriptionAr,
+		DescriptionEn: req.DescriptionEn,
+		Latitude:      req.Latitude,
+		Longitude:     req.Longitude,
+		SortOrder:     req.SortOrder,
+		CreatedBy:     userID,
+		IsActive:      true,
 	}
 
 	err = config.DB.Create(&governate).Error
@@ -106,29 +100,11 @@ func UpdateGovernate(id uuid.UUID, req dto.UpdateGovernateRequest, userID uuid.U
 	if req.DescriptionEn != "" {
 		governate.DescriptionEn = req.DescriptionEn
 	}
-	if req.Capital != "" {
-		governate.Capital = req.Capital
-	}
-	if req.Area > 0 {
-		governate.Area = req.Area
-	}
-	if req.Population > 0 {
-		governate.Population = req.Population
-	}
 	if req.Latitude != 0 {
 		governate.Latitude = req.Latitude
 	}
 	if req.Longitude != 0 {
 		governate.Longitude = req.Longitude
-	}
-	if req.TimeZone != "" {
-		governate.TimeZone = req.TimeZone
-	}
-	if req.PostalCodePrefix != "" {
-		governate.PostalCodePrefix = req.PostalCodePrefix
-	}
-	if req.PhoneCode != "" {
-		governate.PhoneCode = req.PhoneCode
 	}
 	if req.SortOrder != 0 {
 		governate.SortOrder = req.SortOrder
@@ -207,28 +183,22 @@ func mapGovernateToResponse(governate domain.Governate) dto.GovernateResponse {
 	}
 
 	return dto.GovernateResponse{
-		ID:               governate.ID,
-		NameAr:           governate.NameAr,
-		NameEn:           governate.NameEn,
-		Slug:             governate.Slug,
-		DescriptionAr:    governate.DescriptionAr,
-		DescriptionEn:    governate.DescriptionEn,
-		Capital:          governate.Capital,
-		Area:             governate.Area,
-		Population:       governate.Population,
-		Latitude:         governate.Latitude,
-		Longitude:        governate.Longitude,
-		TimeZone:         governate.TimeZone,
-		PostalCodePrefix: governate.PostalCodePrefix,
-		PhoneCode:        governate.PhoneCode,
-		IsActive:         governate.IsActive,
-		SortOrder:        governate.SortOrder,
-		WilayahCount:     len(governate.Wilayahs),
-		PlaceCount:       getPlaceCountForGovernate(governate.ID),
-		Wilayahs:         wilayahs,
-		Images:           images,
-		CreatedAt:        governate.CreatedAt.Format("2006-01-02T15:04:05Z"),
-		UpdatedAt:        governate.UpdatedAt.Format("2006-01-02T15:04:05Z"),
+		ID:            governate.ID,
+		NameAr:        governate.NameAr,
+		NameEn:        governate.NameEn,
+		Slug:          governate.Slug,
+		DescriptionAr: governate.DescriptionAr,
+		DescriptionEn: governate.DescriptionEn,
+		Latitude:      governate.Latitude,
+		Longitude:     governate.Longitude,
+		IsActive:      governate.IsActive,
+		SortOrder:     governate.SortOrder,
+		WilayahCount:  len(governate.Wilayahs),
+		PlaceCount:    getPlaceCountForGovernate(governate.ID),
+		Wilayahs:      wilayahs,
+		Images:        images,
+		CreatedAt:     governate.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		UpdatedAt:     governate.UpdatedAt.Format("2006-01-02T15:04:05Z"),
 	}
 }
 
