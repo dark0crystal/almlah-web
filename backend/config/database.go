@@ -12,13 +12,13 @@ var DB *gorm.DB
 
 func ConnectDB(databaseURL string) {
 	var err error
-	
+
 	// Use pgx driver with GORM
 	DB, err = gorm.Open(postgres.New(postgres.Config{
 		DSN:                  databaseURL,
 		PreferSimpleProtocol: true, // disables implicit prepared statement usage
 	}), &gorm.Config{})
-	
+
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
@@ -28,8 +28,8 @@ func ConnectDB(databaseURL string) {
 
 func MigrateDB() {
 	err := DB.AutoMigrate(
-	    &domain.User{},
-	    &domain.Place{},
+		&domain.User{},
+		&domain.Place{},
 		&domain.Advice{},
 		&domain.Category{},
 		&domain.PlaceImage{},
@@ -41,9 +41,14 @@ func MigrateDB() {
 		&domain.ReviewImage{},
 		&domain.PlaceProperty{},
 		&domain.UserFavorite{},
+		&domain.Governate{},
+		&domain.PlaceContentSection{},
+		&domain.Wilayah{},
+		&domain.WilayahImage{},
+		&domain.PlaceContentSectionImage{},
 	)
 	if err != nil {
-	    log.Fatal("Failed to migrate database:", err)
+		log.Fatal("Failed to migrate database:", err)
 	}
 	log.Println("Database migration completed")
 }
