@@ -4,6 +4,7 @@ import (
 	"almlah/config"
 	"almlah/internals/api/rest"
 	"almlah/internals/api/rest/handlers"
+	"almlah/internals/services"
 	"log"
 
 	"github.com/gofiber/fiber/v2"
@@ -15,6 +16,11 @@ func StartServer(cfg config.AppConfig) {
 	// Initialize database
 	config.ConnectDB(cfg.DatabaseURL)
 	config.MigrateDB()
+
+	// Initialize auth configuration in services
+	if err := services.InitAuthConfig(); err != nil {
+		log.Printf("Warning: Failed to initialize auth config: %v", err)
+	}
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
@@ -28,13 +34,12 @@ func StartServer(cfg config.AppConfig) {
 			})
 		},
 	})
-	
 
 	// Middleware
 	app.Use(logger.New())
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
-		AllowMethods: "GET,POST,PUT,DELETE",
+		AllowMethods: "GET,POST,PUT,DELETE,PATCH", // Added PATCH
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 	}))
 
@@ -54,7 +59,7 @@ func StartServer(cfg config.AppConfig) {
 func setupRoutes(rh *rest.RestHandler) {
 	// API prefix
 	api := rh.App.Group("/api/v1")
-	
+
 	// Health check
 	api.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
@@ -64,11 +69,10 @@ func setupRoutes(rh *rest.RestHandler) {
 	})
 
 	// Setup route handlers
-	handlers.SetupUserRoutes(rh)
+	handlers.SetupAuthRoutes(rh) // New authentication routes
 	handlers.SetupPlaceRoutes(rh)
 	handlers.SetupCategoryRoutes(rh)
 	handlers.SetupGovernateRoutes(rh)
 	handlers.SetupRecipeRoutes(rh)
 	handlers.SetupWilayahRoutes(rh)
-	
 }
