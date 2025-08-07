@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, MapPin, Users, Map, Settings, Save, X, AlertTriangle, Globe, Eye, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, MapPin, Map, Settings, Save, X, AlertTriangle, Globe, Eye, Search } from 'lucide-react';
 
 // API service functions
 const API_HOST = 'http://127.0.0.1:9000';
@@ -49,17 +49,13 @@ const governateAPI = {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          // Remove auth header for now to test - add back when auth is implemented
-          // 'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
         body: JSON.stringify(governateData)
       });
       
       console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
       
       if (!response.ok) {
-        // Try to get error message from response
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
         try {
           const errorData = await response.json();
@@ -87,8 +83,6 @@ const governateAPI = {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
-          // Remove auth header for now to test
-          // 'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
         body: JSON.stringify(governateData)
       });
@@ -116,11 +110,7 @@ const governateAPI = {
   delete: async (id) => {
     try {
       const response = await fetch(`${API_HOST}/api/v1/governates/${id}`, {
-        method: 'DELETE',
-        headers: {
-          // Remove auth header for now to test
-          // 'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
+        method: 'DELETE'
       });
       
       if (!response.ok) {
@@ -161,15 +151,15 @@ const generateSlug = (name) => {
     .replace(/^-+|-+$/g, '');
 };
 
-const formatNumber = (num) => {
-  if (!num) return '0';
-  return new Intl.NumberFormat('en-US').format(num);
-};
-
 // Helper function to get display name based on current language
 const getDisplayName = (item, currentLang) => {
   if (!item) return '';
   return currentLang === 'ar' ? item.name_ar : item.name_en;
+};
+
+const getDisplayDescription = (item, currentLang) => {
+  if (!item) return '';
+  return currentLang === 'ar' ? item.description_ar : item.description_en;
 };
 
 // Simple Login Modal Component
@@ -295,14 +285,8 @@ const GovernateFormModal = ({ isOpen, onClose, governate, onSave, currentLang })
     slug: '',
     description_ar: '',
     description_en: '',
-    capital: '',
-    area: '',
-    population: '',
     latitude: '',
     longitude: '',
-    time_zone: '',
-    postal_code_prefix: '',
-    phone_code: '',
     sort_order: 0
   });
   const [errors, setErrors] = useState({});
@@ -316,14 +300,8 @@ const GovernateFormModal = ({ isOpen, onClose, governate, onSave, currentLang })
         slug: governate.slug || '',
         description_ar: governate.description_ar || '',
         description_en: governate.description_en || '',
-        capital: governate.capital || '',
-        area: governate.area || '',
-        population: governate.population || '',
         latitude: governate.latitude || '',
         longitude: governate.longitude || '',
-        time_zone: governate.time_zone || '',
-        postal_code_prefix: governate.postal_code_prefix || '',
-        phone_code: governate.phone_code || '',
         sort_order: governate.sort_order || 0
       });
     } else {
@@ -333,14 +311,8 @@ const GovernateFormModal = ({ isOpen, onClose, governate, onSave, currentLang })
         slug: '',
         description_ar: '',
         description_en: '',
-        capital: '',
-        area: '',
-        population: '',
         latitude: '',
         longitude: '',
-        time_zone: '',
-        postal_code_prefix: '',
-        phone_code: '',
         sort_order: 0
       });
     }
@@ -376,12 +348,6 @@ const GovernateFormModal = ({ isOpen, onClose, governate, onSave, currentLang })
     if (!formData.slug.trim()) newErrors.slug = 'Slug is required';
 
     // Validate numeric fields
-    if (formData.area && (isNaN(formData.area) || parseFloat(formData.area) < 0)) {
-      newErrors.area = 'Area must be a valid positive number';
-    }
-    if (formData.population && (isNaN(formData.population) || parseInt(formData.population) < 0)) {
-      newErrors.population = 'Population must be a valid positive number';
-    }
     if (formData.latitude && (isNaN(formData.latitude) || Math.abs(parseFloat(formData.latitude)) > 90)) {
       newErrors.latitude = 'Latitude must be between -90 and 90';
     }
@@ -403,8 +369,6 @@ const GovernateFormModal = ({ isOpen, onClose, governate, onSave, currentLang })
       const submitData = { ...formData };
       
       // Convert numeric fields
-      if (submitData.area) submitData.area = parseFloat(submitData.area);
-      if (submitData.population) submitData.population = parseInt(submitData.population);
       if (submitData.latitude) submitData.latitude = parseFloat(submitData.latitude);
       if (submitData.longitude) submitData.longitude = parseFloat(submitData.longitude);
       if (submitData.sort_order) submitData.sort_order = parseInt(submitData.sort_order) || 0;
@@ -494,37 +458,21 @@ const GovernateFormModal = ({ isOpen, onClose, governate, onSave, currentLang })
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Slug *
-              </label>
-              <input
-                type="text"
-                name="slug"
-                value={formData.slug}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.slug ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="governate-slug"
-              />
-              {errors.slug && <p className="text-red-500 text-sm mt-1">{errors.slug}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Capital
-              </label>
-              <input
-                type="text"
-                name="capital"
-                value={formData.capital}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Capital city"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Slug *
+            </label>
+            <input
+              type="text"
+              name="slug"
+              value={formData.slug}
+              onChange={handleInputChange}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                errors.slug ? 'border-red-500' : 'border-gray-300'
+              }`}
+              placeholder="governate-slug"
+            />
+            {errors.slug && <p className="text-red-500 text-sm mt-1">{errors.slug}</p>}
           </div>
 
           {/* Descriptions */}
@@ -556,44 +504,6 @@ const GovernateFormModal = ({ isOpen, onClose, governate, onSave, currentLang })
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Description in English"
               />
-            </div>
-          </div>
-
-          {/* Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Area (km²)
-              </label>
-              <input
-                type="number"
-                name="area"
-                value={formData.area}
-                onChange={handleInputChange}
-                step="0.01"
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.area ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="0.00"
-              />
-              {errors.area && <p className="text-red-500 text-sm mt-1">{errors.area}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Population
-              </label>
-              <input
-                type="number"
-                name="population"
-                value={formData.population}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.population ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="0"
-              />
-              {errors.population && <p className="text-red-500 text-sm mt-1">{errors.population}</p>}
             </div>
           </div>
 
@@ -636,51 +546,6 @@ const GovernateFormModal = ({ isOpen, onClose, governate, onSave, currentLang })
             </div>
           </div>
 
-          {/* Additional Information */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Time Zone
-              </label>
-              <input
-                type="text"
-                name="time_zone"
-                value={formData.time_zone}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="UTC+4"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Postal Code Prefix
-              </label>
-              <input
-                type="text"
-                name="postal_code_prefix"
-                value={formData.postal_code_prefix}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="100"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone Code
-              </label>
-              <input
-                type="text"
-                name="phone_code"
-                value={formData.phone_code}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="+968"
-              />
-            </div>
-          </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Sort Order
@@ -693,6 +558,9 @@ const GovernateFormModal = ({ isOpen, onClose, governate, onSave, currentLang })
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="0"
             />
+            <p className="text-sm text-gray-500 mt-1">
+              Lower numbers appear first. Use this to control the display order.
+            </p>
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
@@ -801,10 +669,10 @@ const GovernateCard = ({ governate, onEdit, onDelete, onViewWilayahs, currentLan
             <p className="text-sm text-gray-600 font-mono bg-gray-100 px-2 py-1 rounded inline-block">
               {governate.slug}
             </p>
-            {governate.capital && (
+            {governate.latitude && governate.longitude && (
               <p className="text-sm text-gray-600 mt-2">
                 <MapPin className="inline mr-1" size={14} />
-                Capital: {governate.capital}
+                {governate.latitude.toFixed(4)}, {governate.longitude.toFixed(4)}
               </p>
             )}
           </div>
@@ -826,18 +694,6 @@ const GovernateCard = ({ governate, onEdit, onDelete, onViewWilayahs, currentLan
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-          {governate.area && (
-            <div>
-              <span className="text-gray-500">Area:</span>
-              <span className="ml-1 font-medium">{formatNumber(governate.area)} km²</span>
-            </div>
-          )}
-          {governate.population && (
-            <div>
-              <span className="text-gray-500">Population:</span>
-              <span className="ml-1 font-medium">{formatNumber(governate.population)}</span>
-            </div>
-          )}
           <div>
             <span className="text-gray-500">Wilayahs:</span>
             <span className="ml-1 font-medium">{governate.wilayah_count || 0}</span>
@@ -845,6 +701,10 @@ const GovernateCard = ({ governate, onEdit, onDelete, onViewWilayahs, currentLan
           <div>
             <span className="text-gray-500">Places:</span>
             <span className="ml-1 font-medium">{governate.place_count || 0}</span>
+          </div>
+          <div>
+            <span className="text-gray-500">Sort Order:</span>
+            <span className="ml-1 font-medium">{governate.sort_order || 0}</span>
           </div>
         </div>
 
@@ -894,15 +754,22 @@ export default function ManageGovernorate() {
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [selectedGovernate, setSelectedGovernate] = useState(null);
   const [currentLang, setCurrentLang] = useState('en');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [apiStatus, setApiStatus] = useState('testing'); // 'testing', 'connected', 'error'
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Test API connection on component mount
   useEffect(() => {
     testApiConnection();
+    // Check if user is already authenticated
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      setIsAuthenticated(true);
+    }
   }, []);
 
   const testApiConnection = async () => {
@@ -945,8 +812,7 @@ export default function ManageGovernorate() {
       const filtered = governorates.filter(gov => 
         gov.name_ar.toLowerCase().includes(searchTerm.toLowerCase()) ||
         gov.name_en.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        gov.slug.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (gov.capital && gov.capital.toLowerCase().includes(searchTerm.toLowerCase()))
+        gov.slug.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredGovernorates(filtered);
     } else {
@@ -959,22 +825,6 @@ export default function ManageGovernorate() {
       setLoading(true);
       setError(''); // Clear previous errors
       
-      // Test connection first
-      console.log('Testing API connection...');
-      const testResponse = await fetch(`${API_HOST}/api/v1/governates`);
-      console.log('API connection test - Status:', testResponse.status);
-      console.log('API connection test - Headers:', Object.fromEntries(testResponse.headers.entries()));
-      
-      if (!testResponse.ok) {
-        if (testResponse.status === 404) {
-          throw new Error(`API endpoint not found. Please check if the server is running on ${API_HOST} and the routes are properly configured.`);
-        } else if (testResponse.status === 500) {
-          throw new Error('Server error. Please check the backend logs.');
-        } else {
-          throw new Error(`Server returned ${testResponse.status}: ${testResponse.statusText}`);
-        }
-      }
-      
       const data = await governateAPI.getAll();
       console.log('Loaded governorates:', data);
       setGovernorates(data || []);
@@ -983,15 +833,28 @@ export default function ManageGovernorate() {
       const errorMessage = err.message || 'Unknown error occurred';
       setError(errorMessage);
       console.error('Error loading governorates:', err);
-      console.error('Error details:', {
-        message: err.message,
-        stack: err.stack,
-        name: err.name
-      });
       setGovernorates([]);
       setFilteredGovernorates([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLogin = (token) => {
+    setIsAuthenticated(true);
+    localStorage.setItem('authToken', token);
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('authToken');
+  };
+
+  const handleAuthError = (error) => {
+    if (error.message.includes('401') || error.message.includes('403')) {
+      setIsAuthenticated(false);
+      localStorage.removeItem('authToken');
+      setShowLoginModal(true);
     }
   };
 
@@ -1035,6 +898,7 @@ export default function ManageGovernorate() {
   if (loading || apiStatus === 'testing') {
     return (
       <div className="flex flex-col items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
         <div className="text-gray-600 mb-4">
           {apiStatus === 'testing' ? 'Testing API connection...' : 'Loading governorates...'}
         </div>
@@ -1081,6 +945,7 @@ export default function ManageGovernorate() {
                 setApiStatus('connected');
                 setGovernorates([]);
                 setFilteredGovernorates([]);
+                setLoading(false);
               }}
               className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
             >
@@ -1221,10 +1086,18 @@ export default function ManageGovernorate() {
               key={governate.id}
               governate={governate}
               onEdit={(gov) => {
+                if (!isAuthenticated) {
+                  setShowLoginModal(true);
+                  return;
+                }
                 setSelectedGovernate(gov);
                 setShowModal(true);
               }}
               onDelete={(gov) => {
+                if (!isAuthenticated) {
+                  setShowLoginModal(true);
+                  return;
+                }
                 setSelectedGovernate(gov);
                 setShowDeleteModal(true);
               }}
@@ -1250,6 +1123,14 @@ export default function ManageGovernorate() {
             <div className="text-gray-500">
               <Map size={48} className="mx-auto mb-4 text-gray-300" />
               <p>No governorates found. Create your first governorate to get started.</p>
+              {!isAuthenticated && (
+                <button
+                  onClick={() => setShowLoginModal(true)}
+                  className="mt-2 text-blue-600 hover:text-blue-800"
+                >
+                  Login to add governorates
+                </button>
+              )}
             </div>
           )}
         </div>
