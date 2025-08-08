@@ -153,6 +153,7 @@ const (
 	ResourceRecipe   = "recipe"
 	ResourceAdvice   = "advice"
 	ResourceRole     = "role"
+	ResourceProperty   = "property"  
 	ResourcePermission = "permission"
 	ResourceSystem   = "system"
 )
