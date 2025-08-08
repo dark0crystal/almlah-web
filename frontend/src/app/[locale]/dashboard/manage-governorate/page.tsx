@@ -1,15 +1,32 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, MapPin, Map, Settings, Save, X, AlertTriangle, Globe, Eye, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, MapPin, Settings, Save, X, AlertTriangle, Globe, Eye, Search } from 'lucide-react';
 
 // API service functions
 const API_HOST = 'http://127.0.0.1:9000';
+
+// Helper function to get auth headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('authToken');
+  const headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  return headers;
+};
 
 const governateAPI = {
   getAll: async () => {
     try {
       console.log('Fetching governorates from:', `${API_HOST}/api/v1/governates`);
-      const response = await fetch(`${API_HOST}/api/v1/governates`);
+      const response = await fetch(`${API_HOST}/api/v1/governates`, {
+        headers: getAuthHeaders()
+      });
       console.log('Get all response status:', response.status);
       
       if (!response.ok) {
@@ -29,7 +46,9 @@ const governateAPI = {
 
   getById: async (id) => {
     try {
-      const response = await fetch(`${API_HOST}/api/v1/governates/${id}`);
+      const response = await fetch(`${API_HOST}/api/v1/governates/${id}`, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -47,9 +66,7 @@ const governateAPI = {
     try {
       const response = await fetch(`${API_HOST}/api/v1/governates`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(governateData)
       });
       
@@ -81,9 +98,7 @@ const governateAPI = {
     try {
       const response = await fetch(`${API_HOST}/api/v1/governates/${id}`, {
         method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(governateData)
       });
       
@@ -110,7 +125,8 @@ const governateAPI = {
   delete: async (id) => {
     try {
       const response = await fetch(`${API_HOST}/api/v1/governates/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: getAuthHeaders()
       });
       
       if (!response.ok) {
@@ -134,10 +150,20 @@ const governateAPI = {
   },
 
   getWilayahs: async (id) => {
-    const response = await fetch(`${API_HOST}/api/v1/governates/${id}/wilayahs`);
-    const data = await response.json();
-    if (!data.success) throw new Error(data.error || 'Failed to fetch wilayahs');
-    return data.data;
+    try {
+      const response = await fetch(`${API_HOST}/api/v1/governates/${id}/wilayahs`, {
+        headers: getAuthHeaders()
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || 'Failed to fetch wilayahs');
+      return data.data;
+    } catch (error) {
+      console.error('API getWilayahs error:', error);
+      throw error;
+    }
   }
 };
 
@@ -174,23 +200,12 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
     setError('');
     
     try {
-      // This is a mock login - replace with your actual authentication logic
-      const response = await fetch(`${API_HOST}/api/v1/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials)
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const token = data.token || data.data?.token;
-        if (token) {
-          localStorage.setItem('authToken', token);
-          onLogin(token);
-          onClose();
-        } else {
-          setError('Invalid response from server');
-        }
+      // Mock login for demo - replace with your actual authentication logic
+      if (credentials.username === 'admin' && credentials.password === 'password') {
+        const mockToken = 'mock-jwt-token-12345';
+        localStorage.setItem('authToken', mockToken);
+        onLogin(mockToken);
+        onClose();
       } else {
         setError('Invalid username or password');
       }
@@ -777,18 +792,14 @@ export default function ManageGovernorate() {
       setApiStatus('testing');
       const response = await fetch(`${API_HOST}/api/v1/governates`, { 
         method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
+        headers: getAuthHeaders()
       });
       
       console.log('API Test Response:', {
         ok: response.ok,
         status: response.status,
         statusText: response.statusText,
-        url: response.url,
-        headers: Object.fromEntries(response.headers.entries())
+        url: response.url
       });
       
       if (response.ok) {
@@ -851,7 +862,7 @@ export default function ManageGovernorate() {
   };
 
   const handleAuthError = (error) => {
-    if (error.message.includes('401') || error.message.includes('403')) {
+    if (error.message.includes('401') || error.message.includes('403') || error.message.includes('Unauthorized')) {
       setIsAuthenticated(false);
       localStorage.removeItem('authToken');
       setShowLoginModal(true);
@@ -883,16 +894,22 @@ export default function ManageGovernorate() {
       setSelectedGovernate(null);
     } catch (err) {
       handleAuthError(err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleViewWilayahs = (governate) => {
-    // This could navigate to wilayahs page or show modal
-    console.log('View wilayahs for:', governate.name_en);
-    // You can implement navigation here
-    // Example: router.push(`/admin/wilayahs?governate=${governate.id}`);
+  const handleViewWilayahs = async (governate) => {
+    try {
+      const wilayahs = await governateAPI.getWilayahs(governate.id);
+      console.log('Wilayahs for', governate.name_en, ':', wilayahs);
+      // You could open a modal or navigate to a new page here
+      alert(`Found ${wilayahs.length} wilayahs for ${governate.name_en}`);
+    } catch (err) {
+      console.error('Error fetching wilayahs:', err);
+      setError('Failed to load wilayahs');
+    }
   };
 
   if (loading || apiStatus === 'testing') {
@@ -1121,7 +1138,7 @@ export default function ManageGovernorate() {
             </div>
           ) : (
             <div className="text-gray-500">
-              <Map size={48} className="mx-auto mb-4 text-gray-300" />
+              <Settings size={48} className="mx-auto mb-4 text-gray-300" />
               <p>No governorates found. Create your first governorate to get started.</p>
               {!isAuthenticated && (
                 <button
