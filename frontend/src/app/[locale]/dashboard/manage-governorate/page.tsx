@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, MapPin, Settings, Save, X, AlertTriangle, Globe, Eye, Search } from 'lucide-react';
 
 // API service functions
-const API_HOST = 'http://127.0.0.1:9000';
+const API_HOST = 'http://localhost:9000';
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {

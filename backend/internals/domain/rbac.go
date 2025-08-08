@@ -26,19 +26,19 @@ type Role struct {
 
 // Permission represents a specific permission in the system
 type Permission struct {
-	ID          uuid.UUID      `json:"id" gorm:"type:uuid;primaryKey"`
-	Name        string         `json:"name" gorm:"unique;not null"` // can_create_place, can_edit_place, etc.
-	DisplayName string         `json:"display_name" gorm:"not null"`
-	Description string         `json:"description"`
-	Resource    string         `json:"resource" gorm:"not null"` // place, user, category, etc.
-	Action      string         `json:"action" gorm:"not null"`   // create, read, update, delete, manage
-	IsActive    bool           `json:"is_active" gorm:"default:true"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt `json:"-" gorm:"index"`
+    ID          uuid.UUID      `json:"id" gorm:"type:uuid;primaryKey"`
+    Name        string         `json:"name" gorm:"unique;not null"`
+    DisplayName string         `json:"display_name" gorm:"not null"`
+    Description string         `json:"description"`
+    Resource    string         `json:"resource" gorm:"not null"`
+    Action      string         `json:"action" gorm:"not null"`
+    IsActive    bool           `json:"is_active" gorm:"default:true"`
+    CreatedAt   time.Time      `json:"created_at"`
+    UpdatedAt   time.Time      `json:"updated_at"`
+    DeletedAt   gorm.DeletedAt `json:"-" gorm:"index"`
 
-	// Relationships
-	Roles []Role `json:"roles" gorm:"many2many:role_permissions"`
+    // Relationships
+    Roles []Role `json:"roles" gorm:"many2many:role_permissions"`
 }
 
 // UserRole represents the many-to-many relationship between users and roles

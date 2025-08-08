@@ -43,11 +43,11 @@ type SimpleRoleResponse struct {
 
 // Permission DTOs
 type CreatePermissionRequest struct {
-	Name        string `json:"name" validate:"required,min=2,max=100"`
-	DisplayName string `json:"display_name" validate:"required,min=2,max=100"`
-	Description string `json:"description"`
-	Resource    string `json:"resource" validate:"required,min=2,max=50"`
-	Action      string `json:"action" validate:"required,min=2,max=50"`
+    Name        string `json:"name" validate:"required,min=2,max=100"`
+    DisplayName string `json:"display_name" validate:"required,min=2,max=100"`
+    Description string `json:"description"`
+    Resource    string `json:"resource" validate:"required,min=2,max=50"`
+    Action      string `json:"action" validate:"required,min=2,max=50"`
 }
 
 type UpdatePermissionRequest struct {
@@ -59,15 +59,15 @@ type UpdatePermissionRequest struct {
 }
 
 type PermissionResponse struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	DisplayName string    `json:"display_name"`
-	Description string    `json:"description"`
-	Resource    string    `json:"resource"`
-	Action      string    `json:"action"`
-	IsActive    bool      `json:"is_active"`
-	CreatedAt   string    `json:"created_at"`
-	UpdatedAt   string    `json:"updated_at"`
+    ID          uuid.UUID `json:"id"`
+    Name        string    `json:"name"`
+    DisplayName string    `json:"display_name"`
+    Description string    `json:"description"`
+    Resource    string    `json:"resource"`
+    Action      string    `json:"action"`
+    IsActive    bool      `json:"is_active"`
+    CreatedAt   string    `json:"created_at"`
+    UpdatedAt   string    `json:"updated_at"`
 }
 
 // User Role Management DTOs
