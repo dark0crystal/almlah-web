@@ -64,6 +64,14 @@ func SetupEnv() (cfg AppConfig, err error) {
 		log.Println("Warning: Using default JWT secret. Set JWT_SECRET environment variable for production!")
 	}
 
+	// Validate Google OAuth configuration
+	googleClientID := os.Getenv("GOOGLE_CLIENT_ID")
+	if len(googleClientID) < 1 {
+		log.Println("Warning: GOOGLE_CLIENT_ID not set. Google OAuth will not work!")
+	} else {
+		log.Println("Google OAuth Client ID loaded successfully")
+	}
+
 	return AppConfig{
 		// Your existing config
 		ServerPort:  ":" + httpPort,
