@@ -235,30 +235,38 @@ func ResendVerification(email string) error {
 }
 
 // Google OAuth Authentication
-func GoogleAuth(accessToken string) (*dto.AuthResponse, error) {
-	// Get user info from Google
-	googleUser, err := getGoogleUserInfo(accessToken)
+
+func GoogleAuth(idToken string) (*dto.AuthResponse, error) {
+	// For now, we'll accept either an ID token or an authorization code
+	// Check if it looks like an authorization code (shorter, no dots)
+	if len(idToken) < 100 && !strings.Contains(idToken, ".") {
+		// It's an authorization code, exchange it for tokens
+		return GoogleCallback(idToken)
+	}
+
+	// Verify the Google ID token
+	googleUser, err := verifyGoogleIDToken(idToken)
 	if err != nil {
-		return nil, errors.New("failed to get user info from Google")
+		return nil, errors.New("failed to verify Google ID token: " + err.Error())
 	}
 
 	// Check if user exists
 	var user domain.User
 	err = config.DB.Where("email = ?", googleUser.Email).First(&user).Error
-
+	
 	if err != nil {
 		// User doesn't exist, create new user
 		user = domain.User{
-			Username:   generateUsernameFromEmail(googleUser.Email),
-			Email:      googleUser.Email,
-			FirstName:  googleUser.GivenName,
-			LastName:   googleUser.FamilyName,
-			ProfilePic: googleUser.Picture,
-			UserType:   "regular",
-			Provider:   "google",
-			GoogleID:   &googleUser.ID,
-			IsActive:   true,
-			IsVerified: googleUser.VerifiedEmail,
+			Username:    generateUsernameFromEmail(googleUser.Email),
+			Email:       googleUser.Email,
+			FirstName:   googleUser.GivenName,
+			LastName:    googleUser.FamilyName,
+			ProfilePic:  googleUser.Picture,
+			UserType:    "regular",
+			Provider:    "google",
+			GoogleID:    &googleUser.ID,
+			IsActive:    true,
+			IsVerified:  googleUser.VerifiedEmail,
 		}
 
 		if err := config.DB.Create(&user).Error; err != nil {
@@ -266,19 +274,25 @@ func GoogleAuth(accessToken string) (*dto.AuthResponse, error) {
 		}
 	} else {
 		// User exists, update Google info if needed
+		updated := false
 		if user.GoogleID == nil {
 			user.GoogleID = &googleUser.ID
 			user.Provider = "google"
+			updated = true
 		}
-		if user.ProfilePic == "" {
+		if user.ProfilePic == "" && googleUser.Picture != "" {
 			user.ProfilePic = googleUser.Picture
+			updated = true
 		}
 		if !user.IsVerified && googleUser.VerifiedEmail {
 			user.IsVerified = true
+			updated = true
 		}
-
-		if err := config.DB.Save(&user).Error; err != nil {
-			return nil, errors.New("failed to update user")
+		
+		if updated {
+			if err := config.DB.Save(&user).Error; err != nil {
+				return nil, errors.New("failed to update user")
+			}
 		}
 	}
 
@@ -295,16 +309,132 @@ func GoogleAuth(accessToken string) (*dto.AuthResponse, error) {
 	}, nil
 }
 
+// Add this new function to verify Google ID tokens
+func verifyGoogleIDToken(idToken string) (*dto.GoogleUserInfo, error) {
+	// Use Google's tokeninfo endpoint to verify the ID token
+	url := fmt.Sprintf("https://oauth2.googleapis.com/tokeninfo?id_token=%s", idToken)
+	
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("invalid Google ID token")
+	}
+
+	var tokenInfo struct {
+		Sub           string `json:"sub"`           // Google user ID
+		Email         string `json:"email"`
+		EmailVerified string `json:"email_verified"`
+		Name          string `json:"name"`
+		GivenName     string `json:"given_name"`
+		FamilyName    string `json:"family_name"`
+		Picture       string `json:"picture"`
+		Locale        string `json:"locale"`
+		Aud           string `json:"aud"`           // Should match your client ID
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&tokenInfo); err != nil {
+		return nil, err
+	}
+
+	// Verify the audience (client ID)
+	oauthConfig := config.GetOAuthConfig()
+	if oauthConfig.GoogleClientID == "" {
+		return nil, errors.New("Google Client ID not configured")
+	}
+	if tokenInfo.Aud != oauthConfig.GoogleClientID {
+		return nil, errors.New("invalid token audience")
+	}
+
+	// Convert to our format
+	emailVerified := tokenInfo.EmailVerified == "true"
+	
+	return &dto.GoogleUserInfo{
+		ID:            tokenInfo.Sub,
+		Email:         tokenInfo.Email,
+		VerifiedEmail: emailVerified,
+		Name:          tokenInfo.Name,
+		GivenName:     tokenInfo.GivenName,
+		FamilyName:    tokenInfo.FamilyName,
+		Picture:       tokenInfo.Picture,
+		Locale:        tokenInfo.Locale,
+	}, nil
+}
+
 func GoogleCallback(code string) (*dto.AuthResponse, error) {
 	// Exchange code for token
 	cfg := getGoogleOAuthConfig()
-	token, err := cfg.Exchange(oauth2.NoContext, code)
+	oauthToken, err := cfg.Exchange(oauth2.NoContext, code)
 	if err != nil {
 		return nil, errors.New("failed to exchange code for token")
 	}
 
 	// Use the access token to get user info
-	return GoogleAuth(token.AccessToken)
+	googleUser, err := getGoogleUserInfo(oauthToken.AccessToken)
+	if err != nil {
+		return nil, errors.New("failed to get user info from Google")
+	}
+
+	// Check if user exists
+	var user domain.User
+	err = config.DB.Where("email = ?", googleUser.Email).First(&user).Error
+	
+	if err != nil {
+		// User doesn't exist, create new user
+		user = domain.User{
+			Username:    generateUsernameFromEmail(googleUser.Email),
+			Email:       googleUser.Email,
+			FirstName:   googleUser.GivenName,
+			LastName:    googleUser.FamilyName,
+			ProfilePic:  googleUser.Picture,
+			UserType:    "regular",
+			Provider:    "google",
+			GoogleID:    &googleUser.ID,
+			IsActive:    true,
+			IsVerified:  googleUser.VerifiedEmail,
+		}
+
+		if err := config.DB.Create(&user).Error; err != nil {
+			return nil, errors.New("failed to create user")
+		}
+	} else {
+		// User exists, update Google info if needed
+		updated := false
+		if user.GoogleID == nil {
+			user.GoogleID = &googleUser.ID
+			user.Provider = "google"
+			updated = true
+		}
+		if user.ProfilePic == "" && googleUser.Picture != "" {
+			user.ProfilePic = googleUser.Picture
+			updated = true
+		}
+		if !user.IsVerified && googleUser.VerifiedEmail {
+			user.IsVerified = true
+			updated = true
+		}
+		
+		if updated {
+			if err := config.DB.Save(&user).Error; err != nil {
+				return nil, errors.New("failed to update user")
+			}
+		}
+	}
+
+	// Generate JWT
+	jwtToken, expiresAt, err := utils.GenerateJWT(user.ID)
+	if err != nil {
+		return nil, errors.New("failed to generate token")
+	}
+
+	return &dto.AuthResponse{
+		Token:     jwtToken,
+		ExpiresAt: expiresAt,
+		User:      mapUserToUserInfo(user),
+	}, nil
 }
 
 // Protected User Operations
@@ -457,10 +587,11 @@ func getGoogleUserInfo(accessToken string) (*dto.GoogleUserInfo, error) {
 }
 
 func getGoogleOAuthConfig() *oauth2.Config {
+	oauthConfig := config.GetOAuthConfig()
 	return &oauth2.Config{
-		ClientID:     getEnvWithDefault("GOOGLE_CLIENT_ID", ""),
-		ClientSecret: getEnvWithDefault("GOOGLE_CLIENT_SECRET", ""),
-		RedirectURL:  getEnvWithDefault("GOOGLE_REDIRECT_URL", "http://localhost:9000/api/v1/auth/google/callback"),
+		ClientID:     oauthConfig.GoogleClientID,
+		ClientSecret: oauthConfig.GoogleClientSecret,
+		RedirectURL:  oauthConfig.GoogleRedirectURL,
 		Scopes: []string{
 			"https://www.googleapis.com/auth/userinfo.email",
 			"https://www.googleapis.com/auth/userinfo.profile",
@@ -491,3 +622,4 @@ func sendPasswordResetEmail(email, token string) error {
 
 	return nil
 }
+

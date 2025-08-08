@@ -26,3 +26,4 @@ type ReviewResponse struct {
 	Author       UserInfo        `json:"author"`
 	Images       []ImageResponse `json:"images"`
 }
+
