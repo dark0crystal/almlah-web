@@ -58,86 +58,163 @@ const apiCall = async (endpoint, options = {}) => {
   }
 };
 
-// API functions for user management
+// Fixed API functions for user management
 const userApi = {
-  // User CRUD operations
   getUsers: async (params = {}) => {
-    const queryString = new URLSearchParams(params).toString();
-    const response = await apiCall(`/admin/users${queryString ? `?${queryString}` : ''}`);
-    return response.data;
+    try {
+      const queryString = new URLSearchParams(params).toString();
+      const response = await apiCall(`/admin/users${queryString ? `?${queryString}` : ''}`);
+      
+      // Handle different response structures
+      if (response.data && response.data.users) {
+        return response.data.users; // Paginated response
+      } else if (Array.isArray(response.data)) {
+        return response.data; // Direct array in data
+      } else if (Array.isArray(response)) {
+        return response; // Direct array response
+      } else {
+        console.warn('Unexpected users response format:', response);
+        return [];
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      return [];
+    }
   },
 
   getUserById: async (id) => {
-    const response = await apiCall(`/admin/users/${id}`);
-    return response.data;
+    try {
+      const response = await apiCall(`/admin/users/${id}`);
+      return response.data || response;
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      throw error;
+    }
   },
 
   createUser: async (userData) => {
-    const response = await apiCall('/admin/users', {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
-    return response.data;
+    try {
+      const response = await apiCall('/admin/users', {
+        method: 'POST',
+        body: JSON.stringify(userData),
+      });
+      return response.data || response;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
   },
 
   updateUser: async (id, userData) => {
-    const response = await apiCall(`/admin/users/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(userData),
-    });
-    return response.data;
+    try {
+      const response = await apiCall(`/admin/users/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(userData),
+      });
+      return response.data || response;
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw error;
+    }
   },
 
   deleteUser: async (id) => {
-    await apiCall(`/admin/users/${id}`, {
-      method: 'DELETE',
-    });
+    try {
+      await apiCall(`/admin/users/${id}`, {
+        method: 'DELETE',
+      });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      throw error;
+    }
   },
 
   toggleUserStatus: async (id, isActive) => {
-    const response = await apiCall(`/admin/users/${id}/toggle-status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ is_active: isActive }),
-    });
-    return response.data;
+    try {
+      const response = await apiCall(`/admin/users/${id}/toggle-status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ is_active: isActive }),
+      });
+      return response.data || response;
+    } catch (error) {
+      console.error('Error toggling user status:', error);
+      throw error;
+    }
   },
 
-  // Role management for users
   getRoles: async () => {
-    const response = await apiCall('/admin/roles');
-    return response.data;
+    try {
+      const response = await apiCall('/admin/roles');
+      
+      // Handle different response structures  
+      if (Array.isArray(response.data)) {
+        return response.data;
+      } else if (Array.isArray(response)) {
+        return response;
+      } else {
+        console.warn('Unexpected roles response format:', response);
+        return [];
+      }
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+      return [];
+    }
   },
 
   getUserRoles: async (userId) => {
-    const response = await apiCall(`/admin/users/${userId}/roles`);
-    return response.data;
+    try {
+      const response = await apiCall(`/admin/users/${userId}/roles`);
+      return response.data || response;
+    } catch (error) {
+      console.error('Error fetching user roles:', error);
+      return [];
+    }
   },
 
   assignRoleToUser: async (userId, roleId) => {
-    await apiCall(`/admin/users/${userId}/roles/assign`, {
-      method: 'POST',
-      body: JSON.stringify({ role_id: roleId }),
-    });
+    try {
+      await apiCall(`/admin/users/${userId}/roles/assign`, {
+        method: 'POST',
+        body: JSON.stringify({ role_id: roleId }),
+      });
+    } catch (error) {
+      console.error('Error assigning role:', error);
+      throw error;
+    }
   },
 
   removeRoleFromUser: async (userId, roleId) => {
-    await apiCall(`/admin/users/${userId}/roles/remove`, {
-      method: 'POST',
-      body: JSON.stringify({ role_id: roleId }),
-    });
+    try {
+      await apiCall(`/admin/users/${userId}/roles/remove`, {
+        method: 'POST',
+        body: JSON.stringify({ role_id: roleId }),
+      });
+    } catch (error) {
+      console.error('Error removing role:', error);
+      throw error;
+    }
   },
 
   bulkAssignRoles: async (userIds, roleIds) => {
-    await apiCall('/admin/users/bulk-assign-roles', {
-      method: 'POST',
-      body: JSON.stringify({ user_ids: userIds, role_ids: roleIds }),
-    });
+    try {
+      await apiCall('/admin/users/bulk-assign-roles', {
+        method: 'POST',
+        body: JSON.stringify({ user_ids: userIds, role_ids: roleIds }),
+      });
+    } catch (error) {
+      console.error('Error bulk assigning roles:', error);
+      throw error;
+    }
   },
 
-  // User statistics
   getUserStats: async () => {
-    const response = await apiCall('/admin/users/stats');
-    return response.data;
+    try {
+      const response = await apiCall('/admin/users/stats');
+      return response.data || response;
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      return {};
+    }
   }
 };
 
@@ -166,17 +243,97 @@ const UserManagement = () => {
     setLoading(true);
     setError(null);
     try {
+      console.log('Loading data...');
+      
       const [usersData, rolesData, statsData] = await Promise.all([
         userApi.getUsers(),
         userApi.getRoles(),
         userApi.getUserStats()
       ]);
-      setUsers(usersData || []);
-      setRoles(rolesData || []);
+      
+      console.log('=== API RESPONSES ===');
+      console.log('usersData:', usersData);
+      console.log('usersData type:', typeof usersData);
+      console.log('usersData isArray:', Array.isArray(usersData));
+      console.log('rolesData:', rolesData);
+      console.log('statsData:', statsData);
+      console.log('==================');
+      
+      // Ensure arrays
+      const finalUsers = Array.isArray(usersData) ? usersData : [];
+      const finalRoles = Array.isArray(rolesData) ? rolesData : [];
+      
+      console.log('Final users array:', finalUsers);
+      console.log('Final users length:', finalUsers.length);
+      console.log('Final roles array:', finalRoles);
+      
+      setUsers(finalUsers);
+      setRoles(finalRoles);
       setStats(statsData || {});
+      
     } catch (error) {
-      setError(`Failed to load data: ${error.message}`);
       console.error('Error loading data:', error);
+      
+      // If backend is not available, show dummy data for testing
+      if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED')) {
+        setError('Cannot connect to backend server. Showing dummy data for testing.');
+        
+        // Set dummy data for UI testing
+        setUsers([
+          {
+            id: '1',
+            username: 'admin',
+            email: 'admin@example.com',
+            first_name: 'Admin',
+            last_name: 'User',
+            user_type: 'regular',
+            provider: 'email',
+            is_active: true,
+            is_verified: true,
+            created_at: '2024-01-01T00:00:00Z',
+            roles: [{ id: 'role1', name: 'admin', display_name: 'Administrator' }]
+          },
+          {
+            id: '2',
+            username: 'testuser',
+            email: 'test@example.com',
+            first_name: 'Test',
+            last_name: 'User',
+            user_type: 'regular',
+            provider: 'google',
+            is_active: false,
+            is_verified: false,
+            created_at: '2024-01-02T00:00:00Z',
+            roles: []
+          }
+        ]);
+        
+        setRoles([
+          {
+            id: 'role1',
+            name: 'admin',
+            display_name: 'Administrator',
+            description: 'Full system access',
+            is_active: true
+          },
+          {
+            id: 'role2',
+            name: 'user',
+            display_name: 'Regular User',
+            description: 'Basic user access',
+            is_active: true
+          }
+        ]);
+        
+        setStats({
+          total_users: 2,
+          active_users: 1,
+          verified_users: 1,
+          new_users_month: 2
+        });
+      } else {
+        setError(`Failed to load data: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -259,22 +416,35 @@ const UserManagement = () => {
     }
   };
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = 
-      user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.last_name?.toLowerCase().includes(searchTerm.toLowerCase());
+  // Safe filtering with proper error handling
+  const filteredUsers = (() => {
+    if (!Array.isArray(users)) {
+      console.log('Users is not an array:', users, typeof users);
+      return [];
+    }
 
-    const matchesStatus = filterStatus === 'all' || 
-      (filterStatus === 'active' && user.is_active) ||
-      (filterStatus === 'inactive' && !user.is_active);
+    return users.filter(user => {
+      if (!user || typeof user !== 'object') {
+        console.warn('Invalid user object:', user);
+        return false;
+      }
+      
+      const matchesSearch = !searchTerm || 
+        user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.last_name?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesRole = filterRole === 'all' || 
-      user.roles?.some(role => role.id === filterRole);
+      const matchesStatus = filterStatus === 'all' || 
+        (filterStatus === 'active' && user.is_active) ||
+        (filterStatus === 'inactive' && !user.is_active);
 
-    return matchesSearch && matchesStatus && matchesRole;
-  });
+      const matchesRole = filterRole === 'all' || 
+        (user.roles && Array.isArray(user.roles) && user.roles.some(role => role.id === filterRole));
+
+      return matchesSearch && matchesStatus && matchesRole;
+    });
+  })();
 
   const handleSelectUser = (userId) => {
     const newSelected = new Set(selectedUsers);
@@ -287,10 +457,11 @@ const UserManagement = () => {
   };
 
   const handleSelectAll = () => {
-    if (selectedUsers.size === filteredUsers.length) {
+    const validUsers = Array.isArray(filteredUsers) ? filteredUsers : [];
+    if (selectedUsers.size === validUsers.length && validUsers.length > 0) {
       setSelectedUsers(new Set());
     } else {
-      setSelectedUsers(new Set(filteredUsers.map(user => user.id)));
+      setSelectedUsers(new Set(validUsers.map(user => user.id)));
     }
   };
 
@@ -408,8 +579,8 @@ const UserManagement = () => {
                     className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="all">All Roles</option>
-                    {roles.map(role => (
-                      <option key={role.id} value={role.id}>{role.display_name}</option>
+                    {Array.isArray(roles) && roles.map(role => (
+                      <option key={role.id} value={role.id}>{role.display_name || role.name}</option>
                     ))}
                   </select>
                 </div>
@@ -462,7 +633,17 @@ const UserManagement = () => {
             ) : filteredUsers.length === 0 ? (
               <div className="text-center py-12">
                 <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">No users found</p>
+                <p className="text-gray-500">
+                  {users.length === 0 ? 'No users found. Try connecting to your backend server.' : 'No users match your filters.'}
+                </p>
+                {users.length === 0 && (
+                  <button
+                    onClick={loadData}
+                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    Retry Loading
+                  </button>
+                )}
               </div>
             ) : (
               <table className="min-w-full divide-y divide-gray-200">
@@ -587,13 +768,15 @@ const UserRow = ({
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const getUserRoleNames = () => {
-    return user.roles?.map(role => role.display_name || role.name).join(', ') || 'No roles';
+  const formatDate = (dateString) => {
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch (e) {
+      return 'N/A';
+    }
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString();
-  };
+  const safeUser = user || {};
 
   return (
     <tr className="hover:bg-gray-50 transition-colors">
@@ -608,11 +791,11 @@ const UserRow = ({
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center">
           <div className="flex-shrink-0 h-10 w-10">
-            {user.profile_picture ? (
+            {safeUser.profile_picture ? (
               <img
                 className="h-10 w-10 rounded-full"
-                src={user.profile_picture}
-                alt={user.username}
+                src={safeUser.profile_picture}
+                alt={safeUser.username || 'User'}
               />
             ) : (
               <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
@@ -622,19 +805,19 @@ const UserRow = ({
           </div>
           <div className="ml-4">
             <div className="text-sm font-medium text-gray-900">
-              {user.first_name && user.last_name 
-                ? `${user.first_name} ${user.last_name}` 
-                : user.username}
+              {safeUser.first_name && safeUser.last_name 
+                ? `${safeUser.first_name} ${safeUser.last_name}` 
+                : safeUser.username || 'Unknown User'}
             </div>
-            <div className="text-sm text-gray-500">@{user.username}</div>
+            <div className="text-sm text-gray-500">@{safeUser.username || 'unknown'}</div>
           </div>
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm text-gray-900">{user.email}</div>
+        <div className="text-sm text-gray-900">{safeUser.email || 'No email'}</div>
         <div className="text-sm text-gray-500 flex items-center">
-          {user.provider === 'google' && <span className="mr-1">🔗</span>}
-          {user.is_verified ? (
+          {safeUser.provider === 'google' && <span className="mr-1">🔗</span>}
+          {safeUser.is_verified ? (
             <span className="text-green-600 flex items-center">
               <Check className="w-3 h-3 mr-1" />
               Verified
@@ -646,8 +829,8 @@ const UserRow = ({
       </td>
       <td className="px-6 py-4">
         <div className="flex flex-wrap gap-1">
-          {user.roles?.length > 0 ? (
-            user.roles.slice(0, 2).map(role => (
+          {safeUser.roles && Array.isArray(safeUser.roles) && safeUser.roles.length > 0 ? (
+            safeUser.roles.slice(0, 2).map(role => (
               <span
                 key={role.id}
                 className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800"
@@ -658,22 +841,22 @@ const UserRow = ({
           ) : (
             <span className="text-sm text-gray-500">No roles</span>
           )}
-          {user.roles?.length > 2 && (
-            <span className="text-xs text-gray-500">+{user.roles.length - 2} more</span>
+          {safeUser.roles && safeUser.roles.length > 2 && (
+            <span className="text-xs text-gray-500">+{safeUser.roles.length - 2} more</span>
           )}
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-          user.is_active 
+          safeUser.is_active 
             ? 'bg-green-100 text-green-800' 
             : 'bg-red-100 text-red-800'
         }`}>
-          {user.is_active ? 'Active' : 'Inactive'}
+          {safeUser.is_active ? 'Active' : 'Inactive'}
         </span>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        {formatDate(user.created_at)}
+        {formatDate(safeUser.created_at)}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium relative">
         <div className="flex items-center space-x-2">
@@ -693,10 +876,10 @@ const UserRow = ({
           </button>
           <button
             onClick={() => onToggleStatus(user)}
-            className={`${user.is_active ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'}`}
-            title={user.is_active ? 'Deactivate User' : 'Activate User'}
+            className={`${safeUser.is_active ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'}`}
+            title={safeUser.is_active ? 'Deactivate User' : 'Activate User'}
           >
-            {user.is_active ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+            {safeUser.is_active ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
           </button>
           <div className="relative">
             <button
@@ -709,7 +892,7 @@ const UserRow = ({
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
                 <button
                   onClick={() => {
-                    onDelete(user.id);
+                    onDelete(safeUser.id);
                     setShowDropdown(false);
                   }}
                   className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
@@ -774,6 +957,8 @@ const CreateUserModal = ({ onClose, onSave, roles }) => {
       setSaving(false);
     }
   };
+
+  const safeRoles = Array.isArray(roles) ? roles : [];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -880,7 +1065,7 @@ const CreateUserModal = ({ onClose, onSave, roles }) => {
                 Assign Roles
               </label>
               <div className="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded p-2">
-                {roles.map(role => (
+                {safeRoles.length > 0 ? safeRoles.map(role => (
                   <label key={role.id} className="flex items-center">
                     <input
                       type="checkbox"
@@ -895,7 +1080,9 @@ const CreateUserModal = ({ onClose, onSave, roles }) => {
                     />
                     <span className="text-sm">{role.display_name || role.name}</span>
                   </label>
-                ))}
+                )) : (
+                  <p className="text-sm text-gray-500">No roles available</p>
+                )}
               </div>
             </div>
 
@@ -938,13 +1125,14 @@ const CreateUserModal = ({ onClose, onSave, roles }) => {
 
 // Edit User Modal
 const EditUserModal = ({ user, onClose, onSave }) => {
+  const safeUser = user || {};
   const [formData, setFormData] = useState({
-    username: user.username || '',
-    email: user.email || '',
-    first_name: user.first_name || '',
-    last_name: user.last_name || '',
-    user_type: user.user_type || 'regular',
-    is_active: user.is_active ?? true
+    username: safeUser.username || '',
+    email: safeUser.email || '',
+    first_name: safeUser.first_name || '',
+    last_name: safeUser.last_name || '',
+    user_type: safeUser.user_type || 'regular',
+    is_active: safeUser.is_active ?? true
   });
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
@@ -1112,6 +1300,8 @@ const RoleManagementModal = ({
   const [selectedRoles, setSelectedRoles] = useState(new Set());
   const [saving, setSaving] = useState(false);
   const isBulkMode = users && users.length > 1;
+  const safeRoles = Array.isArray(roles) ? roles : [];
+  const safeUsers = Array.isArray(users) ? users : [];
 
   useEffect(() => {
     if (!isBulkMode && user?.roles) {
@@ -1133,7 +1323,7 @@ const RoleManagementModal = ({
     setSaving(true);
     try {
       if (isBulkMode) {
-        await onBulkAssign(users.map(u => u.id), Array.from(selectedRoles));
+        await onBulkAssign(safeUsers.map(u => u.id), Array.from(selectedRoles));
       } else {
         // Handle individual user role assignment
         const currentRoles = new Set(user.roles?.map(role => role.id) || []);
@@ -1159,8 +1349,8 @@ const RoleManagementModal = ({
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">
             {isBulkMode 
-              ? `Assign Roles to ${users.length} Users` 
-              : `Manage Roles for ${user?.username}`}
+              ? `Assign Roles to ${safeUsers.length} Users` 
+              : `Manage Roles for ${user?.username || 'User'}`}
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X className="w-5 h-5" />
@@ -1170,13 +1360,13 @@ const RoleManagementModal = ({
         {isBulkMode && (
           <div className="mb-4 p-3 bg-blue-50 rounded-md">
             <p className="text-sm text-blue-800">
-              Selected users: {users.map(u => u.username).join(', ')}
+              Selected users: {safeUsers.map(u => u.username).join(', ')}
             </p>
           </div>
         )}
 
         <div className="space-y-3 max-h-64 overflow-y-auto">
-          {roles.map(role => {
+          {safeRoles.length > 0 ? safeRoles.map(role => {
             const isSelected = selectedRoles.has(role.id);
             return (
               <label
@@ -1205,7 +1395,11 @@ const RoleManagementModal = ({
                 )}
               </label>
             );
-          })}
+          }) : (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No roles available</p>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-between items-center mt-6">
