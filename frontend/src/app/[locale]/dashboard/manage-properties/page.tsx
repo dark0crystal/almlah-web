@@ -236,7 +236,7 @@ const ManageProperties = () => {
                   className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">All Categories</option>
-                  {categories.map(category => (
+                  {categories && categories.map(category => (
                     <option key={category.id} value={category.id}>
                       {category.display_name || category.name_en}
                     </option>
@@ -317,7 +317,7 @@ const ManageProperties = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {properties.map((property) => (
+                  {properties && properties.length > 0 ? properties.map((property) => (
                     <tr key={property.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
@@ -366,14 +366,20 @@ const ManageProperties = () => {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  )) : (
+                    <tr>
+                      <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                        {loading ? 'Loading...' : 'No properties found'}
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             )}
           </div>
 
           {/* Empty State */}
-          {!loading && properties.length === 0 && (
+          {!loading && properties && properties.length === 0 && (
             <div className="p-8 text-center">
               <Tag className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600">No properties found</p>
@@ -502,7 +508,7 @@ const PropertyModal = ({ title, property, categories, onClose, onSave }) => {
                 required
               >
                 <option value="">Select Category</option>
-                {categories.map(category => (
+                {categories && categories.map(category => (
                   <option key={category.id} value={category.id}>
                     {category.display_name || category.name_en}
                   </option>
