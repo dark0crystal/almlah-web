@@ -26,10 +26,21 @@ func SetupGovernateRoutes(rh *rest.RestHandler) {
 	governates.Get("/:id", handler.GetGovernateByID)
 	governates.Get("/:id/wilayahs", handler.GetGovernateWilayahs)
 
-	// Protected routes (require authentication)
-	governates.Post("/", middleware.AuthRequired, handler.CreateGovernate)
-	governates.Put("/:id", middleware.AuthRequired, handler.UpdateGovernate)
-	governates.Delete("/:id", middleware.AuthRequired, handler.DeleteGovernate)
+	// Protected routes with RBAC
+	governates.Post("/", 
+		middleware.AuthRequiredWithRBAC, 
+		middleware.RequirePermission("can_create_governate"), 
+		handler.CreateGovernate)
+	
+	governates.Put("/:id", 
+		middleware.AuthRequiredWithRBAC, 
+		middleware.RequirePermission("can_edit_governate"), 
+		handler.UpdateGovernate)
+	
+	governates.Delete("/:id", 
+		middleware.AuthRequiredWithRBAC, 
+		middleware.RequirePermission("can_delete_governate"), 
+		handler.DeleteGovernate)
 }
 
 func (h *GovernateHandler) GetAllGovernates(ctx *fiber.Ctx) error {
