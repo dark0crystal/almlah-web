@@ -9,6 +9,28 @@ if (typeof window !== 'undefined') {
   validateEnv();
 }
 
+// Token storage utility
+const tokenStorage = {
+  setToken: (token) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('authToken', token);
+    }
+  },
+  
+  getToken: () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('authToken');
+    }
+    return null;
+  },
+  
+  removeToken: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('authToken');
+    }
+  }
+};
+
 // API Service
 const authAPI = {
   login: async (credentials) => {
@@ -125,6 +147,13 @@ const GoogleSignIn = ({ onSuccess, onError, disabled }) => {
     try {
       const result = await authAPI.googleAuth(response.credential);
       console.log('Google auth successful:', result);
+      
+      // Store token in localStorage
+      if (result.token) {
+        tokenStorage.setToken(result.token);
+        console.log('Token stored successfully');
+      }
+      
       onSuccess(result);
     } catch (error) {
       console.error('Google auth failed:', error);
@@ -212,10 +241,21 @@ const LoginForm = ({ onSuccess }) => {
         password: formData.password
       });
       
+      console.log('Login successful:', result);
+      
+      // Store token in localStorage
+      if (result.token) {
+        tokenStorage.setToken(result.token);
+        console.log('Token stored successfully:', result.token.substring(0, 20) + '...');
+      } else {
+        console.warn('No token received from login response');
+      }
+      
       setSuccess('Login successful!');
       onSuccess(result);
       
     } catch (error) {
+      console.error('Login error:', error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -267,7 +307,14 @@ const LoginForm = ({ onSuccess }) => {
           <div className="mb-6">
             <GoogleSignIn 
               disabled={loading} 
-              onSuccess={onSuccess}
+              onSuccess={(result) => {
+                // Store token from Google auth as well
+                if (result.token) {
+                  tokenStorage.setToken(result.token);
+                  console.log('Google token stored successfully');
+                }
+                onSuccess(result);
+              }}
               onError={(error) => setError(error)}
             />
             
@@ -362,19 +409,42 @@ const LoginPage = () => {
   const [user, setUser] = useState(null);
   const [authToken, setAuthToken] = useState(null);
 
+  // Check for existing token on component mount
+  React.useEffect(() => {
+    const existingToken = tokenStorage.getToken();
+    if (existingToken) {
+      console.log('Existing token found:', existingToken.substring(0, 20) + '...');
+      setAuthToken(existingToken);
+      // Optionally verify token with backend here
+    }
+  }, []);
+
   const handleAuthSuccess = (result) => {
+    console.log('Auth success, result:', result);
+    
     setUser(result.user);
     setAuthToken(result.token);
-    // Redirect to dashboard or home page
-    window.location.href = '/dashboard';
+    
+    // Store token (redundant but ensures it's stored)
+    if (result.token) {
+      tokenStorage.setToken(result.token);
+    }
+    
+    // Add a small delay to show success message before redirect
+    setTimeout(() => {
+      // Redirect to dashboard or home page
+      window.location.href = '/dashboard';
+    }, 1500);
   };
 
-  if (user) {
+  // Show success state if user is logged in
+  if (user && authToken) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="text-center">
           <CheckCircle className="text-green-500 mx-auto mb-4" size={32} />
           <p className="text-gray-600">Login successful! Redirecting...</p>
+          <p className="text-xs text-gray-400 mt-2">Token stored: {authToken.substring(0, 20)}...</p>
         </div>
       </div>
     );
@@ -383,4 +453,4 @@ const LoginPage = () => {
   return <LoginForm onSuccess={handleAuthSuccess} />;
 };
 
-export default LoginPage; 
+export default LoginPage;

@@ -20,9 +20,16 @@ func SetupRecipeRoutes(rh *rest.RestHandler) {
 
 	// Recipe routes
 	recipes := app.Group("/api/v1/recipes")
+	
+	// Public routes
 	recipes.Get("/", handler.GetRecipes)
 	recipes.Get("/:id", handler.GetRecipe)
-	recipes.Post("/", middleware.AuthRequired, handler.CreateRecipe)
+	
+	// Protected routes with RBAC
+	recipes.Post("/", 
+		middleware.AuthRequiredWithRBAC, 
+		middleware.RequirePermission("can_create_recipe"), 
+		handler.CreateRecipe)
 }
 
 func (h *RecipeHandler) CreateRecipe(ctx *fiber.Ctx) error {

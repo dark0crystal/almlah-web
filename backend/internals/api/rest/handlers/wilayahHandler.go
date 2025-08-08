@@ -28,10 +28,21 @@ func SetupWilayahRoutes(rh *rest.RestHandler) {
 	wilayahs.Get("/:id", handler.GetWilayahByID)
 	wilayahs.Get("/governate/:governateId", handler.GetWilayahsByGovernate)
 
-	// Protected routes (require authentication)
-	wilayahs.Post("/", middleware.AuthRequired, handler.CreateWilayah)
-	wilayahs.Put("/:id", middleware.AuthRequired, handler.UpdateWilayah)
-	wilayahs.Delete("/:id", middleware.AuthRequired, handler.DeleteWilayah)
+	// Protected routes with RBAC
+	wilayahs.Post("/", 
+		middleware.AuthRequiredWithRBAC, 
+		middleware.RequirePermission("can_create_wilayah"), 
+		handler.CreateWilayah)
+	
+	wilayahs.Put("/:id", 
+		middleware.AuthRequiredWithRBAC, 
+		middleware.RequirePermission("can_edit_wilayah"), 
+		handler.UpdateWilayah)
+	
+	wilayahs.Delete("/:id", 
+		middleware.AuthRequiredWithRBAC, 
+		middleware.RequirePermission("can_delete_wilayah"), 
+		handler.DeleteWilayah)
 }
 
 func (h *WilayahHandler) GetAllWilayahs(ctx *fiber.Ctx) error {

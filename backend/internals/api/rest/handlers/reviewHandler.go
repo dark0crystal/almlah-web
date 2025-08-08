@@ -20,7 +20,14 @@ func SetupReviewRoutes(rh *rest.RestHandler) {
 
 	// Review routes
 	reviews := app.Group("/api/v1/reviews")
-	reviews.Post("/", middleware.AuthRequired, handler.CreateReview)
+	
+	// Protected routes with RBAC
+	reviews.Post("/", 
+		middleware.AuthRequiredWithRBAC, 
+		middleware.RequirePermission("can_create_review"), 
+		handler.CreateReview)
+	
+	// Public routes
 	reviews.Get("/place/:placeId", handler.GetReviewsByPlace)
 	reviews.Get("/:id", handler.GetReview)
 }
