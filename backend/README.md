@@ -101,3 +101,25 @@ backend/
 ├── .env                         # Environment variables
 ├── go.mod                       # Go modules
 └── README.md
+
+
+Google Oauth : 
+
+📝 Complete Example Flow
+1. User clicks "Continue with Google"
+   ↓
+2. Google OAuth popup opens
+   ↓
+3. User authorizes app
+   ↓
+4. Google returns ID token to frontend
+   ↓
+5. Frontend calls: POST /api/v1/auth/google
+   ↓
+6. Backend verifies token with Google
+   ↓
+7. Backend creates/updates user in database
+   ↓
+8. Backend returns JWT token
+   ↓
+9. Frontend stores token and shows user as logged in
