@@ -119,3 +119,4 @@ type ContentSectionImageResponse struct {
 	CaptionEn string    `json:"caption_en"`
 	SortOrder int       `json:"sort_order"`
 }
+
