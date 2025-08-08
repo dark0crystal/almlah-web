@@ -30,16 +30,35 @@ func SetupPlaceRoutes(rh *rest.RestHandler) {
 	places.Get("/governate/:governateId", handler.GetPlacesByGovernate)
 	places.Get("/wilayah/:wilayahId", handler.GetPlacesByWilayah)
 
-	// Protected routes (require authentication)
-	places.Post("/", middleware.AuthRequired, handler.CreatePlace)
-	places.Put("/:id", middleware.AuthRequired, handler.UpdatePlace)
-	places.Delete("/:id", middleware.AuthRequired, handler.DeletePlace)
+	// Protected routes with RBAC
+	places.Post("/", 
+		middleware.AuthRequiredWithRBAC, 
+		middleware.RequirePermission("can_create_place"), 
+		handler.CreatePlace)
+	
+	places.Put("/:id", 
+		middleware.AuthRequiredWithRBAC, 
+		middleware.LoadUserWithPermissions(), 
+		handler.UpdatePlace)
+	
+	places.Delete("/:id", 
+		middleware.AuthRequiredWithRBAC, 
+		middleware.LoadUserWithPermissions(), 
+		handler.DeletePlace)
 
-	// Content section routes
-	contentSections := places.Group("/:placeId/content-sections", middleware.AuthRequired)
-	contentSections.Post("/", handler.CreateContentSection)
-	contentSections.Put("/:sectionId", handler.UpdateContentSection)
-	contentSections.Delete("/:sectionId", handler.DeleteContentSection)
+	// Content section routes with RBAC
+	contentSections := places.Group("/:placeId/content-sections", middleware.AuthRequiredWithRBAC)
+	contentSections.Post("/", 
+		middleware.RequirePermission("can_create_place"), 
+		handler.CreateContentSection)
+	
+	contentSections.Put("/:sectionId", 
+		middleware.LoadUserWithPermissions(), 
+		handler.UpdateContentSection)
+	
+	contentSections.Delete("/:sectionId", 
+		middleware.LoadUserWithPermissions(), 
+		handler.DeleteContentSection)
 }
 
 func (h *PlaceHandler) CreatePlace(ctx *fiber.Ctx) error {
