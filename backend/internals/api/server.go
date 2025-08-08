@@ -69,10 +69,14 @@ func setupRoutes(rh *rest.RestHandler) {
 	})
 
 	// Setup route handlers
-	handlers.SetupAuthRoutes(rh) // New authentication routes
+	handlers.SetupAuthRoutes(rh) 
 	handlers.SetupPlaceRoutes(rh)
 	handlers.SetupCategoryRoutes(rh)
 	handlers.SetupGovernateRoutes(rh)
 	handlers.SetupRecipeRoutes(rh)
 	handlers.SetupWilayahRoutes(rh)
+	handlers.SetupRBACRoutes(rh)
+	handlers.SetupReviewRoutes(rh)
+	handlers.SetupAdminRBACRoutes(rh)
+
 }
