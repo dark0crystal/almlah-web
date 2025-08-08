@@ -696,6 +696,14 @@ func initializeDefaultPermissions() error {
 
 		// System permissions
 		{Name: "can_manage_system", DisplayName: "Manage System", Description: "System administration", Resource: domain.ResourceSystem, Action: domain.ActionManage, IsActive: true},
+
+		// Property permissions
+		{Name: "can_create_property", DisplayName: "Create Property", Description: "Create new properties", Resource: domain.ResourceProperty, Action: domain.ActionCreate, IsActive: true},
+		{Name: "can_edit_property", DisplayName: "Edit Property", Description: "Edit existing properties", Resource: domain.ResourceProperty, Action: domain.ActionUpdate, IsActive: true},
+		{Name: "can_delete_property", DisplayName: "Delete Property", Description: "Delete properties", Resource: domain.ResourceProperty, Action: domain.ActionDelete, IsActive: true},
+		{Name: "can_view_property", DisplayName: "View Property", Description: "View properties", Resource: domain.ResourceProperty, Action: domain.ActionView, IsActive: true},
+		{Name: "can_manage_property", DisplayName: "Manage Properties", Description: "Full control over properties", Resource: domain.ResourceProperty, Action: domain.ActionManage, IsActive: true},
+
 	}
 
 	for _, permission := range permissions {
@@ -726,7 +734,7 @@ func assignDefaultPermissions() error {
 	// Admin permissions
 	adminPermissions := []string{
 		"can_manage_place", "can_manage_user", "can_manage_category",
-		"can_moderate_review", "can_moderate_place",
+		"can_moderate_review", "can_moderate_place","can_manage_property",
 	}
 	if err := assignPermissionsToRole(adminRole.ID, adminPermissions); err != nil {
 		return err
@@ -735,7 +743,7 @@ func assignDefaultPermissions() error {
 	// Moderator permissions
 	moderatorPermissions := []string{
 		"can_create_place", "can_edit_place", "can_view_place", "can_moderate_place",
-		"can_moderate_review", "can_view_user",
+		"can_moderate_review", "can_view_user","can_create_property", "can_edit_property", "can_view_property",
 	}
 	if err := assignPermissionsToRole(moderatorRole.ID, moderatorPermissions); err != nil {
 		return err
@@ -744,7 +752,7 @@ func assignDefaultPermissions() error {
 	// User permissions
 	userPermissions := []string{
 		"can_create_place", "can_edit_place", "can_view_place",
-		"can_create_review", "can_edit_review",
+		"can_create_review", "can_edit_review","can_create_property", "can_edit_property", "can_view_property",
 	}
 	if err := assignPermissionsToRole(userRole.ID, userPermissions); err != nil {
 		return err
