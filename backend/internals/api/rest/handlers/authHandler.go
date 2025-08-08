@@ -30,12 +30,15 @@ func SetupAuthRoutes(rh *rest.RestHandler) {
 	auth.Post("/google", googleAuthHandler)
 	auth.Get("/google/callback", googleCallbackHandler)
 
-	// Protected routes (require authentication)
-	auth.Get("/me", middleware.AuthRequired, getProfileHandler)
-	auth.Put("/me", middleware.AuthRequired, updateProfileHandler)
-	auth.Post("/change-password", middleware.AuthRequired, changePasswordHandler)
-	auth.Post("/logout", middleware.AuthRequired, logoutHandler)
-	auth.Delete("/account", middleware.AuthRequired, deleteAccountHandler)
+	// Protected routes with RBAC
+	auth.Get("/me", middleware.AuthRequiredWithRBAC, getProfileHandler)
+	auth.Put("/me", middleware.AuthRequiredWithRBAC, updateProfileHandler)
+	auth.Post("/change-password", middleware.AuthRequiredWithRBAC, changePasswordHandler)
+	auth.Post("/logout", middleware.AuthRequiredWithRBAC, logoutHandler)
+	auth.Delete("/account", 
+		middleware.AuthRequiredWithRBAC, 
+		middleware.RequirePermission("can_delete_user"), 
+		deleteAccountHandler)
 }
 
 // Public Authentication Handlers
