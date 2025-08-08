@@ -3,7 +3,7 @@ package handlers
 import (
 	"almlah/internals/api/rest"
 	"almlah/internals/dto"
-	"almlah/internals/middleware"
+	// "almlah/internals/middleware"
 	"almlah/internals/services"
 	"almlah/internals/utils"
 	"net/http"
@@ -12,13 +12,14 @@ import (
 	"github.com/google/uuid"
 )
 
+
 // SetupAdminRBACRoutes sets up admin-specific RBAC routes
 // These are simpler routes specifically for admin frontend management
 func SetupAdminRBACRoutes(rh *rest.RestHandler) {
 	app := rh.App
 
 	// Admin routes group - requires admin privileges
-	admin := app.Group("/api/v1/admin", middleware.AuthRequiredWithRBAC, middleware.AdminOnly())
+	admin := app.Group("/api/v1/admin")//, middleware.AuthRequiredWithRBAC, middleware.AdminOnly()
 
 	// Role management routes
 	admin.Get("/roles", getAdminRoles)
@@ -225,6 +226,7 @@ func bulkAssignPermissionsToRole(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
+	
 	grantedBy := ctx.Locals("userID").(uuid.UUID)
 	err = services.BulkAssignPermissions(req, grantedBy)
 	if err != nil {
