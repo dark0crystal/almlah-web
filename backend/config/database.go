@@ -46,6 +46,13 @@ func MigrateDB() {
 		&domain.Wilayah{},
 		&domain.WilayahImage{},
 		&domain.PlaceContentSectionImage{},
+		&domain.Permission{},
+		&domain.Role{},
+		&domain.RolePermission{},
+		&domain.UserRole{},
+
+
+		
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)
