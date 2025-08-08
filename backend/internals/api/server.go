@@ -79,4 +79,5 @@ func setupRoutes(rh *rest.RestHandler) {
 	handlers.SetupReviewRoutes(rh)
 	handlers.SetupAdminRBACRoutes(rh)
 	handlers.SetupPropertyRoutes(rh)
+	handlers.SetupUserManagementRoutes(rh) 
 }
