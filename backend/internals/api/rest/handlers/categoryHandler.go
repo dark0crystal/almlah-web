@@ -4,6 +4,7 @@ package handlers
 import (
 	"almlah/internals/api/rest"
 	"almlah/internals/dto"
+	"almlah/internals/middleware"
 	"almlah/internals/services"
 	"almlah/internals/utils"
 	"net/http"
@@ -21,22 +22,29 @@ func SetupCategoryRoutes(rh *rest.RestHandler) {
 	// Admin routes for category management
 	categories := app.Group("/api/v1/categories")
 
-	// Get all categories with hierarchy
+	// Public routes (no authentication required)
 	categories.Get("/", handler.GetAllCategories)
 	categories.Get("/hierarchy", handler.GetCategoryHierarchy)
-
-	// Get categories by type
 	categories.Get("/primary", handler.GetPrimaryCategories)
 	categories.Get("/secondary/:parentId", handler.GetSecondaryCategories)
-
-	// CRUD operations
-	categories.Post("/", handler.CreateCategory)
-	categories.Put("/:id", handler.UpdateCategory)
-	categories.Delete("/:id", handler.DeleteCategory)
-
-	// Get single category with subcategories
 	categories.Get("/:id", handler.GetCategoryById)
 	categories.Get("/:id/subcategories", handler.GetSubcategories)
+
+	// Protected routes with RBAC
+	categories.Post("/", 
+		middleware.AuthRequiredWithRBAC, 
+		middleware.RequirePermission("can_create_category"), 
+		handler.CreateCategory)
+	
+	categories.Put("/:id", 
+		middleware.AuthRequiredWithRBAC, 
+		middleware.RequirePermission("can_edit_category"), 
+		handler.UpdateCategory)
+	
+	categories.Delete("/:id", 
+		middleware.AuthRequiredWithRBAC, 
+		middleware.RequirePermission("can_delete_category"), 
+		handler.DeleteCategory)
 }
 
 func (h *CategoryHandler) GetAllCategories(ctx *fiber.Ctx) error {
