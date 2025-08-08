@@ -6,6 +6,7 @@ import (
 	"almlah/internals/middleware"
 	"almlah/internals/services"
 	"almlah/internals/utils"
+	"fmt"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -159,11 +160,16 @@ func googleAuthHandler(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
+	// Log the request for debugging
+	fmt.Printf("Google OAuth request received with token length: %d\n", len(req.Token))
+
 	response, err := services.GoogleAuth(req.Token)
 	if err != nil {
+		fmt.Printf("Google OAuth error: %v\n", err)
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
+	fmt.Printf("Google OAuth successful for user: %s\n", response.User.Email)
 	return ctx.JSON(utils.SuccessResponse("Google authentication successful", response))
 }
 
