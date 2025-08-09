@@ -50,6 +50,7 @@ func MigrateDB() {
 		&domain.Role{},
 		&domain.RolePermission{},
 		&domain.UserRole{},
+		&domain.GovernateImage{},
 
 
 		
