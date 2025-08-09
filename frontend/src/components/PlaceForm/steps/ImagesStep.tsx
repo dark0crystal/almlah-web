@@ -28,7 +28,7 @@ export const ImagesStep: React.FC = () => {
     handleSubmit,
     formState: { errors }
   } = useForm<ImagesFormData>({
-    resolver: zodResolver(imagesSchema),
+    // resolver: zodResolver(imagesSchema),
     defaultValues: {
       images: formData.images
     }

@@ -290,7 +290,7 @@ const ACTIONS = [
 
 const RESOURCES = [
   'place', 'user', 'category', 'review', 'recipe', 'advice', 
-  'role', 'property', 'permission', 'system','governate'
+  'role', 'property', 'permission', 'system','governate','wilayah'
 ];
 
 // Login Modal Component
