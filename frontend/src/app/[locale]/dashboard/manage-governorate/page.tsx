@@ -1,8 +1,9 @@
 "use client"
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, MapPin, Settings, Save, X, AlertTriangle, Globe, Eye, Search, Image as ImageIcon } from 'lucide-react';
-import ImageUpload from "@/components/ImageUpload";
-import { ExistingImage } from '../../../../types/image';
+import SimpleImageSelector from '@/components/SimpleImageSelector';
+import { SupabaseStorageService } from '@/services/supabaseStorage';
+import { ExistingImage } from '@/types/image';
 
 // API service functions
 const API_HOST = 'http://localhost:9000';
@@ -89,7 +90,7 @@ const governateAPI = {
       console.log('Response data:', data);
       
       if (!data.success) throw new Error(data.error || 'Failed to create governate');
-      return data.data;
+      return data.data; // Return the created governate with ID
     } catch (error) {
       console.error('API create error:', error);
       throw error;
@@ -117,7 +118,7 @@ const governateAPI = {
       
       const data = await response.json();
       if (!data.success) throw new Error(data.error || 'Failed to update governate');
-      return data.data;
+      return data.data; // Return the updated governate
     } catch (error) {
       console.error('API update error:', error);
       throw error;
@@ -330,7 +331,7 @@ const GovernateFormModal = ({
   isOpen: boolean;
   onClose: () => void;
   governate: any;
-  onSave: (id: string | null, data: any) => Promise<void>;
+  onSave: (id: string | null, data: any) => Promise<any>;
   currentLang: string;
 }) => {
   const [formData, setFormData] = useState({
@@ -344,6 +345,7 @@ const GovernateFormModal = ({
     sort_order: 0
   });
   const [galleryImages, setGalleryImages] = useState<ExistingImage[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -376,6 +378,7 @@ const GovernateFormModal = ({
       });
       setGalleryImages([]);
     }
+    setPendingFiles([]);
     setErrors({});
     setUploadProgress(0);
   }, [governate, isOpen]);
@@ -401,6 +404,14 @@ const GovernateFormModal = ({
     }
   };
 
+  const handleImagesChange = (images: ExistingImage[]) => {
+    setGalleryImages(images);
+  };
+
+  const handleNewFiles = (files: File[]) => {
+    setPendingFiles(files);
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -420,6 +431,55 @@ const GovernateFormModal = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  const uploadImagesToGovernateFolder = async (governateId: string): Promise<ExistingImage[]> => {
+    if (pendingFiles.length === 0) return galleryImages;
+
+    const uploadedImages: ExistingImage[] = [...galleryImages];
+    let completedUploads = 0;
+
+    for (const file of pendingFiles) {
+      try {
+        const fileName = SupabaseStorageService.generateFileName(file.name);
+        const folder = `governates/${governateId}`;
+        
+        setUploadProgress((completedUploads / pendingFiles.length) * 100);
+
+        const result = await SupabaseStorageService.uploadFile({
+          bucket: process.env.NEXT_PUBLIC_STORAGE_BUCKET || 'media-bucket',
+          folder,
+          fileName,
+          file,
+          onProgress: (progress) => {
+            const overallProgress = ((completedUploads + (progress / 100)) / pendingFiles.length) * 100;
+            setUploadProgress(overallProgress);
+          }
+        });
+
+        if (result.success && result.path) {
+          const newImage: ExistingImage = {
+            id: `uploaded-${Date.now()}-${Math.random()}`,
+            path: result.path,
+            alt_text: '',
+            caption: '',
+            is_primary: uploadedImages.length === 0, // First image is primary
+            display_order: uploadedImages.length,
+            url: result.url
+          };
+          uploadedImages.push(newImage);
+        } else {
+          console.error('Failed to upload image:', result.error);
+        }
+
+        completedUploads++;
+      } catch (error) {
+        console.error('Error uploading image:', error);
+      }
+    }
+
+    setUploadProgress(100);
+    return uploadedImages;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -434,33 +494,53 @@ const GovernateFormModal = ({
       if (submitData.longitude) submitData.longitude = parseFloat(submitData.longitude as any);
       if (submitData.sort_order) submitData.sort_order = parseInt(submitData.sort_order as any) || 0;
 
-      // Add gallery images
-      if (galleryImages.length > 0) {
-        (submitData as any).gallery_images = JSON.stringify(galleryImages.map(img => ({
-          path: img.path,
-          alt_text: img.alt_text,
-          caption: img.caption,
-          is_primary: img.is_primary,
-          display_order: img.display_order
-        })));
+      let finalImages = galleryImages;
+      let savedGovernate;
+
+      // Save the governate first
+      savedGovernate = await onSave(governate?.id || null, submitData);
+
+      // Upload images to the correct folder
+      if (pendingFiles.length > 0) {
+        const governateId = savedGovernate?.id || governate?.id;
+        if (governateId) {
+          finalImages = await uploadImagesToGovernateFolder(governateId);
+          
+          // Update the governate with the uploaded images
+          if (finalImages.length > galleryImages.length) {
+            const updateData = {
+              gallery_images: JSON.stringify(finalImages.map(img => ({
+                path: img.path,
+                alt_text: img.alt_text,
+                caption: img.caption,
+                is_primary: img.is_primary,
+                display_order: img.display_order
+              })))
+            };
+            await onSave(governateId, updateData);
+          }
+        }
+      } else if (finalImages.length > 0) {
+        // Update existing images metadata
+        const updateData = {
+          gallery_images: JSON.stringify(finalImages.map(img => ({
+            path: img.path,
+            alt_text: img.alt_text,
+            caption: img.caption,
+            is_primary: img.is_primary,
+            display_order: img.display_order
+          })))
+        };
+        await onSave(savedGovernate?.id || governate?.id, updateData);
       }
 
-      // Remove empty strings
-      Object.keys(submitData).forEach(key => {
-        if (submitData[key as keyof typeof submitData] === '') {
-          delete submitData[key as keyof typeof submitData];
-        }
-      });
-
-      console.log('Submitting form data:', submitData);
-
-      await onSave(governate?.id || null, submitData);
       onClose();
     } catch (error) {
       console.error('Form submission error:', error);
       setErrors({ general: (error as Error).message });
     } finally {
       setLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -648,29 +728,18 @@ const GovernateFormModal = ({
               </div>
               
               <div className="bg-gray-50 rounded-lg p-4">
-                <ImageUpload
-                  config={{
-                    maxFiles: 15,
-                    maxFileSize: 5 * 1024 * 1024, // 5MB
-                    acceptedTypes: ['image/jpeg', 'image/png', 'image/webp'],
-                    bucket: process.env.NEXT_PUBLIC_STORAGE_BUCKET || 'media-bucket',
-                    folder: governate 
-                      ? `governates/${governate.id}` 
-                      : `temp/governates/${Date.now()}`,
-                    allowReorder: true,
-                    allowSetPrimary: true,
-                    showMetadataFields: true
-                  }}
+                <SimpleImageSelector
                   existingImages={galleryImages}
-                  onImagesChange={setGalleryImages}
-                  onUploadProgress={setUploadProgress}
+                  onImagesChange={handleImagesChange}
+                  onNewFiles={handleNewFiles}
+                  maxFiles={15}
                   disabled={loading}
                 />
                 
                 {uploadProgress > 0 && uploadProgress < 100 && (
                   <div className="mt-4">
                     <div className="flex justify-between text-sm text-gray-600 mb-1">
-                      <span>Uploading images...</span>
+                      <span>Uploading images to governates/{governate?.id || 'new'}...</span>
                       <span>{Math.round(uploadProgress)}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
@@ -683,15 +752,22 @@ const GovernateFormModal = ({
                 )}
               </div>
 
-              {galleryImages.length > 0 && (
+              {(galleryImages.length > 0 || pendingFiles.length > 0) && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <div className="flex items-center text-blue-700 text-sm">
                     <ImageIcon className="mr-2" size={16} />
                     <span>
-                      {galleryImages.length} image{galleryImages.length !== 1 ? 's' : ''} in gallery
-                      {galleryImages.some(img => img.is_primary) && ' (including primary image)'}
+                      {galleryImages.length} existing image{galleryImages.length !== 1 ? 's' : ''}
+                      {pendingFiles.length > 0 && (
+                        <>, {pendingFiles.length} new image{pendingFiles.length !== 1 ? 's' : ''} ready</>
+                      )}
                     </span>
                   </div>
+                  {pendingFiles.length > 0 && (
+                    <div className="text-xs text-blue-600 mt-1">
+                      New images will be uploaded to governates/{governate?.id || 'new-governate'} folder
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -712,7 +788,9 @@ const GovernateFormModal = ({
               disabled={loading}
             >
               <Save className="mr-2" size={16} />
-              {loading ? 'Saving...' : 'Save Governate'}
+              {loading ? (
+                uploadProgress > 0 ? `Uploading... ${Math.round(uploadProgress)}%` : 'Saving...'
+              ) : 'Save Governate'}
             </button>
           </div>
         </form>
@@ -1051,12 +1129,14 @@ export default function ManageGovernorate() {
 
   const handleSaveGovernate = async (id: string | null, governateData: any) => {
     try {
+      let result;
       if (id) {
-        await governateAPI.update(id, governateData);
+        result = await governateAPI.update(id, governateData);
       } else {
-        await governateAPI.create(governateData);
+        result = await governateAPI.create(governateData);
       }
       await loadGovernorates();
+      return result; // Return the result so the modal can access the created/updated governate
     } catch (err) {
       handleAuthError(err as Error);
       throw err;
