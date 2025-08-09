@@ -12,25 +12,46 @@ import (
 )
 
 func CreatePlace(req dto.CreatePlaceRequest, userID uuid.UUID) (*dto.PlaceResponse, error) {
+	// Convert string IDs to UUIDs using helper methods
+	governateID, err := req.GetGovernateUUID()
+	if err != nil {
+		return nil, errors.New("invalid governate ID format")
+	}
+	
+	wilayahID, err := req.GetWilayahUUID()
+	if err != nil {
+		return nil, errors.New("invalid wilayah ID format")
+	}
+	
+	categoryUUIDs, err := req.GetCategoryUUIDs()
+	if err != nil {
+		return nil, errors.New("invalid category ID format")
+	}
+	
+	propertyUUIDs, err := req.GetPropertyUUIDs()
+	if err != nil {
+		return nil, errors.New("invalid property ID format")
+	}
+
 	// Validate governate if provided
-	if req.GovernateID != nil {
+	if governateID != nil {
 		var governate domain.Governate
-		err := config.DB.First(&governate, *req.GovernateID).Error
+		err := config.DB.First(&governate, *governateID).Error
 		if err != nil {
 			return nil, errors.New("invalid governate ID")
 		}
 	}
 
 	// Validate wilayah if provided
-	if req.WilayahID != nil {
+	if wilayahID != nil {
 		var wilayah domain.Wilayah
-		err := config.DB.First(&wilayah, *req.WilayahID).Error
+		err := config.DB.First(&wilayah, *wilayahID).Error
 		if err != nil {
 			return nil, errors.New("invalid wilayah ID")
 		}
 
 		// Ensure wilayah belongs to the specified governate (if both are provided)
-		if req.GovernateID != nil && wilayah.GovernateID != *req.GovernateID {
+		if governateID != nil && wilayah.GovernateID != *governateID {
 			return nil, errors.New("wilayah does not belong to the specified governate")
 		}
 	}
@@ -42,8 +63,8 @@ func CreatePlace(req dto.CreatePlaceRequest, userID uuid.UUID) (*dto.PlaceRespon
 		DescriptionEn: req.DescriptionEn,
 		SubtitleAr:    req.SubtitleAr,
 		SubtitleEn:    req.SubtitleEn,
-		GovernateID:   req.GovernateID,
-		WilayahID:     req.WilayahID,
+		GovernateID:   governateID,
+		WilayahID:     wilayahID,
 		Latitude:      req.Latitude,
 		Longitude:     req.Longitude,
 		Phone:         req.Phone,
@@ -57,10 +78,10 @@ func CreatePlace(req dto.CreatePlaceRequest, userID uuid.UUID) (*dto.PlaceRespon
 		return nil, err
 	}
 
-	// Associate categories by IDs
-	if len(req.CategoryIDs) > 0 {
+	// Associate categories by UUIDs
+	if len(categoryUUIDs) > 0 {
 		var categories []domain.Category
-		config.DB.Where("id IN ?", req.CategoryIDs).Find(&categories)
+		config.DB.Where("id IN ?", categoryUUIDs).Find(&categories)
 
 		if err := config.DB.Model(&place).Association("Categories").Replace(&categories); err != nil {
 			return nil, err
@@ -68,7 +89,7 @@ func CreatePlace(req dto.CreatePlaceRequest, userID uuid.UUID) (*dto.PlaceRespon
 	}
 
 	// Associate properties
-	for _, propertyID := range req.PropertyIDs {
+	for _, propertyID := range propertyUUIDs {
 		placeProperty := domain.PlaceProperty{
 			PlaceID:    place.ID,
 			PropertyID: propertyID,
