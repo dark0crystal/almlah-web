@@ -1,6 +1,7 @@
-// stores/usePlaceStore.ts - Fixed version
+// stores/usePlaceStore.ts - Enhanced with Supabase integration
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { SupabaseStorageService } from '../services/supabaseStorage';
 
 // API Configuration
 const API_BASE_URL = 'http://127.0.0.1:9000';
@@ -34,6 +35,8 @@ export interface PlaceImage {
   display_order: number;
   file?: File; // For local file handling
   preview?: string; // For preview URL
+  supabase_path?: string; // Supabase storage path
+  temp_place_id?: string; // Temporary place ID for folder organization
 }
 
 export interface PlaceFormData {
@@ -162,11 +165,13 @@ interface PlaceStore {
   fetchWilayahs: (governateId: string) => Promise<void>;
   fetchProperties: (categoryId: string) => Promise<void>;
   
-  // Image handling
+  // Enhanced image handling with Supabase
   addImage: (image: PlaceImage) => void;
   removeImage: (index: number) => void;
   updateImage: (index: number, image: Partial<PlaceImage>) => void;
   setPrimaryImage: (index: number) => void;
+  uploadImageToSupabase: (file: File, onProgress?: (progress: number) => void) => Promise<PlaceImage | null>;
+  cleanupImagePreviews: () => void;
   
   // Content sections
   addContentSection: (section: ContentSection) => void;
@@ -216,7 +221,7 @@ export const usePlaceStore = create<PlaceStore>()(
       
       nextStep: () => {
         const { currentStep } = get();
-        if (currentStep < 7) {
+        if (currentStep < 8) {
           set({ currentStep: currentStep + 1 });
         }
       },
@@ -314,7 +319,7 @@ export const usePlaceStore = create<PlaceStore>()(
         }
       },
       
-      // Image management (keeping existing implementations)
+      // Enhanced image management with Supabase
       addImage: (image) => {
         set((state) => ({
           formData: {
@@ -324,7 +329,24 @@ export const usePlaceStore = create<PlaceStore>()(
         }));
       },
       
-      removeImage: (index) => {
+      removeImage: async (index) => {
+        const { formData } = get();
+        const imageToRemove = formData.images[index];
+        
+        // If image has a Supabase path, delete it from storage
+        if (imageToRemove.supabase_path) {
+          try {
+            await SupabaseStorageService.deleteFile('media-bucket', imageToRemove.supabase_path);
+          } catch (error) {
+            console.error('Failed to delete image from Supabase:', error);
+          }
+        }
+        
+        // Clean up preview URL
+        if (imageToRemove.preview) {
+          URL.revokeObjectURL(imageToRemove.preview);
+        }
+        
         set((state) => ({
           formData: {
             ...state.formData,
@@ -355,8 +377,90 @@ export const usePlaceStore = create<PlaceStore>()(
           }
         }));
       },
+
+      // New Supabase upload method with proper folder structure
+      uploadImageToSupabase: async (file, onProgress, isPrimary = false, placeId = null) => {
+        try {
+          // Validate file first
+          const validation = SupabaseStorageService.validateFile(
+            file,
+            10 * 1024 * 1024, // 10MB max
+            ['image/jpeg', 'image/png', 'image/webp']
+          );
+
+          if (!validation.valid) {
+            throw new Error(validation.error);
+          }
+
+          // Resize image for optimization
+          const resizedFile = await SupabaseStorageService.resizeImage(
+            file,
+            1920, // max width
+            1080, // max height
+            0.8   // quality
+          );
+
+          // Determine folder structure based on your schema
+          const tempPlaceId = placeId || `temp-${Date.now()}`;
+          const folder = isPrimary ? `places/${tempPlaceId}` : `places/${tempPlaceId}/gallery`;
+          
+          // Generate filename based on image type
+          let fileName;
+          if (isPrimary) {
+            const extension = file.name.split('.').pop();
+            fileName = `cover.${extension}`;
+          } else {
+            // For gallery images, use sequential naming
+            const { formData } = get();
+            const galleryCount = formData.images.filter(img => !img.is_primary).length + 1;
+            const extension = file.name.split('.').pop();
+            fileName = `${galleryCount.toString().padStart(3, '0')}.${extension}`;
+          }
+
+          // Upload to Supabase
+          const result = await SupabaseStorageService.uploadFile({
+            bucket: 'media-bucket',
+            folder,
+            fileName,
+            file: resizedFile,
+            onProgress
+          });
+
+          if (result.success && result.url && result.path) {
+            const { formData } = get();
+            
+            const uploadedImage: PlaceImage = {
+              id: `supabase-${Date.now()}`,
+              url: result.url,
+              alt_text: '',
+              is_primary: isPrimary,
+              display_order: formData.images.length,
+              supabase_path: result.path,
+              preview: URL.createObjectURL(file),
+              temp_place_id: tempPlaceId
+            };
+
+            return uploadedImage;
+          } else {
+            throw new Error(result.error || 'Upload failed');
+          }
+        } catch (error) {
+          console.error('Supabase upload error:', error);
+          throw error;
+        }
+      },
+
+      // Clean up all preview URLs
+      cleanupImagePreviews: () => {
+        const { formData } = get();
+        formData.images.forEach(image => {
+          if (image.preview) {
+            URL.revokeObjectURL(image.preview);
+          }
+        });
+      },
       
-      // Content sections management (keeping existing implementations)
+      // Content sections management
       addContentSection: (section) => {
         set((state) => ({
           formData: {
@@ -386,7 +490,7 @@ export const usePlaceStore = create<PlaceStore>()(
         }));
       },
       
-      // FIXED FORM SUBMISSION
+      // Enhanced form submission with Supabase URLs
       submitForm: async () => {
         const { formData } = get();
         set({ isSubmitting: true });
@@ -405,7 +509,6 @@ export const usePlaceStore = create<PlaceStore>()(
           }
 
           console.log('Submitting form data:', formData);
-          console.log('Using token:', token.substring(0, 20) + '...');
 
           // Prepare the data to match backend DTO structure
           const requestData = {
@@ -420,12 +523,20 @@ export const usePlaceStore = create<PlaceStore>()(
             website: formData.website || '',
             latitude: formData.latitude || 0,
             longitude: formData.longitude || 0,
-            // Convert string IDs to UUIDs as expected by backend
             governate_id: formData.governate_id || null,
             wilayah_id: formData.wilayah_id || null,
             category_ids: formData.category_ids,
             property_ids: formData.property_ids,
-            // Transform content sections to match backend structure
+            
+            // Transform images to include Supabase URLs
+            images: formData.images.map((image, index) => ({
+              image_url: image.url, // This is now the Supabase URL
+              alt_text: image.alt_text,
+              is_primary: image.is_primary,
+              display_order: image.display_order
+            })),
+            
+            // Transform content sections
             content_sections: formData.content_sections.map(section => ({
               section_type: section.section_type,
               title_ar: section.title_ar,
@@ -444,82 +555,54 @@ export const usePlaceStore = create<PlaceStore>()(
             }))
           };
 
-          console.log('Prepared request data:', requestData);
-
-          // If there are images with files, use FormData approach
-          if (formData.images.some(img => img.file)) {
-            const submitData = new FormData();
+          // Enhanced form submission with proper image organization
+          const submitFormData = {
+            ...requestData,
             
-            // Add JSON data as a single field
-            submitData.append('data', JSON.stringify(requestData));
+            // Add temporary place IDs to help backend organize images
+            temp_image_data: formData.images.map((image, index) => ({
+              temp_place_id: image.temp_place_id,
+              current_path: image.supabase_path,
+              is_primary: image.is_primary,
+              alt_text: image.alt_text,
+              display_order: image.display_order
+            }))
+          };
+
+          console.log('Prepared request data with temp image data:', submitFormData);
+
+          // Submit to backend - backend will handle moving images to proper folders
+          const response = await fetch(`${API_BASE_URL}/api/v1/places`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(submitFormData)
+          });
+
+          console.log('Response status:', response.status);
+          const result = await response.json();
+          console.log('Response body:', result);
+
+          if (response.ok && result.success) {
+            // Clean up preview URLs
+            get().cleanupImagePreviews();
             
-            // Add image files
-            formData.images.forEach((image, index) => {
-              if (image.file) {
-                submitData.append(`images`, image.file);
-                submitData.append(`image_metadata_${index}`, JSON.stringify({
-                  alt_text: image.alt_text,
-                  is_primary: image.is_primary,
-                  display_order: image.display_order
-                }));
-              }
-            });
-
-            const response = await fetch(`${API_BASE_URL}/api/v1/places`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`
-                // Don't set Content-Type for FormData
-              },
-              body: submitData
-            });
-
-            console.log('Response status:', response.status);
-            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-            const result = await response.json();
-            console.log('Response body:', result);
-
-            if (response.ok && result.success) {
-              set({ currentStep: 8 }); // Success step
-              return true;
-            } else {
-              const errorMessage = result.error || result.message || 'Failed to create place';
-              console.error('API Error:', errorMessage);
-              set({ errors: { submit: errorMessage } });
-              return false;
-            }
+            set({ currentStep: 8 }); // Success step
+            return true;
           } else {
-            // No files, use JSON approach
-            const response = await fetch(`${API_BASE_URL}/api/v1/places`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(requestData)
-            });
-
-            console.log('Response status:', response.status);
-            const result = await response.json();
-            console.log('Response body:', result);
-
-            if (response.ok && result.success) {
-              set({ currentStep: 8 }); // Success step
-              return true;
+            const errorMessage = result.error || result.message || 'Failed to create place';
+            console.error('API Error:', errorMessage);
+            
+            if (response.status === 401) {
+              localStorage.removeItem('token');
+              localStorage.removeItem('authToken');
+              set({ errors: { submit: 'Authentication failed. Please login again.' } });
             } else {
-              const errorMessage = result.error || result.message || 'Failed to create place';
-              console.error('API Error:', errorMessage);
-              
-              if (response.status === 401) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('authToken');
-                set({ errors: { submit: 'Authentication failed. Please login again.' } });
-              } else {
-                set({ errors: { submit: errorMessage } });
-              }
-              return false;
+              set({ errors: { submit: errorMessage } });
             }
+            return false;
           }
         } catch (error) {
           console.error('Form submission error:', error);
@@ -531,6 +614,9 @@ export const usePlaceStore = create<PlaceStore>()(
       },
       
       resetForm: () => {
+        // Clean up any preview URLs before resetting
+        get().cleanupImagePreviews();
+        
         set({
           currentStep: 1,
           formData: defaultFormData,
