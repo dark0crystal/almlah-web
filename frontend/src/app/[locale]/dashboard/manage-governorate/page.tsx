@@ -1,6 +1,8 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, MapPin, Settings, Save, X, AlertTriangle, Globe, Eye, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, MapPin, Settings, Save, X, AlertTriangle, Globe, Eye, Search, Image as ImageIcon } from 'lucide-react';
+import ImageUpload from "@/components/ImageUpload";
+import { ExistingImage } from '../../../../types/image';
 
 // API service functions
 const API_HOST = 'http://localhost:9000';
@@ -8,7 +10,7 @@ const API_HOST = 'http://localhost:9000';
 // Helper function to get auth headers
 const getAuthHeaders = () => {
   const token = localStorage.getItem('authToken');
-  const headers = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   };
@@ -44,7 +46,7 @@ const governateAPI = {
     }
   },
 
-  getById: async (id) => {
+  getById: async (id: string) => {
     try {
       const response = await fetch(`${API_HOST}/api/v1/governates/${id}`, {
         headers: getAuthHeaders()
@@ -61,7 +63,7 @@ const governateAPI = {
     }
   },
 
-  create: async (governateData) => {
+  create: async (governateData: any) => {
     console.log('Creating governate with data:', governateData);
     try {
       const response = await fetch(`${API_HOST}/api/v1/governates`, {
@@ -94,7 +96,7 @@ const governateAPI = {
     }
   },
 
-  update: async (id, governateData) => {
+  update: async (id: string, governateData: any) => {
     try {
       const response = await fetch(`${API_HOST}/api/v1/governates/${id}`, {
         method: 'PUT',
@@ -122,7 +124,7 @@ const governateAPI = {
     }
   },
 
-  delete: async (id) => {
+  delete: async (id: string) => {
     try {
       const response = await fetch(`${API_HOST}/api/v1/governates/${id}`, {
         method: 'DELETE',
@@ -149,7 +151,7 @@ const governateAPI = {
     }
   },
 
-  getWilayahs: async (id) => {
+  getWilayahs: async (id: string) => {
     try {
       const response = await fetch(`${API_HOST}/api/v1/governates/${id}/wilayahs`, {
         headers: getAuthHeaders()
@@ -168,7 +170,7 @@ const governateAPI = {
 };
 
 // Utility functions
-const generateSlug = (name) => {
+const generateSlug = (name: string): string => {
   return name
     .toLowerCase()
     .trim()
@@ -178,23 +180,48 @@ const generateSlug = (name) => {
 };
 
 // Helper function to get display name based on current language
-const getDisplayName = (item, currentLang) => {
+const getDisplayName = (item: any, currentLang: string): string => {
   if (!item) return '';
   return currentLang === 'ar' ? item.name_ar : item.name_en;
 };
 
-const getDisplayDescription = (item, currentLang) => {
+const getDisplayDescription = (item: any, currentLang: string): string => {
   if (!item) return '';
   return currentLang === 'ar' ? item.description_ar : item.description_en;
 };
 
+// Helper function to parse gallery images
+const parseGalleryImages = (galleryImagesJson: string | null): ExistingImage[] => {
+  if (!galleryImagesJson) return [];
+  
+  try {
+    const parsed = JSON.parse(galleryImagesJson);
+    return Array.isArray(parsed) ? parsed.map((img: any, index: number) => ({
+      id: img.id || `existing-${index}`,
+      path: img.path,
+      alt_text: img.alt_text || '',
+      caption: img.caption || '',
+      is_primary: img.is_primary || false,
+      display_order: img.display_order || index,
+      url: img.url // This should be constructed from path + base URL
+    })) : [];
+  } catch (error) {
+    console.error('Error parsing gallery images:', error);
+    return [];
+  }
+};
+
 // Simple Login Modal Component
-const LoginModal = ({ isOpen, onClose, onLogin }) => {
+const LoginModal = ({ isOpen, onClose, onLogin }: {
+  isOpen: boolean;
+  onClose: () => void;
+  onLogin: (token: string) => void;
+}) => {
   const [credentials, setCredentials] = useState({ username: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -293,7 +320,19 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
 };
 
 // Governate Form Modal Component
-const GovernateFormModal = ({ isOpen, onClose, governate, onSave, currentLang }) => {
+const GovernateFormModal = ({ 
+  isOpen, 
+  onClose, 
+  governate, 
+  onSave, 
+  currentLang 
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  governate: any;
+  onSave: (id: string | null, data: any) => Promise<void>;
+  currentLang: string;
+}) => {
   const [formData, setFormData] = useState({
     name_ar: '',
     name_en: '',
@@ -304,7 +343,9 @@ const GovernateFormModal = ({ isOpen, onClose, governate, onSave, currentLang })
     longitude: '',
     sort_order: 0
   });
-  const [errors, setErrors] = useState({});
+  const [galleryImages, setGalleryImages] = useState<ExistingImage[]>([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -319,6 +360,9 @@ const GovernateFormModal = ({ isOpen, onClose, governate, onSave, currentLang })
         longitude: governate.longitude || '',
         sort_order: governate.sort_order || 0
       });
+      
+      // Parse existing gallery images
+      setGalleryImages(parseGalleryImages(governate.gallery_images));
     } else {
       setFormData({
         name_ar: '',
@@ -330,11 +374,13 @@ const GovernateFormModal = ({ isOpen, onClose, governate, onSave, currentLang })
         longitude: '',
         sort_order: 0
       });
+      setGalleryImages([]);
     }
     setErrors({});
+    setUploadProgress(0);
   }, [governate, isOpen]);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -355,18 +401,18 @@ const GovernateFormModal = ({ isOpen, onClose, governate, onSave, currentLang })
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
 
     if (!formData.name_ar.trim()) newErrors.name_ar = 'Arabic name is required';
     if (!formData.name_en.trim()) newErrors.name_en = 'English name is required';
     if (!formData.slug.trim()) newErrors.slug = 'Slug is required';
 
     // Validate numeric fields
-    if (formData.latitude && (isNaN(formData.latitude) || Math.abs(parseFloat(formData.latitude)) > 90)) {
+    if (formData.latitude && (isNaN(Number(formData.latitude)) || Math.abs(parseFloat(formData.latitude)) > 90)) {
       newErrors.latitude = 'Latitude must be between -90 and 90';
     }
-    if (formData.longitude && (isNaN(formData.longitude) || Math.abs(parseFloat(formData.longitude)) > 180)) {
+    if (formData.longitude && (isNaN(Number(formData.longitude)) || Math.abs(parseFloat(formData.longitude)) > 180)) {
       newErrors.longitude = 'Longitude must be between -180 and 180';
     }
 
@@ -374,7 +420,7 @@ const GovernateFormModal = ({ isOpen, onClose, governate, onSave, currentLang })
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) return;
@@ -384,28 +430,35 @@ const GovernateFormModal = ({ isOpen, onClose, governate, onSave, currentLang })
       const submitData = { ...formData };
       
       // Convert numeric fields
-      if (submitData.latitude) submitData.latitude = parseFloat(submitData.latitude);
-      if (submitData.longitude) submitData.longitude = parseFloat(submitData.longitude);
-      if (submitData.sort_order) submitData.sort_order = parseInt(submitData.sort_order) || 0;
+      if (submitData.latitude) submitData.latitude = parseFloat(submitData.latitude as any);
+      if (submitData.longitude) submitData.longitude = parseFloat(submitData.longitude as any);
+      if (submitData.sort_order) submitData.sort_order = parseInt(submitData.sort_order as any) || 0;
+
+      // Add gallery images
+      if (galleryImages.length > 0) {
+        (submitData as any).gallery_images = JSON.stringify(galleryImages.map(img => ({
+          path: img.path,
+          alt_text: img.alt_text,
+          caption: img.caption,
+          is_primary: img.is_primary,
+          display_order: img.display_order
+        })));
+      }
 
       // Remove empty strings
       Object.keys(submitData).forEach(key => {
-        if (submitData[key] === '') {
-          delete submitData[key];
+        if (submitData[key as keyof typeof submitData] === '') {
+          delete submitData[key as keyof typeof submitData];
         }
       });
 
       console.log('Submitting form data:', submitData);
 
-      if (governate) {
-        await onSave(governate.id, submitData);
-      } else {
-        await onSave(null, submitData);
-      }
+      await onSave(governate?.id || null, submitData);
       onClose();
     } catch (error) {
       console.error('Form submission error:', error);
-      setErrors({ general: error.message });
+      setErrors({ general: (error as Error).message });
     } finally {
       setLoading(false);
     }
@@ -415,7 +468,7 @@ const GovernateFormModal = ({ isOpen, onClose, governate, onSave, currentLang })
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg p-6 w-full max-w-6xl max-h-[95vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">
             {governate ? 'Edit Governate' : 'Add New Governate'}
@@ -435,161 +488,227 @@ const GovernateFormModal = ({ isOpen, onClose, governate, onSave, currentLang })
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Arabic Name *
-              </label>
-              <input
-                type="text"
-                name="name_ar"
-                value={formData.name_ar}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.name_ar ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="الاسم بالعربية"
-                dir="rtl"
-              />
-              {errors.name_ar && <p className="text-red-500 text-sm mt-1">{errors.name_ar}</p>}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column - Basic Information */}
+            <div className="space-y-6">
+              <h3 className="text-lg font-medium text-gray-900 border-b pb-2">Basic Information</h3>
+              
+              {/* Names */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Arabic Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="name_ar"
+                    value={formData.name_ar}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.name_ar ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="الاسم بالعربية"
+                    dir="rtl"
+                  />
+                  {errors.name_ar && <p className="text-red-500 text-sm mt-1">{errors.name_ar}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    English Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="name_en"
+                    value={formData.name_en}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.name_en ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="Governate name in English"
+                  />
+                  {errors.name_en && <p className="text-red-500 text-sm mt-1">{errors.name_en}</p>}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Slug *
+                </label>
+                <input
+                  type="text"
+                  name="slug"
+                  value={formData.slug}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.slug ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="governate-slug"
+                />
+                {errors.slug && <p className="text-red-500 text-sm mt-1">{errors.slug}</p>}
+              </div>
+
+              {/* Descriptions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Arabic Description
+                  </label>
+                  <textarea
+                    name="description_ar"
+                    value={formData.description_ar}
+                    onChange={handleInputChange}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="الوصف بالعربية"
+                    dir="rtl"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    English Description
+                  </label>
+                  <textarea
+                    name="description_en"
+                    value={formData.description_en}
+                    onChange={handleInputChange}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Description in English"
+                  />
+                </div>
+              </div>
+
+              {/* Coordinates */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Latitude
+                  </label>
+                  <input
+                    type="number"
+                    name="latitude"
+                    value={formData.latitude}
+                    onChange={handleInputChange}
+                    step="0.000001"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.latitude ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="0.000000"
+                  />
+                  {errors.latitude && <p className="text-red-500 text-sm mt-1">{errors.latitude}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Longitude
+                  </label>
+                  <input
+                    type="number"
+                    name="longitude"
+                    value={formData.longitude}
+                    onChange={handleInputChange}
+                    step="0.000001"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.longitude ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="0.000000"
+                  />
+                  {errors.longitude && <p className="text-red-500 text-sm mt-1">{errors.longitude}</p>}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Sort Order
+                </label>
+                <input
+                  type="number"
+                  name="sort_order"
+                  value={formData.sort_order}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Lower numbers appear first. Use this to control the display order.
+                </p>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                English Name *
-              </label>
-              <input
-                type="text"
-                name="name_en"
-                value={formData.name_en}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.name_en ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Governate name in English"
-              />
-              {errors.name_en && <p className="text-red-500 text-sm mt-1">{errors.name_en}</p>}
+            {/* Right Column - Image Gallery */}
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium text-gray-900 border-b pb-2 flex items-center">
+                  <ImageIcon className="mr-2" size={20} />
+                  Image Gallery
+                </h3>
+                <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">Optional</span>
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-4">
+                <ImageUpload
+                  config={{
+                    maxFiles: 15,
+                    maxFileSize: 5 * 1024 * 1024, // 5MB
+                    acceptedTypes: ['image/jpeg', 'image/png', 'image/webp'],
+                    bucket: process.env.NEXT_PUBLIC_STORAGE_BUCKET || 'media-bucket',
+                    folder: governate 
+                      ? `governates/${governate.id}` 
+                      : `temp/governates/${Date.now()}`,
+                    allowReorder: true,
+                    allowSetPrimary: true,
+                    showMetadataFields: true
+                  }}
+                  existingImages={galleryImages}
+                  onImagesChange={setGalleryImages}
+                  onUploadProgress={setUploadProgress}
+                  disabled={loading}
+                />
+                
+                {uploadProgress > 0 && uploadProgress < 100 && (
+                  <div className="mt-4">
+                    <div className="flex justify-between text-sm text-gray-600 mb-1">
+                      <span>Uploading images...</span>
+                      <span>{Math.round(uploadProgress)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {galleryImages.length > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-center text-blue-700 text-sm">
+                    <ImageIcon className="mr-2" size={16} />
+                    <span>
+                      {galleryImages.length} image{galleryImages.length !== 1 ? 's' : ''} in gallery
+                      {galleryImages.some(img => img.is_primary) && ' (including primary image)'}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Slug *
-            </label>
-            <input
-              type="text"
-              name="slug"
-              value={formData.slug}
-              onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.slug ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder="governate-slug"
-            />
-            {errors.slug && <p className="text-red-500 text-sm mt-1">{errors.slug}</p>}
-          </div>
-
-          {/* Descriptions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Arabic Description
-              </label>
-              <textarea
-                name="description_ar"
-                value={formData.description_ar}
-                onChange={handleInputChange}
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="الوصف بالعربية"
-                dir="rtl"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                English Description
-              </label>
-              <textarea
-                name="description_en"
-                value={formData.description_en}
-                onChange={handleInputChange}
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Description in English"
-              />
-            </div>
-          </div>
-
-          {/* Coordinates */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Latitude
-              </label>
-              <input
-                type="number"
-                name="latitude"
-                value={formData.latitude}
-                onChange={handleInputChange}
-                step="0.000001"
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.latitude ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="0.000000"
-              />
-              {errors.latitude && <p className="text-red-500 text-sm mt-1">{errors.latitude}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Longitude
-              </label>
-              <input
-                type="number"
-                name="longitude"
-                value={formData.longitude}
-                onChange={handleInputChange}
-                step="0.000001"
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.longitude ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="0.000000"
-              />
-              {errors.longitude && <p className="text-red-500 text-sm mt-1">{errors.longitude}</p>}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Sort Order
-            </label>
-            <input
-              type="number"
-              name="sort_order"
-              value={formData.sort_order}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="0"
-            />
-            <p className="text-sm text-gray-500 mt-1">
-              Lower numbers appear first. Use this to control the display order.
-            </p>
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-4">
+          <div className="flex justify-end space-x-3 pt-6 border-t">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-6 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center disabled:opacity-50"
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center disabled:opacity-50 transition-colors"
               disabled={loading}
             >
               <Save className="mr-2" size={16} />
@@ -603,7 +722,21 @@ const GovernateFormModal = ({ isOpen, onClose, governate, onSave, currentLang })
 };
 
 // Delete Confirmation Modal
-const DeleteConfirmModal = ({ isOpen, onClose, governate, onConfirm, loading, currentLang }) => {
+const DeleteConfirmModal = ({ 
+  isOpen, 
+  onClose, 
+  governate, 
+  onConfirm, 
+  loading, 
+  currentLang 
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  governate: any;
+  onConfirm: () => void;
+  loading: boolean;
+  currentLang: string;
+}) => {
   if (!isOpen || !governate) return null;
 
   return (
@@ -635,6 +768,14 @@ const DeleteConfirmModal = ({ isOpen, onClose, governate, onConfirm, loading, cu
             <div className="bg-orange-50 border border-orange-200 rounded-md p-3 mt-3">
               <p className="text-orange-700 text-sm">
                 📍 This governate is associated with {governate.place_count} places.
+              </p>
+            </div>
+          )}
+
+          {governate.gallery_images && parseGalleryImages(governate.gallery_images).length > 0 && (
+            <div className="bg-purple-50 border border-purple-200 rounded-md p-3 mt-3">
+              <p className="text-purple-700 text-sm">
+                🖼️ This will also delete {parseGalleryImages(governate.gallery_images).length} image{parseGalleryImages(governate.gallery_images).length !== 1 ? 's' : ''} from the gallery.
               </p>
             </div>
           )}
@@ -672,9 +813,44 @@ const DeleteConfirmModal = ({ isOpen, onClose, governate, onConfirm, loading, cu
 };
 
 // Governate Card Component
-const GovernateCard = ({ governate, onEdit, onDelete, onViewWilayahs, currentLang }) => {
+const GovernateCard = ({ 
+  governate, 
+  onEdit, 
+  onDelete, 
+  onViewWilayahs, 
+  currentLang 
+}: {
+  governate: any;
+  onEdit: (governate: any) => void;
+  onDelete: (governate: any) => void;
+  onViewWilayahs: (governate: any) => void;
+  currentLang: string;
+}) => {
+  const galleryImages = parseGalleryImages(governate.gallery_images);
+  const primaryImage = galleryImages.find(img => img.is_primary) || galleryImages[0];
+
   return (
-    <div className="bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
+    <div className="bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow overflow-hidden">
+      {/* Image Header */}
+      {primaryImage && (
+        <div className="relative h-48 bg-gray-100">
+          <img
+            src={primaryImage.url || `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_STORAGE_BUCKET}/${primaryImage.path}`}
+            alt={primaryImage.alt_text || getDisplayName(governate, currentLang)}
+            className="w-full h-full object-cover"
+          />
+          {galleryImages.length > 1 && (
+            <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+              +{galleryImages.length - 1} more
+            </div>
+          )}
+          <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs flex items-center">
+            <ImageIcon size={12} className="mr-1" />
+            {galleryImages.length}
+          </div>
+        </div>
+      )}
+
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
           <div className="flex-1">
@@ -704,7 +880,7 @@ const GovernateCard = ({ governate, onEdit, onDelete, onViewWilayahs, currentLan
 
         <div className="text-sm text-gray-600 mb-4">
           {getDisplayDescription(governate, currentLang) && (
-            <p className="italic">{getDisplayDescription(governate, currentLang)}</p>
+            <p className="italic line-clamp-2">{getDisplayDescription(governate, currentLang)}</p>
           )}
         </div>
 
@@ -716,6 +892,10 @@ const GovernateCard = ({ governate, onEdit, onDelete, onViewWilayahs, currentLan
           <div>
             <span className="text-gray-500">Places:</span>
             <span className="ml-1 font-medium">{governate.place_count || 0}</span>
+          </div>
+          <div>
+            <span className="text-gray-500">Images:</span>
+            <span className="ml-1 font-medium">{galleryImages.length}</span>
           </div>
           <div>
             <span className="text-gray-500">Sort Order:</span>
@@ -763,14 +943,14 @@ const GovernateCard = ({ governate, onEdit, onDelete, onViewWilayahs, currentLan
 
 // Main ManageGovernorate Component
 export default function ManageGovernorate() {
-  const [governorates, setGovernorates] = useState([]);
-  const [filteredGovernorates, setFilteredGovernorates] = useState([]);
+  const [governorates, setGovernorates] = useState<any[]>([]);
+  const [filteredGovernorates, setFilteredGovernorates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [selectedGovernate, setSelectedGovernate] = useState(null);
+  const [selectedGovernate, setSelectedGovernate] = useState<any>(null);
   const [currentLang, setCurrentLang] = useState('en');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
@@ -812,7 +992,7 @@ export default function ManageGovernorate() {
     } catch (err) {
       console.error('API Connection Test Failed:', err);
       setApiStatus('error');
-      setError(`Cannot connect to API: ${err.message}`);
+      setError(`Cannot connect to API: ${(err as Error).message}`);
       setLoading(false);
     }
   };
@@ -841,7 +1021,7 @@ export default function ManageGovernorate() {
       setGovernorates(data || []);
       setFilteredGovernorates(data || []);
     } catch (err) {
-      const errorMessage = err.message || 'Unknown error occurred';
+      const errorMessage = (err as Error).message || 'Unknown error occurred';
       setError(errorMessage);
       console.error('Error loading governorates:', err);
       setGovernorates([]);
@@ -851,7 +1031,7 @@ export default function ManageGovernorate() {
     }
   };
 
-  const handleLogin = (token) => {
+  const handleLogin = (token: string) => {
     setIsAuthenticated(true);
     localStorage.setItem('authToken', token);
   };
@@ -861,7 +1041,7 @@ export default function ManageGovernorate() {
     localStorage.removeItem('authToken');
   };
 
-  const handleAuthError = (error) => {
+  const handleAuthError = (error: Error) => {
     if (error.message.includes('401') || error.message.includes('403') || error.message.includes('Unauthorized')) {
       setIsAuthenticated(false);
       localStorage.removeItem('authToken');
@@ -869,7 +1049,7 @@ export default function ManageGovernorate() {
     }
   };
 
-  const handleSaveGovernate = async (id, governateData) => {
+  const handleSaveGovernate = async (id: string | null, governateData: any) => {
     try {
       if (id) {
         await governateAPI.update(id, governateData);
@@ -878,7 +1058,7 @@ export default function ManageGovernorate() {
       }
       await loadGovernorates();
     } catch (err) {
-      handleAuthError(err);
+      handleAuthError(err as Error);
       throw err;
     }
   };
@@ -893,14 +1073,14 @@ export default function ManageGovernorate() {
       setShowDeleteModal(false);
       setSelectedGovernate(null);
     } catch (err) {
-      handleAuthError(err);
-      setError(err.message);
+      handleAuthError(err as Error);
+      setError((err as Error).message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleViewWilayahs = async (governate) => {
+  const handleViewWilayahs = async (governate: any) => {
     try {
       const wilayahs = await governateAPI.getWilayahs(governate.id);
       console.log('Wilayahs for', governate.name_en, ':', wilayahs);
