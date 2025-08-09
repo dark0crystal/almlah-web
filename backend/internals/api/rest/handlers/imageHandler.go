@@ -1,4 +1,4 @@
-// handlers/image_handler.go - Updated to work with your RBAC middleware
+// handlers/image_handler.go - Fixed unused variable errors
 package handlers
 
 import (
@@ -103,8 +103,10 @@ func (h *ImageHandler) GetPlaceImages(ctx *fiber.Ctx) error {
 }
 
 func (h *ImageHandler) UpdatePlaceImage(ctx *fiber.Ctx) error {
+	// We don't need placeId in the service call since imageId is unique
+	// But we validate it for URL consistency
 	placeIdStr := ctx.Params("placeId")
-	placeId, err := uuid.Parse(placeIdStr)
+	_, err := uuid.Parse(placeIdStr)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
 	}
@@ -136,8 +138,10 @@ func (h *ImageHandler) UpdatePlaceImage(ctx *fiber.Ctx) error {
 }
 
 func (h *ImageHandler) DeletePlaceImage(ctx *fiber.Ctx) error {
+	// We don't need placeId in the service call since imageId is unique
+	// But we validate it for URL consistency
 	placeIdStr := ctx.Params("placeId")
-	placeId, err := uuid.Parse(placeIdStr)
+	_, err := uuid.Parse(placeIdStr)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
 	}
@@ -211,8 +215,10 @@ func (h *ImageHandler) GetContentSectionImages(ctx *fiber.Ctx) error {
 }
 
 func (h *ImageHandler) UpdateContentSectionImage(ctx *fiber.Ctx) error {
+	// We don't need sectionId in the service call since imageId is unique
+	// But we validate it for URL consistency
 	sectionIdStr := ctx.Params("sectionId")
-	sectionId, err := uuid.Parse(sectionIdStr)
+	_, err := uuid.Parse(sectionIdStr)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid section ID"))
 	}
@@ -244,8 +250,10 @@ func (h *ImageHandler) UpdateContentSectionImage(ctx *fiber.Ctx) error {
 }
 
 func (h *ImageHandler) DeleteContentSectionImage(ctx *fiber.Ctx) error {
+	// We don't need sectionId in the service call since imageId is unique
+	// But we validate it for URL consistency
 	sectionIdStr := ctx.Params("sectionId")
-	sectionId, err := uuid.Parse(sectionIdStr)
+	_, err := uuid.Parse(sectionIdStr)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid section ID"))
 	}
