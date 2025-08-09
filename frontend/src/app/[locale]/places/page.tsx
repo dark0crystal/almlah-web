@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { MapPin, Star, Clock, ChevronDown, ChevronUp, X, List } from "lucide-react";
 import PlacesModal from "./PlacesModal";
-import PlacesCardsWrapper from "./PlacesCarsWrapper";
+import PlacesCardsWrapper from "./PlacesCardsWrapper";
 import PlacesMap from "./PlacesMap";
 
 /**
