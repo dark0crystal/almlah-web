@@ -1,4 +1,4 @@
-// stores/usePlaceStore.ts
+// stores/usePlaceStore.ts - Fixed version
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
@@ -68,6 +68,32 @@ export interface PlaceFormData {
   website?: string;
 }
 
+// Helper function to check if user is authenticated
+const isAuthenticated = (): boolean => {
+  const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+  return !!token;
+};
+
+// Helper function to get auth token
+const getAuthToken = (): string | null => {
+  return localStorage.getItem('token') || localStorage.getItem('authToken');
+};
+
+// Helper function to get auth headers
+const getAuthHeaders = (): Record<string, string> => {
+  const token = getAuthToken();
+  
+  if (!token) {
+    throw new Error('No authentication token found');
+  }
+  
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  };
+};
+
+// Rest of your interfaces remain the same...
 export interface Category {
   id: string;
   name_ar: string;
@@ -212,7 +238,7 @@ export const usePlaceStore = create<PlaceStore>()(
       setErrors: (errors) => set({ errors }),
       clearErrors: () => set({ errors: {} }),
       
-      // API calls
+      // API calls (keeping existing implementations)
       fetchParentCategories: async () => {
         set({ isLoadingCategories: true });
         try {
@@ -288,7 +314,7 @@ export const usePlaceStore = create<PlaceStore>()(
         }
       },
       
-      // Image management
+      // Image management (keeping existing implementations)
       addImage: (image) => {
         set((state) => ({
           formData: {
@@ -330,7 +356,7 @@ export const usePlaceStore = create<PlaceStore>()(
         }));
       },
       
-      // Content sections management
+      // Content sections management (keeping existing implementations)
       addContentSection: (section) => {
         set((state) => ({
           formData: {
@@ -360,65 +386,144 @@ export const usePlaceStore = create<PlaceStore>()(
         }));
       },
       
-      // Form submission
+      // FIXED FORM SUBMISSION
       submitForm: async () => {
         const { formData } = get();
         set({ isSubmitting: true });
         
         try {
-          // Create FormData for file uploads
-          const submitData = new FormData();
-          
-          // Add text data
-          Object.entries(formData).forEach(([key, value]) => {
-            if (key === 'images') {
-              // Handle images separately
-              return;
-            }
-            if (key === 'content_sections') {
-              submitData.append(key, JSON.stringify(value));
-              return;
-            }
-            if (Array.isArray(value)) {
-              value.forEach((item) => submitData.append(`${key}[]`, item));
-            } else if (value !== undefined && value !== null) {
-              submitData.append(key, value.toString());
-            }
-          });
-          
-          // Add image files
-          formData.images.forEach((image, index) => {
-            if (image.file) {
-              submitData.append(`images`, image.file);
-              submitData.append(`image_metadata_${index}`, JSON.stringify({
-                alt_text: image.alt_text,
-                is_primary: image.is_primary,
-                display_order: image.display_order
-              }));
-            }
-          });
-          
-          const token = localStorage.getItem('token');
-          const response = await fetch(`${API_BASE_URL}/api/v1/places`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`
-            },
-            body: submitData
-          });
-          
-          const result = await response.json();
-          
-          if (result.success) {
-            set({ currentStep: 8 }); // Success step
-            return true;
-          } else {
-            set({ errors: { submit: result.error || 'Failed to create place' } });
+          // Check authentication first
+          if (!isAuthenticated()) {
+            set({ errors: { submit: 'Please login to continue.' } });
             return false;
+          }
+
+          const token = getAuthToken();
+          if (!token) {
+            set({ errors: { submit: 'Authentication token not found. Please login again.' } });
+            return false;
+          }
+
+          console.log('Submitting form data:', formData);
+          console.log('Using token:', token.substring(0, 20) + '...');
+
+          // Prepare the data to match backend DTO structure
+          const requestData = {
+            name_ar: formData.name_ar,
+            name_en: formData.name_en,
+            subtitle_ar: formData.subtitle_ar,
+            subtitle_en: formData.subtitle_en,
+            description_ar: formData.description_ar,
+            description_en: formData.description_en,
+            phone: formData.phone || '',
+            email: formData.email || '',
+            website: formData.website || '',
+            latitude: formData.latitude || 0,
+            longitude: formData.longitude || 0,
+            // Convert string IDs to UUIDs as expected by backend
+            governate_id: formData.governate_id || null,
+            wilayah_id: formData.wilayah_id || null,
+            category_ids: formData.category_ids,
+            property_ids: formData.property_ids,
+            // Transform content sections to match backend structure
+            content_sections: formData.content_sections.map(section => ({
+              section_type: section.section_type,
+              title_ar: section.title_ar,
+              title_en: section.title_en,
+              content_ar: section.content_ar,
+              content_en: section.content_en,
+              sort_order: section.sort_order,
+              images: section.images.map(img => ({
+                image_url: img.image_url,
+                alt_text_ar: img.alt_text_ar,
+                alt_text_en: img.alt_text_en,
+                caption_ar: img.caption_ar,
+                caption_en: img.caption_en,
+                sort_order: img.sort_order
+              }))
+            }))
+          };
+
+          console.log('Prepared request data:', requestData);
+
+          // If there are images with files, use FormData approach
+          if (formData.images.some(img => img.file)) {
+            const submitData = new FormData();
+            
+            // Add JSON data as a single field
+            submitData.append('data', JSON.stringify(requestData));
+            
+            // Add image files
+            formData.images.forEach((image, index) => {
+              if (image.file) {
+                submitData.append(`images`, image.file);
+                submitData.append(`image_metadata_${index}`, JSON.stringify({
+                  alt_text: image.alt_text,
+                  is_primary: image.is_primary,
+                  display_order: image.display_order
+                }));
+              }
+            });
+
+            const response = await fetch(`${API_BASE_URL}/api/v1/places`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`
+                // Don't set Content-Type for FormData
+              },
+              body: submitData
+            });
+
+            console.log('Response status:', response.status);
+            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+            const result = await response.json();
+            console.log('Response body:', result);
+
+            if (response.ok && result.success) {
+              set({ currentStep: 8 }); // Success step
+              return true;
+            } else {
+              const errorMessage = result.error || result.message || 'Failed to create place';
+              console.error('API Error:', errorMessage);
+              set({ errors: { submit: errorMessage } });
+              return false;
+            }
+          } else {
+            // No files, use JSON approach
+            const response = await fetch(`${API_BASE_URL}/api/v1/places`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(requestData)
+            });
+
+            console.log('Response status:', response.status);
+            const result = await response.json();
+            console.log('Response body:', result);
+
+            if (response.ok && result.success) {
+              set({ currentStep: 8 }); // Success step
+              return true;
+            } else {
+              const errorMessage = result.error || result.message || 'Failed to create place';
+              console.error('API Error:', errorMessage);
+              
+              if (response.status === 401) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('authToken');
+                set({ errors: { submit: 'Authentication failed. Please login again.' } });
+              } else {
+                set({ errors: { submit: errorMessage } });
+              }
+              return false;
+            }
           }
         } catch (error) {
           console.error('Form submission error:', error);
-          set({ errors: { submit: 'Network error occurred' } });
+          set({ errors: { submit: 'Network error occurred. Please check your connection and try again.' } });
           return false;
         } finally {
           set({ isSubmitting: false });
