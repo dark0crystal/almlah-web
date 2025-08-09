@@ -1,7 +1,7 @@
-// stores/usePlaceStore.ts - Enhanced with Supabase integration
+// stores/usePlaceStore.ts - Updated for post-submission image upload
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { SupabaseStorageService } from '../services/supabaseStorage';
+import { ExistingImage } from '../types/image';
 
 // API Configuration
 const API_BASE_URL = 'http://127.0.0.1:9000';
@@ -27,18 +27,6 @@ export interface ContentSectionImage {
   sort_order: number;
 }
 
-export interface PlaceImage {
-  id?: string;
-  url: string;
-  alt_text: string;
-  is_primary: boolean;
-  display_order: number;
-  file?: File; // For local file handling
-  preview?: string; // For preview URL
-  supabase_path?: string; // Supabase storage path
-  temp_place_id?: string; // Temporary place ID for folder organization
-}
-
 export interface PlaceFormData {
   // Step 1: Category Selection
   parent_category_id?: string;
@@ -61,8 +49,8 @@ export interface PlaceFormData {
   description_en: string;
   content_sections: ContentSection[];
   
-  // Step 5: Images
-  images: PlaceImage[];
+  // Step 5: Images (now just metadata - actual files handled separately)
+  images: ExistingImage[];
   
   // Step 6: Properties & Contact
   property_ids: string[];
@@ -130,12 +118,22 @@ export interface Property {
   icon: string;
 }
 
+export interface CreatedPlace {
+  id: string;
+  name_ar: string;
+  name_en: string;
+  created_at: string;
+}
+
 interface PlaceStore {
   // Form state
   currentStep: number;
   formData: PlaceFormData;
   isSubmitting: boolean;
   errors: Record<string, string>;
+  
+  // Created place data (for image upload)
+  createdPlace: CreatedPlace | null;
   
   // Data from API
   parentCategories: Category[];
@@ -165,21 +163,18 @@ interface PlaceStore {
   fetchWilayahs: (governateId: string) => Promise<void>;
   fetchProperties: (categoryId: string) => Promise<void>;
   
-  // Enhanced image handling with Supabase
-  addImage: (image: PlaceImage) => void;
-  removeImage: (index: number) => void;
-  updateImage: (index: number, image: Partial<PlaceImage>) => void;
-  setPrimaryImage: (index: number) => void;
-  uploadImageToSupabase: (file: File, onProgress?: (progress: number) => void) => Promise<PlaceImage | null>;
-  cleanupImagePreviews: () => void;
-  
   // Content sections
   addContentSection: (section: ContentSection) => void;
   removeContentSection: (index: number) => void;
   updateContentSection: (index: number, section: Partial<ContentSection>) => void;
   
-  // Form submission
+  // Form submission (without images)
   submitForm: () => Promise<boolean>;
+  
+  // Image management after place creation
+  uploadPlaceImages: (images: ExistingImage[]) => Promise<boolean>;
+  uploadContentSectionImages: (sectionId: string, images: ExistingImage[]) => Promise<boolean>;
+  
   resetForm: () => void;
 }
 
@@ -204,6 +199,7 @@ export const usePlaceStore = create<PlaceStore>()(
       formData: defaultFormData,
       isSubmitting: false,
       errors: {},
+      createdPlace: null,
       
       parentCategories: [],
       childCategories: [],
@@ -319,147 +315,6 @@ export const usePlaceStore = create<PlaceStore>()(
         }
       },
       
-      // Enhanced image management with Supabase
-      addImage: (image) => {
-        set((state) => ({
-          formData: {
-            ...state.formData,
-            images: [...state.formData.images, image]
-          }
-        }));
-      },
-      
-      removeImage: async (index) => {
-        const { formData } = get();
-        const imageToRemove = formData.images[index];
-        
-        // If image has a Supabase path, delete it from storage
-        if (imageToRemove.supabase_path) {
-          try {
-            await SupabaseStorageService.deleteFile('media-bucket', imageToRemove.supabase_path);
-          } catch (error) {
-            console.error('Failed to delete image from Supabase:', error);
-          }
-        }
-        
-        // Clean up preview URL
-        if (imageToRemove.preview) {
-          URL.revokeObjectURL(imageToRemove.preview);
-        }
-        
-        set((state) => ({
-          formData: {
-            ...state.formData,
-            images: state.formData.images.filter((_, i) => i !== index)
-          }
-        }));
-      },
-      
-      updateImage: (index, imageUpdate) => {
-        set((state) => ({
-          formData: {
-            ...state.formData,
-            images: state.formData.images.map((img, i) => 
-              i === index ? { ...img, ...imageUpdate } : img
-            )
-          }
-        }));
-      },
-      
-      setPrimaryImage: (index) => {
-        set((state) => ({
-          formData: {
-            ...state.formData,
-            images: state.formData.images.map((img, i) => ({
-              ...img,
-              is_primary: i === index
-            }))
-          }
-        }));
-      },
-
-      // New Supabase upload method with proper folder structure
-      uploadImageToSupabase: async (file, onProgress, isPrimary = false, placeId = null) => {
-        try {
-          // Validate file first
-          const validation = SupabaseStorageService.validateFile(
-            file,
-            10 * 1024 * 1024, // 10MB max
-            ['image/jpeg', 'image/png', 'image/webp']
-          );
-
-          if (!validation.valid) {
-            throw new Error(validation.error);
-          }
-
-          // Resize image for optimization
-          const resizedFile = await SupabaseStorageService.resizeImage(
-            file,
-            1920, // max width
-            1080, // max height
-            0.8   // quality
-          );
-
-          // Determine folder structure based on your schema
-          const tempPlaceId = placeId || `temp-${Date.now()}`;
-          const folder = isPrimary ? `places/${tempPlaceId}` : `places/${tempPlaceId}/gallery`;
-          
-          // Generate filename based on image type
-          let fileName;
-          if (isPrimary) {
-            const extension = file.name.split('.').pop();
-            fileName = `cover.${extension}`;
-          } else {
-            // For gallery images, use sequential naming
-            const { formData } = get();
-            const galleryCount = formData.images.filter(img => !img.is_primary).length + 1;
-            const extension = file.name.split('.').pop();
-            fileName = `${galleryCount.toString().padStart(3, '0')}.${extension}`;
-          }
-
-          // Upload to Supabase
-          const result = await SupabaseStorageService.uploadFile({
-            bucket: 'media-bucket',
-            folder,
-            fileName,
-            file: resizedFile,
-            onProgress
-          });
-
-          if (result.success && result.url && result.path) {
-            const { formData } = get();
-            
-            const uploadedImage: PlaceImage = {
-              id: `supabase-${Date.now()}`,
-              url: result.url,
-              alt_text: '',
-              is_primary: isPrimary,
-              display_order: formData.images.length,
-              supabase_path: result.path,
-              preview: URL.createObjectURL(file),
-              temp_place_id: tempPlaceId
-            };
-
-            return uploadedImage;
-          } else {
-            throw new Error(result.error || 'Upload failed');
-          }
-        } catch (error) {
-          console.error('Supabase upload error:', error);
-          throw error;
-        }
-      },
-
-      // Clean up all preview URLs
-      cleanupImagePreviews: () => {
-        const { formData } = get();
-        formData.images.forEach(image => {
-          if (image.preview) {
-            URL.revokeObjectURL(image.preview);
-          }
-        });
-      },
-      
       // Content sections management
       addContentSection: (section) => {
         set((state) => ({
@@ -490,7 +345,7 @@ export const usePlaceStore = create<PlaceStore>()(
         }));
       },
       
-      // Enhanced form submission with Supabase URLs
+      // Form submission WITHOUT images
       submitForm: async () => {
         const { formData } = get();
         set({ isSubmitting: true });
@@ -510,7 +365,7 @@ export const usePlaceStore = create<PlaceStore>()(
 
           console.log('Submitting form data:', formData);
 
-          // Prepare the data to match backend DTO structure
+          // Prepare the data to match backend DTO structure (NO IMAGES)
           const requestData = {
             name_ar: formData.name_ar,
             name_en: formData.name_en,
@@ -528,15 +383,7 @@ export const usePlaceStore = create<PlaceStore>()(
             category_ids: formData.category_ids,
             property_ids: formData.property_ids,
             
-            // Transform images to include Supabase URLs
-            images: formData.images.map((image, index) => ({
-              image_url: image.url, // This is now the Supabase URL
-              alt_text: image.alt_text,
-              is_primary: image.is_primary,
-              display_order: image.display_order
-            })),
-            
-            // Transform content sections
+            // Transform content sections (without images for now)
             content_sections: formData.content_sections.map(section => ({
               section_type: section.section_type,
               title_ar: section.title_ar,
@@ -544,41 +391,21 @@ export const usePlaceStore = create<PlaceStore>()(
               content_ar: section.content_ar,
               content_en: section.content_en,
               sort_order: section.sort_order,
-              images: section.images.map(img => ({
-                image_url: img.image_url,
-                alt_text_ar: img.alt_text_ar,
-                alt_text_en: img.alt_text_en,
-                caption_ar: img.caption_ar,
-                caption_en: img.caption_en,
-                sort_order: img.sort_order
-              }))
+              // Will add images separately after place creation
+              images: []
             }))
           };
 
-          // Enhanced form submission with proper image organization
-          const submitFormData = {
-            ...requestData,
-            
-            // Add temporary place IDs to help backend organize images
-            temp_image_data: formData.images.map((image, index) => ({
-              temp_place_id: image.temp_place_id,
-              current_path: image.supabase_path,
-              is_primary: image.is_primary,
-              alt_text: image.alt_text,
-              display_order: image.display_order
-            }))
-          };
+          console.log('Prepared request data:', requestData);
 
-          console.log('Prepared request data with temp image data:', submitFormData);
-
-          // Submit to backend - backend will handle moving images to proper folders
+          // Submit to backend
           const response = await fetch(`${API_BASE_URL}/api/v1/places`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify(submitFormData)
+            body: JSON.stringify(requestData)
           });
 
           console.log('Response status:', response.status);
@@ -586,10 +413,11 @@ export const usePlaceStore = create<PlaceStore>()(
           console.log('Response body:', result);
 
           if (response.ok && result.success) {
-            // Clean up preview URLs
-            get().cleanupImagePreviews();
-            
-            set({ currentStep: 8 }); // Success step
+            // Store the created place data for image upload
+            set({ 
+              createdPlace: result.data,
+              currentStep: 7 // Move to image upload step
+            });
             return true;
           } else {
             const errorMessage = result.error || result.message || 'Failed to create place';
@@ -613,15 +441,107 @@ export const usePlaceStore = create<PlaceStore>()(
         }
       },
       
+      // Upload images after place creation
+      uploadPlaceImages: async (images: ExistingImage[]) => {
+        const { createdPlace } = get();
+        if (!createdPlace) {
+          set({ errors: { images: 'No place created yet. Please submit the form first.' } });
+          return false;
+        }
+
+        try {
+          const token = getAuthToken();
+          if (!token) {
+            set({ errors: { images: 'Authentication token not found.' } });
+            return false;
+          }
+
+          // Transform images to the format expected by backend
+          const imageData = images.map((image, index) => ({
+            image_url: image.url,
+            alt_text: image.alt_text || '',
+            is_primary: image.is_primary || false,
+            display_order: image.display_order || index
+          }));
+
+          console.log('Uploading place images:', imageData);
+
+          const response = await fetch(`${API_BASE_URL}/api/v1/places/${createdPlace.id}/images`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ images: imageData })
+          });
+
+          const result = await response.json();
+
+          if (response.ok && result.success) {
+            console.log('Images uploaded successfully');
+            return true;
+          } else {
+            const errorMessage = result.error || result.message || 'Failed to upload images';
+            console.error('Image upload error:', errorMessage);
+            set({ errors: { images: errorMessage } });
+            return false;
+          }
+        } catch (error) {
+          console.error('Image upload error:', error);
+          set({ errors: { images: 'Failed to upload images. Please try again.' } });
+          return false;
+        }
+      },
+
+      // Upload content section images
+      uploadContentSectionImages: async (sectionId: string, images: ExistingImage[]) => {
+        try {
+          const token = getAuthToken();
+          if (!token) {
+            set({ errors: { images: 'Authentication token not found.' } });
+            return false;
+          }
+
+          const imageData = images.map((image, index) => ({
+            image_url: image.url,
+            alt_text_ar: image.alt_text || '',
+            alt_text_en: image.alt_text || '',
+            caption_ar: image.caption || '',
+            caption_en: image.caption || '',
+            sort_order: image.display_order || index
+          }));
+
+          const response = await fetch(`${API_BASE_URL}/api/v1/content-sections/${sectionId}/images`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ images: imageData })
+          });
+
+          const result = await response.json();
+
+          if (response.ok && result.success) {
+            return true;
+          } else {
+            const errorMessage = result.error || result.message || 'Failed to upload section images';
+            console.error('Section image upload error:', errorMessage);
+            return false;
+          }
+        } catch (error) {
+          console.error('Section image upload error:', error);
+          return false;
+        }
+      },
+      
       resetForm: () => {
-        // Clean up any preview URLs before resetting
-        get().cleanupImagePreviews();
-        
         set({
           currentStep: 1,
           formData: defaultFormData,
           errors: {},
-          isSubmitting: false
+          isSubmitting: false,
+          createdPlace: null
         });
       }
     }),
