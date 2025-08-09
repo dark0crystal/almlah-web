@@ -3,7 +3,7 @@ package handlers
 import (
 	"almlah/internals/api/rest"
 	"almlah/internals/dto"
-	// "almlah/internals/middleware"
+	"almlah/internals/middleware"
 	"almlah/internals/services"
 	"almlah/internals/utils"
 	"net/http"
@@ -19,7 +19,7 @@ func SetupAdminRBACRoutes(rh *rest.RestHandler) {
 	app := rh.App
 
 	// Admin routes group - requires admin privileges
-	admin := app.Group("/api/v1/admin")//, middleware.AuthRequiredWithRBAC, middleware.AdminOnly()
+	admin := app.Group("/api/v1/admin", middleware.AuthRequiredWithRBAC, middleware.AdminOnly())//, middleware.AuthRequiredWithRBAC, middleware.AdminOnly()
 
 	// Role management routes
 	admin.Get("/roles", getAdminRoles)
@@ -207,6 +207,7 @@ func deleteAdminPermission(ctx *fiber.Ctx) error {
 }
 
 // Bulk Permission Assignment
+
 func bulkAssignPermissionsToRole(ctx *fiber.Ctx) error {
 	roleIdStr := ctx.Params("id")
 	roleId, err := uuid.Parse(roleIdStr)
@@ -226,11 +227,25 @@ func bulkAssignPermissionsToRole(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	
-	grantedBy := ctx.Locals("userID").(uuid.UUID)
-	err = services.BulkAssignPermissions(req, grantedBy)
-	if err != nil {
-		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
+	// Safe user ID extraction with nil check
+	userIDInterface := ctx.Locals("userID")
+	if userIDInterface == nil {
+		// For development/testing - use a default UUID or return error
+		// Option 1: Return error (production approach)
+		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User not authenticated"))
+		
+		// Option 2: Use default UUID for testing (uncomment below and comment above)
+		// grantedBy := uuid.New() // Generate a new UUID for testing
+	} else {
+		grantedBy, ok := userIDInterface.(uuid.UUID)
+		if !ok {
+			return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse("Invalid user ID format"))
+		}
+		
+		err = services.BulkAssignPermissions(req, grantedBy)
+		if err != nil {
+			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
+		}
 	}
 
 	return ctx.JSON(utils.SuccessResponse("Permissions assigned to role successfully", nil))
@@ -254,7 +269,16 @@ func bulkRemovePermissionsFromRole(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	removedBy := ctx.Locals("userID").(uuid.UUID)
+	// Safe user ID extraction with nil check
+	userIDInterface := ctx.Locals("userID")
+	if userIDInterface == nil {
+		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User not authenticated"))
+	}
+
+	removedBy, ok := userIDInterface.(uuid.UUID)
+	if !ok {
+		return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse("Invalid user ID format"))
+	}
 
 	// Remove each permission individually
 	for _, permissionID := range req.PermissionIDs {
