@@ -6,3 +6,26 @@ Requirements for frontend:
 node 22
 
 
+media-bucket/
+├── places/
+│   ├── {place-id}/
+│   │   ├── cover.jpg (or cover.{ext})
+│   │   ├── gallery/
+│   │   │   ├── 001.jpg
+│   │   │   ├── 002.jpg
+│   │   │   └── 003.jpg
+│   │   └── content-sections/
+│   │       ├── {section-id}/
+│   │       │   ├── 001.jpg
+│   │       │   └── 002.jpg
+├── governates/
+│   ├── {governate-id}/
+│   │   ├── cover.jpg
+│   │   └── gallery/ 
+├── wilayahs/
+│   ├── {wilayah-id}/
+│   │   ├── cover.jpg
+│   │   └── gallery/
+└── temp/ (for uploads before processing)
+
+
