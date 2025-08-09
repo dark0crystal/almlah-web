@@ -11,15 +11,8 @@ type CreateWilayahRequest struct {
 	Slug          string    `json:"slug" validate:"required,min=2,max=100"`
 	DescriptionAr string    `json:"description_ar"`
 	DescriptionEn string    `json:"description_en"`
-	Area          float64   `json:"area"`
-	Population    int64     `json:"population"`
 	Latitude      float64   `json:"latitude"`
 	Longitude     float64   `json:"longitude"`
-	PostalCode    string    `json:"postal_code"`
-	IsCapital     bool      `json:"is_capital"`
-	IsCoastal     bool      `json:"is_coastal"`
-	Elevation     float64   `json:"elevation"`
-	ClimateType   string    `json:"climate_type"`
 	SortOrder     int       `json:"sort_order"`
 }
 
@@ -29,15 +22,8 @@ type UpdateWilayahRequest struct {
 	Slug          string  `json:"slug" validate:"omitempty,min=2,max=100"`
 	DescriptionAr string  `json:"description_ar"`
 	DescriptionEn string  `json:"description_en"`
-	Area          float64 `json:"area"`
-	Population    int64   `json:"population"`
 	Latitude      float64 `json:"latitude"`
 	Longitude     float64 `json:"longitude"`
-	PostalCode    string  `json:"postal_code"`
-	IsCapital     bool    `json:"is_capital"`
-	IsCoastal     bool    `json:"is_coastal"`
-	Elevation     float64 `json:"elevation"`
-	ClimateType   string  `json:"climate_type"`
 	SortOrder     int     `json:"sort_order"`
 	IsActive      *bool   `json:"is_active"`
 }
@@ -50,15 +36,8 @@ type WilayahResponse struct {
 	Slug             string                   `json:"slug"`
 	DescriptionAr    string                   `json:"description_ar"`
 	DescriptionEn    string                   `json:"description_en"`
-	Area             float64                  `json:"area"`
-	Population       int64                    `json:"population"`
 	Latitude         float64                  `json:"latitude"`
 	Longitude        float64                  `json:"longitude"`
-	PostalCode       string                   `json:"postal_code"`
-	IsCapital        bool                     `json:"is_capital"`
-	IsCoastal        bool                     `json:"is_coastal"`
-	Elevation        float64                  `json:"elevation"`
-	ClimateType      string                   `json:"climate_type"`
 	IsActive         bool                     `json:"is_active"`
 	SortOrder        int                      `json:"sort_order"`
 	PlaceCount       int                      `json:"place_count"`
@@ -67,4 +46,3 @@ type WilayahResponse struct {
 	CreatedAt        string                   `json:"created_at"`
 	UpdatedAt        string                   `json:"updated_at"`
 }
-
