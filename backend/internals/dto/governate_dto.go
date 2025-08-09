@@ -7,6 +7,8 @@ import (
 type CreateGovernateRequest struct {
 	NameAr        string  `json:"name_ar" validate:"required,min=2,max=100"`
 	NameEn        string  `json:"name_en" validate:"required,min=2,max=100"`
+	SubtitleAr    string  `json:"subtitle_ar" validate:"omitempty,max=200"`
+	SubtitleEn    string  `json:"subtitle_en" validate:"omitempty,max=200"`
 	Slug          string  `json:"slug" validate:"required,min=2,max=100"`
 	DescriptionAr string  `json:"description_ar"`
 	DescriptionEn string  `json:"description_en"`
@@ -18,6 +20,8 @@ type CreateGovernateRequest struct {
 type UpdateGovernateRequest struct {
 	NameAr        string  `json:"name_ar" validate:"omitempty,min=2,max=100"`
 	NameEn        string  `json:"name_en" validate:"omitempty,min=2,max=100"`
+	SubtitleAr    string  `json:"subtitle_ar" validate:"omitempty,max=200"`
+	SubtitleEn    string  `json:"subtitle_en" validate:"omitempty,max=200"`
 	Slug          string  `json:"slug" validate:"omitempty,min=2,max=100"`
 	DescriptionAr string  `json:"description_ar"`
 	DescriptionEn string  `json:"description_en"`
@@ -31,6 +35,8 @@ type GovernateResponse struct {
 	ID            uuid.UUID         `json:"id"`
 	NameAr        string            `json:"name_ar"`
 	NameEn        string            `json:"name_en"`
+	SubtitleAr    string            `json:"subtitle_ar"`
+	SubtitleEn    string            `json:"subtitle_en"`
 	Slug          string            `json:"slug"`
 	DescriptionAr string            `json:"description_ar"`
 	DescriptionEn string            `json:"description_en"`

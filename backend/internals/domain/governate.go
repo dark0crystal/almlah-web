@@ -11,6 +11,8 @@ type Governate struct {
 	ID            uuid.UUID      `json:"id" gorm:"type:uuid;primaryKey"`
 	NameAr        string         `json:"name_ar" gorm:"not null"`
 	NameEn        string         `json:"name_en" gorm:"not null"`
+	SubtitleAr    string         `json:"subtitle_ar"`
+	SubtitleEn    string         `json:"subtitle_en"`
 	Slug          string         `json:"slug" gorm:"unique;not null"`
 	DescriptionAr string         `json:"description_ar" gorm:"type:text"`
 	DescriptionEn string         `json:"description_en" gorm:"type:text"`
@@ -44,6 +46,13 @@ func (g *Governate) GetName(lang string) string {
 		return g.NameAr
 	}
 	return g.NameEn
+}
+
+func (g *Governate) GetSubtitle(lang string) string {
+	if lang == "ar" {
+		return g.SubtitleAr
+	}
+	return g.SubtitleEn
 }
 
 func (g *Governate) GetDescription(lang string) string {
