@@ -1,4 +1,4 @@
-// handlers/place_handler.go - Updated for new model structure
+// handlers/place_handler.go - Updated to handle both JSON and FormData
 package handlers
 
 import (
@@ -7,7 +7,9 @@ import (
 	"almlah/internals/middleware"
 	"almlah/internals/services"
 	"almlah/internals/utils"
+	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -63,15 +65,47 @@ func SetupPlaceRoutes(rh *rest.RestHandler) {
 
 func (h *PlaceHandler) CreatePlace(ctx *fiber.Ctx) error {
 	var req dto.CreatePlaceRequest
-	if err := ctx.BodyParser(&req); err != nil {
-		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body"))
+	
+	// Check Content-Type to determine how to parse the request
+	contentType := ctx.Get("Content-Type")
+	
+	if strings.Contains(contentType, "multipart/form-data") {
+		// Handle FormData (with file uploads)
+		
+		// Get the JSON data from 'data' field
+		dataField := ctx.FormValue("data")
+		if dataField == "" {
+			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Missing 'data' field in form"))
+		}
+		
+		if err := json.Unmarshal([]byte(dataField), &req); err != nil {
+			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid JSON data in 'data' field"))
+		}
+		
+		// TODO: Handle file uploads here
+		// files := ctx.MultipartForm()
+		// Process image files if needed
+		
+	} else {
+		// Handle regular JSON request
+		if err := ctx.BodyParser(&req); err != nil {
+			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body: " + err.Error()))
+		}
 	}
 
+	// Validate the parsed request
 	if err := utils.ValidateStruct(req); err != nil {
-		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
+		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Validation error: " + err.Error()))
 	}
 
-	userID := ctx.Locals("userID").(uuid.UUID)
+	// Log the received data for debugging
+	// fmt.Printf("Received CreatePlaceRequest: %+v\n", req)
+
+	userID, ok := ctx.Locals("userID").(uuid.UUID)
+	if !ok {
+		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("Invalid user ID"))
+	}
+
 	response, err := services.CreatePlace(req, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
@@ -80,6 +114,7 @@ func (h *PlaceHandler) CreatePlace(ctx *fiber.Ctx) error {
 	return ctx.Status(http.StatusCreated).JSON(utils.SuccessResponse("Place created successfully", response))
 }
 
+// Keep all other handler methods the same...
 func (h *PlaceHandler) GetPlaces(ctx *fiber.Ctx) error {
 	places, err := services.GetPlaces()
 	if err != nil {
