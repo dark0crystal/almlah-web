@@ -64,15 +64,8 @@ func CreateWilayah(req dto.CreateWilayahRequest, userID uuid.UUID) (*dto.Wilayah
 		Slug:          req.Slug,
 		DescriptionAr: req.DescriptionAr,
 		DescriptionEn: req.DescriptionEn,
-		Area:          req.Area,
-		Population:    req.Population,
 		Latitude:      req.Latitude,
 		Longitude:     req.Longitude,
-		PostalCode:    req.PostalCode,
-		IsCapital:     req.IsCapital,
-		IsCoastal:     req.IsCoastal,
-		Elevation:     req.Elevation,
-		ClimateType:   req.ClimateType,
 		SortOrder:     req.SortOrder,
 		CreatedBy:     userID,
 		IsActive:      true,
@@ -115,37 +108,17 @@ func UpdateWilayah(id uuid.UUID, req dto.UpdateWilayahRequest, userID uuid.UUID)
 	if req.DescriptionEn != "" {
 		wilayah.DescriptionEn = req.DescriptionEn
 	}
-	if req.Area > 0 {
-		wilayah.Area = req.Area
-	}
-	if req.Population > 0 {
-		wilayah.Population = req.Population
-	}
 	if req.Latitude != 0 {
 		wilayah.Latitude = req.Latitude
 	}
 	if req.Longitude != 0 {
 		wilayah.Longitude = req.Longitude
 	}
-	if req.PostalCode != "" {
-		wilayah.PostalCode = req.PostalCode
-	}
-	if req.ClimateType != "" {
-		wilayah.ClimateType = req.ClimateType
-	}
 	if req.SortOrder != 0 {
 		wilayah.SortOrder = req.SortOrder
 	}
 	if req.IsActive != nil {
 		wilayah.IsActive = *req.IsActive
-	}
-
-	// Handle boolean fields explicitly
-	wilayah.IsCapital = req.IsCapital
-	wilayah.IsCoastal = req.IsCoastal
-	
-	if req.Elevation != 0 {
-		wilayah.Elevation = req.Elevation
 	}
 
 	err = config.DB.Save(&wilayah).Error
@@ -228,15 +201,8 @@ func mapWilayahToResponse(wilayah domain.Wilayah) dto.WilayahResponse {
 		Slug:          wilayah.Slug,
 		DescriptionAr: wilayah.DescriptionAr,
 		DescriptionEn: wilayah.DescriptionEn,
-		Area:          wilayah.Area,
-		Population:    wilayah.Population,
 		Latitude:      wilayah.Latitude,
 		Longitude:     wilayah.Longitude,
-		PostalCode:    wilayah.PostalCode,
-		IsCapital:     wilayah.IsCapital,
-		IsCoastal:     wilayah.IsCoastal,
-		Elevation:     wilayah.Elevation,
-		ClimateType:   wilayah.ClimateType,
 		IsActive:      wilayah.IsActive,
 		SortOrder:     wilayah.SortOrder,
 		PlaceCount:    getPlaceCountForWilayah(wilayah.ID),
