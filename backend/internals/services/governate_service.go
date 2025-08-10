@@ -53,6 +53,8 @@ func CreateGovernate(req dto.CreateGovernateRequest, userID uuid.UUID) (*dto.Gov
 	governate := domain.Governate{
 		NameAr:        req.NameAr,
 		NameEn:        req.NameEn,
+		SubtitleAr:    req.SubtitleAr,
+		SubtitleEn:    req.SubtitleEn,
 		Slug:          req.Slug,
 		DescriptionAr: req.DescriptionAr,
 		DescriptionEn: req.DescriptionEn,
@@ -84,6 +86,12 @@ func UpdateGovernate(id uuid.UUID, req dto.UpdateGovernateRequest, userID uuid.U
 	}
 	if req.NameEn != "" {
 		governate.NameEn = req.NameEn
+	}
+	if req.SubtitleAr != "" {
+		governate.SubtitleAr = req.SubtitleAr
+	}
+	if req.SubtitleEn != "" {
+		governate.SubtitleEn = req.SubtitleEn
 	}
 	if req.Slug != "" {
 		// Check for duplicate slug (excluding current governate)
@@ -186,6 +194,8 @@ func mapGovernateToResponse(governate domain.Governate) dto.GovernateResponse {
 		ID:            governate.ID,
 		NameAr:        governate.NameAr,
 		NameEn:        governate.NameEn,
+		SubtitleAr:    governate.SubtitleAr,
+		SubtitleEn:    governate.SubtitleEn,
 		Slug:          governate.Slug,
 		DescriptionAr: governate.DescriptionAr,
 		DescriptionEn: governate.DescriptionEn,
