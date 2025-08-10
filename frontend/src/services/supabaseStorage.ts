@@ -1,4 +1,4 @@
-// services/supabaseStorage.ts - Fixed version with proper exports
+// services/supabaseStorage.ts - Updated with governate support
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client
@@ -9,7 +9,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export interface UploadOptions {
   bucket: string;
-  filePath: string; // Full path including folder structure
+  folder: string;
+  fileName: string;
   file: File;
   onProgress?: (progress: number) => void;
 }
@@ -27,66 +28,27 @@ export type ImageType = 'cover' | 'gallery' | 'content-section';
 export class SupabaseStorageService {
   
   /**
-   * Generate the proper file path based on entity type and image type
+   * Generate a unique filename with timestamp
    */
-  static generateFilePath(
-    entityType: EntityType,
-    entityId: string,
-    imageType: ImageType,
-    fileName: string,
-    sectionId?: string
-  ): string {
-    const extension = fileName.split('.').pop();
-    
-    switch (entityType) {
-      case 'place':
-        if (imageType === 'cover') {
-          return `places/${entityId}/cover.${extension}`;
-        } else if (imageType === 'gallery') {
-          return `places/${entityId}/gallery/${fileName}`;
-        } else if (imageType === 'content-section' && sectionId) {
-          return `places/${entityId}/content-sections/${sectionId}/${fileName}`;
-        }
-        break;
-        
-      case 'governate':
-        if (imageType === 'cover') {
-          return `governates/${entityId}/cover.${extension}`;
-        } else if (imageType === 'gallery') {
-          return `governates/${entityId}/gallery/${fileName}`;
-        }
-        break;
-        
-      case 'wilayah':
-        if (imageType === 'cover') {
-          return `wilayahs/${entityId}/cover.${extension}`;
-        } else if (imageType === 'gallery') {
-          return `wilayahs/${entityId}/gallery/${fileName}`;
-        }
-        break;
-    }
-    
-    throw new Error(`Invalid combination: ${entityType}, ${imageType}`);
+  static generateFileName(originalName: string): string {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 8);
+    const extension = originalName.split('.').pop();
+    return `${timestamp}-${random}.${extension}`;
   }
 
   /**
-   * Generate sequential gallery filename (001.jpg, 002.jpg, etc.)
-   */
-  static generateGalleryFileName(index: number, extension: string): string {
-    const paddedIndex = (index + 1).toString().padStart(3, '0');
-    return `${paddedIndex}.${extension}`;
-  }
-
-  /**
-   * Upload a single file to the correct location
+   * Upload a single file to the specified folder
    */
   static async uploadFile({
     bucket,
-    filePath,
+    folder,
+    fileName,
     file,
     onProgress
   }: UploadOptions): Promise<UploadResult> {
     try {
+      const filePath = `${folder}/${fileName}`;
       console.log('🔄 Uploading file to Supabase:', { bucket, filePath, fileName: file.name });
 
       // Upload the file
@@ -127,6 +89,78 @@ export class SupabaseStorageService {
   }
 
   /**
+   * Upload governate images with proper file structure
+   */
+  static async uploadGovernateImages(
+    governateId: string,
+    images: Array<{
+      file: File;
+      isPrimary: boolean;
+      altText: string;
+      displayOrder: number;
+    }>
+  ): Promise<Array<{
+    path: string;
+    url: string;
+    isPrimary: boolean;
+    altText: string;
+    displayOrder: number;
+  }>> {
+    console.log('🚀 SupabaseStorageService.uploadGovernateImages called:', { governateId, imageCount: images.length });
+    
+    const results = [];
+    let galleryIndex = 0;
+
+    for (const image of images) {
+      try {
+        let folder: string;
+        let fileName: string;
+
+        if (image.isPrimary) {
+          // Cover image goes in governates/{id}/
+          folder = `governates/${governateId}`;
+          const extension = image.file.name.split('.').pop() || 'jpg';
+          fileName = `cover.${extension}`;
+        } else {
+          // Gallery images go in governates/{id}/gallery/
+          folder = `governates/${governateId}/gallery`;
+          const extension = image.file.name.split('.').pop() || 'jpg';
+          const paddedIndex = (galleryIndex + 1).toString().padStart(3, '0');
+          fileName = `${paddedIndex}.${extension}`;
+          galleryIndex++;
+        }
+
+        console.log('📁 Generated path:', `${folder}/${fileName}`);
+
+        const result = await this.uploadFile({
+          bucket: process.env.NEXT_PUBLIC_STORAGE_BUCKET || 'media-bucket',
+          folder,
+          fileName,
+          file: image.file
+        });
+
+        if (result.success && result.url && result.path) {
+          results.push({
+            path: result.path,
+            url: result.url,
+            isPrimary: image.isPrimary,
+            altText: image.altText,
+            displayOrder: image.displayOrder
+          });
+        } else {
+          throw new Error(`Failed to upload ${image.isPrimary ? 'cover' : 'gallery'} image: ${result.error}`);
+        }
+      } catch (error) {
+        console.error(`💥 Error uploading image ${image.isPrimary ? 'cover' : 'gallery'}:`, error);
+        throw error;
+      }
+    }
+
+    console.log('✅ All governate images uploaded successfully:', results);
+    return results;
+  }
+
+  /**
    * Upload place images with proper file structure
    */
   static async uploadPlaceImages(
@@ -151,24 +185,29 @@ export class SupabaseStorageService {
 
     for (const image of images) {
       try {
-        const extension = image.file.name.split('.').pop() || 'jpg';
-        let filePath: string;
+        let folder: string;
+        let fileName: string;
 
         if (image.isPrimary) {
-          // Cover image
-          filePath = this.generateFilePath('place', placeId, 'cover', image.file.name);
+          // Cover image goes in places/{id}/
+          folder = `places/${placeId}`;
+          const extension = image.file.name.split('.').pop() || 'jpg';
+          fileName = `cover.${extension}`;
         } else {
-          // Gallery image
-          const galleryFileName = this.generateGalleryFileName(galleryIndex, extension);
-          filePath = this.generateFilePath('place', placeId, 'gallery', galleryFileName);
+          // Gallery images go in places/{id}/gallery/
+          folder = `places/${placeId}/gallery`;
+          const extension = image.file.name.split('.').pop() || 'jpg';
+          const paddedIndex = (galleryIndex + 1).toString().padStart(3, '0');
+          fileName = `${paddedIndex}.${extension}`;
           galleryIndex++;
         }
 
-        console.log('📁 Generated file path:', filePath);
+        console.log('📁 Generated path:', `${folder}/${fileName}`);
 
         const result = await this.uploadFile({
-          bucket: 'media-bucket',
-          filePath,
+          bucket: process.env.NEXT_PUBLIC_STORAGE_BUCKET || 'media-bucket',
+          folder,
+          fileName,
           file: image.file
         });
 
@@ -190,6 +229,78 @@ export class SupabaseStorageService {
     }
 
     console.log('✅ All place images uploaded successfully:', results);
+    return results;
+  }
+
+  /**
+   * Upload wilayah images with proper file structure
+   */
+  static async uploadWilayahImages(
+    wilayahId: string,
+    images: Array<{
+      file: File;
+      isPrimary: boolean;
+      altText: string;
+      displayOrder: number;
+    }>
+  ): Promise<Array<{
+    path: string;
+    url: string;
+    isPrimary: boolean;
+    altText: string;
+    displayOrder: number;
+  }>> {
+    console.log('🚀 SupabaseStorageService.uploadWilayahImages called:', { wilayahId, imageCount: images.length });
+    
+    const results = [];
+    let galleryIndex = 0;
+
+    for (const image of images) {
+      try {
+        let folder: string;
+        let fileName: string;
+
+        if (image.isPrimary) {
+          // Cover image goes in wilayahs/{id}/
+          folder = `wilayahs/${wilayahId}`;
+          const extension = image.file.name.split('.').pop() || 'jpg';
+          fileName = `cover.${extension}`;
+        } else {
+          // Gallery images go in wilayahs/{id}/gallery/
+          folder = `wilayahs/${wilayahId}/gallery`;
+          const extension = image.file.name.split('.').pop() || 'jpg';
+          const paddedIndex = (galleryIndex + 1).toString().padStart(3, '0');
+          fileName = `${paddedIndex}.${extension}`;
+          galleryIndex++;
+        }
+
+        console.log('📁 Generated path:', `${folder}/${fileName}`);
+
+        const result = await this.uploadFile({
+          bucket: process.env.NEXT_PUBLIC_STORAGE_BUCKET || 'media-bucket',
+          folder,
+          fileName,
+          file: image.file
+        });
+
+        if (result.success && result.url && result.path) {
+          results.push({
+            path: result.path,
+            url: result.url,
+            isPrimary: image.isPrimary,
+            altText: image.altText,
+            displayOrder: image.displayOrder
+          });
+        } else {
+          throw new Error(`Failed to upload ${image.isPrimary ? 'cover' : 'gallery'} image: ${result.error}`);
+        }
+      } catch (error) {
+        console.error(`💥 Error uploading image ${image.isPrimary ? 'cover' : 'gallery'}:`, error);
+        throw error;
+      }
+    }
+
+    console.log('✅ All wilayah images uploaded successfully:', results);
     return results;
   }
 
@@ -223,19 +334,15 @@ export class SupabaseStorageService {
     for (let i = 0; i < images.length; i++) {
       const image = images[i];
       const extension = image.file.name.split('.').pop() || 'jpg';
-      const fileName = this.generateGalleryFileName(i, extension);
+      const paddedIndex = (i + 1).toString().padStart(3, '0');
       
-      const filePath = this.generateFilePath(
-        'place',
-        placeId,
-        'content-section',
-        fileName,
-        sectionId
-      );
+      const folder = `places/${placeId}/content-sections/${sectionId}`;
+      const fileName = `${paddedIndex}.${extension}`;
 
       const result = await this.uploadFile({
-        bucket: 'media-bucket',
-        filePath,
+        bucket: process.env.NEXT_PUBLIC_STORAGE_BUCKET || 'media-bucket',
+        folder,
+        fileName,
         file: image.file
       });
 
@@ -374,7 +481,9 @@ export class SupabaseStorageService {
 }
 
 // Export functions individually as well for backwards compatibility
+export const uploadGovernateImages = SupabaseStorageService.uploadGovernateImages.bind(SupabaseStorageService);
 export const uploadPlaceImages = SupabaseStorageService.uploadPlaceImages.bind(SupabaseStorageService);
+export const uploadWilayahImages = SupabaseStorageService.uploadWilayahImages.bind(SupabaseStorageService);
 export const uploadContentSectionImages = SupabaseStorageService.uploadContentSectionImages.bind(SupabaseStorageService);
 export const uploadFile = SupabaseStorageService.uploadFile.bind(SupabaseStorageService);
 export const deleteFile = SupabaseStorageService.deleteFile.bind(SupabaseStorageService);
