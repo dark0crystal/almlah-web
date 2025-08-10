@@ -12,6 +12,8 @@ type Wilayah struct {
 	GovernateID   uuid.UUID      `json:"governate_id" gorm:"type:uuid;not null"`
 	NameAr        string         `json:"name_ar" gorm:"not null"`
 	NameEn        string         `json:"name_en" gorm:"not null"`
+	SubtitleAr    string         `json:"subtitle_ar"`
+	SubtitleEn    string         `json:"subtitle_en"`
 	Slug          string         `json:"slug" gorm:"unique;not null"`
 	DescriptionAr string         `json:"description_ar" gorm:"type:text"`
 	DescriptionEn string         `json:"description_en" gorm:"type:text"`
@@ -45,6 +47,13 @@ func (w *Wilayah) GetName(lang string) string {
 		return w.NameAr
 	}
 	return w.NameEn
+}
+
+func (w *Wilayah) GetSubtitle(lang string) string {
+	if lang == "ar" {
+		return w.SubtitleAr
+	}
+	return w.SubtitleEn
 }
 
 func (w *Wilayah) GetDescription(lang string) string {

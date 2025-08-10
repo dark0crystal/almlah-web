@@ -81,4 +81,5 @@ func setupRoutes(rh *rest.RestHandler) {
 	handlers.SetupPropertyRoutes(rh)
 	handlers.SetupUserManagementRoutes(rh) 
 	handlers.SetupImageRoutes(rh) 
+	handlers.SetupGovernateImageRoutes(rh)
 }
