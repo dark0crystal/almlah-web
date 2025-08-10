@@ -1,4 +1,4 @@
-// handlers/image_handler.go - Fixed unused variable errors
+// handlers/image_handler.go - Updated to use cleanup functions
 package handlers
 
 import (
@@ -7,7 +7,9 @@ import (
 	"almlah/internals/middleware"
 	"almlah/internals/services"
 	"almlah/internals/utils"
+	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -22,38 +24,40 @@ func SetupImageRoutes(rh *rest.RestHandler) {
 	// Image routes with authentication
 	images := app.Group("/api/v1")
 
-	// Place image routes - using your existing AuthRequired middleware
+	// Place image routes
 	images.Post("/places/:placeId/images", 
-		middleware.AuthRequired,  // Use your existing auth middleware
+		middleware.AuthRequired,
 		handler.UploadPlaceImages)
 	
 	images.Get("/places/:placeId/images", 
-		handler.GetPlaceImages)  // Public endpoint to view images
+		handler.GetPlaceImages)
 	
 	images.Put("/places/:placeId/images/:imageId", 
-		middleware.AuthRequired,  // Use your existing auth middleware
+		middleware.AuthRequired,
 		handler.UpdatePlaceImage)
 	
 	images.Delete("/places/:placeId/images/:imageId", 
-		middleware.AuthRequired,  // Use your existing auth middleware
+		middleware.AuthRequired,
 		handler.DeletePlaceImage)
 
 	// Content section image routes
 	images.Post("/content-sections/:sectionId/images", 
-		middleware.AuthRequired,  // Use your existing auth middleware
+		middleware.AuthRequired,
 		handler.UploadContentSectionImages)
 	
 	images.Get("/content-sections/:sectionId/images", 
-		handler.GetContentSectionImages)  // Public endpoint to view images
+		handler.GetContentSectionImages)
 	
 	images.Put("/content-sections/:sectionId/images/:imageId", 
-		middleware.AuthRequired,  // Use your existing auth middleware
+		middleware.AuthRequired,
 		handler.UpdateContentSectionImage)
 	
 	images.Delete("/content-sections/:sectionId/images/:imageId", 
-		middleware.AuthRequired,  // Use your existing auth middleware
+		middleware.AuthRequired,
 		handler.DeleteContentSectionImage)
 }
+
+// Place Image Handlers
 
 func (h *ImageHandler) UploadPlaceImages(ctx *fiber.Ctx) error {
 	placeIdStr := ctx.Params("placeId")
@@ -63,21 +67,57 @@ func (h *ImageHandler) UploadPlaceImages(ctx *fiber.Ctx) error {
 	}
 
 	var req dto.UploadPlaceImagesRequest
-	if err := ctx.BodyParser(&req); err != nil {
-		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body: " + err.Error()))
+	
+	// Check Content-Type to determine how to parse the request
+	contentType := ctx.Get("Content-Type")
+	
+	if strings.Contains(contentType, "multipart/form-data") {
+		// Handle FormData (with file uploads)
+		dataField := ctx.FormValue("data")
+		if dataField == "" {
+			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Missing 'data' field in form"))
+		}
+		
+		if err := json.Unmarshal([]byte(dataField), &req); err != nil {
+			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid JSON data in 'data' field"))
+		}
+		
+		// Process uploaded files
+		form, err := ctx.MultipartForm()
+		if err != nil {
+			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Failed to parse multipart form"))
+		}
+
+		// Handle file uploads and update image URLs
+		if files := form.File["images"]; len(files) > 0 {
+			for i, file := range files {
+				if i < len(req.Images) {
+					// Save the uploaded file and get URL
+					savedURL, err := services.SaveUploadedFile(file, "places", placeId.String())
+					if err != nil {
+						return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse("Failed to save image: " + err.Error()))
+					}
+					req.Images[i].ImageURL = savedURL
+				}
+			}
+		}
+	} else {
+		// Handle regular JSON request (for URL-based images)
+		if err := ctx.BodyParser(&req); err != nil {
+			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body: " + err.Error()))
+		}
 	}
 
 	if err := utils.ValidateStruct(req); err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Validation error: " + err.Error()))
 	}
 
-	// Get userID from your existing auth middleware
 	userID, ok := ctx.Locals("userID").(uuid.UUID)
 	if !ok {
 		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User ID not found in context"))
 	}
 	
-	// Call service - all database operations and RBAC checks happen in service
+	// Call service
 	response, err := services.UploadPlaceImages(placeId, req, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
@@ -93,7 +133,6 @@ func (h *ImageHandler) GetPlaceImages(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
 	}
 
-	// Call service
 	images, err := services.GetPlaceImages(placeId)
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse(err.Error()))
@@ -103,8 +142,6 @@ func (h *ImageHandler) GetPlaceImages(ctx *fiber.Ctx) error {
 }
 
 func (h *ImageHandler) UpdatePlaceImage(ctx *fiber.Ctx) error {
-	// We don't need placeId in the service call since imageId is unique
-	// But we validate it for URL consistency
 	placeIdStr := ctx.Params("placeId")
 	_, err := uuid.Parse(placeIdStr)
 	if err != nil {
@@ -122,13 +159,11 @@ func (h *ImageHandler) UpdatePlaceImage(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body"))
 	}
 
-	// Get userID from your existing auth middleware
 	userID, ok := ctx.Locals("userID").(uuid.UUID)
 	if !ok {
 		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User ID not found in context"))
 	}
 	
-	// Call service
 	image, err := services.UpdatePlaceImage(imageId, req, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
@@ -138,8 +173,6 @@ func (h *ImageHandler) UpdatePlaceImage(ctx *fiber.Ctx) error {
 }
 
 func (h *ImageHandler) DeletePlaceImage(ctx *fiber.Ctx) error {
-	// We don't need placeId in the service call since imageId is unique
-	// But we validate it for URL consistency
 	placeIdStr := ctx.Params("placeId")
 	_, err := uuid.Parse(placeIdStr)
 	if err != nil {
@@ -152,20 +185,26 @@ func (h *ImageHandler) DeletePlaceImage(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid image ID"))
 	}
 
-	// Get userID from your existing auth middleware
 	userID, ok := ctx.Locals("userID").(uuid.UUID)
 	if !ok {
 		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User ID not found in context"))
 	}
 	
-	// Call service
-	err = services.DeletePlaceImage(imageId, userID)
+	// Use enhanced cleanup function if available, fallback to regular delete
+	err = services.DeletePlaceImageWithCleanup(imageId, userID)
 	if err != nil {
-		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
+		// Fallback to regular delete function from your existing image service
+		err = services.DeletePlaceImage(imageId, userID)
+		if err != nil {
+			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
+		}
+		return ctx.JSON(utils.SuccessResponse("Image deleted successfully", nil))
 	}
 
-	return ctx.JSON(utils.SuccessResponse("Image deleted successfully", nil))
+	return ctx.JSON(utils.SuccessResponse("Image and file deleted successfully", nil))
 }
+
+// Content Section Image Handlers
 
 func (h *ImageHandler) UploadContentSectionImages(ctx *fiber.Ctx) error {
 	sectionIdStr := ctx.Params("sectionId")
@@ -175,21 +214,55 @@ func (h *ImageHandler) UploadContentSectionImages(ctx *fiber.Ctx) error {
 	}
 
 	var req dto.UploadContentSectionImagesRequest
-	if err := ctx.BodyParser(&req); err != nil {
-		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body: " + err.Error()))
+	
+	// Check Content-Type to determine how to parse the request
+	contentType := ctx.Get("Content-Type")
+	
+	if strings.Contains(contentType, "multipart/form-data") {
+		// Handle FormData (with file uploads)
+		dataField := ctx.FormValue("data")
+		if dataField == "" {
+			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Missing 'data' field in form"))
+		}
+		
+		if err := json.Unmarshal([]byte(dataField), &req); err != nil {
+			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid JSON data in 'data' field"))
+		}
+		
+		// Process uploaded files
+		form, err := ctx.MultipartForm()
+		if err != nil {
+			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Failed to parse multipart form"))
+		}
+
+		// Handle file uploads
+		if files := form.File["images"]; len(files) > 0 {
+			for i, file := range files {
+				if i < len(req.Images) {
+					savedURL, err := services.SaveUploadedFile(file, "content-sections", sectionId.String())
+					if err != nil {
+						return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse("Failed to save image: " + err.Error()))
+					}
+					req.Images[i].ImageURL = savedURL
+				}
+			}
+		}
+	} else {
+		// Handle regular JSON request
+		if err := ctx.BodyParser(&req); err != nil {
+			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body: " + err.Error()))
+		}
 	}
 
 	if err := utils.ValidateStruct(req); err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Validation error: " + err.Error()))
 	}
 
-	// Get userID from your existing auth middleware
 	userID, ok := ctx.Locals("userID").(uuid.UUID)
 	if !ok {
 		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User ID not found in context"))
 	}
 	
-	// Call service
 	response, err := services.UploadContentSectionImages(sectionId, req, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
@@ -205,7 +278,6 @@ func (h *ImageHandler) GetContentSectionImages(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid section ID"))
 	}
 
-	// Call service
 	images, err := services.GetContentSectionImages(sectionId)
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse(err.Error()))
@@ -215,8 +287,6 @@ func (h *ImageHandler) GetContentSectionImages(ctx *fiber.Ctx) error {
 }
 
 func (h *ImageHandler) UpdateContentSectionImage(ctx *fiber.Ctx) error {
-	// We don't need sectionId in the service call since imageId is unique
-	// But we validate it for URL consistency
 	sectionIdStr := ctx.Params("sectionId")
 	_, err := uuid.Parse(sectionIdStr)
 	if err != nil {
@@ -234,13 +304,11 @@ func (h *ImageHandler) UpdateContentSectionImage(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body"))
 	}
 
-	// Get userID from your existing auth middleware
 	userID, ok := ctx.Locals("userID").(uuid.UUID)
 	if !ok {
 		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User ID not found in context"))
 	}
 	
-	// Call service
 	image, err := services.UpdateContentSectionImage(imageId, req, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
@@ -250,8 +318,6 @@ func (h *ImageHandler) UpdateContentSectionImage(ctx *fiber.Ctx) error {
 }
 
 func (h *ImageHandler) DeleteContentSectionImage(ctx *fiber.Ctx) error {
-	// We don't need sectionId in the service call since imageId is unique
-	// But we validate it for URL consistency
 	sectionIdStr := ctx.Params("sectionId")
 	_, err := uuid.Parse(sectionIdStr)
 	if err != nil {
@@ -264,17 +330,21 @@ func (h *ImageHandler) DeleteContentSectionImage(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid image ID"))
 	}
 
-	// Get userID from your existing auth middleware
 	userID, ok := ctx.Locals("userID").(uuid.UUID)
 	if !ok {
 		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User ID not found in context"))
 	}
 	
-	// Call service
-	err = services.DeleteContentSectionImage(imageId, userID)
+	// Use enhanced cleanup function if available, fallback to regular delete
+	err = services.DeleteContentSectionImageWithCleanup(imageId, userID)
 	if err != nil {
-		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
+		// Fallback to regular delete function from your existing image service
+		err = services.DeleteContentSectionImage(imageId, userID)
+		if err != nil {
+			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
+		}
+		return ctx.JSON(utils.SuccessResponse("Image deleted successfully", nil))
 	}
 
-	return ctx.JSON(utils.SuccessResponse("Image deleted successfully", nil))
+	return ctx.JSON(utils.SuccessResponse("Image and file deleted successfully", nil))
 }
