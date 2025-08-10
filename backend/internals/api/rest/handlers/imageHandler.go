@@ -1,4 +1,4 @@
-// handlers/image_handler.go - Updated to use cleanup functions
+// handlers/image_handler.go - Updated for Supabase URL handling
 package handlers
 
 import (
@@ -8,7 +8,9 @@ import (
 	"almlah/internals/services"
 	"almlah/internals/utils"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -57,7 +59,7 @@ func SetupImageRoutes(rh *rest.RestHandler) {
 		handler.DeleteContentSectionImage)
 }
 
-// Place Image Handlers
+// Place Image Handlers - Updated for Supabase URLs
 
 func (h *ImageHandler) UploadPlaceImages(ctx *fiber.Ctx) error {
 	placeIdStr := ctx.Params("placeId")
@@ -72,7 +74,7 @@ func (h *ImageHandler) UploadPlaceImages(ctx *fiber.Ctx) error {
 	contentType := ctx.Get("Content-Type")
 	
 	if strings.Contains(contentType, "multipart/form-data") {
-		// Handle FormData (with file uploads)
+		// Handle FormData (legacy support for file uploads)
 		dataField := ctx.FormValue("data")
 		if dataField == "" {
 			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Missing 'data' field in form"))
@@ -82,34 +84,33 @@ func (h *ImageHandler) UploadPlaceImages(ctx *fiber.Ctx) error {
 			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid JSON data in 'data' field"))
 		}
 		
-		// Process uploaded files
-		form, err := ctx.MultipartForm()
-		if err != nil {
-			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Failed to parse multipart form"))
-		}
-
-		// Handle file uploads and update image URLs
-		if files := form.File["images"]; len(files) > 0 {
-			for i, file := range files {
-				if i < len(req.Images) {
-					// Save the uploaded file and get URL
-					savedURL, err := services.SaveUploadedFile(file, "places", placeId.String())
-					if err != nil {
-						return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse("Failed to save image: " + err.Error()))
-					}
-					req.Images[i].ImageURL = savedURL
-				}
-			}
-		}
+		// For multipart, we would handle file uploads here, but since we're using Supabase
+		// from frontend, we expect the URLs to already be populated in the JSON data
+		
 	} else {
-		// Handle regular JSON request (for URL-based images)
+		// Handle JSON request with Supabase URLs (preferred method)
 		if err := ctx.BodyParser(&req); err != nil {
 			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body: " + err.Error()))
 		}
 	}
 
+	// Validate the request
 	if err := utils.ValidateStruct(req); err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Validation error: " + err.Error()))
+	}
+
+	// Validate that all images have URLs (should be Supabase URLs)
+	for i, img := range req.Images {
+		if img.ImageURL == "" {
+			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(
+				fmt.Sprintf("Image %d is missing URL - please upload to storage first", i+1)))
+		}
+		
+		// Optional: Validate that URLs are from your Supabase instance
+		if !isValidSupabaseURL(img.ImageURL) {
+			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(
+				fmt.Sprintf("Image %d has invalid URL format", i+1)))
+		}
 	}
 
 	userID, ok := ctx.Locals("userID").(uuid.UUID)
@@ -117,13 +118,27 @@ func (h *ImageHandler) UploadPlaceImages(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User ID not found in context"))
 	}
 	
-	// Call service
+	// Call service to save metadata
 	response, err := services.UploadPlaceImages(placeId, req, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
 	return ctx.Status(http.StatusCreated).JSON(utils.SuccessResponse("Images uploaded successfully", response))
+}
+
+// Helper function to validate Supabase URLs
+func isValidSupabaseURL(url string) bool {
+	// Basic validation - adjust based on your Supabase project URL
+	supabaseURL := os.Getenv("SUPABASE_URL")
+	if supabaseURL == "" {
+		// If not configured, skip validation
+		return true
+	}
+	
+	// Check if URL starts with your Supabase storage URL
+	expectedPrefix := fmt.Sprintf("%s/storage/v1/object/public/", supabaseURL)
+	return strings.HasPrefix(url, expectedPrefix)
 }
 
 func (h *ImageHandler) GetPlaceImages(ctx *fiber.Ctx) error {
@@ -190,10 +205,10 @@ func (h *ImageHandler) DeletePlaceImage(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User ID not found in context"))
 	}
 	
-	// Use enhanced cleanup function if available, fallback to regular delete
-	err = services.DeletePlaceImageWithCleanup(imageId, userID)
+	// Use enhanced cleanup function that also removes from Supabase
+	err = services.DeletePlaceImageWithSupabaseCleanup(imageId, userID)
 	if err != nil {
-		// Fallback to regular delete function from your existing image service
+		// Fallback to regular delete function
 		err = services.DeletePlaceImage(imageId, userID)
 		if err != nil {
 			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
@@ -204,7 +219,7 @@ func (h *ImageHandler) DeletePlaceImage(ctx *fiber.Ctx) error {
 	return ctx.JSON(utils.SuccessResponse("Image and file deleted successfully", nil))
 }
 
-// Content Section Image Handlers
+// Content Section Image Handlers - Similar updates
 
 func (h *ImageHandler) UploadContentSectionImages(ctx *fiber.Ctx) error {
 	sectionIdStr := ctx.Params("sectionId")
@@ -215,47 +230,22 @@ func (h *ImageHandler) UploadContentSectionImages(ctx *fiber.Ctx) error {
 
 	var req dto.UploadContentSectionImagesRequest
 	
-	// Check Content-Type to determine how to parse the request
-	contentType := ctx.Get("Content-Type")
-	
-	if strings.Contains(contentType, "multipart/form-data") {
-		// Handle FormData (with file uploads)
-		dataField := ctx.FormValue("data")
-		if dataField == "" {
-			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Missing 'data' field in form"))
-		}
-		
-		if err := json.Unmarshal([]byte(dataField), &req); err != nil {
-			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid JSON data in 'data' field"))
-		}
-		
-		// Process uploaded files
-		form, err := ctx.MultipartForm()
-		if err != nil {
-			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Failed to parse multipart form"))
-		}
-
-		// Handle file uploads
-		if files := form.File["images"]; len(files) > 0 {
-			for i, file := range files {
-				if i < len(req.Images) {
-					savedURL, err := services.SaveUploadedFile(file, "content-sections", sectionId.String())
-					if err != nil {
-						return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse("Failed to save image: " + err.Error()))
-					}
-					req.Images[i].ImageURL = savedURL
-				}
-			}
-		}
-	} else {
-		// Handle regular JSON request
-		if err := ctx.BodyParser(&req); err != nil {
-			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body: " + err.Error()))
-		}
+	// Handle JSON request with Supabase URLs (preferred method)
+	if err := ctx.BodyParser(&req); err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body: " + err.Error()))
 	}
 
+	// Validate the request
 	if err := utils.ValidateStruct(req); err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Validation error: " + err.Error()))
+	}
+
+	// Validate that all images have URLs
+	for i, img := range req.Images {
+		if img.ImageURL == "" {
+			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(
+				fmt.Sprintf("Image %d is missing URL - please upload to storage first", i+1)))
+		}
 	}
 
 	userID, ok := ctx.Locals("userID").(uuid.UUID)
@@ -335,10 +325,10 @@ func (h *ImageHandler) DeleteContentSectionImage(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User ID not found in context"))
 	}
 	
-	// Use enhanced cleanup function if available, fallback to regular delete
-	err = services.DeleteContentSectionImageWithCleanup(imageId, userID)
+	// Use enhanced cleanup function that also removes from Supabase
+	err = services.DeleteContentSectionImageWithSupabaseCleanup(imageId, userID)
 	if err != nil {
-		// Fallback to regular delete function from your existing image service
+		// Fallback to regular delete function
 		err = services.DeleteContentSectionImage(imageId, userID)
 		if err != nil {
 			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
