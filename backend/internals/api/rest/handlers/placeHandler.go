@@ -1,4 +1,4 @@
-// handlers/place_handler.go - Updated to handle both JSON and FormData
+// handlers/place_handler.go - Fixed and integrated with place service
 package handlers
 
 import (
@@ -61,6 +61,9 @@ func SetupPlaceRoutes(rh *rest.RestHandler) {
 	contentSections.Delete("/:sectionId", 
 		middleware.LoadUserWithPermissions(), 
 		handler.DeleteContentSection)
+
+	// Note: Image routes are handled in your existing image_handler.go
+	// This avoids route conflicts and keeps separation of concerns
 }
 
 func (h *PlaceHandler) CreatePlace(ctx *fiber.Ctx) error {
@@ -82,9 +85,8 @@ func (h *PlaceHandler) CreatePlace(ctx *fiber.Ctx) error {
 			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid JSON data in 'data' field"))
 		}
 		
-		// TODO: Handle file uploads here
-		// files := ctx.MultipartForm()
-		// Process image files if needed
+		// Handle file uploads if needed - for now, we'll focus on the JSON data
+		// File uploads for places can be handled separately via the image endpoints
 		
 	} else {
 		// Handle regular JSON request
@@ -97,9 +99,6 @@ func (h *PlaceHandler) CreatePlace(ctx *fiber.Ctx) error {
 	if err := utils.ValidateStruct(req); err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Validation error: " + err.Error()))
 	}
-
-	// Log the received data for debugging
-	// fmt.Printf("Received CreatePlaceRequest: %+v\n", req)
 
 	userID, ok := ctx.Locals("userID").(uuid.UUID)
 	if !ok {
@@ -114,7 +113,6 @@ func (h *PlaceHandler) CreatePlace(ctx *fiber.Ctx) error {
 	return ctx.Status(http.StatusCreated).JSON(utils.SuccessResponse("Place created successfully", response))
 }
 
-// Keep all other handler methods the same...
 func (h *PlaceHandler) GetPlaces(ctx *fiber.Ctx) error {
 	places, err := services.GetPlaces()
 	if err != nil {
@@ -160,6 +158,7 @@ func (h *PlaceHandler) UpdatePlace(ctx *fiber.Ctx) error {
 	return ctx.JSON(utils.SuccessResponse("Place updated successfully", place))
 }
 
+// Enhanced DeletePlace with complete cleanup
 func (h *PlaceHandler) DeletePlace(ctx *fiber.Ctx) error {
 	idStr := ctx.Params("id")
 	id, err := uuid.Parse(idStr)
@@ -168,12 +167,14 @@ func (h *PlaceHandler) DeletePlace(ctx *fiber.Ctx) error {
 	}
 
 	userID := ctx.Locals("userID").(uuid.UUID)
-	err = services.DeletePlace(id, userID)
+	
+	// Try enhanced delete with complete cleanup first
+	err = services.DeletePlaceWithCleanup(id, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	return ctx.JSON(utils.SuccessResponse("Place deleted successfully", nil))
+	return ctx.JSON(utils.SuccessResponse("Place and all associated data deleted successfully", nil))
 }
 
 func (h *PlaceHandler) GetPlacesByCategory(ctx *fiber.Ctx) error {
@@ -242,7 +243,6 @@ func (h *PlaceHandler) CreateContentSection(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
 	}
-	
 
 	var req dto.CreateContentSectionRequest
 	if err := ctx.BodyParser(&req); err != nil {
@@ -293,10 +293,12 @@ func (h *PlaceHandler) DeleteContentSection(ctx *fiber.Ctx) error {
 	}
 
 	userID := ctx.Locals("userID").(uuid.UUID)
-	err = services.DeletePlaceContentSection(sectionId, userID)
+	
+	// Try enhanced cleanup function first
+	err = services.DeletePlaceContentSectionWithCleanup(sectionId, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	return ctx.JSON(utils.SuccessResponse("Content section deleted successfully", nil))
+	return ctx.JSON(utils.SuccessResponse("Content section and all associated images deleted successfully", nil))
 }
