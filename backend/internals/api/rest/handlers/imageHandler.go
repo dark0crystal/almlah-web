@@ -1,8 +1,9 @@
-// handlers/image_handler.go - Fixed version with better error handling and logging
+// handlers/image_handler_cached.go
 package handlers
 
 import (
 	"almlah/internals/api/rest"
+	"almlah/internals/cache"
 	"almlah/internals/dto"
 	"almlah/internals/middleware"
 	"almlah/internals/services"
@@ -59,7 +60,7 @@ func SetupImageRoutes(rh *rest.RestHandler) {
 		handler.DeleteContentSectionImage)
 }
 
-// Enhanced UploadPlaceImages with better error handling and logging
+// Enhanced UploadPlaceImages with cache invalidation
 func (h *ImageHandler) UploadPlaceImages(ctx *fiber.Ctx) error {
 	fmt.Printf("🚀 UploadPlaceImages endpoint called\n")
 	
@@ -84,7 +85,6 @@ func (h *ImageHandler) UploadPlaceImages(ctx *fiber.Ctx) error {
 	if strings.Contains(contentType, "multipart/form-data") {
 		fmt.Printf("📁 Handling multipart/form-data request\n")
 		
-		// Handle FormData (legacy support)
 		dataField := ctx.FormValue("data")
 		if dataField == "" {
 			fmt.Printf("❌ Missing 'data' field in form\n")
@@ -101,7 +101,6 @@ func (h *ImageHandler) UploadPlaceImages(ctx *fiber.Ctx) error {
 	} else {
 		fmt.Printf("📄 Handling JSON request\n")
 		
-		// Handle JSON request with Supabase URLs (preferred method)
 		bodyBytes := ctx.Body()
 		fmt.Printf("📄 Request body: %s\n", string(bodyBytes))
 		
@@ -131,9 +130,7 @@ func (h *ImageHandler) UploadPlaceImages(ctx *fiber.Ctx) error {
 			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(errorMsg))
 		}
 		
-		// Optional: Validate that URLs are from your Supabase instance
 		if !isValidSupabaseURL(img.ImageURL) {
-			// Log warning but don't fail - allow non-Supabase URLs for flexibility
 			fmt.Printf("⚠️ Warning: Image %d has non-Supabase URL: %s\n", i+1, img.ImageURL)
 		}
 	}
@@ -146,7 +143,7 @@ func (h *ImageHandler) UploadPlaceImages(ctx *fiber.Ctx) error {
 	
 	fmt.Printf("👤 User ID: %s\n", userID)
 	
-	// Call service to save metadata
+	// 🔄 ORIGINAL: Call service to save metadata
 	fmt.Printf("📞 Calling UploadPlaceImages service\n")
 	response, err := services.UploadPlaceImages(placeId, req, userID)
 	if err != nil {
@@ -154,21 +151,23 @@ func (h *ImageHandler) UploadPlaceImages(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
+	// 🔧 REDIS CACHE: Invalidate related caches after successful upload
+	go func() {
+		cache.Delete(fmt.Sprintf("place_images_%s", placeId.String()))
+		cache.Delete(fmt.Sprintf("place_%s", placeId.String())) // Place data may include image info
+	}()
+
 	fmt.Printf("✅ Images uploaded successfully\n")
 	return ctx.Status(http.StatusCreated).JSON(utils.SuccessResponse("Images uploaded successfully", response))
 }
 
-// Enhanced helper function with better validation
 func isValidSupabaseURL(url string) bool {
-	// Basic validation - adjust based on your Supabase project URL
 	supabaseURL := os.Getenv("SUPABASE_URL")
 	if supabaseURL == "" {
-		// If not configured, skip validation but log it
 		fmt.Printf("⚠️ SUPABASE_URL not configured, skipping URL validation\n")
 		return true
 	}
 	
-	// Check if URL starts with your Supabase storage URL
 	expectedPrefix := fmt.Sprintf("%s/storage/v1/object/public/", supabaseURL)
 	isValid := strings.HasPrefix(url, expectedPrefix)
 	
@@ -188,11 +187,26 @@ func (h *ImageHandler) GetPlaceImages(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
 	}
 
-	images, err := services.GetPlaceImages(placeId)
+	// 🔧 REDIS CACHE: Try cache first
+	cacheKey := fmt.Sprintf("place_images_%s", placeId.String())
+	var images []dto.PlaceImageResponse
+	
+	if err := cache.Get(cacheKey, &images); err == nil {
+		ctx.Set("X-Cache", "HIT")
+		fmt.Printf("🎯 Cache HIT: Retrieved %d images for place %s\n", len(images), placeId)
+		return ctx.JSON(utils.SuccessResponse("Images retrieved successfully", images))
+	}
+
+	// 🔄 ORIGINAL: Your existing database call
+	images, err = services.GetPlaceImages(placeId)
 	if err != nil {
 		fmt.Printf("❌ Error getting images: %v\n", err)
 		return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse(err.Error()))
 	}
+
+	// 🔧 REDIS CACHE: Store in cache (background, doesn't block response)
+	go cache.Set(cacheKey, images, cache.LongTTL) // Images don't change often
+	ctx.Set("X-Cache", "MISS")
 
 	fmt.Printf("✅ Retrieved %d images for place %s\n", len(images), placeId)
 	return ctx.JSON(utils.SuccessResponse("Images retrieved successfully", images))
@@ -202,7 +216,7 @@ func (h *ImageHandler) UpdatePlaceImage(ctx *fiber.Ctx) error {
 	fmt.Printf("🔄 UpdatePlaceImage endpoint called\n")
 	
 	placeIdStr := ctx.Params("placeId")
-	_, err := uuid.Parse(placeIdStr)
+	placeId, err := uuid.Parse(placeIdStr)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
 	}
@@ -223,11 +237,18 @@ func (h *ImageHandler) UpdatePlaceImage(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User ID not found in context"))
 	}
 	
+	// 🔄 ORIGINAL: Your existing update logic
 	image, err := services.UpdatePlaceImage(imageId, req, userID)
 	if err != nil {
 		fmt.Printf("❌ Error updating image: %v\n", err)
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
+
+	// 🔧 REDIS CACHE: Invalidate related caches after successful update
+	go func() {
+		cache.Delete(fmt.Sprintf("place_images_%s", placeId.String()))
+		cache.Delete(fmt.Sprintf("place_%s", placeId.String()))
+	}()
 
 	return ctx.JSON(utils.SuccessResponse("Image updated successfully", image))
 }
@@ -236,7 +257,7 @@ func (h *ImageHandler) DeletePlaceImage(ctx *fiber.Ctx) error {
 	fmt.Printf("🗑️ DeletePlaceImage endpoint called\n")
 	
 	placeIdStr := ctx.Params("placeId")
-	_, err := uuid.Parse(placeIdStr)
+	placeId, err := uuid.Parse(placeIdStr)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
 	}
@@ -252,7 +273,7 @@ func (h *ImageHandler) DeletePlaceImage(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User ID not found in context"))
 	}
 	
-	// Use enhanced cleanup function that also removes from Supabase
+	// 🔄 ORIGINAL: Use enhanced cleanup function that also removes from Supabase
 	err = services.DeletePlaceImageWithSupabaseCleanup(imageId, userID)
 	if err != nil {
 		fmt.Printf("❌ Error deleting image with cleanup: %v\n", err)
@@ -261,14 +282,26 @@ func (h *ImageHandler) DeletePlaceImage(ctx *fiber.Ctx) error {
 		if err != nil {
 			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 		}
+		
+		// 🔧 REDIS CACHE: Invalidate caches for fallback delete too
+		go func() {
+			cache.Delete(fmt.Sprintf("place_images_%s", placeId.String()))
+			cache.Delete(fmt.Sprintf("place_%s", placeId.String()))
+		}()
+		
 		return ctx.JSON(utils.SuccessResponse("Image deleted successfully", nil))
 	}
+
+	// 🔧 REDIS CACHE: Invalidate related caches after successful deletion
+	go func() {
+		cache.Delete(fmt.Sprintf("place_images_%s", placeId.String()))
+		cache.Delete(fmt.Sprintf("place_%s", placeId.String()))
+	}()
 
 	return ctx.JSON(utils.SuccessResponse("Image and file deleted successfully", nil))
 }
 
-// Content Section Image Handlers - Similar updates
-
+// Content Section Image Handlers
 func (h *ImageHandler) UploadContentSectionImages(ctx *fiber.Ctx) error {
 	fmt.Printf("🚀 UploadContentSectionImages endpoint called\n")
 	
@@ -280,18 +313,15 @@ func (h *ImageHandler) UploadContentSectionImages(ctx *fiber.Ctx) error {
 
 	var req dto.UploadContentSectionImagesRequest
 	
-	// Handle JSON request with Supabase URLs (preferred method)
 	if err := ctx.BodyParser(&req); err != nil {
 		fmt.Printf("❌ Invalid JSON body: %v\n", err)
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body: " + err.Error()))
 	}
 
-	// Validate the request
 	if err := utils.ValidateStruct(req); err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Validation error: " + err.Error()))
 	}
 
-	// Validate that all images have URLs
 	for i, img := range req.Images {
 		if img.ImageURL == "" {
 			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(
@@ -304,10 +334,17 @@ func (h *ImageHandler) UploadContentSectionImages(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User ID not found in context"))
 	}
 	
+	// 🔄 ORIGINAL: Your existing service call
 	response, err := services.UploadContentSectionImages(sectionId, req, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
+
+	// 🔧 REDIS CACHE: Invalidate related caches after successful upload
+	go func() {
+		cache.Delete(fmt.Sprintf("content_section_images_%s", sectionId.String()))
+		// Note: Would need placeId to invalidate place cache, but we don't have it in this context
+	}()
 
 	return ctx.Status(http.StatusCreated).JSON(utils.SuccessResponse("Images uploaded successfully", response))
 }
@@ -319,17 +356,31 @@ func (h *ImageHandler) GetContentSectionImages(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid section ID"))
 	}
 
-	images, err := services.GetContentSectionImages(sectionId)
+	// 🔧 REDIS CACHE: Try cache first
+	cacheKey := fmt.Sprintf("content_section_images_%s", sectionId.String())
+	var images []dto.ContentSectionImageResponse
+	
+	if err := cache.Get(cacheKey, &images); err == nil {
+		ctx.Set("X-Cache", "HIT")
+		return ctx.JSON(utils.SuccessResponse("Images retrieved successfully", images))
+	}
+
+	// 🔄 ORIGINAL: Your existing database call
+	images, err = services.GetContentSectionImages(sectionId)
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse(err.Error()))
 	}
+
+	// 🔧 REDIS CACHE: Store in cache (background, doesn't block response)
+	go cache.Set(cacheKey, images, cache.LongTTL)
+	ctx.Set("X-Cache", "MISS")
 
 	return ctx.JSON(utils.SuccessResponse("Images retrieved successfully", images))
 }
 
 func (h *ImageHandler) UpdateContentSectionImage(ctx *fiber.Ctx) error {
 	sectionIdStr := ctx.Params("sectionId")
-	_, err := uuid.Parse(sectionIdStr)
+	sectionId, err := uuid.Parse(sectionIdStr)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid section ID"))
 	}
@@ -350,17 +401,23 @@ func (h *ImageHandler) UpdateContentSectionImage(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User ID not found in context"))
 	}
 	
+	// 🔄 ORIGINAL: Your existing update logic
 	image, err := services.UpdateContentSectionImage(imageId, req, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
+
+	// 🔧 REDIS CACHE: Invalidate related caches after successful update
+	go func() {
+		cache.Delete(fmt.Sprintf("content_section_images_%s", sectionId.String()))
+	}()
 
 	return ctx.JSON(utils.SuccessResponse("Image updated successfully", image))
 }
 
 func (h *ImageHandler) DeleteContentSectionImage(ctx *fiber.Ctx) error {
 	sectionIdStr := ctx.Params("sectionId")
-	_, err := uuid.Parse(sectionIdStr)
+	sectionId, err := uuid.Parse(sectionIdStr)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid section ID"))
 	}
@@ -376,7 +433,7 @@ func (h *ImageHandler) DeleteContentSectionImage(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User ID not found in context"))
 	}
 	
-	// Use enhanced cleanup function that also removes from Supabase
+	// 🔄 ORIGINAL: Use enhanced cleanup function that also removes from Supabase
 	err = services.DeleteContentSectionImageWithSupabaseCleanup(imageId, userID)
 	if err != nil {
 		// Fallback to regular delete function
@@ -384,8 +441,19 @@ func (h *ImageHandler) DeleteContentSectionImage(ctx *fiber.Ctx) error {
 		if err != nil {
 			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 		}
+		
+		// 🔧 REDIS CACHE: Invalidate caches for fallback delete too
+		go func() {
+			cache.Delete(fmt.Sprintf("content_section_images_%s", sectionId.String()))
+		}()
+		
 		return ctx.JSON(utils.SuccessResponse("Image deleted successfully", nil))
 	}
+
+	// 🔧 REDIS CACHE: Invalidate related caches after successful deletion
+	go func() {
+		cache.Delete(fmt.Sprintf("content_section_images_%s", sectionId.String()))
+	}()
 
 	return ctx.JSON(utils.SuccessResponse("Image and file deleted successfully", nil))
 }
