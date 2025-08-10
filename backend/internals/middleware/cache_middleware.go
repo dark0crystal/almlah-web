@@ -34,6 +34,14 @@ func DefaultCacheConfig() CacheConfig {
 	}
 }
 
+// CachedResponse represents a cached HTTP response
+type CachedResponse struct {
+	Body        []byte            `json:"body"`
+	ContentType string            `json:"content_type"`
+	StatusCode  int               `json:"status_code"`
+	Headers     map[string]string `json:"headers,omitempty"`
+}
+
 // CacheMiddleware creates HTTP response caching middleware
 func CacheMiddleware(config ...CacheConfig) fiber.Handler {
 	cfg := DefaultCacheConfig()
@@ -48,7 +56,7 @@ func CacheMiddleware(config ...CacheConfig) fiber.Handler {
 		}
 
 		// Skip if Redis is not available
-		if !cache.IsRedisAvailable() {
+		if !cache.IsAvailable() {
 			return c.Next()
 		}
 
@@ -62,6 +70,11 @@ func CacheMiddleware(config ...CacheConfig) fiber.Handler {
 			c.Set("X-Cache", "HIT")
 			c.Set("Content-Type", cachedResponse.ContentType)
 			
+			// Set cached headers if any
+			for headerKey, headerValue := range cachedResponse.Headers {
+				c.Set(headerKey, headerValue)
+			}
+			
 			if cachedResponse.StatusCode != 0 {
 				c.Status(cachedResponse.StatusCode)
 			}
@@ -72,49 +85,48 @@ func CacheMiddleware(config ...CacheConfig) fiber.Handler {
 		// Cache miss - continue with request
 		c.Set("X-Cache", "MISS")
 
-		// Capture response
-		originalWrite := c.Response().BodyWriter()
-		responseBuffer := &responseWriter{
-			original: originalWrite,
-			body:     make([]byte, 0),
-		}
-		c.Response().SetBodyWriter(responseBuffer)
-
-		// Continue with the request
+		// Execute the handler
 		err := c.Next()
+		if err != nil {
+			return err
+		}
 
-		// Cache successful responses
-		if err == nil && c.Response().StatusCode() < 400 {
+		// Cache successful responses (status < 400)
+		if c.Response().StatusCode() < 400 {
+			// Get the response body
+			body := c.Response().Body()
+			
+			// Prepare cached response
 			cachedResp := CachedResponse{
-				Body:        responseBuffer.body,
+				Body:        make([]byte, len(body)),
 				ContentType: string(c.Response().Header.ContentType()),
 				StatusCode:  c.Response().StatusCode(),
+				Headers:     make(map[string]string),
 			}
+			
+			// Copy body to avoid reference issues
+			copy(cachedResp.Body, body)
+			
+			// Cache important headers (optional)
+			c.Response().Header.VisitAll(func(key, value []byte) {
+				headerKey := string(key)
+				headerValue := string(value)
+				
+				// Cache only specific headers to avoid bloating cache
+				switch strings.ToLower(headerKey) {
+				case "content-type", "content-encoding", "cache-control", "etag":
+					cachedResp.Headers[headerKey] = headerValue
+				}
+			})
 
 			// Cache in background to avoid blocking
-			go cache.Set(key, cachedResp, cfg.TTL)
+			go func() {
+				cache.Set(key, cachedResp, cfg.TTL)
+			}()
 		}
 
-		return err
+		return nil
 	}
-}
-
-// CachedResponse represents a cached HTTP response
-type CachedResponse struct {
-	Body        []byte `json:"body"`
-	ContentType string `json:"content_type"`
-	StatusCode  int    `json:"status_code"`
-}
-
-// responseWriter captures the response body for caching
-type responseWriter struct {
-	original []byte
-	body     []byte
-}
-
-func (w *responseWriter) Write(p []byte) (int, error) {
-	w.body = append(w.body, p...)
-	return len(p), nil
 }
 
 // CacheForRoute creates route-specific cache middleware
@@ -138,4 +150,61 @@ func InvalidateCache(pattern string) {
 	cache.DeletePattern(pattern)
 }
 
+// CacheWithCustomKey creates cache middleware with custom key generation
+func CacheWithCustomKey(ttl time.Duration, keyFunc func(c *fiber.Ctx) string) fiber.Handler {
+	config := CacheConfig{
+		TTL:          ttl,
+		KeyGenerator: keyFunc,
+	}
+	return CacheMiddleware(config)
+}
 
+// CacheHeaders creates middleware that only caches specific headers
+func CacheHeaders(ttl time.Duration, headers []string) fiber.Handler {
+	headerMap := make(map[string]bool)
+	for _, h := range headers {
+		headerMap[strings.ToLower(h)] = true
+	}
+	
+	return func(c *fiber.Ctx) error {
+		if c.Method() != "GET" || !cache.IsAvailable() {
+			return c.Next()
+		}
+
+		key := fmt.Sprintf("header_cache:%s", c.OriginalURL())
+		
+		var cachedResponse CachedResponse
+		if err := cache.Get(key, &cachedResponse); err == nil {
+			c.Set("X-Cache", "HIT")
+			for headerKey, headerValue := range cachedResponse.Headers {
+				c.Set(headerKey, headerValue)
+			}
+			return c.Next()
+		}
+
+		c.Set("X-Cache", "MISS")
+		err := c.Next()
+		if err != nil {
+			return err
+		}
+
+		if c.Response().StatusCode() < 400 {
+			cachedResp := CachedResponse{
+				Headers: make(map[string]string),
+			}
+			
+			c.Response().Header.VisitAll(func(key, value []byte) {
+				headerKey := strings.ToLower(string(key))
+				if headerMap[headerKey] {
+					cachedResp.Headers[string(key)] = string(value)
+				}
+			})
+
+			go func() {
+				cache.Set(key, cachedResp, ttl)
+			}()
+		}
+
+		return nil
+	}
+}

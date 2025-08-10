@@ -1,4 +1,3 @@
-// internals/cache/redis.go
 package cache
 
 import (
@@ -6,554 +5,380 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
-	"strconv"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sony/gobreaker"
 )
 
 var (
-	RedisClient *redis.Client
-	ctx         = context.Background()
+	Client    *redis.Client
+	ctx       = context.Background()
+	redisOnce sync.Once
+
+	// Prometheus metrics
+	cacheHits = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "cache_hits_total",
+		Help: "Total number of cache hits",
+	})
+	cacheMisses = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "cache_misses_total",
+		Help: "Total number of cache misses",
+	})
+	cacheErrors = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "cache_errors_total",
+		Help: "Total number of cache errors",
+	})
+
+	// Circuit breaker
+	cb = gobreaker.NewCircuitBreaker(gobreaker.Settings{
+		Name:        "Redis",
+		MaxRequests: 5,
+		Interval:    30 * time.Second,
+		Timeout:     10 * time.Second,
+		ReadyToTrip: func(counts gobreaker.Counts) bool {
+			return counts.ConsecutiveFailures > 5
+		},
+		OnStateChange: func(name string, from, to gobreaker.State) {
+			log.Printf("CircuitBreaker '%s' changed from %s to %s", name, from, to)
+		},
+	})
+
+	// TTL constants
+	ShortTTL   = 5 * time.Minute
+	MediumTTL  = 30 * time.Minute
+	LongTTL    = 2 * time.Hour
+	VeryLongTTL = 24 * time.Hour
 )
 
-// InitRedis initializes the Redis client
-func InitRedis() error {
-	redisHost := os.Getenv("REDIS_HOST")
-	if redisHost == "" {
-		redisHost = "localhost"
+func init() {
+	prometheus.MustRegister(cacheHits, cacheMisses, cacheErrors)
+}
+
+// InitializeRedis sets up the Redis connection with thread-safe initialization
+func InitializeRedis(redisURL string) error {
+	var initErr error
+	redisOnce.Do(func() {
+		opts, err := redis.ParseURL(redisURL)
+		if err != nil {
+			initErr = fmt.Errorf("failed to parse Redis URL: %v", err)
+			return
+		}
+
+		Client = redis.NewClient(opts)
+		_, err = Client.Ping(ctx).Result()
+		if err != nil {
+			initErr = fmt.Errorf("failed to connect to Redis: %v", err)
+			return
+		}
+		log.Println("✅ Redis connection established successfully")
+	})
+	return initErr
+}
+
+// Get retrieves a value from cache with context timeout
+func Get(key string, dest interface{}) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+
+	if Client == nil {
+		return fmt.Errorf("redis client not initialized")
 	}
 
-	redisPort := os.Getenv("REDIS_PORT")
-	if redisPort == "" {
-		redisPort = "6379"
+	val, err := Client.Get(ctx, key).Result()
+	switch {
+	case err == redis.Nil:
+		cacheMisses.Inc()
+		return fmt.Errorf("cache miss for key: %s", key)
+	case err != nil:
+		cacheErrors.Inc()
+		return fmt.Errorf("cache error for key %s: %v", key, err)
+	default:
+		cacheHits.Inc()
 	}
 
-	redisPassword := os.Getenv("REDIS_PASSWORD")
-	redisDB := os.Getenv("REDIS_DB")
+	if err := json.Unmarshal([]byte(val), dest); err != nil {
+		cacheErrors.Inc()
+		return fmt.Errorf("failed to unmarshal cache value for key %s: %v", key, err)
+	}
+
+	return nil
+}
+
+// Set stores a value in cache with context timeout
+func Set(key string, value interface{}, ttl time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+
+	if Client == nil {
+		log.Printf("⚠️ Redis client not initialized, skipping cache set for key: %s", key)
+		return nil
+	}
+
+	jsonValue, err := json.Marshal(value)
+	if err != nil {
+		cacheErrors.Inc()
+		return fmt.Errorf("failed to marshal value for key %s: %v", key, err)
+	}
+
+	if err := Client.Set(ctx, key, jsonValue, ttl).Err(); err != nil {
+		cacheErrors.Inc()
+		return fmt.Errorf("failed to set cache for key %s: %v", key, err)
+	}
+
+	return nil
+}
+
+// Delete removes a key from cache with context timeout
+func Delete(key string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+
+	if Client == nil {
+		log.Printf("⚠️ Redis client not initialized, skipping cache delete for key: %s", key)
+		return nil
+	}
+
+	if err := Client.Del(ctx, key).Err(); err != nil {
+		cacheErrors.Inc()
+		return fmt.Errorf("failed to delete cache key %s: %v", key, err)
+	}
+
+	return nil
+}
+
+// DeletePattern removes all keys matching a pattern with SCAN iterator
+func DeletePattern(pattern string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	if Client == nil {
+		log.Printf("⚠️ Redis client not initialized, skipping pattern delete: %s", pattern)
+		return nil
+	}
+
+	iter := Client.Scan(ctx, 0, pattern, 0).Iterator()
+	var keys []string
+	for iter.Next(ctx) {
+		keys = append(keys, iter.Val())
+	}
+
+	if err := iter.Err(); err != nil {
+		cacheErrors.Inc()
+		return fmt.Errorf("failed to scan keys with pattern %s: %v", pattern, err)
+	}
+
+	if len(keys) == 0 {
+		return nil
+	}
+
+	if err := Client.Del(ctx, keys...).Err(); err != nil {
+		cacheErrors.Inc()
+		return fmt.Errorf("failed to delete keys with pattern %s: %v", pattern, err)
+	}
+
+	log.Printf("🗑️ Deleted %d keys matching pattern: %s", len(keys), pattern)
+	return nil
+}
+
+// Close safely closes the Redis connection
+func Close() error {
+	if Client == nil {
+		return nil
+	}
+
+	if err := Client.Close(); err != nil {
+		return fmt.Errorf("failed to close Redis connection: %v", err)
+	}
+
+	log.Println("🔌 Redis connection closed")
+	return nil
+}
+
+// GetOrSet provides atomic cache get-or-set operation
+func GetOrSet(key string, dest interface{}, ttl time.Duration, fetchFunc func() (interface{}, error)) error {
+	_, err := cb.Execute(func() (interface{}, error) {
+		if err := Get(key, dest); err == nil {
+			return nil, nil
+		}
+
+		value, err := fetchFunc()
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch data for key %s: %v", key, err)
+		}
+
+		if err := Set(key, value, ttl); err != nil {
+			log.Printf("⚠️ Failed to cache value for key %s: %v", key, err)
+		}
+
+		jsonValue, err := json.Marshal(value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal fetched value: %v", err)
+		}
+
+		return nil, json.Unmarshal(jsonValue, dest)
+	})
+	return err
+}
+
+// IsAvailable checks if Redis is responsive
+func IsAvailable() bool {
+	if Client == nil {
+		return false
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+	_, err := Client.Ping(ctx).Result()
+	return err == nil
+}
+
+// Exists checks if a key exists in cache
+func Exists(key string) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+
+	if Client == nil {
+		return false, fmt.Errorf("redis client not initialized")
+	}
+
+	count, err := Client.Exists(ctx, key).Result()
+	if err != nil {
+		cacheErrors.Inc()
+		return false, fmt.Errorf("failed to check existence of key %s: %v", key, err)
+	}
+
+	return count > 0, nil
+}
+
+// GetTTL returns the remaining TTL for a key
+func GetTTL(key string) (time.Duration, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+
+	if Client == nil {
+		return 0, fmt.Errorf("redis client not initialized")
+	}
+
+	ttl, err := Client.TTL(ctx, key).Result()
+	if err != nil {
+		cacheErrors.Inc()
+		return 0, fmt.Errorf("failed to get TTL for key %s: %v", key, err)
+	}
+
+	return ttl, nil
+}
+
+// FlushAll clears all cache (use with caution!)
+func FlushAll() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if Client == nil {
+		return fmt.Errorf("redis client not initialized")
+	}
+
+	if err := Client.FlushAll(ctx).Err(); err != nil {
+		cacheErrors.Inc()
+		return fmt.Errorf("failed to flush cache: %v", err)
+	}
+
+	log.Println("🧹 Cache flushed successfully")
+	return nil
+}
+
+// GetStats returns Redis server statistics
+func GetStats() (map[string]interface{}, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	if Client == nil {
+		return nil, fmt.Errorf("redis client not initialized")
+	}
+
+	info, err := Client.Info(ctx).Result()
+	if err != nil {
+		cacheErrors.Inc()
+		return nil, fmt.Errorf("failed to get Redis info: %v", err)
+	}
+
+	stats := make(map[string]interface{})
+	lines := strings.Split(info, "\r\n")
 	
-	db := 0
-	if redisDB != "" {
-		if parsed, err := strconv.Atoi(redisDB); err == nil {
-			db = parsed
+	for _, line := range lines {
+		if strings.Contains(line, ":") && !strings.HasPrefix(line, "#") {
+			parts := strings.SplitN(line, ":", 2)
+			if len(parts) == 2 {
+				key := strings.TrimSpace(parts[0])
+				value := strings.TrimSpace(parts[1])
+				stats[key] = value
+			}
 		}
 	}
 
-	RedisClient = redis.NewClient(&redis.Options{
-		Addr:         fmt.Sprintf("%s:%s", redisHost, redisPort),
-		Password:     redisPassword,
-		DB:           db,
-		PoolSize:     10,
-		PoolTimeout:  30 * time.Second,
-		IdleTimeout:  5 * time.Minute,
-		ReadTimeout:  3 * time.Second,
-		WriteTimeout: 3 * time.Second,
-	})
-
-	// Test connection
-	_, err := RedisClient.Ping(ctx).Result()
-	if err != nil {
-		log.Printf("✅ Cached category: %s (%s)", category.NameEn, category.ID)
-	}
-	return err
+	return stats, nil
 }
 
-func (s *MetaCacheService) GetCategory(categoryID uuid.UUID) (*dto.CategoryResponse, error) {
-	var category dto.CategoryResponse
-	key := cache.CategoryKey(categoryID)
+// GetCacheInfo returns information about cached keys
+func GetCacheInfo() (map[string]interface{}, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	if Client == nil {
+		return nil, fmt.Errorf("redis client not initialized")
+	}
+
+	info := make(map[string]interface{})
 	
-	err := cache.Get(key, &category)
-	if err != nil {
-		return nil, err
+	iter := Client.Scan(ctx, 0, "*", 0).Iterator()
+	prefixCounts := make(map[string]int)
+	total := 0
+
+	for iter.Next(ctx) {
+		total++
+		key := iter.Val()
+		parts := strings.SplitN(key, "_", 2)
+		if len(parts) > 0 {
+			prefix := parts[0]
+			prefixCounts[prefix]++
+		}
 	}
 
-	log.Printf("🎯 Cache HIT: Category %s", categoryID)
-	return &category, nil
-}
-
-func (s *MetaCacheService) CacheCategoryList(categories interface{}, lang string) error {
-	if categories == nil {
-		return fmt.Errorf("categories list is nil")
+	if err := iter.Err(); err != nil {
+		cacheErrors.Inc()
+		return nil, fmt.Errorf("failed to scan keys: %v", err)
 	}
-
-	key := cache.CategoryListKey(lang)
-	err := cache.Set(key, categories, cache.LongTTL)
-	if err != nil {
-		log.Printf("⚠️ Failed to cache category list (lang: %s): %v", lang, err)
-	} else {
-		log.Printf("✅ Cached category list (lang: %s)", lang)
-	}
-	return err
-}
-
-func (s *MetaCacheService) GetCategoryList(lang string) (interface{}, error) {
-	var categories interface{}
-	key := cache.CategoryListKey(lang)
 	
-	err := cache.Get(key, &categories)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("🎯 Cache HIT: Category list (lang: %s)", lang)
-	return categories, nil
-}
-
-func (s *MetaCacheService) CacheCategoryHierarchy(hierarchy *dto.CategoryHierarchyResponse, lang string) error {
-	if hierarchy == nil {
-		return fmt.Errorf("hierarchy is nil")
-	}
-
-	key := cache.CategoryHierarchyKey(lang)
-	err := cache.Set(key, hierarchy, cache.LongTTL)
-	if err != nil {
-		log.Printf("⚠️ Failed to cache category hierarchy (lang: %s): %v", lang, err)
-	} else {
-		log.Printf("✅ Cached category hierarchy (lang: %s)", lang)
-	}
-	return err
-}
-
-func (s *MetaCacheService) GetCategoryHierarchy(lang string) (*dto.CategoryHierarchyResponse, error) {
-	var hierarchy dto.CategoryHierarchyResponse
-	key := cache.CategoryHierarchyKey(lang)
+	info["total_keys"] = total
+	info["keys_by_prefix"] = prefixCounts
 	
-	err := cache.Get(key, &hierarchy)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("🎯 Cache HIT: Category hierarchy (lang: %s)", lang)
-	return &hierarchy, nil
+	return info, nil
 }
 
-func (s *MetaCacheService) CachePrimaryCategories(categories interface{}, lang string) error {
-	if categories == nil {
-		return fmt.Errorf("primary categories list is nil")
-	}
-
-	key := cache.PrimaryCategoriesKey(lang)
-	err := cache.Set(key, categories, cache.LongTTL)
-	if err != nil {
-		log.Printf("⚠️ Failed to cache primary categories (lang: %s): %v", lang, err)
-	} else {
-		log.Printf("✅ Cached primary categories (lang: %s)", lang)
-	}
-	return err
+// InvalidatePattern safely invalidates cache patterns in background
+func InvalidatePattern(pattern string) {
+	go func() {
+		_, err := cb.Execute(func() (interface{}, error) {
+			return nil, DeletePattern(pattern)
+		})
+		if err != nil {
+			log.Printf("❌ Failed to invalidate pattern %s: %v", pattern, err)
+		}
+	}()
 }
 
-func (s *MetaCacheService) GetPrimaryCategories(lang string) (interface{}, error) {
-	var categories interface{}
-	key := cache.PrimaryCategoriesKey(lang)
-	
-	err := cache.Get(key, &categories)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("🎯 Cache HIT: Primary categories (lang: %s)", lang)
-	return categories, nil
-}
-
-func (s *MetaCacheService) CacheSecondaryCategories(parentID uuid.UUID, categories []dto.CategoryResponse) error {
-	if categories == nil {
-		return fmt.Errorf("secondary categories list is nil")
-	}
-
-	key := cache.SecondaryCategoriesKey(parentID)
-	err := cache.Set(key, categories, cache.LongTTL)
-	if err != nil {
-		log.Printf("⚠️ Failed to cache secondary categories for %s: %v", parentID, err)
-	} else {
-		log.Printf("✅ Cached secondary categories for %s (%d categories)", parentID, len(categories))
-	}
-	return err
-}
-
-func (s *MetaCacheService) GetSecondaryCategories(parentID uuid.UUID) ([]dto.CategoryResponse, error) {
-	var categories []dto.CategoryResponse
-	key := cache.SecondaryCategoriesKey(parentID)
-	
-	err := cache.Get(key, &categories)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("🎯 Cache HIT: Secondary categories for %s (%d categories)", parentID, len(categories))
-	return categories, nil
-}
-
-func (s *MetaCacheService) InvalidateCategory(categoryID uuid.UUID) error {
-	// Delete specific category
-	cache.Delete(cache.CategoryKey(categoryID))
-	
-	// Delete related cached data
-	cache.DeletePattern(cache.CategoryPattern(categoryID))
-	
-	// Invalidate category lists
-	s.InvalidateCategoryLists()
-	
-	log.Printf("🗑️ Invalidated cache for category: %s", categoryID)
-	return nil
-}
-
-func (s *MetaCacheService) InvalidateCategoryLists() error {
-	// Delete all category lists
-	cache.DeletePattern(cache.CategoryListPrefix + "*")
-	cache.DeletePattern(cache.CategoryHierarchyPrefix + "*")
-	cache.DeletePattern(cache.PrimaryCategoriesPrefix + "*")
-	cache.DeletePattern(cache.SecondaryCategoriesPrefix + "*")
-	
-	log.Printf("🗑️ Invalidated all category list caches")
-	return nil
-}
-
-// Governates
-func (s *MetaCacheService) CacheGovernate(governate *dto.GovernateResponse) error {
-	if governate == nil {
-		return fmt.Errorf("governate is nil")
-	}
-
-	key := cache.GovernateKey(governate.ID)
-	err := cache.Set(key, governate, cache.LongTTL)
-	if err != nil {
-		log.Printf("⚠️ Failed to cache governate %s: %v", governate.ID, err)
-	} else {
-		log.Printf("✅ Cached governate: %s (%s)", governate.NameEn, governate.ID)
-	}
-	return err
-}
-
-func (s *MetaCacheService) GetGovernate(governateID uuid.UUID) (*dto.GovernateResponse, error) {
-	var governate dto.GovernateResponse
-	key := cache.GovernateKey(governateID)
-	
-	err := cache.Get(key, &governate)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("🎯 Cache HIT: Governate %s", governateID)
-	return &governate, nil
-}
-
-func (s *MetaCacheService) CacheGovernateList(governates []dto.GovernateResponse) error {
-	if governates == nil {
-		return fmt.Errorf("governates list is nil")
-	}
-
-	key := cache.GovernateListKey()
-	err := cache.Set(key, governates, cache.LongTTL)
-	if err != nil {
-		log.Printf("⚠️ Failed to cache governate list: %v", err)
-	} else {
-		log.Printf("✅ Cached governate list: %d governates", len(governates))
-	}
-	return err
-}
-
-func (s *MetaCacheService) GetGovernateList() ([]dto.GovernateResponse, error) {
-	var governates []dto.GovernateResponse
-	key := cache.GovernateListKey()
-	
-	err := cache.Get(key, &governates)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("🎯 Cache HIT: Governate list (%d governates)", len(governates))
-	return governates, nil
-}
-
-func (s *MetaCacheService) CacheGovernateWilayahs(governateID uuid.UUID, wilayahs []dto.WilayahResponse) error {
-	if wilayahs == nil {
-		return fmt.Errorf("wilayahs list is nil")
-	}
-
-	key := cache.GovernateWilayahsKey(governateID)
-	err := cache.Set(key, wilayahs, cache.LongTTL)
-	if err != nil {
-		log.Printf("⚠️ Failed to cache governate wilayahs %s: %v", governateID, err)
-	} else {
-		log.Printf("✅ Cached governate wilayahs: %s (%d wilayahs)", governateID, len(wilayahs))
-	}
-	return err
-}
-
-func (s *MetaCacheService) GetGovernateWilayahs(governateID uuid.UUID) ([]dto.WilayahResponse, error) {
-	var wilayahs []dto.WilayahResponse
-	key := cache.GovernateWilayahsKey(governateID)
-	
-	err := cache.Get(key, &wilayahs)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("🎯 Cache HIT: Governate wilayahs %s (%d wilayahs)", governateID, len(wilayahs))
-	return wilayahs, nil
-}
-
-func (s *MetaCacheService) InvalidateGovernate(governateID uuid.UUID) error {
-	// Delete specific governate
-	cache.Delete(cache.GovernateKey(governateID))
-	
-	// Delete related cached data
-	cache.DeletePattern(cache.GovernatePattern(governateID))
-	
-	// Invalidate governate lists
-	s.InvalidateGovernateLists()
-	
-	log.Printf("🗑️ Invalidated cache for governate: %s", governateID)
-	return nil
-}
-
-func (s *MetaCacheService) InvalidateGovernateLists() error {
-	// Delete governate list
-	cache.Delete(cache.GovernateListKey())
-	
-	// Delete governate wilayahs
-	cache.DeletePattern(cache.GovernateWilayahsPrefix + "*")
-	
-	log.Printf("🗑️ Invalidated all governate list caches")
-	return nil
-}
-
-// Wilayahs
-func (s *MetaCacheService) CacheWilayah(wilayah *dto.WilayahResponse) error {
-	if wilayah == nil {
-		return fmt.Errorf("wilayah is nil")
-	}
-
-	key := cache.WilayahKey(wilayah.ID)
-	err := cache.Set(key, wilayah, cache.LongTTL)
-	if err != nil {
-		log.Printf("⚠️ Failed to cache wilayah %s: %v", wilayah.ID, err)
-	} else {
-		log.Printf("✅ Cached wilayah: %s (%s)", wilayah.NameEn, wilayah.ID)
-	}
-	return err
-}
-
-func (s *MetaCacheService) GetWilayah(wilayahID uuid.UUID) (*dto.WilayahResponse, error) {
-	var wilayah dto.WilayahResponse
-	key := cache.WilayahKey(wilayahID)
-	
-	err := cache.Get(key, &wilayah)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("🎯 Cache HIT: Wilayah %s", wilayahID)
-	return &wilayah, nil
-}
-
-func (s *MetaCacheService) CacheWilayahList(wilayahs []dto.WilayahResponse) error {
-	if wilayahs == nil {
-		return fmt.Errorf("wilayahs list is nil")
-	}
-
-	key := cache.WilayahListKey()
-	err := cache.Set(key, wilayahs, cache.LongTTL)
-	if err != nil {
-		log.Printf("⚠️ Failed to cache wilayah list: %v", err)
-	} else {
-		log.Printf("✅ Cached wilayah list: %d wilayahs", len(wilayahs))
-	}
-	return err
-}
-
-func (s *MetaCacheService) GetWilayahList() ([]dto.WilayahResponse, error) {
-	var wilayahs []dto.WilayahResponse
-	key := cache.WilayahListKey()
-	
-	err := cache.Get(key, &wilayahs)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("🎯 Cache HIT: Wilayah list (%d wilayahs)", len(wilayahs))
-	return wilayahs, nil
-}
-
-func (s *MetaCacheService) CacheWilayahSearchResults(query string, wilayahs []dto.WilayahResponse) error {
-	key := cache.WilayahSearchKey(query)
-	err := cache.Set(key, wilayahs, cache.ShortTTL)
-	if err != nil {
-		log.Printf("⚠️ Failed to cache wilayah search results for '%s': %v", query, err)
-	} else {
-		log.Printf("✅ Cached wilayah search results for '%s': %d wilayahs", query, len(wilayahs))
-	}
-	return err
-}
-
-func (s *MetaCacheService) GetWilayahSearchResults(query string) ([]dto.WilayahResponse, error) {
-	var wilayahs []dto.WilayahResponse
-	key := cache.WilayahSearchKey(query)
-	
-	err := cache.Get(key, &wilayahs)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("🎯 Cache HIT: Wilayah search results for '%s' (%d wilayahs)", query, len(wilayahs))
-	return wilayahs, nil
-}
-
-func (s *MetaCacheService) InvalidateWilayah(wilayahID uuid.UUID) error {
-	// Delete specific wilayah
-	cache.Delete(cache.WilayahKey(wilayahID))
-	
-	// Delete related cached data
-	cache.DeletePattern(cache.WilayahPattern(wilayahID))
-	
-	// Invalidate wilayah lists
-	s.InvalidateWilayahLists()
-	
-	log.Printf("🗑️ Invalidated cache for wilayah: %s", wilayahID)
-	return nil
-}
-
-func (s *MetaCacheService) InvalidateWilayahLists() error {
-	// Delete wilayah list
-	cache.Delete(cache.WilayahListKey())
-	
-	// Delete search results
-	cache.DeletePattern(cache.WilayahSearchPrefix + "*")
-	
-	log.Printf("🗑️ Invalidated all wilayah list caches")
-	return nil
-}
-
-// Properties
-func (s *MetaCacheService) CacheProperty(property *dto.DetailedPropertyResponse) error {
-	if property == nil {
-		return fmt.Errorf("property is nil")
-	}
-
-	key := cache.PropertyKey(property.ID)
-	err := cache.Set(key, property, cache.LongTTL)
-	if err != nil {
-		log.Printf("⚠️ Failed to cache property %s: %v", property.ID, err)
-	} else {
-		log.Printf("✅ Cached property: %s (%s)", property.NameEn, property.ID)
-	}
-	return err
-}
-
-func (s *MetaCacheService) GetProperty(propertyID uuid.UUID) (*dto.DetailedPropertyResponse, error) {
-	var property dto.DetailedPropertyResponse
-	key := cache.PropertyKey(propertyID)
-	
-	err := cache.Get(key, &property)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("🎯 Cache HIT: Property %s", propertyID)
-	return &property, nil
-}
-
-func (s *MetaCacheService) CachePropertyList(properties []dto.PropertyListResponse) error {
-	if properties == nil {
-		return fmt.Errorf("properties list is nil")
-	}
-
-	key := cache.PropertyListKey()
-	err := cache.Set(key, properties, cache.LongTTL)
-	if err != nil {
-		log.Printf("⚠️ Failed to cache property list: %v", err)
-	} else {
-		log.Printf("✅ Cached property list: %d properties", len(properties))
-	}
-	return err
-}
-
-func (s *MetaCacheService) GetPropertyList() ([]dto.PropertyListResponse, error) {
-	var properties []dto.PropertyListResponse
-	key := cache.PropertyListKey()
-	
-	err := cache.Get(key, &properties)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("🎯 Cache HIT: Property list (%d properties)", len(properties))
-	return properties, nil
-}
-
-func (s *MetaCacheService) CachePropertiesByCategory(categoryID uuid.UUID, properties []dto.PropertyListResponse) error {
-	key := cache.PropertyByCategoryKey(categoryID)
-	err := cache.Set(key, properties, cache.LongTTL)
-	if err != nil {
-		log.Printf("⚠️ Failed to cache properties by category %s: %v", categoryID, err)
-	} else {
-		log.Printf("✅ Cached properties by category %s: %d properties", categoryID, len(properties))
-	}
-	return err
-}
-
-func (s *MetaCacheService) GetPropertiesByCategory(categoryID uuid.UUID) ([]dto.PropertyListResponse, error) {
-	var properties []dto.PropertyListResponse
-	key := cache.PropertyByCategoryKey(categoryID)
-	
-	err := cache.Get(key, &properties)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("🎯 Cache HIT: Properties by category %s (%d properties)", categoryID, len(properties))
-	return properties, nil
-}
-
-func (s *MetaCacheService) CachePlaceProperties(placeID uuid.UUID, properties []dto.PlacePropertyResponse) error {
-	key := cache.PlacePropertiesKey(placeID)
-	err := cache.Set(key, properties, cache.MediumTTL)
-	if err != nil {
-		log.Printf("⚠️ Failed to cache place properties %s: %v", placeID, err)
-	} else {
-		log.Printf("✅ Cached place properties: %s (%d properties)", placeID, len(properties))
-	}
-	return err
-}
-
-func (s *MetaCacheService) GetPlaceProperties(placeID uuid.UUID) ([]dto.PlacePropertyResponse, error) {
-	var properties []dto.PlacePropertyResponse
-	key := cache.PlacePropertiesKey(placeID)
-	
-	err := cache.Get(key, &properties)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("🎯 Cache HIT: Place properties %s (%d properties)", placeID, len(properties))
-	return properties, nil
-}
-
-func (s *MetaCacheService) InvalidateProperty(propertyID uuid.UUID) error {
-	// Delete specific property
-	cache.Delete(cache.PropertyKey(propertyID))
-	
-	// Delete related cached data
-	cache.DeletePattern(cache.PropertyPattern(propertyID))
-	
-	// Invalidate property lists
-	s.InvalidatePropertyLists()
-	
-	log.Printf("🗑️ Invalidated cache for property: %s", propertyID)
-	return nil
-}
-
-func (s *MetaCacheService) InvalidatePropertyLists() error {
-	// Delete property list
-	cache.Delete(cache.PropertyListKey())
-	
-	// Delete category-filtered lists
-	cache.DeletePattern(cache.PropertyByCategoryPrefix + "*")
-	
-	// Delete place properties
-	cache.DeletePattern(cache.PlacePropertiesPrefix + "*")
-	
-	log.Printf("🗑️ Invalidated all property list caches")
-	return nil
+// InvalidateKeys safely invalidates multiple keys in background
+func InvalidateKeys(keys ...string) {
+	go func() {
+		for _, key := range keys {
+			_, err := cb.Execute(func() (interface{}, error) {
+				return nil, Delete(key)
+			})
+			if err != nil {
+				log.Printf("❌ Failed to invalidate key %s: %v", key, err)
+			}
+		}
+	}()
 }

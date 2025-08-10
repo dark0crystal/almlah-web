@@ -6,8 +6,8 @@ import (
 )
 
 // InitializeRedis sets up Redis connection
-func InitializeRedis() {
-	if err := cache.InitRedis(); err != nil {
+func InitializeRedis(redisURL string) {
+	if err := cache.InitializeRedis(redisURL); err != nil {
 		log.Printf("⚠️ Redis initialization failed: %v", err)
 		log.Printf("🔄 Application will continue without Redis caching")
 	} else {
