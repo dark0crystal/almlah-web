@@ -1,3 +1,5 @@
+// Enhanced Place Edit Component with Backend Image Management
+
 "use client"
 import React, { useState, useEffect } from 'react';
 import { 
@@ -18,95 +20,56 @@ import {
   X,
   Eye,
   Move,
-  Star
+  Star,
+  RefreshCw,
+  Edit
 } from 'lucide-react';
+
+// Import the enhanced services from the previous component
+import { placeService } from '../../ManagePlaces'; // Adjust import path as needed
 
 // API Configuration
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:9000/api/v1';
 
-// API Services
-const placeService = {
-  getPlaceById: async (placeId) => {
-    const response = await fetch(`${API_BASE_URL}/places/${placeId}`, {
+const metaService = {
+  getCategories: async () => {
+    const response = await fetch(`${API_BASE_URL}/categories`, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         'Content-Type': 'application/json'
       }
     });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch place: ${response.statusText}`);
-    }
-
     return response.json();
   },
 
-  updatePlace: async (placeId, data) => {
-    const response = await fetch(`${API_BASE_URL}/places/${placeId}`, {
-      method: 'PUT',
+  getGovernates: async () => {
+    const response = await fetch(`${API_BASE_URL}/governates`, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to update place: ${response.statusText}`);
-    }
-
-    return response.json();
-  },
-
-  uploadImages: async (placeId, images) => {
-    const formData = new FormData();
-    
-    // Add the JSON data
-    formData.append('data', JSON.stringify({ images }));
-    
-    // Add image files
-    images.forEach((image, index) => {
-      if (image.file) {
-        formData.append(`images[${index}]`, image.file);
-      }
-    });
-
-    const response = await fetch(`${API_BASE_URL}/places/${placeId}/images`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-      body: formData
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to upload images: ${response.statusText}`);
-    }
-
-    return response.json();
-  },
-
-  deleteImage: async (imageId) => {
-    const response = await fetch(`${API_BASE_URL}/places/images/${imageId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         'Content-Type': 'application/json'
       }
     });
-
-    if (!response.ok) {
-      throw new Error(`Failed to delete image: ${response.statusText}`);
-    }
-
     return response.json();
   },
 
+  getWilayahs: async (governateId) => {
+    const response = await fetch(`${API_BASE_URL}/wilayahs?governate_id=${governateId}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    return response.json();
+  }
+};
+
+// Content Section Services
+const contentSectionService = {
   createContentSection: async (placeId, sectionData) => {
     const response = await fetch(`${API_BASE_URL}/places/${placeId}/content-sections`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(sectionData)
@@ -123,7 +86,7 @@ const placeService = {
     const response = await fetch(`${API_BASE_URL}/places/${placeId}/content-sections/${sectionId}`, {
       method: 'PUT',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(sectionData)
@@ -140,7 +103,7 @@ const placeService = {
     const response = await fetch(`${API_BASE_URL}/places/${placeId}/content-sections/${sectionId}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         'Content-Type': 'application/json'
       }
     });
@@ -153,101 +116,184 @@ const placeService = {
   }
 };
 
-const metaService = {
-  getCategories: async () => {
-    const response = await fetch(`${API_BASE_URL}/categories`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    return response.json();
-  },
-
-  getGovernates: async () => {
-    const response = await fetch(`${API_BASE_URL}/governates`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    return response.json();
-  },
-
-  getWilayahs: async (governateId) => {
-    const response = await fetch(`${API_BASE_URL}/wilayahs?governate_id=${governateId}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    return response.json();
-  }
-};
-
-// Image Management Component
-const ImageManager = ({ images, onImagesChange, onImageDelete }) => {
+// Enhanced Image Manager Component for Place Edit
+const PlaceImageManager = ({ placeId, onImageCountChange }) => {
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
-  const handleFileSelect = (files) => {
-    const newImages = Array.from(files).map((file, index) => ({
-      id: `temp_${Date.now()}_${index}`,
-      file,
-      imageUrl: URL.createObjectURL(file),
-      altText: '',
-      isPrimary: images.length === 0 && index === 0,
-      displayOrder: images.length + index + 1,
-      isNew: true
-    }));
+  useEffect(() => {
+    if (placeId) {
+      loadImages();
+    }
+  }, [placeId]);
 
-    onImagesChange([...images, ...newImages]);
+  const loadImages = async () => {
+    try {
+      setLoading(true);
+      const response = await placeService.getPlaceImages(placeId);
+      if (response.success) {
+        const imageData = response.data || [];
+        setImages(imageData);
+        onImageCountChange?.(imageData.length);
+      }
+    } catch (err) {
+      console.error('Error loading images:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFileUpload = async (files) => {
+    if (!files || files.length === 0) return;
+
+    try {
+      setUploading(true);
+      setUploadProgress(0);
+
+      const fileArray = Array.from(files);
+      
+      // Validate files
+      for (const file of fileArray) {
+        if (file.size > 10 * 1024 * 1024) { // 10MB limit
+          throw new Error(`File ${file.name} is too large. Maximum size is 10MB.`);
+        }
+        if (!file.type.startsWith('image/')) {
+          throw new Error(`File ${file.name} is not an image.`);
+        }
+      }
+
+      // Prepare image data
+      const imageData = fileArray.map((file, index) => ({
+        altText: '',
+        isPrimary: images.length === 0 && index === 0,
+        displayOrder: images.length + index + 1
+      }));
+
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 10, 90));
+      }, 200);
+
+      // Upload images
+      const response = await placeService.uploadImages(placeId, fileArray, imageData);
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      if (response.success) {
+        // Reload images from backend
+        await loadImages();
+        setTimeout(() => {
+          setUploadProgress(0);
+        }, 1000);
+      } else {
+        throw new Error(response.message || 'Upload failed');
+      }
+    } catch (err) {
+      console.error('Error uploading images:', err);
+      alert(`Failed to upload images: ${err.message}`);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     setDragOver(false);
     const files = e.dataTransfer.files;
-    handleFileSelect(files);
+    handleFileUpload(files);
   };
 
-  const updateImage = (imageId, updates) => {
-    const updatedImages = images.map(img => 
-      img.id === imageId ? { ...img, ...updates } : img
-    );
-    onImagesChange(updatedImages);
+  const updateImageMetadata = async (imageId, updates) => {
+    try {
+      const response = await placeService.updateImage(placeId, imageId, updates);
+      if (response.success) {
+        await loadImages();
+      }
+    } catch (err) {
+      console.error('Error updating image:', err);
+      alert(`Failed to update image: ${err.message}`);
+    }
   };
 
-  const setPrimaryImage = (imageId) => {
-    const updatedImages = images.map(img => ({
-      ...img,
-      isPrimary: img.id === imageId
-    }));
-    onImagesChange(updatedImages);
+  const deleteImage = async (imageId) => {
+    if (!confirm('Are you sure you want to delete this image?')) return;
+
+    try {
+      const response = await placeService.deleteImage(placeId, imageId);
+      if (response.success) {
+        await loadImages();
+      }
+    } catch (err) {
+      console.error('Error deleting image:', err);
+      alert(`Failed to delete image: ${err.message}`);
+    }
+  };
+
+  const setPrimaryImage = async (imageId) => {
+    try {
+      const response = await placeService.updateImage(placeId, imageId, { is_primary: true });
+      if (response.success) {
+        await loadImages();
+      }
+    } catch (err) {
+      console.error('Error setting primary image:', err);
+      alert(`Failed to set primary image: ${err.message}`);
+    }
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Images</h3>
-        <label className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer">
-          <Upload className="w-4 h-4" />
-          Upload Images
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => handleFileSelect(e.target.files)}
-          />
-        </label>
+        <h3 className="text-lg font-medium">Images ({images.length})</h3>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={loadImages}
+            disabled={loading || uploading}
+            className="flex items-center gap-2 px-3 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <label className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer disabled:opacity-50">
+            <Upload className="w-4 h-4" />
+            Upload Images
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleFileUpload(e.target.files)}
+              disabled={uploading}
+            />
+          </label>
+        </div>
       </div>
+
+      {/* Upload Progress */}
+      {uploading && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+            <span className="text-sm text-blue-800">Uploading images... {uploadProgress}%</span>
+          </div>
+          <div className="w-full bg-blue-200 rounded-full h-2">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${uploadProgress}%` }}
+            ></div>
+          </div>
+        </div>
+      )}
 
       {/* Drop Zone */}
       <div
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
           dragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-        }`}
+        } ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
         onDrop={handleDrop}
         onDragOver={(e) => {
           e.preventDefault();
@@ -265,35 +311,55 @@ const ImageManager = ({ images, onImagesChange, onImageDelete }) => {
               multiple
               accept="image/*"
               className="hidden"
-              onChange={(e) => handleFileSelect(e.target.files)}
+              onChange={(e) => handleFileUpload(e.target.files)}
+              disabled={uploading}
             />
           </label>
         </p>
+        <p className="text-sm text-gray-500 mt-2">
+          Supported formats: JPG, PNG, WebP, GIF (max 10MB each)
+        </p>
       </div>
 
-      {/* Image Grid */}
-      {images.length > 0 && (
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          <span className="ml-2 text-gray-600">Loading images...</span>
+        </div>
+      )}
+
+      {/* Images Grid */}
+      {!loading && images.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {images.map((image) => (
             <div key={image.id} className="border rounded-lg overflow-hidden">
               <div className="relative">
                 <img
-                  src={image.imageUrl || image.image_url}
-                  alt={image.altText || 'Place image'}
+                  src={image.image_url}
+                  alt={image.alt_text || 'Place image'}
                   className="w-full h-32 object-cover"
+                  onError={(e) => {
+                    e.target.src = '/placeholder-image.jpg';
+                  }}
                 />
                 
                 {/* Primary badge */}
-                {image.isPrimary && (
+                {image.is_primary && (
                   <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
                     <Star className="w-3 h-3" />
                     Primary
                   </div>
                 )}
 
+                {/* Display order badge */}
+                <div className="absolute top-2 right-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs">
+                  #{image.display_order}
+                </div>
+
                 {/* Actions */}
-                <div className="absolute top-2 right-2 flex gap-1">
-                  {!image.isPrimary && (
+                <div className="absolute bottom-2 right-2 flex gap-1">
+                  {!image.is_primary && (
                     <button
                       onClick={() => setPrimaryImage(image.id)}
                       className="w-7 h-7 bg-white bg-opacity-90 rounded-full flex items-center justify-center hover:bg-opacity-100"
@@ -303,8 +369,9 @@ const ImageManager = ({ images, onImagesChange, onImageDelete }) => {
                     </button>
                   )}
                   <button
-                    onClick={() => onImageDelete(image.id)}
+                    onClick={() => deleteImage(image.id)}
                     className="w-7 h-7 bg-red-500 bg-opacity-90 text-white rounded-full flex items-center justify-center hover:bg-opacity-100"
+                    title="Delete image"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -314,31 +381,68 @@ const ImageManager = ({ images, onImagesChange, onImageDelete }) => {
               <div className="p-3">
                 <input
                   type="text"
-                  placeholder="Alt text"
-                  value={image.altText || ''}
-                  onChange={(e) => updateImage(image.id, { altText: e.target.value })}
+                  placeholder="Alt text (for accessibility)"
+                  value={image.alt_text || ''}
+                  onChange={(e) => {
+                    // Update local state immediately for better UX
+                    setImages(prev => prev.map(img => 
+                      img.id === image.id ? { ...img, alt_text: e.target.value } : img
+                    ));
+                  }}
+                  onBlur={(e) => updateImageMetadata(image.id, { alt_text: e.target.value })}
                   className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
                 />
+                <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+                  <span>Order: {image.display_order}</span>
+                  <span>
+                    {new Date(image.upload_date).toLocaleDateString()}
+                  </span>
+                </div>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!loading && images.length === 0 && (
+        <div className="text-center py-8">
+          <FileImage className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No images yet</h3>
+          <p className="text-gray-600 mb-4">
+            Upload some images to showcase this place
+          </p>
+          <label className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer">
+            <Upload className="w-4 h-4" />
+            Upload First Image
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleFileUpload(e.target.files)}
+            />
+          </label>
         </div>
       )}
     </div>
   );
 };
 
-// Content Section Component
-const ContentSectionEditor = ({ sections, onSectionsChange }) => {
+// Content Section Editor Component
+const ContentSectionEditor = ({ placeId, sections, onSectionsChange }) => {
+  const [saving, setSaving] = useState(false);
+
   const addSection = () => {
     const newSection = {
       id: `temp_${Date.now()}`,
-      sectionType: 'history',
-      titleAr: '',
-      titleEn: '',
-      contentAr: '',
-      contentEn: '',
-      sortOrder: sections.length + 1,
+      section_type: 'history',
+      title_ar: '',
+      title_en: '',
+      content_ar: '',
+      content_en: '',
+      sort_order: sections.length + 1,
+      is_active: true,
       isNew: true
     };
     onSectionsChange([...sections, newSection]);
@@ -351,9 +455,26 @@ const ContentSectionEditor = ({ sections, onSectionsChange }) => {
     onSectionsChange(updatedSections);
   };
 
-  const deleteSection = (sectionId) => {
-    const updatedSections = sections.filter(section => section.id !== sectionId);
-    onSectionsChange(updatedSections);
+  const deleteSection = async (sectionId, isNew = false) => {
+    if (!confirm('Are you sure you want to delete this content section?')) return;
+
+    try {
+      setSaving(true);
+
+      if (!isNew) {
+        // Delete from backend
+        await contentSectionService.deleteContentSection(placeId, sectionId);
+      }
+
+      // Remove from local state
+      const updatedSections = sections.filter(section => section.id !== sectionId);
+      onSectionsChange(updatedSections);
+    } catch (err) {
+      console.error('Error deleting section:', err);
+      alert(`Failed to delete section: ${err.message}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const sectionTypes = [
@@ -369,24 +490,44 @@ const ContentSectionEditor = ({ sections, onSectionsChange }) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Content Sections</h3>
+        <h3 className="text-lg font-medium">Content Sections ({sections.length})</h3>
         <button
           onClick={addSection}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          disabled={saving}
+          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
         >
           <Plus className="w-4 h-4" />
           Add Section
         </button>
       </div>
 
+      {sections.length === 0 && (
+        <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Edit className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No content sections yet</h3>
+          <p className="text-gray-600 mb-4">
+            Add content sections to provide detailed information about this place
+          </p>
+          <button
+            onClick={addSection}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          >
+            <Plus className="w-4 h-4" />
+            Add First Section
+          </button>
+        </div>
+      )}
+
       {sections.map((section, index) => (
-        <div key={section.id} className="border rounded-lg p-4">
+        <div key={section.id} className="border rounded-lg p-4 bg-gray-50">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <select
-                value={section.sectionType}
-                onChange={(e) => updateSection(section.id, { sectionType: e.target.value })}
-                className="px-3 py-2 border border-gray-300 rounded-lg"
+                value={section.section_type}
+                onChange={(e) => updateSection(section.id, { section_type: e.target.value })}
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white"
               >
                 {sectionTypes.map(type => (
                   <option key={type.value} value={type.value}>
@@ -395,10 +536,17 @@ const ContentSectionEditor = ({ sections, onSectionsChange }) => {
                 ))}
               </select>
               <span className="text-sm text-gray-500">Section {index + 1}</span>
+              {section.isNew && (
+                <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                  New
+                </span>
+              )}
             </div>
             <button
-              onClick={() => deleteSection(section.id)}
-              className="text-red-600 hover:text-red-800"
+              onClick={() => deleteSection(section.id, section.isNew)}
+              disabled={saving}
+              className="text-red-600 hover:text-red-800 disabled:opacity-50"
+              title="Delete section"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -412,9 +560,9 @@ const ContentSectionEditor = ({ sections, onSectionsChange }) => {
               </label>
               <input
                 type="text"
-                value={section.titleAr}
-                onChange={(e) => updateSection(section.id, { titleAr: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                value={section.title_ar}
+                onChange={(e) => updateSection(section.id, { title_ar: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white"
                 placeholder="العنوان بالعربية"
               />
               
@@ -422,10 +570,10 @@ const ContentSectionEditor = ({ sections, onSectionsChange }) => {
                 Content (Arabic)
               </label>
               <textarea
-                value={section.contentAr}
-                onChange={(e) => updateSection(section.id, { contentAr: e.target.value })}
+                value={section.content_ar}
+                onChange={(e) => updateSection(section.id, { content_ar: e.target.value })}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white"
                 placeholder="المحتوى بالعربية..."
               />
             </div>
@@ -437,9 +585,9 @@ const ContentSectionEditor = ({ sections, onSectionsChange }) => {
               </label>
               <input
                 type="text"
-                value={section.titleEn}
-                onChange={(e) => updateSection(section.id, { titleEn: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                value={section.title_en}
+                onChange={(e) => updateSection(section.id, { title_en: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white"
                 placeholder="Title in English"
               />
               
@@ -447,10 +595,10 @@ const ContentSectionEditor = ({ sections, onSectionsChange }) => {
                 Content (English)
               </label>
               <textarea
-                value={section.contentEn}
-                onChange={(e) => updateSection(section.id, { contentEn: e.target.value })}
+                value={section.content_en}
+                onChange={(e) => updateSection(section.id, { content_en: e.target.value })}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white"
                 placeholder="Content in English..."
               />
             </div>
@@ -468,6 +616,7 @@ export default function PlaceEdit() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [imageCount, setImageCount] = useState(0);
   
   // Form data
   const [formData, setFormData] = useState({
@@ -487,7 +636,6 @@ export default function PlaceEdit() {
     categoryIds: []
   });
 
-  const [images, setImages] = useState([]);
   const [contentSections, setContentSections] = useState([]);
   const [categories, setCategories] = useState([]);
   const [governates, setGovernates] = useState([]);
@@ -517,7 +665,7 @@ export default function PlaceEdit() {
         const placeData = response.data;
         setPlace(placeData);
         
-        // Set form data
+        // Set form data - handle both snake_case and camelCase
         setFormData({
           nameAr: placeData.name_ar || '',
           nameEn: placeData.name_en || '',
@@ -525,8 +673,8 @@ export default function PlaceEdit() {
           descriptionEn: placeData.description_en || '',
           subtitleAr: placeData.subtitle_ar || '',
           subtitleEn: placeData.subtitle_en || '',
-          governateId: placeData.governate_id || '',
-          wilayahId: placeData.wilayah_id || '',
+          governateId: placeData.governate?.id || '',
+          wilayahId: placeData.wilayah?.id || '',
           latitude: placeData.latitude || '',
           longitude: placeData.longitude || '',
           phone: placeData.phone || '',
@@ -535,8 +683,8 @@ export default function PlaceEdit() {
           categoryIds: placeData.categories?.map(cat => cat.id) || []
         });
 
-        setImages(placeData.images || []);
         setContentSections(placeData.content_sections || []);
+        setImageCount(placeData.images?.length || 0);
       }
     } catch (err) {
       console.error('Error loading place:', err);
@@ -595,22 +743,6 @@ export default function PlaceEdit() {
     }));
   };
 
-  const handleImageDelete = async (imageId) => {
-    try {
-      if (imageId.toString().startsWith('temp_')) {
-        // Remove temporary image
-        setImages(images.filter(img => img.id !== imageId));
-      } else {
-        // Delete from server
-        await placeService.deleteImage(imageId);
-        setImages(images.filter(img => img.id !== imageId));
-      }
-    } catch (err) {
-      console.error('Error deleting image:', err);
-      alert('Failed to delete image');
-    }
-  };
-
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -634,43 +766,31 @@ export default function PlaceEdit() {
         category_ids: formData.categoryIds
       };
 
-      // Update place
+      // Update place basic info
       await placeService.updatePlace(placeId, updateData);
-
-      // Handle new images
-      const newImages = images.filter(img => img.isNew);
-      if (newImages.length > 0) {
-        const imageData = newImages.map(img => ({
-          imageUrl: img.imageUrl,
-          altText: img.altText,
-          isPrimary: img.isPrimary,
-          displayOrder: img.displayOrder
-        }));
-        await placeService.uploadImages(placeId, imageData);
-      }
 
       // Handle content sections
       for (const section of contentSections) {
         const sectionData = {
-          section_type: section.sectionType,
-          title_ar: section.titleAr,
-          title_en: section.titleEn,
-          content_ar: section.contentAr,
-          content_en: section.contentEn,
-          sort_order: section.sortOrder
+          section_type: section.section_type,
+          title_ar: section.title_ar,
+          title_en: section.title_en,
+          content_ar: section.content_ar,
+          content_en: section.content_en,
+          sort_order: section.sort_order
         };
 
         if (section.isNew) {
-          await placeService.createContentSection(placeId, sectionData);
+          await contentSectionService.createContentSection(placeId, sectionData);
         } else {
-          await placeService.updateContentSection(placeId, section.id, sectionData);
+          await contentSectionService.updateContentSection(placeId, section.id, sectionData);
         }
       }
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
       
-      // Reload place data
+      // Reload place data to get updated content
       await loadPlace();
     } catch (err) {
       console.error('Error saving place:', err);
@@ -793,7 +913,7 @@ export default function PlaceEdit() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Name (Arabic)
+                    Name (Arabic) *
                   </label>
                   <input
                     type="text"
@@ -801,12 +921,13 @@ export default function PlaceEdit() {
                     onChange={(e) => handleInputChange('nameAr', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="اسم المكان بالعربية"
+                    required
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Name (English)
+                    Name (English) *
                   </label>
                   <input
                     type="text"
@@ -814,6 +935,7 @@ export default function PlaceEdit() {
                     onChange={(e) => handleInputChange('nameEn', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Place name in English"
+                    required
                   />
                 </div>
 
@@ -884,7 +1006,10 @@ export default function PlaceEdit() {
                   </label>
                   <select
                     value={formData.governateId}
-                    onChange={(e) => handleInputChange('governateId', e.target.value)}
+                    onChange={(e) => {
+                      handleInputChange('governateId', e.target.value);
+                      handleInputChange('wilayahId', ''); // Reset wilayah when governate changes
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">Select Governate</option>
@@ -996,16 +1121,16 @@ export default function PlaceEdit() {
 
             {/* Images */}
             <div className="bg-white rounded-lg border p-6">
-              <ImageManager
-                images={images}
-                onImagesChange={setImages}
-                onImageDelete={handleImageDelete}
+              <PlaceImageManager 
+                placeId={placeId}
+                onImageCountChange={setImageCount}
               />
             </div>
 
             {/* Content Sections */}
             <div className="bg-white rounded-lg border p-6">
               <ContentSectionEditor
+                placeId={placeId}
                 sections={contentSections}
                 onSectionsChange={setContentSections}
               />
@@ -1035,6 +1160,9 @@ export default function PlaceEdit() {
                   </label>
                 ))}
               </div>
+              {categories.length === 0 && (
+                <p className="text-sm text-gray-500">No categories available</p>
+              )}
             </div>
 
             {/* Place Stats */}
@@ -1043,7 +1171,7 @@ export default function PlaceEdit() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Images</span>
-                  <span className="text-sm font-medium">{images.length}</span>
+                  <span className="text-sm font-medium">{imageCount}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Content Sections</span>
@@ -1099,6 +1227,33 @@ export default function PlaceEdit() {
                     View on Maps
                   </button>
                 )}
+              </div>
+            </div>
+
+            {/* Save Progress */}
+            <div className="bg-white rounded-lg border p-6">
+              <h3 className="text-lg font-medium mb-4">Auto-Save</h3>
+              <div className="text-sm text-gray-600">
+                <p className="mb-2">
+                  Changes are saved manually. Don't forget to save your progress!
+                </p>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      Save All Changes
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>
