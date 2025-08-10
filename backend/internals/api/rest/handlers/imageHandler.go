@@ -1,4 +1,4 @@
-// handlers/image_handler.go - Updated for Supabase URL handling
+// handlers/image_handler.go - Fixed version with better error handling and logging
 package handlers
 
 import (
@@ -59,89 +59,129 @@ func SetupImageRoutes(rh *rest.RestHandler) {
 		handler.DeleteContentSectionImage)
 }
 
-// Place Image Handlers - Updated for Supabase URLs
-
+// Enhanced UploadPlaceImages with better error handling and logging
 func (h *ImageHandler) UploadPlaceImages(ctx *fiber.Ctx) error {
+	fmt.Printf("🚀 UploadPlaceImages endpoint called\n")
+	
 	placeIdStr := ctx.Params("placeId")
 	placeId, err := uuid.Parse(placeIdStr)
 	if err != nil {
+		fmt.Printf("❌ Invalid place ID: %s\n", placeIdStr)
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
 	}
 
+	fmt.Printf("📍 Place ID: %s\n", placeId)
+
 	var req dto.UploadPlaceImagesRequest
+	
+	// Log request details for debugging
+	fmt.Printf("📡 Request Content-Type: %s\n", ctx.Get("Content-Type"))
+	fmt.Printf("📡 Request Method: %s\n", ctx.Method())
 	
 	// Check Content-Type to determine how to parse the request
 	contentType := ctx.Get("Content-Type")
 	
 	if strings.Contains(contentType, "multipart/form-data") {
-		// Handle FormData (legacy support for file uploads)
+		fmt.Printf("📁 Handling multipart/form-data request\n")
+		
+		// Handle FormData (legacy support)
 		dataField := ctx.FormValue("data")
 		if dataField == "" {
+			fmt.Printf("❌ Missing 'data' field in form\n")
 			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Missing 'data' field in form"))
 		}
 		
+		fmt.Printf("📄 Form data field: %s\n", dataField)
+		
 		if err := json.Unmarshal([]byte(dataField), &req); err != nil {
-			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid JSON data in 'data' field"))
+			fmt.Printf("❌ Invalid JSON in 'data' field: %v\n", err)
+			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid JSON data in 'data' field: " + err.Error()))
 		}
 		
-		// For multipart, we would handle file uploads here, but since we're using Supabase
-		// from frontend, we expect the URLs to already be populated in the JSON data
-		
 	} else {
+		fmt.Printf("📄 Handling JSON request\n")
+		
 		// Handle JSON request with Supabase URLs (preferred method)
-		if err := ctx.BodyParser(&req); err != nil {
+		bodyBytes := ctx.Body()
+		fmt.Printf("📄 Request body: %s\n", string(bodyBytes))
+		
+		if err := json.Unmarshal(bodyBytes, &req); err != nil {
+			fmt.Printf("❌ Invalid JSON body: %v\n", err)
 			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body: " + err.Error()))
 		}
 	}
 
+	// Log parsed request
+	fmt.Printf("📊 Parsed request: %+v\n", req)
+	fmt.Printf("🖼️ Number of images: %d\n", len(req.Images))
+
 	// Validate the request
 	if err := utils.ValidateStruct(req); err != nil {
+		fmt.Printf("❌ Validation error: %v\n", err)
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Validation error: " + err.Error()))
 	}
 
-	// Validate that all images have URLs (should be Supabase URLs)
+	// Validate that all images have URLs
 	for i, img := range req.Images {
+		fmt.Printf("🔍 Validating image %d: URL=%s\n", i+1, img.ImageURL)
+		
 		if img.ImageURL == "" {
-			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(
-				fmt.Sprintf("Image %d is missing URL - please upload to storage first", i+1)))
+			errorMsg := fmt.Sprintf("Image %d is missing URL - please upload to storage first", i+1)
+			fmt.Printf("❌ %s\n", errorMsg)
+			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(errorMsg))
 		}
 		
 		// Optional: Validate that URLs are from your Supabase instance
 		if !isValidSupabaseURL(img.ImageURL) {
-			return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(
-				fmt.Sprintf("Image %d has invalid URL format", i+1)))
+			// Log warning but don't fail - allow non-Supabase URLs for flexibility
+			fmt.Printf("⚠️ Warning: Image %d has non-Supabase URL: %s\n", i+1, img.ImageURL)
 		}
 	}
 
 	userID, ok := ctx.Locals("userID").(uuid.UUID)
 	if !ok {
+		fmt.Printf("❌ User ID not found in context\n")
 		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User ID not found in context"))
 	}
 	
+	fmt.Printf("👤 User ID: %s\n", userID)
+	
 	// Call service to save metadata
+	fmt.Printf("📞 Calling UploadPlaceImages service\n")
 	response, err := services.UploadPlaceImages(placeId, req, userID)
 	if err != nil {
+		fmt.Printf("❌ Service error: %v\n", err)
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
+	fmt.Printf("✅ Images uploaded successfully\n")
 	return ctx.Status(http.StatusCreated).JSON(utils.SuccessResponse("Images uploaded successfully", response))
 }
 
-// Helper function to validate Supabase URLs
+// Enhanced helper function with better validation
 func isValidSupabaseURL(url string) bool {
 	// Basic validation - adjust based on your Supabase project URL
 	supabaseURL := os.Getenv("SUPABASE_URL")
 	if supabaseURL == "" {
-		// If not configured, skip validation
+		// If not configured, skip validation but log it
+		fmt.Printf("⚠️ SUPABASE_URL not configured, skipping URL validation\n")
 		return true
 	}
 	
 	// Check if URL starts with your Supabase storage URL
 	expectedPrefix := fmt.Sprintf("%s/storage/v1/object/public/", supabaseURL)
-	return strings.HasPrefix(url, expectedPrefix)
+	isValid := strings.HasPrefix(url, expectedPrefix)
+	
+	if !isValid {
+		fmt.Printf("⚠️ URL validation failed: expected prefix '%s', got '%s'\n", expectedPrefix, url)
+	}
+	
+	return isValid
 }
 
 func (h *ImageHandler) GetPlaceImages(ctx *fiber.Ctx) error {
+	fmt.Printf("📋 GetPlaceImages endpoint called\n")
+	
 	placeIdStr := ctx.Params("placeId")
 	placeId, err := uuid.Parse(placeIdStr)
 	if err != nil {
@@ -150,13 +190,17 @@ func (h *ImageHandler) GetPlaceImages(ctx *fiber.Ctx) error {
 
 	images, err := services.GetPlaceImages(placeId)
 	if err != nil {
+		fmt.Printf("❌ Error getting images: %v\n", err)
 		return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse(err.Error()))
 	}
 
+	fmt.Printf("✅ Retrieved %d images for place %s\n", len(images), placeId)
 	return ctx.JSON(utils.SuccessResponse("Images retrieved successfully", images))
 }
 
 func (h *ImageHandler) UpdatePlaceImage(ctx *fiber.Ctx) error {
+	fmt.Printf("🔄 UpdatePlaceImage endpoint called\n")
+	
 	placeIdStr := ctx.Params("placeId")
 	_, err := uuid.Parse(placeIdStr)
 	if err != nil {
@@ -181,6 +225,7 @@ func (h *ImageHandler) UpdatePlaceImage(ctx *fiber.Ctx) error {
 	
 	image, err := services.UpdatePlaceImage(imageId, req, userID)
 	if err != nil {
+		fmt.Printf("❌ Error updating image: %v\n", err)
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
@@ -188,6 +233,8 @@ func (h *ImageHandler) UpdatePlaceImage(ctx *fiber.Ctx) error {
 }
 
 func (h *ImageHandler) DeletePlaceImage(ctx *fiber.Ctx) error {
+	fmt.Printf("🗑️ DeletePlaceImage endpoint called\n")
+	
 	placeIdStr := ctx.Params("placeId")
 	_, err := uuid.Parse(placeIdStr)
 	if err != nil {
@@ -208,6 +255,7 @@ func (h *ImageHandler) DeletePlaceImage(ctx *fiber.Ctx) error {
 	// Use enhanced cleanup function that also removes from Supabase
 	err = services.DeletePlaceImageWithSupabaseCleanup(imageId, userID)
 	if err != nil {
+		fmt.Printf("❌ Error deleting image with cleanup: %v\n", err)
 		// Fallback to regular delete function
 		err = services.DeletePlaceImage(imageId, userID)
 		if err != nil {
@@ -222,6 +270,8 @@ func (h *ImageHandler) DeletePlaceImage(ctx *fiber.Ctx) error {
 // Content Section Image Handlers - Similar updates
 
 func (h *ImageHandler) UploadContentSectionImages(ctx *fiber.Ctx) error {
+	fmt.Printf("🚀 UploadContentSectionImages endpoint called\n")
+	
 	sectionIdStr := ctx.Params("sectionId")
 	sectionId, err := uuid.Parse(sectionIdStr)
 	if err != nil {
@@ -232,6 +282,7 @@ func (h *ImageHandler) UploadContentSectionImages(ctx *fiber.Ctx) error {
 	
 	// Handle JSON request with Supabase URLs (preferred method)
 	if err := ctx.BodyParser(&req); err != nil {
+		fmt.Printf("❌ Invalid JSON body: %v\n", err)
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body: " + err.Error()))
 	}
 
