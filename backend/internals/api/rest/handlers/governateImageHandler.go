@@ -7,27 +7,29 @@ import (
 	"almlah/internals/services"
 	"almlah/internals/utils"
 	"net/http"
+	"fmt"
+	"almlah/internals/cache"
+
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
 
-// Add these routes to your existing handler setup
+// SetupGovernateImageRoutes - Enhanced with caching
 func SetupGovernateImageRoutes(rh *rest.RestHandler) {
 	app := rh.App
-	handler := ImageHandler{} // Reuse existing ImageHandler or create a new one
+	handler := ImageHandler{}
 
 	// Governate image routes
 	images := app.Group("/api/v1")
 
-	// Governate image routes - using your existing AuthRequired middleware
 	images.Post("/governates/:governateId/images", 
 		middleware.AuthRequiredWithRBAC,
 		middleware.RequirePermission("can_edit_governate"),
 		handler.UploadGovernateImages)
 	
 	images.Get("/governates/:governateId/images", 
-		handler.GetGovernateImages)  // Public endpoint to view images
+		handler.GetGovernateImages)
 	
 	images.Put("/governates/:governateId/images/:imageId", 
 		middleware.AuthRequiredWithRBAC,
@@ -40,7 +42,7 @@ func SetupGovernateImageRoutes(rh *rest.RestHandler) {
 		handler.DeleteGovernateImage)
 }
 
-// Add these methods to your existing ImageHandler struct
+// Governate Image Handlers with Caching
 func (h *ImageHandler) UploadGovernateImages(ctx *fiber.Ctx) error {
 	governateIdStr := ctx.Params("governateId")
 	governateId, err := uuid.Parse(governateIdStr)
@@ -57,17 +59,22 @@ func (h *ImageHandler) UploadGovernateImages(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Validation error: " + err.Error()))
 	}
 
-	// Get userID from your existing auth middleware
 	userID, ok := ctx.Locals("userID").(uuid.UUID)
 	if !ok {
 		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User ID not found in context"))
 	}
 	
-	// Call service
+	// 🔄 ORIGINAL: Call service
 	response, err := services.UploadGovernateImages(governateId, req, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
+
+	// 🔧 REDIS CACHE: Invalidate related caches after successful upload
+	go func() {
+		cache.Delete(fmt.Sprintf("governate_images_%s", governateId.String()))
+		cache.Delete(fmt.Sprintf("governate_%s", governateId.String()))
+	}()
 
 	return ctx.Status(http.StatusCreated).JSON(utils.SuccessResponse("Images uploaded successfully", response))
 }
@@ -79,20 +86,31 @@ func (h *ImageHandler) GetGovernateImages(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid governate ID"))
 	}
 
-	// Call service
-	images, err := services.GetGovernateImages(governateId)
+	// 🔧 REDIS CACHE: Try cache first
+	cacheKey := fmt.Sprintf("governate_images_%s", governateId.String())
+	var images []dto.GovernateImageResponse
+	
+	if err := cache.Get(cacheKey, &images); err == nil {
+		ctx.Set("X-Cache", "HIT")
+		return ctx.JSON(utils.SuccessResponse("Images retrieved successfully", images))
+	}
+
+	// 🔄 ORIGINAL: Call service
+	images, err = services.GetGovernateImages(governateId)
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse(err.Error()))
 	}
+
+	// 🔧 REDIS CACHE: Store in cache (background, doesn't block response)
+	go cache.Set(cacheKey, images, cache.LongTTL)
+	ctx.Set("X-Cache", "MISS")
 
 	return ctx.JSON(utils.SuccessResponse("Images retrieved successfully", images))
 }
 
 func (h *ImageHandler) UpdateGovernateImage(ctx *fiber.Ctx) error {
-	// We don't need governateId in the service call since imageId is unique
-	// But we validate it for URL consistency
 	governateIdStr := ctx.Params("governateId")
-	_, err := uuid.Parse(governateIdStr)
+	governateId, err := uuid.Parse(governateIdStr)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid governate ID"))
 	}
@@ -108,26 +126,29 @@ func (h *ImageHandler) UpdateGovernateImage(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body"))
 	}
 
-	// Get userID from your existing auth middleware
 	userID, ok := ctx.Locals("userID").(uuid.UUID)
 	if !ok {
 		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User ID not found in context"))
 	}
 	
-	// Call service
+	// 🔄 ORIGINAL: Call service
 	image, err := services.UpdateGovernateImage(imageId, req, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
+	// 🔧 REDIS CACHE: Invalidate related caches after successful update
+	go func() {
+		cache.Delete(fmt.Sprintf("governate_images_%s", governateId.String()))
+		cache.Delete(fmt.Sprintf("governate_%s", governateId.String()))
+	}()
+
 	return ctx.JSON(utils.SuccessResponse("Image updated successfully", image))
 }
 
 func (h *ImageHandler) DeleteGovernateImage(ctx *fiber.Ctx) error {
-	// We don't need governateId in the service call since imageId is unique
-	// But we validate it for URL consistency
 	governateIdStr := ctx.Params("governateId")
-	_, err := uuid.Parse(governateIdStr)
+	governateId, err := uuid.Parse(governateIdStr)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid governate ID"))
 	}
@@ -138,17 +159,22 @@ func (h *ImageHandler) DeleteGovernateImage(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid image ID"))
 	}
 
-	// Get userID from your existing auth middleware
 	userID, ok := ctx.Locals("userID").(uuid.UUID)
 	if !ok {
 		return ctx.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse("User ID not found in context"))
 	}
 	
-	// Call service
+	// 🔄 ORIGINAL: Call service
 	err = services.DeleteGovernateImage(imageId, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
+
+	// 🔧 REDIS CACHE: Invalidate related caches after successful deletion
+	go func() {
+		cache.Delete(fmt.Sprintf("governate_images_%s", governateId.String()))
+		cache.Delete(fmt.Sprintf("governate_%s", governateId.String()))
+	}()
 
 	return ctx.JSON(utils.SuccessResponse("Image deleted successfully", nil))
 }
