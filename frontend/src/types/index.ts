@@ -7,7 +7,7 @@ export interface PlaceName {
 
 export interface Place {
   id: string;
-  name: string | PlaceName; // Updated to handle both formats
+  name: string | PlaceName;
   lat: number;
   lng: number;
   image: string;
@@ -18,7 +18,6 @@ export interface Place {
   highlights?: string[];
   wilayah?: string;
   location?: string;
-
 }
 
 // Helper function to safely get place name
