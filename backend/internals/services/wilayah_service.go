@@ -61,6 +61,8 @@ func CreateWilayah(req dto.CreateWilayahRequest, userID uuid.UUID) (*dto.Wilayah
 		GovernateID:   req.GovernateID,
 		NameAr:        req.NameAr,
 		NameEn:        req.NameEn,
+		SubtitleAr:    req.SubtitleAr,
+		SubtitleEn:    req.SubtitleEn,
 		Slug:          req.Slug,
 		DescriptionAr: req.DescriptionAr,
 		DescriptionEn: req.DescriptionEn,
@@ -92,6 +94,12 @@ func UpdateWilayah(id uuid.UUID, req dto.UpdateWilayahRequest, userID uuid.UUID)
 	}
 	if req.NameEn != "" {
 		wilayah.NameEn = req.NameEn
+	}
+	if req.SubtitleAr != "" {
+		wilayah.SubtitleAr = req.SubtitleAr
+	}
+	if req.SubtitleEn != "" {
+		wilayah.SubtitleEn = req.SubtitleEn
 	}
 	if req.Slug != "" {
 		// Check for duplicate slug (excluding current wilayah)
@@ -153,8 +161,8 @@ func GetWilayahsByGovernate(governateID uuid.UUID) ([]dto.WilayahResponse, error
 func SearchWilayahs(query string) ([]dto.WilayahResponse, error) {
 	var wilayahs []domain.Wilayah
 
-	err := config.DB.Where("(name_ar ILIKE ? OR name_en ILIKE ? OR description_ar ILIKE ? OR description_en ILIKE ?) AND is_active = ?",
-		"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", true).
+	err := config.DB.Where("(name_ar ILIKE ? OR name_en ILIKE ? OR subtitle_ar ILIKE ? OR subtitle_en ILIKE ? OR description_ar ILIKE ? OR description_en ILIKE ?) AND is_active = ?",
+		"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", true).
 		Preload("Governate").Preload("Images").
 		Order("name_en ASC").
 		Find(&wilayahs).Error
@@ -198,6 +206,8 @@ func mapWilayahToResponse(wilayah domain.Wilayah) dto.WilayahResponse {
 		GovernateID:   wilayah.GovernateID,
 		NameAr:        wilayah.NameAr,
 		NameEn:        wilayah.NameEn,
+		SubtitleAr:    wilayah.SubtitleAr,
+		SubtitleEn:    wilayah.SubtitleEn,
 		Slug:          wilayah.Slug,
 		DescriptionAr: wilayah.DescriptionAr,
 		DescriptionEn: wilayah.DescriptionEn,
