@@ -10,6 +10,8 @@ interface WilayahModalProps {
     governate_id: string;
     name_ar: string;
     name_en: string;
+    subtitle_ar: string;
+    subtitle_en: string;
     slug: string;
     description_ar: string;
     description_en: string;
@@ -50,7 +52,7 @@ const WilayahModal: React.FC<WilayahModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-gray-200">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold text-gray-900">
@@ -67,192 +69,270 @@ const WilayahModal: React.FC<WilayahModalProps> = ({
         </div>
 
         <form onSubmit={onSubmit} className="p-6 space-y-6">
-          {/* Basic Information Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
-              Basic Information
-            </h3>
-            
-            {/* Governate Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Governate *
-              </label>
-              <select
-                value={formData.governate_id}
-                onChange={(e) => onFormDataChange('governate_id', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                  errors.governate_id ? 'border-red-300' : 'border-gray-300'
-                }`}
-                disabled={submitLoading}
-              >
-                <option value="">Select a governate</option>
-                {governates.map(gov => (
-                  <option key={gov.id} value={gov.id}>{gov.name_en}</option>
-                ))}
-              </select>
-              {errors.governate_id && (
-                <p className="text-red-500 text-sm mt-1">{errors.governate_id}</p>
-              )}
-            </div>
-
-            {/* Names */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column - Basic Information */}
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                Basic Information
+              </h3>
+              
+              {/* Governate Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Arabic Name *
+                  Governate *
                 </label>
-                <input
-                  type="text"
-                  value={formData.name_ar}
-                  onChange={(e) => onFormDataChange('name_ar', e.target.value)}
+                <select
+                  value={formData.governate_id}
+                  onChange={(e) => onFormDataChange('governate_id', e.target.value)}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                    errors.name_ar ? 'border-red-300' : 'border-gray-300'
+                    errors.governate_id ? 'border-red-300' : 'border-gray-300'
                   }`}
-                  dir="rtl"
                   disabled={submitLoading}
-                />
-                {errors.name_ar && (
-                  <p className="text-red-500 text-sm mt-1">{errors.name_ar}</p>
+                >
+                  <option value="">Select a governate</option>
+                  {governates.map(gov => (
+                    <option key={gov.id} value={gov.id}>{gov.name_en}</option>
+                  ))}
+                </select>
+                {errors.governate_id && (
+                  <p className="text-red-500 text-sm mt-1">{errors.governate_id}</p>
                 )}
               </div>
 
+              {/* Names */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Arabic Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name_ar}
+                    onChange={(e) => onFormDataChange('name_ar', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                      errors.name_ar ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    dir="rtl"
+                    disabled={submitLoading}
+                    placeholder="الاسم بالعربية"
+                  />
+                  {errors.name_ar && (
+                    <p className="text-red-500 text-sm mt-1">{errors.name_ar}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    English Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name_en}
+                    onChange={(e) => onNameEnChange(e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                      errors.name_en ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    disabled={submitLoading}
+                    placeholder="Wilayah name in English"
+                  />
+                  {errors.name_en && (
+                    <p className="text-red-500 text-sm mt-1">{errors.name_en}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Subtitles */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Arabic Subtitle
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.subtitle_ar}
+                    onChange={(e) => onFormDataChange('subtitle_ar', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    dir="rtl"
+                    disabled={submitLoading}
+                    placeholder="العنوان الفرعي بالعربية"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    English Subtitle
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.subtitle_en}
+                    onChange={(e) => onFormDataChange('subtitle_en', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    disabled={submitLoading}
+                    placeholder="Subtitle in English"
+                  />
+                </div>
+              </div>
+
+              {/* Slug */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  English Name *
+                  Slug *
                 </label>
                 <input
                   type="text"
-                  value={formData.name_en}
-                  onChange={(e) => onNameEnChange(e.target.value)}
+                  value={formData.slug}
+                  onChange={(e) => onFormDataChange('slug', e.target.value)}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                    errors.name_en ? 'border-red-300' : 'border-gray-300'
+                    errors.slug ? 'border-red-300' : 'border-gray-300'
                   }`}
                   disabled={submitLoading}
+                  placeholder="wilayah-slug"
                 />
-                {errors.name_en && (
-                  <p className="text-red-500 text-sm mt-1">{errors.name_en}</p>
+                {errors.slug && (
+                  <p className="text-red-500 text-sm mt-1">{errors.slug}</p>
                 )}
               </div>
+
+              {/* Descriptions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Arabic Description
+                  </label>
+                  <textarea
+                    value={formData.description_ar}
+                    onChange={(e) => onFormDataChange('description_ar', e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    dir="rtl"
+                    disabled={submitLoading}
+                    placeholder="الوصف بالعربية"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    English Description
+                  </label>
+                  <textarea
+                    value={formData.description_en}
+                    onChange={(e) => onFormDataChange('description_en', e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    disabled={submitLoading}
+                    placeholder="Description in English"
+                  />
+                </div>
+              </div>
+
+              {/* Geographic Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                  Geographic Information
+                </h3>
+                
+                {/* Coordinates and Sort Order */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Latitude
+                    </label>
+                    <input
+                      type="number"
+                      step="0.000001"
+                      value={formData.latitude}
+                      onChange={(e) => onFormDataChange('latitude', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      disabled={submitLoading}
+                      placeholder="0.000000"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Longitude
+                    </label>
+                    <input
+                      type="number"
+                      step="0.000001"
+                      value={formData.longitude}
+                      onChange={(e) => onFormDataChange('longitude', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      disabled={submitLoading}
+                      placeholder="0.000000"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Sort Order
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.sort_order}
+                      onChange={(e) => onFormDataChange('sort_order', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      disabled={submitLoading}
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Slug */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Slug *
-              </label>
-              <input
-                type="text"
-                value={formData.slug}
-                onChange={(e) => onFormDataChange('slug', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                  errors.slug ? 'border-red-300' : 'border-gray-300'
-                }`}
-                disabled={submitLoading}
-              />
-              {errors.slug && (
-                <p className="text-red-500 text-sm mt-1">{errors.slug}</p>
+            {/* Right Column - Image Management */}
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 flex items-center">
+                  <ImageIcon className="w-5 h-5 mr-2" />
+                  Images
+                </h3>
+                <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">Optional</span>
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-4">
+                <SimpleImageSelector
+                  existingImages={existingImages}
+                  onImagesChange={onExistingImagesChange}
+                  onNewFiles={onNewImagesChange}
+                  maxFiles={10}
+                  maxFileSize={5 * 1024 * 1024} // 5MB
+                  acceptedTypes={['image/jpeg', 'image/png', 'image/webp']}
+                  disabled={submitLoading}
+                />
+                
+                {submitLoading && imageUploadProgress > 0 && imageUploadProgress < 100 && (
+                  <div className="mt-4">
+                    <div className="flex justify-between text-sm text-gray-600 mb-1">
+                      <span>Uploading images to wilayahs/{editingWilayah?.id || 'new'}...</span>
+                      <span>{Math.round(imageUploadProgress)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${imageUploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {(existingImages.length > 0 || submitLoading) && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-center text-blue-700 text-sm">
+                    <ImageIcon className="mr-2" size={16} />
+                    <span>
+                      {existingImages.length} image{existingImages.length !== 1 ? 's' : ''} selected
+                    </span>
+                  </div>
+                  {submitLoading && (
+                    <div className="text-xs text-blue-600 mt-1">
+                      Images will be uploaded to wilayahs/{editingWilayah?.id || 'new-wilayah'} folder
+                    </div>
+                  )}
+                </div>
               )}
             </div>
-
-            {/* Descriptions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Arabic Description
-                </label>
-                <textarea
-                  value={formData.description_ar}
-                  onChange={(e) => onFormDataChange('description_ar', e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  dir="rtl"
-                  disabled={submitLoading}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  English Description
-                </label>
-                <textarea
-                  value={formData.description_en}
-                  onChange={(e) => onFormDataChange('description_en', e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  disabled={submitLoading}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Geographic Information Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
-              Geographic Information
-            </h3>
-            
-            {/* Coordinates and Sort Order */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Latitude
-                </label>
-                <input
-                  type="number"
-                  step="0.000001"
-                  value={formData.latitude}
-                  onChange={(e) => onFormDataChange('latitude', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  disabled={submitLoading}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Longitude
-                </label>
-                <input
-                  type="number"
-                  step="0.000001"
-                  value={formData.longitude}
-                  onChange={(e) => onFormDataChange('longitude', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  disabled={submitLoading}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Sort Order
-                </label>
-                <input
-                  type="number"
-                  value={formData.sort_order}
-                  onChange={(e) => onFormDataChange('sort_order', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  disabled={submitLoading}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Image Management Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 flex items-center">
-              <ImageIcon className="w-5 h-5 mr-2" />
-              Images
-            </h3>
-            
-            <SimpleImageSelector
-              existingImages={existingImages}
-              onImagesChange={onExistingImagesChange}
-              onNewFiles={onNewImagesChange}
-              maxFiles={10}
-              maxFileSize={5 * 1024 * 1024} // 5MB
-              acceptedTypes={['image/jpeg', 'image/png', 'image/webp']}
-              disabled={submitLoading}
-            />
           </div>
 
           {/* Upload Progress */}
