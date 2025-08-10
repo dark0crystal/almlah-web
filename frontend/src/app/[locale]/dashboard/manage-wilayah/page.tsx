@@ -137,16 +137,16 @@ const api = {
     }
   },
 
-  async updateWilayahImages(wilayahId, imageData) {
+  async updateWilayahImage(wilayahId, imageId, imageData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/wilayahs/${wilayahId}/images`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/wilayahs/${wilayahId}/images/${imageId}`, {
         method: 'PUT',
         headers: createHeaders(true),
         body: JSON.stringify(imageData),
       });
       return await handleApiResponse(response);
     } catch (error) {
-      console.error('Error updating wilayah images:', error);
+      console.error('Error updating wilayah image:', error);
       throw error;
     }
   }
@@ -176,6 +176,8 @@ export default function ManageWilayah() {
     governate_id: '',
     name_ar: '',
     name_en: '',
+    subtitle_ar: '',
+    subtitle_en: '',
     slug: '',
     description_ar: '',
     description_en: '',
@@ -225,6 +227,8 @@ export default function ManageWilayah() {
   const filteredWilayahs = Array.isArray(wilayahs) ? wilayahs.filter(wilayah => {
     const matchesSearch = wilayah.name_en?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          wilayah.name_ar?.includes(searchTerm) ||
+                         wilayah.subtitle_en?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         wilayah.subtitle_ar?.includes(searchTerm) ||
                          wilayah.slug?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesGovernate = !selectedGovernate || wilayah.governate_id === selectedGovernate;
     const matchesActive = !showActiveOnly || wilayah.is_active;
@@ -237,6 +241,8 @@ export default function ManageWilayah() {
       governate_id: '',
       name_ar: '',
       name_en: '',
+      subtitle_ar: '',
+      subtitle_en: '',
       slug: '',
       description_ar: '',
       description_en: '',
@@ -258,6 +264,8 @@ export default function ManageWilayah() {
         governate_id: wilayah.governate_id,
         name_ar: wilayah.name_ar,
         name_en: wilayah.name_en,
+        subtitle_ar: wilayah.subtitle_ar || '',
+        subtitle_en: wilayah.subtitle_en || '',
         slug: wilayah.slug,
         description_ar: wilayah.description_ar || '',
         description_en: wilayah.description_en || '',
@@ -266,15 +274,15 @@ export default function ManageWilayah() {
         sort_order: wilayah.sort_order?.toString() || ''
       });
       
-      // Load existing images
+      // Load existing images from API response or legacy format
       const images: ExistingImage[] = wilayah.images?.map(img => ({
         id: img.id,
-        path: img.path,
+        path: img.image_url ? img.image_url.replace(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_STORAGE_BUCKET}/`, '') : '',
         alt_text: img.alt_text || '',
-        caption: img.caption || '',
+        caption: '', // Wilayah images don't have captions
         is_primary: img.is_primary || false,
         display_order: img.display_order || 0,
-        url: img.url || SupabaseStorageService.getPublicUrl('wilayahs', img.path)
+        url: img.image_url
       })) || [];
       
       setExistingImages(images);
@@ -312,34 +320,32 @@ export default function ManageWilayah() {
       const file = newImageFiles[i];
       
       try {
-        // Generate unique filename
-        const fileName = SupabaseStorageService.generateFileName(file.name);
-        
-        // Upload to Supabase Storage
-        const result = await SupabaseStorageService.uploadFile({
-          bucket: 'wilayahs',
-          folder: `wilayahs/${wilayahId}`,
-          fileName,
+        const imagesToUpload = [{
           file,
-          onProgress: (progress) => {
-            const overallProgress = ((i + (progress / 100)) / totalFiles) * 100;
-            setImageUploadProgress(overallProgress);
-          }
-        });
+          isPrimary: i === 0 && existingImages.length === 0, // First image is primary if no existing images
+          altText: '',
+          displayOrder: existingImages.length + i
+        }];
 
-        if (result.success && result.path) {
+        const result = await SupabaseStorageService.uploadWilayahImages(wilayahId, imagesToUpload);
+        
+        if (result.length > 0) {
           const uploadedImage: ExistingImage = {
             id: `temp-${Date.now()}-${i}`, // Temporary ID, will be replaced by backend
-            path: result.path,
-            alt_text: '',
+            path: result[0].path,
+            alt_text: result[0].altText,
             caption: '',
-            is_primary: i === 0 && existingImages.length === 0, // First image is primary if no existing images
-            display_order: existingImages.length + i,
-            url: result.url
+            is_primary: result[0].isPrimary,
+            display_order: result[0].displayOrder,
+            url: result[0].url
           };
           
           uploadedImages.push(uploadedImage);
         }
+
+        // Update progress
+        const progress = ((i + 1) / totalFiles) * 100;
+        setImageUploadProgress(progress);
       } catch (error) {
         console.error(`Error uploading file ${file.name}:`, error);
         // Continue with other files
@@ -364,6 +370,8 @@ export default function ManageWilayah() {
         governate_id: formData.governate_id,
         name_ar: formData.name_ar.trim(),
         name_en: formData.name_en.trim(),
+        subtitle_ar: formData.subtitle_ar.trim() || '',
+        subtitle_en: formData.subtitle_en.trim() || '',
         slug: formData.slug.trim(),
         description_ar: formData.description_ar.trim() || '',
         description_en: formData.description_en.trim() || '',
@@ -404,9 +412,8 @@ export default function ManageWilayah() {
         // Send image metadata to backend
         if (uploadedImages.length > 0) {
           const imageData = uploadedImages.map(img => ({
-            path: img.path,
+            image_url: img.url,
             alt_text: img.alt_text,
-            caption: img.caption,
             is_primary: img.is_primary,
             display_order: img.display_order
           }));
@@ -417,15 +424,19 @@ export default function ManageWilayah() {
 
       // Update existing images metadata if changed
       if (editingWilayah && existingImages.length > 0) {
-        const imageData = existingImages.map(img => ({
-          id: img.id,
-          alt_text: img.alt_text,
-          caption: img.caption,
-          is_primary: img.is_primary,
-          display_order: img.display_order
-        }));
-        
-        await api.updateWilayahImages(wilayahId, { images: imageData });
+        for (const img of existingImages) {
+          if (img.id && !img.id.startsWith('temp-')) {
+            try {
+              await api.updateWilayahImage(wilayahId, img.id, {
+                alt_text: img.alt_text,
+                is_primary: img.is_primary,
+                display_order: img.display_order
+              });
+            } catch (error) {
+              console.warn('Failed to update image metadata:', error);
+            }
+          }
+        }
       }
 
       // Update the wilayah in the list
@@ -465,7 +476,10 @@ export default function ManageWilayah() {
       // Delete associated images from storage
       if (wilayah.images && wilayah.images.length > 0) {
         for (const image of wilayah.images) {
-          await SupabaseStorageService.deleteFile('wilayahs', image.path);
+          const imagePath = image.image_url ? image.image_url.replace(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_STORAGE_BUCKET}/`, '') : '';
+          if (imagePath) {
+            await SupabaseStorageService.deleteFile(process.env.NEXT_PUBLIC_STORAGE_BUCKET || 'media-bucket', imagePath);
+          }
         }
       }
 

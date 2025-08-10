@@ -1,7 +1,7 @@
 "use client"
 import { useState } from "react";
 import { MapPin, Star, Clock, ChevronDown, ChevronUp, X } from "lucide-react";
-import PlaceCard from "./PlacesCard";
+import PlaceCard from "./PlaceCard";
 import img1 from "../../../../public/img1.jpeg"
 
 // Interface defining props for the PlacesModal component

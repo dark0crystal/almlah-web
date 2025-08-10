@@ -285,7 +285,7 @@ const rbacAPI = {
 
 // Constants
 const ACTIONS = [
-  'create', 'read', 'update', 'delete', 'manage', 'view', 'moderate'
+  'create', 'read', 'update', 'delete', 'manage', 'view', 'moderate','edit'
 ];
 
 const RESOURCES = [
