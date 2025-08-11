@@ -1,11 +1,14 @@
+// handlers/review_handler_cached.go
 package handlers
 
 import (
 	"almlah/internals/api/rest"
+	"almlah/internals/cache"
 	"almlah/internals/dto"
 	"almlah/internals/middleware"
 	"almlah/internals/services"
 	"almlah/internals/utils"
+	"fmt"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -43,10 +46,19 @@ func (h *ReviewHandler) CreateReview(ctx *fiber.Ctx) error {
 	}
 
 	userID := ctx.Locals("userID").(uuid.UUID)
+	
+	// 🔄 ORIGINAL: Your existing create logic
 	response, err := services.CreateReview(req, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
+
+	// 🔧 REDIS CACHE: Invalidate related caches after successful creation
+	go func() {
+		cache.Delete(fmt.Sprintf("reviews_place_%s", req.PlaceID.String()))
+		cache.Delete(fmt.Sprintf("place_%s", req.PlaceID.String())) // Place data may include review stats
+		cache.DeletePattern("reviews_*") // Any review-related caches
+	}()
 
 	return ctx.Status(http.StatusCreated).JSON(utils.SuccessResponse("Review created successfully", response))
 }
@@ -58,10 +70,24 @@ func (h *ReviewHandler) GetReviewsByPlace(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
 	}
 
-	reviews, err := services.GetReviewsByPlaceID(placeId)
+	// 🔧 REDIS CACHE: Try cache first
+	cacheKey := fmt.Sprintf("reviews_place_%s", placeId.String())
+	var reviews []dto.ReviewResponse
+	
+	if err := cache.Get(cacheKey, &reviews); err == nil {
+		ctx.Set("X-Cache", "HIT")
+		return ctx.JSON(utils.SuccessResponse("Reviews retrieved successfully", reviews))
+	}
+
+	// 🔄 ORIGINAL: Your existing database call
+	reviews, err = services.GetReviewsByPlaceID(placeId)
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse(err.Error()))
 	}
+
+	// 🔧 REDIS CACHE: Store in cache (background, doesn't block response)
+	go cache.Set(cacheKey, reviews, cache.MediumTTL) // Reviews change somewhat frequently
+	ctx.Set("X-Cache", "MISS")
 
 	return ctx.JSON(utils.SuccessResponse("Reviews retrieved successfully", reviews))
 }
@@ -73,10 +99,24 @@ func (h *ReviewHandler) GetReview(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid review ID"))
 	}
 
-	review, err := services.GetReviewByID(id)
+	// 🔧 REDIS CACHE: Try cache first
+	cacheKey := fmt.Sprintf("review_%s", id.String())
+	var review dto.ReviewResponse
+	
+	if err := cache.Get(cacheKey, &review); err == nil {
+		ctx.Set("X-Cache", "HIT")
+		return ctx.JSON(utils.SuccessResponse("Review retrieved successfully", review))
+	}
+
+	// 🔄 ORIGINAL: Your existing database call
+	reviewPtr, err := services.GetReviewByID(id)
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(utils.ErrorResponse("Review not found"))
 	}
 
-	return ctx.JSON(utils.SuccessResponse("Review retrieved successfully", review))
+	// 🔧 REDIS CACHE: Store in cache (background, doesn't block response)
+	go cache.Set(cacheKey, *reviewPtr, cache.LongTTL) // Individual reviews don't change often
+	ctx.Set("X-Cache", "MISS")
+
+	return ctx.JSON(utils.SuccessResponse("Review retrieved successfully", *reviewPtr))
 }
