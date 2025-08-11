@@ -44,7 +44,7 @@ const placeService = {
 
     const response = await fetch(url, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         'Content-Type': 'application/json'
       }
     });
@@ -60,7 +60,7 @@ const placeService = {
   getPlaceImages: async (placeId) => {
     const response = await fetch(`${API_BASE_URL}/places/${placeId}/images`, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         'Content-Type': 'application/json'
       }
     });
@@ -80,7 +80,7 @@ const placeService = {
   getPlacesByCategory: async (categoryId) => {
     const response = await fetch(`${API_BASE_URL}/places/category/${categoryId}`, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         'Content-Type': 'application/json'
       }
     });
@@ -96,7 +96,7 @@ const placeService = {
   getPlacesByGovernate: async (governateId) => {
     const response = await fetch(`${API_BASE_URL}/places/governate/${governateId}`, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         'Content-Type': 'application/json'
       }
     });
@@ -112,7 +112,7 @@ const placeService = {
   searchPlaces: async (query) => {
     const response = await fetch(`${API_BASE_URL}/places/search?q=${encodeURIComponent(query)}`, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         'Content-Type': 'application/json'
       }
     });
@@ -129,7 +129,7 @@ const placeService = {
     const response = await fetch(`${API_BASE_URL}/places/${placeId}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         'Content-Type': 'application/json'
       }
     });
@@ -145,7 +145,7 @@ const placeService = {
   getPlaceById: async (placeId) => {
     const response = await fetch(`${API_BASE_URL}/places/${placeId}`, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         'Content-Type': 'application/json'
       }
     });
@@ -163,7 +163,7 @@ const metaService = {
   getCategories: async () => {
     const response = await fetch(`${API_BASE_URL}/categories`, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         'Content-Type': 'application/json'
       }
     });
@@ -178,7 +178,7 @@ const metaService = {
   getGovernates: async () => {
     const response = await fetch(`${API_BASE_URL}/governates`, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         'Content-Type': 'application/json'
       }
     });
