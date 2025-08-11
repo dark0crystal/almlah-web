@@ -1,11 +1,31 @@
-// dto/place_dto.go - Complete DTO with all types
+// dto/place_dto.go - Clean version with duplicates removed
 package dto
 
 import (
 	"github.com/google/uuid"
 )
 
-// Request DTOs
+// PlaceFilters represents filtering parameters for places
+type PlaceFilters struct {
+	Category    string `json:"category"`
+	GovernateID string `json:"governate_id"`
+	WilayahID   string `json:"wilayah_id"`
+	Featured    bool   `json:"featured"`
+	Limit       int    `json:"limit"`
+	Offset      int    `json:"offset"`
+}
+
+// PlaceSearchParams represents search parameters for places
+type PlaceSearchParams struct {
+	Query       string `json:"query"`
+	Category    string `json:"category"`
+	GovernateID string `json:"governate_id"`
+	WilayahID   string `json:"wilayah_id"`
+	Limit       int    `json:"limit"`
+	Offset      int    `json:"offset"`
+}
+
+// Request DTOs for creating/updating places
 type CreatePlaceRequest struct {
 	NameAr        string                         `json:"name_ar" validate:"required,min=2,max=200"`
 	NameEn        string                         `json:"name_en" validate:"required,min=2,max=200"`
@@ -44,6 +64,7 @@ type UpdatePlaceRequest struct {
 	IsActive      *bool       `json:"is_active"`
 }
 
+// Content Section DTOs
 type CreateContentSectionRequest struct {
 	SectionType string                              `json:"section_type" validate:"required"`
 	TitleAr     string                              `json:"title_ar" validate:"required"`
@@ -74,7 +95,7 @@ type CreateContentSectionImageRequest struct {
 	SortOrder  int    `json:"sort_order"`
 }
 
-// Response DTOs
+// Response DTOs - Full place response with all details
 type PlaceResponse struct {
 	ID              uuid.UUID                      `json:"id"`
 	NameAr          string                         `json:"name_ar"`
@@ -101,8 +122,7 @@ type PlaceResponse struct {
 	UpdatedAt       string                         `json:"updated_at"`
 }
 
-
-
+// Content Section Response
 type ContentSectionResponse struct {
 	ID          uuid.UUID                     `json:"id"`
 	SectionType string                        `json:"section_type"`
@@ -126,7 +146,6 @@ type ContentSectionImageResponse struct {
 	CaptionEn string    `json:"caption_en"`
 	SortOrder int       `json:"sort_order"`
 }
-
 
 // Helper methods for CreatePlaceRequest
 func (r *CreatePlaceRequest) GetGovernateUUID() (*uuid.UUID, error) {

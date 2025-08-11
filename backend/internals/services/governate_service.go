@@ -1,3 +1,5 @@
+// Add these functions to your services/governate_service.go file
+
 package services
 
 import (
@@ -12,7 +14,7 @@ import (
 func GetAllGovernates() ([]dto.GovernateResponse, error) {
 	var governates []domain.Governate
 
-	err := config.DB.Preload("Wilayahs").Preload("Images").
+	err := config.DB.Preload("Images").
 		Order("sort_order ASC, name_en ASC").
 		Find(&governates).Error
 
@@ -31,7 +33,7 @@ func GetAllGovernates() ([]dto.GovernateResponse, error) {
 func GetGovernateByID(id uuid.UUID) (*dto.GovernateResponse, error) {
 	var governate domain.Governate
 
-	err := config.DB.Preload("Wilayahs").Preload("Images").Preload("Creator").
+	err := config.DB.Preload("Images").Preload("Creator").
 		First(&governate, id).Error
 
 	if err != nil {
@@ -40,6 +42,26 @@ func GetGovernateByID(id uuid.UUID) (*dto.GovernateResponse, error) {
 
 	response := mapGovernateToResponse(governate)
 	return &response, nil
+}
+
+func GetGovernateWilayahs(governateID uuid.UUID) ([]dto.WilayahResponse, error) {
+	var wilayahs []domain.Wilayah
+
+	err := config.DB.Where("governate_id = ? AND is_active = ?", governateID, true).
+		Preload("Governate").Preload("Images").
+		Order("sort_order ASC, name_en ASC").
+		Find(&wilayahs).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	var response []dto.WilayahResponse
+	for _, wilayah := range wilayahs {
+		response = append(response, mapWilayahToResponse(wilayah))
+	}
+
+	return response, nil
 }
 
 func CreateGovernate(req dto.CreateGovernateRequest, userID uuid.UUID) (*dto.GovernateResponse, error) {
@@ -147,38 +169,13 @@ func DeleteGovernate(id uuid.UUID, userID uuid.UUID) error {
 	var placeCount int64
 	config.DB.Model(&domain.Place{}).Where("governate_id = ?", id).Count(&placeCount)
 	if placeCount > 0 {
-		return errors.New("cannot delete governate that has associated places")
+		return errors.New("cannot delete governate that has places")
 	}
 
 	return config.DB.Delete(&governate).Error
 }
 
-func GetGovernateWilayahs(governateID uuid.UUID) ([]dto.WilayahResponse, error) {
-	var wilayahs []domain.Wilayah
-
-	err := config.DB.Where("governate_id = ? AND is_active = ?", governateID, true).
-		Preload("Images").
-		Order("sort_order ASC, name_en ASC").
-		Find(&wilayahs).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	var response []dto.WilayahResponse
-	for _, wilayah := range wilayahs {
-		response = append(response, mapWilayahToResponse(wilayah))
-	}
-
-	return response, nil
-}
-
 func mapGovernateToResponse(governate domain.Governate) dto.GovernateResponse {
-	var wilayahs []dto.WilayahResponse
-	for _, w := range governate.Wilayahs {
-		wilayahs = append(wilayahs, mapWilayahToResponse(w))
-	}
-
 	var images []dto.ImageResponse
 	for _, img := range governate.Images {
 		images = append(images, dto.ImageResponse{
@@ -203,13 +200,18 @@ func mapGovernateToResponse(governate domain.Governate) dto.GovernateResponse {
 		Longitude:     governate.Longitude,
 		IsActive:      governate.IsActive,
 		SortOrder:     governate.SortOrder,
-		WilayahCount:  len(governate.Wilayahs),
+		WilayahCount:  getWilayahCountForGovernate(governate.ID),
 		PlaceCount:    getPlaceCountForGovernate(governate.ID),
-		Wilayahs:      wilayahs,
 		Images:        images,
 		CreatedAt:     governate.CreatedAt.Format("2006-01-02T15:04:05Z"),
 		UpdatedAt:     governate.UpdatedAt.Format("2006-01-02T15:04:05Z"),
 	}
+}
+
+func getWilayahCountForGovernate(governateID uuid.UUID) int {
+	var count int64
+	config.DB.Model(&domain.Wilayah{}).Where("governate_id = ?", governateID).Count(&count)
+	return int(count)
 }
 
 func getPlaceCountForGovernate(governateID uuid.UUID) int {
