@@ -3,40 +3,32 @@ import { useState } from "react";
 import { MapPin } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
-
-// Add this interface for the name object
-interface PlaceName {
-  id: string;
-  name_ar: string;
-  name_en: string;
-  slug: string;
-}
-
-interface Place {
-  id: string;
-  name: string | PlaceName; // Updated to handle both formats
-  wilayah?: string;
-  location?: string;
-  image?: string;
-  rating?: number;
-  duration?: string;
-}
+import { Place, Governate, Wilayah } from "@/types";
 
 interface PlaceCardProps {
   place: Place;
 }
 
-// Helper function to safely get place name
-const getPlaceName = (name: Place['name'], locale: string = 'en'): string => {
-  if (typeof name === 'string') {
-    return name;
-  }
-  
-  if (typeof name === 'object' && name !== null) {
-    return locale === 'ar' ? name.name_ar : name.name_en;
-  }
-  
-  return 'Unknown Place';
+// Helper function to get localized name from bilingual data
+const getLocalizedName = (place: Place, locale: string = 'en'): string => {
+  return locale === 'ar' ? place.name_ar : place.name_en;
+};
+
+// Helper function to get governate name
+const getGovernateName = (governate: Governate | undefined, locale: string = 'en'): string => {
+  if (!governate) return '';
+  return locale === 'ar' ? governate.name_ar : governate.name_en;
+};
+
+// Helper function to get wilayah name
+const getWilayahName = (wilayah: Wilayah | undefined, locale: string = 'en'): string => {
+  if (!wilayah) return '';
+  return locale === 'ar' ? wilayah.name_ar : wilayah.name_en;
+};
+
+// Helper function to get place description
+const getPlaceDescription = (place: Place, locale: string = 'en'): string => {
+  return locale === 'ar' ? place.description_ar || '' : place.description_en || '';
 };
 
 export default function PlaceCard({ place }: PlaceCardProps) {
@@ -49,26 +41,40 @@ export default function PlaceCard({ place }: PlaceCardProps) {
   const locale = (params?.locale as string) || 'en';
 
   const handleCardClick = () => {
-    router.push(`/places/${place.id}`);
+    router.push(`/${locale}/places/${place.id}`);
   };
 
   // Get safe image source
   const getImageSrc = () => {
-    if (!place.image) {
-      return '/images/default-place.jpg'; // Fallback default image
+    if (place.primary_image) {
+      // Check if it's a valid URL (http/https) or local path
+      try {
+        new URL(place.primary_image);
+        return place.primary_image;
+      } catch {
+        return `/images/${place.primary_image}`;
+      }
     }
     
-    // Check if it's a valid URL (http/https) or local path
-    try {
-      new URL(place.image);
-      return place.image;
-    } catch {
-      return `/images/${place.image}`;
+    // Fallback to first image if available
+    if (place.images && place.images.length > 0) {
+      const primaryImage = place.images.find(img => img.is_primary) || place.images[0];
+      return primaryImage.image_url;
     }
+    
+    return '/images/default-place.jpg'; // Fallback default image
   };
 
-  // Get the appropriate name for current locale
-  const placeName = getPlaceName(place.name, locale);
+  // Get the appropriate names for current locale
+  const placeName = getLocalizedName(place, locale);
+  const governateName = getGovernateName(place.governate, locale);
+  const wilayahName = getWilayahName(place.wilayah, locale);
+  const description = getPlaceDescription(place, locale);
+
+  // Format location string
+  const locationString = governateName && wilayahName 
+    ? `${governateName} | ${wilayahName}`
+    : governateName || wilayahName || (locale === 'ar' ? 'صور، جنوب الشرقية' : 'Sur, South Eastern');
 
   return (
     <div 
@@ -100,17 +106,22 @@ export default function PlaceCard({ place }: PlaceCardProps) {
       
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
       
-      <div className="absolute bottom-4 right-4 text-right">
+      <div className={`absolute bottom-4 ${locale === 'ar' ? 'left-4 text-left' : 'right-4 text-right'}`}>
         <h3 className="text-white text-xl font-bold mb-1 drop-shadow-lg">
           {placeName}
         </h3>
         <p className="text-white/90 text-sm font-medium drop-shadow-md">
-          {place.wilayah || place.location || 'صور، جنوب الشرقية'}
+          {locationString}
         </p>
         {place.rating && (
-          <div className="flex items-center justify-end mt-1">
+          <div className={`flex items-center ${locale === 'ar' ? 'justify-start' : 'justify-end'} mt-1`}>
             <span className="text-yellow-400 text-sm">{place.rating.toFixed(1)}</span>
           </div>
+        )}
+        {description && (
+          <p className="text-white/80 text-xs mt-1 drop-shadow-md line-clamp-2 max-w-48">
+            {description}
+          </p>
         )}
       </div>
     </div>
