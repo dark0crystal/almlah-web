@@ -33,7 +33,7 @@ func SetupPlaceRoutes(rh *rest.RestHandler) {
 	places.Get("/category/:categoryId", handler.GetPlacesByCategory)
 	places.Get("/governate/:governateId", handler.GetPlacesByGovernate)
 	places.Get("/wilayah/:wilayahId", handler.GetPlacesByWilayah)
-
+	places.Get("/filter/:category_id?/:governate_id?", handler.GetPlacesByFilters)
 	// Protected routes with RBAC
 	places.Post("/", 
 		middleware.AuthRequiredWithRBAC, 
@@ -436,4 +436,51 @@ func (h *PlaceHandler) DeleteContentSection(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.JSON(utils.SuccessResponse("Content section and all associated images deleted successfully", nil))
+}
+
+
+// -----
+
+func (h *PlaceHandler) GetPlacesByFilters(ctx *fiber.Ctx) error {
+    // Get path parameters
+    categoryID := ctx.Params("category_id")
+    governateID := ctx.Params("governate_id")
+    
+    var categoryUUID, governateUUID uuid.UUID
+    var err error
+    
+    if categoryID != "" {
+        categoryUUID, err = uuid.Parse(categoryID)
+        if err != nil {
+            return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid category ID"))
+        }
+    }
+    
+    if governateID != "" {
+        governateUUID, err = uuid.Parse(governateID)
+        if err != nil {
+            return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid governate ID"))
+        }
+    }
+    
+    // Build cache key
+    cacheKey := fmt.Sprintf("places_filter_category_%s_governate_%s", categoryID, governateID)
+    
+    var places []dto.PlaceListResponse
+    if err := cache.Get(cacheKey, &places); err == nil {
+        ctx.Set("X-Cache", "HIT")
+        return ctx.JSON(utils.SuccessResponse("Places retrieved successfully", places))
+    }
+    
+    // Get from service with optimized fields
+    places, err = services.GetPlacesByFilters(categoryUUID, governateUUID)
+    if err != nil {
+        return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse(err.Error()))
+    }
+    
+    // Cache the result
+    go cache.Set(cacheKey, places, cache.MediumTTL)
+    ctx.Set("X-Cache", "MISS")
+    
+    return ctx.JSON(utils.SuccessResponse("Places retrieved successfully", places))
 }

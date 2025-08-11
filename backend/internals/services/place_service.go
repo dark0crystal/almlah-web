@@ -563,7 +563,7 @@ func GetContentSectionByID(id uuid.UUID) (*dto.ContentSectionResponse, error) {
 func getBaseURL() string {
 	baseURL := os.Getenv("BASE_URL")
 	if baseURL == "" {
-		baseURL = "http://localhost:8080"
+		baseURL = "http://localhost:9000"
 	}
 	return baseURL
 }
@@ -857,3 +857,119 @@ func mapContentSectionToResponse(section domain.PlaceContentSection) dto.Content
 		UpdatedAt:   section.UpdatedAt.Format("2006-01-02T15:04:05Z"),
 	}
 }
+
+// Fixed GetPlacesByFilters function in services/place_service.go
+func GetPlacesByFilters(categoryID uuid.UUID, governateID uuid.UUID) ([]dto.PlaceListResponse, error) {
+    var places []domain.Place
+    
+    // Select only the essential fields for better performance
+    query := config.DB.Select(
+        "places.id",
+        "places.name_ar",
+        "places.name_en",
+        "places.latitude",
+        "places.longitude",
+        "places.governate_id",
+        "places.wilayah_id",
+        "places.created_at",
+        "places.updated_at",
+    ).Where("places.is_active = ?", true)
+    
+    if categoryID != uuid.Nil {
+        query = query.Joins("JOIN place_categories ON places.id = place_categories.place_id").
+            Where("place_categories.category_id = ?", categoryID)
+    }
+    
+    if governateID != uuid.Nil {
+        query = query.Where("places.governate_id = ?", governateID)
+    }
+    
+    // Preload only what we need
+    err := query.
+        Preload("Categories", func(db *gorm.DB) *gorm.DB {
+            return db.Select("id", "name_ar", "name_en", "slug", "icon", "type")
+        }).
+        Preload("Images", func(db *gorm.DB) *gorm.DB {
+            return db.Select("id", "place_id", "image_url", "is_primary").Where("is_active = ?", true)
+        }).
+        Preload("Governate", func(db *gorm.DB) *gorm.DB {
+            return db.Select("id", "name_ar", "name_en", "slug")
+        }).
+        Preload("Wilayah", func(db *gorm.DB) *gorm.DB {
+            return db.Select("id", "name_ar", "name_en", "slug")
+        }).
+        Find(&places).Error
+    
+    if err != nil {
+        return nil, err
+    }
+    
+    var response []dto.PlaceListResponse
+    for _, place := range places {
+        response = append(response, mapPlaceToMinimalResponse(place))
+    }
+    
+    return response, nil
+}
+
+// Fixed minimal response mapper
+func mapPlaceToMinimalResponse(place domain.Place) dto.PlaceListResponse {
+    // Get primary image
+    var primaryImage *dto.ImageResponse
+    for _, img := range place.Images {
+        if img.IsPrimary {
+            primaryImage = &dto.ImageResponse{
+                ID:        img.ID,
+                URL:       img.ImageURL,
+                IsPrimary: img.IsPrimary,
+            }
+            break
+        }
+    }
+    
+    // Map governate
+    var governate *dto.SimpleGovernateResponse
+    if place.Governate != nil {
+        governate = &dto.SimpleGovernateResponse{
+            ID:     place.Governate.ID,
+            NameAr: place.Governate.NameAr,
+            NameEn: place.Governate.NameEn,
+            Slug:   place.Governate.Slug,
+        }
+    }
+    
+    // Map wilayah
+    var wilayah *dto.SimpleWilayahResponse
+    if place.Wilayah != nil {
+        wilayah = &dto.SimpleWilayahResponse{
+            ID:     place.Wilayah.ID,
+            NameAr: place.Wilayah.NameAr,
+            NameEn: place.Wilayah.NameEn,
+            Slug:   place.Wilayah.Slug,
+        }
+    }
+    
+    // Map categories - FIXED: removed the syntax error
+    var categories []dto.SimpleCategoryResponse
+    for _, category := range place.Categories {
+        categories = append(categories, dto.SimpleCategoryResponse{
+            ID:     category.ID,
+            NameAr: category.NameAr,
+            NameEn: category.NameEn,
+            Slug:   category.Slug,
+            Icon:   category.Icon,
+            Type:   category.Type,
+        })
+    }
+    
+    return dto.PlaceListResponse{
+        ID:            place.ID,
+        NameAr:        place.NameAr,
+        NameEn:        place.NameEn,
+        Governate:     governate,
+        Wilayah:       wilayah,
+        Categories:    categories,
+        PrimaryImage:  primaryImage,
+    }
+}
+
