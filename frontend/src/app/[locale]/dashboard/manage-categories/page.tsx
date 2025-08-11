@@ -1,87 +1,129 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, ChevronDown, ChevronRight, Folder, Tag, Settings, Save, X, AlertTriangle, Globe } from 'lucide-react';
+import { Plus, Settings, Globe, X, AlertTriangle } from 'lucide-react';
+import CategoryFormModal from './CategoryFormModal';
+import CategoryItem from './CategoryItem';
+import DeleteConfirmModal from './DeleteConfirmModal';
 
-// API service functions with host
+// Type definitions
+interface Category {
+  id: string;
+  name?: string;
+  name_ar: string;
+  name_en: string;
+  slug: string;
+  description?: string;
+  description_ar?: string;
+  description_en?: string;
+  icon?: string;
+  type: 'primary' | 'secondary';
+  parent_id?: string | null;
+  sort_order: number;
+  is_active: boolean;
+  place_count?: number;
+  subcategories?: Category[];
+  children?: Category[];
+}
+
+interface CategoryFormData {
+  name_ar: string;
+  name_en: string;
+  slug: string;
+  description_ar: string;
+  description_en: string;
+  icon: string;
+  type: 'primary' | 'secondary';
+  parent_id: string | null;
+  sort_order: number;
+}
+
+interface APIResponse {
+  success: boolean;
+  data?: any;
+  error?: string;
+}
+
+// API service functions with host and authentication
 const API_HOST = 'http://127.0.0.1:9000';
 
+// Generic API call function with authentication
+const apiCall = async (endpoint: string, options: RequestInit = {}): Promise<any> => {
+  const token = localStorage.getItem('authToken');
+  
+  const config: RequestInit = {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    },
+    ...options,
+  };
+
+  const response = await fetch(`${API_HOST}${endpoint}`, config);
+  
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'API request failed' }));
+    throw new Error(error.message || error.error || `HTTP ${response.status}: Failed to complete request`);
+  }
+
+  return response.json();
+};
+
 const categoryAPI = {
-  getAll: async (lang = null) => {
-    const url = lang ? `${API_HOST}/api/v1/categories?lang=${lang}` : `${API_HOST}/api/v1/categories`;
-    const response = await fetch(url);
-    const data = await response.json();
+  getAll: async (lang: string | null = null): Promise<Category[]> => {
+    const endpoint = lang ? `/api/v1/categories?lang=${lang}` : `/api/v1/categories`;
+    const data: APIResponse = await apiCall(endpoint);
     if (!data.success) throw new Error(data.error || 'Failed to fetch categories');
     return data.data;
   },
 
-  getHierarchy: async (lang = null) => {
-    const url = lang ? `${API_HOST}/api/v1/categories/hierarchy?lang=${lang}` : `${API_HOST}/api/v1/categories/hierarchy`;
-    const response = await fetch(url);
-    const data = await response.json();
+  getHierarchy: async (lang: string | null = null): Promise<Category[]> => {
+    const endpoint = lang ? `/api/v1/categories/hierarchy?lang=${lang}` : `/api/v1/categories/hierarchy`;
+    const data: APIResponse = await apiCall(endpoint);
     if (!data.success) throw new Error(data.error || 'Failed to fetch hierarchy');
     return data.data;
   },
 
-  getPrimary: async (lang = null) => {
-    const url = lang ? `${API_HOST}/api/v1/categories/primary?lang=${lang}` : `${API_HOST}/api/v1/categories/primary`;
-    const response = await fetch(url);
-    const data = await response.json();
+  getPrimary: async (lang: string | null = null): Promise<Category[]> => {
+    const endpoint = lang ? `/api/v1/categories/primary?lang=${lang}` : `/api/v1/categories/primary`;
+    const data: APIResponse = await apiCall(endpoint);
     if (!data.success) throw new Error(data.error || 'Failed to fetch primary categories');
     return data.data;
   },
 
-  create: async (categoryData) => {
+  create: async (categoryData: CategoryFormData): Promise<Category> => {
     console.log('Creating category with data:', categoryData);
-    const response = await fetch(`${API_HOST}/api/v1/categories`, {
+    const data: APIResponse = await apiCall(`/api/v1/categories`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(categoryData)
     });
     
-    console.log('Response status:', response.status);
-    const data = await response.json();
     console.log('Response data:', data);
     
-    if (!response.ok) {
-      throw new Error(data.error || data.message || `HTTP ${response.status}: Failed to create category`);
-    }
     if (!data.success) throw new Error(data.error || 'Failed to create category');
     return data.data;
   },
 
-  update: async (id, categoryData) => {
-    const response = await fetch(`${API_HOST}/api/v1/categories/${id}`, {
+  update: async (id: string, categoryData: CategoryFormData): Promise<Category> => {
+    const data: APIResponse = await apiCall(`/api/v1/categories/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(categoryData)
     });
-    const data = await response.json();
     if (!data.success) throw new Error(data.error || 'Failed to update category');
     return data.data;
   },
 
-  delete: async (id) => {
-    const response = await fetch(`${API_HOST}/api/v1/categories/${id}`, {
+  delete: async (id: string): Promise<any> => {
+    const data: APIResponse = await apiCall(`/api/v1/categories/${id}`, {
       method: 'DELETE'
     });
-    const data = await response.json();
     if (!data.success) throw new Error(data.error || 'Failed to delete category');
     return data.data;
   }
 };
 
-// Utility functions
-const generateSlug = (name) => {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-};
-
 // Helper function to ensure array format
-const ensureArray = (data) => {
+const ensureArray = (data: any): Category[] => {
   if (!data) return [];
   if (Array.isArray(data)) return data;
   if (typeof data === 'object') {
@@ -93,582 +135,25 @@ const ensureArray = (data) => {
   return [];
 };
 
-// Helper function to get display name based on current language
-const getDisplayName = (category, currentLang) => {
-  if (category.name) return category.name; // Localized response
-  return currentLang === 'ar' ? category.name_ar : category.name_en;
-};
-
-// Helper function to get display description based on current language
-const getDisplayDescription = (category, currentLang) => {
-  if (category.description) return category.description; // Localized response
-  return currentLang === 'ar' ? category.description_ar : category.description_en;
-};
-
-// Category Form Modal Component
-const CategoryFormModal = ({ isOpen, onClose, category, primaryCategories, onSave, currentLang }) => {
-  const [formData, setFormData] = useState({
-    name_ar: '',
-    name_en: '',
-    slug: '',
-    description_ar: '',
-    description_en: '',
-    icon: '',
-    type: 'primary',
-    parent_id: null,
-    sort_order: 0
-  });
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (category) {
-      setFormData({
-        name_ar: category.name_ar || '',
-        name_en: category.name_en || '',
-        slug: category.slug || '',
-        description_ar: category.description_ar || '',
-        description_en: category.description_en || '',
-        icon: category.icon || '',
-        type: category.type || 'primary',
-        parent_id: category.parent_id || null,
-        sort_order: category.sort_order || 0
-      });
-    } else {
-      setFormData({
-        name_ar: '',
-        name_en: '',
-        slug: '',
-        description_ar: '',
-        description_en: '',
-        icon: '',
-        type: 'primary',
-        parent_id: null,
-        sort_order: 0
-      });
-    }
-    setErrors({});
-  }, [category, isOpen]);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value === '' ? '' : value
-    }));
-
-    // Auto-generate slug from English name
-    if (name === 'name_en' && !category) {
-      setFormData(prev => ({
-        ...prev,
-        slug: generateSlug(value)
-      }));
-    }
-
-    // Clear error for this field
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-  };
-
-  const handleTypeChange = (e) => {
-    const type = e.target.value;
-    setFormData(prev => ({
-      ...prev,
-      type,
-      parent_id: type === 'primary' ? null : prev.parent_id
-    }));
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.name_ar.trim()) newErrors.name_ar = 'Arabic name is required';
-    if (!formData.name_en.trim()) newErrors.name_en = 'English name is required';
-    if (!formData.slug.trim()) newErrors.slug = 'Slug is required';
-    if (!formData.type) newErrors.type = 'Type is required';
-    if (formData.type === 'secondary' && !formData.parent_id) {
-      newErrors.parent_id = 'Parent category is required for secondary categories';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
-
-    setLoading(true);
-    try {
-      const submitData = { ...formData };
-      
-      // Ensure primary categories have null parent_id
-      if (submitData.type === 'primary') {
-        submitData.parent_id = null;
-      }
-      
-      // Convert numeric fields
-      if (submitData.sort_order !== null && submitData.sort_order !== '') {
-        submitData.sort_order = parseInt(submitData.sort_order, 10) || 0;
-      } else {
-        submitData.sort_order = 0;
-      }
-      
-      // Keep parent_id as string (UUID) or null
-      if (submitData.parent_id !== null && submitData.parent_id !== '') {
-        submitData.parent_id = submitData.parent_id.toString();
-      } else {
-        submitData.parent_id = null;
-      }
-      
-      // Trim string values and handle empty strings
-      Object.keys(submitData).forEach(key => {
-        if (typeof submitData[key] === 'string') {
-          submitData[key] = submitData[key].trim();
-          // Keep empty strings as empty strings, not null for text fields
-        }
-      });
-
-      console.log('Submitting form data:', submitData);
-
-      if (category) {
-        await onSave(category.id, submitData);
-      } else {
-        await onSave(null, submitData);
-      }
-      onClose();
-    } catch (error) {
-      console.error('Form submission error:', error);
-      setErrors({ general: error.message });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">
-            {category ? 'Edit Category' : 'Add New Category'}
-          </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <X size={20} />
-          </button>
-        </div>
-
-        {errors.general && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-            <div className="flex items-center">
-              <AlertTriangle className="text-red-500 mr-2" size={16} />
-              <span className="text-red-700 text-sm">{errors.general}</span>
-            </div>
-          </div>
-        )}
-
-        <div className="space-y-4">
-          {/* Bilingual Name Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Arabic Name *
-              </label>
-              <input
-                type="text"
-                name="name_ar"
-                value={formData.name_ar}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.name_ar ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="الاسم بالعربية"
-                dir="rtl"
-              />
-              {errors.name_ar && <p className="text-red-500 text-sm mt-1">{errors.name_ar}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                English Name *
-              </label>
-              <input
-                type="text"
-                name="name_en"
-                value={formData.name_en}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.name_en ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Category name in English"
-              />
-              {errors.name_en && <p className="text-red-500 text-sm mt-1">{errors.name_en}</p>}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Slug *
-            </label>
-            <input
-              type="text"
-              name="slug"
-              value={formData.slug}
-              onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.slug ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder="category-slug"
-            />
-            {errors.slug && <p className="text-red-500 text-sm mt-1">{errors.slug}</p>}
-          </div>
-
-          {/* Bilingual Description Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Arabic Description
-              </label>
-              <textarea
-                name="description_ar"
-                value={formData.description_ar}
-                onChange={handleInputChange}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="الوصف بالعربية"
-                dir="rtl"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                English Description
-              </label>
-              <textarea
-                name="description_en"
-                value={formData.description_en}
-                onChange={handleInputChange}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Category description in English"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Icon
-            </label>
-            <input
-              type="text"
-              name="icon"
-              value={formData.icon}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Icon name or emoji"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Type *
-            </label>
-            <select
-              name="type"
-              value={formData.type}
-              onChange={handleTypeChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.type ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="primary">Primary</option>
-              <option value="secondary">Secondary</option>
-            </select>
-            {errors.type && <p className="text-red-500 text-sm mt-1">{errors.type}</p>}
-          </div>
-
-          {formData.type === 'secondary' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Parent Category *
-              </label>
-              <select
-                name="parent_id"
-                value={formData.parent_id || ''}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.parent_id ? 'border-red-500' : 'border-gray-300'
-                }`}
-              >
-                <option value="">Select parent category</option>
-                {ensureArray(primaryCategories).map(cat => (
-                  <option key={cat.id} value={cat.id}>
-                    {getDisplayName(cat, currentLang)}
-                  </option>
-                ))}
-              </select>
-              {errors.parent_id && <p className="text-red-500 text-sm mt-1">{errors.parent_id}</p>}
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Sort Order
-            </label>
-            <input
-              type="number"
-              name="sort_order"
-              value={formData.sort_order}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="0"
-            />
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center disabled:opacity-50"
-              disabled={loading}
-            >
-              <Save className="mr-2" size={16} />
-              {loading ? 'Saving...' : 'Save Category'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Delete Confirmation Modal
-const DeleteConfirmModal = ({ isOpen, onClose, category, onConfirm, loading, currentLang }) => {
-  if (!isOpen || !category) return null;
-
-  const subcategories = ensureArray(category.subcategories || category.children);
-  const subcategoryCount = subcategories.length;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <div className="flex items-center mb-4">
-          <AlertTriangle className="text-red-500 mr-3 flex-shrink-0" size={24} />
-          <h2 className="text-lg font-semibold">Delete Category</h2>
-        </div>
-        
-        <div className="mb-6">
-          <p className="text-gray-600 mb-3">
-            Are you sure you want to delete <strong>"{getDisplayName(category, currentLang)}"</strong>?
-          </p>
-          
-          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-3">
-            <p className="text-yellow-800 text-sm font-medium">⚠️ This action cannot be undone.</p>
-          </div>
-
-          {subcategoryCount > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-3">
-              <p className="text-red-700 text-sm font-medium">
-                🗂️ This will also permanently delete all {subcategoryCount} subcategories:
-              </p>
-              <ul className="mt-2 text-red-600 text-sm list-disc list-inside max-h-24 overflow-y-auto">
-                {subcategories.map(sub => (
-                  <li key={sub.id}>{getDisplayName(sub, currentLang)}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {category.place_count && category.place_count > 0 && (
-            <div className="bg-orange-50 border border-orange-200 rounded-md p-3 mt-3">
-              <p className="text-orange-700 text-sm">
-                📍 This category is associated with {category.place_count} places. The places will remain but lose this category association.
-              </p>
-            </div>
-          )}
-        </div>
-
-        <div className="flex justify-end space-x-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-            disabled={loading}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors flex items-center"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Deleting...
-              </>
-            ) : (
-              <>
-                <Trash2 size={16} className="mr-2" />
-                Delete {subcategoryCount > 0 ? `All (${subcategoryCount + 1})` : 'Category'}
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Category Item Component
-const CategoryItem = ({ category, level = 0, onEdit, onDelete, expandedCategories, onToggleExpand, currentLang }) => {
-  const subcategories = ensureArray(category.subcategories || category.children);
-  const hasSubcategories = subcategories.length > 0;
-  const isExpanded = expandedCategories.has(category.id);
-
-  return (
-    <div className="border-b border-gray-100 last:border-b-0">
-      <div 
-        className={`flex items-center p-4 hover:bg-gray-50 ${
-          level > 0 ? `border-l-4 border-blue-200 bg-gray-50` : ''
-        }`}
-        style={{ marginLeft: level > 0 ? `${level * 20}px` : '0' }}
-      >
-        <div className="flex-1 flex items-center">
-          {hasSubcategories ? (
-            <button
-              onClick={() => onToggleExpand(category.id)}
-              className="mr-2 p-1 hover:bg-gray-200 rounded transition-colors"
-              title={isExpanded ? 'Collapse' : 'Expand'}
-            >
-              {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            </button>
-          ) : (
-            <div className="w-6 mr-2"></div>
-          )}
-          
-          <div className="flex items-center">
-            {category.type === 'primary' ? (
-              <Folder className="text-blue-500 mr-2 flex-shrink-0" size={18} />
-            ) : (
-              <Tag className="text-green-500 mr-2 flex-shrink-0" size={18} />
-            )}
-            
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center flex-wrap gap-2">
-                <span className="font-medium text-gray-900">
-                  {getDisplayName(category, currentLang)}
-                </span>
-                {category.icon && (
-                  <span className="text-lg">{category.icon}</span>
-                )}
-                <span className={`px-2 py-1 text-xs rounded-full flex-shrink-0 ${
-                  category.is_active 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                }`}>
-                  {category.is_active ? 'Active' : 'Inactive'}
-                </span>
-                <span className={`px-2 py-1 text-xs rounded-full flex-shrink-0 ${
-                  category.type === 'primary'
-                    ? 'bg-blue-100 text-blue-800'
-                    : 'bg-purple-100 text-purple-800'
-                }`}>
-                  {category.type}
-                </span>
-              </div>
-              <div className="text-sm text-gray-500 mt-1">
-                <span className="font-mono bg-gray-100 px-1 rounded">{category.slug}</span>
-                {hasSubcategories && (
-                  <span className="ml-2">• {subcategories.length} subcategories</span>
-                )}
-                {category.place_count && category.place_count > 0 && (
-                  <span className="ml-2">• {category.place_count} places</span>
-                )}
-              </div>
-              {getDisplayDescription(category, currentLang) && (
-                <div className="text-sm text-gray-600 mt-1 italic">
-                  {getDisplayDescription(category, currentLang)}
-                </div>
-              )}
-              {/* Show both languages in admin view */}
-              {currentLang === 'both' && (
-                <div className="text-xs text-gray-500 mt-1 space-y-1">
-                  <div><strong>AR:</strong> {category.name_ar}</div>
-                  <div><strong>EN:</strong> {category.name_en}</div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-1 ml-4">
-          <button
-            onClick={() => onEdit(category)}
-            className="p-2 text-blue-600 hover:bg-blue-100 rounded-md transition-colors"
-            title="Edit category"
-          >
-            <Edit size={16} />
-          </button>
-          <button
-            onClick={() => onDelete(category)}
-            className="p-2 text-red-600 hover:bg-red-100 rounded-md transition-colors"
-            title="Delete category"
-          >
-            <Trash2 size={16} />
-          </button>
-        </div>
-      </div>
-
-      {hasSubcategories && isExpanded && (
-        <div>
-          {subcategories.map(subcategory => (
-            <CategoryItem
-              key={subcategory.id}
-              category={subcategory}
-              level={level + 1}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              expandedCategories={expandedCategories}
-              onToggleExpand={onToggleExpand}
-              currentLang={currentLang}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
 // Main ManageCategories Component
-export default function ManageCategories() {
-  const [categories, setCategories] = useState([]);
-  const [primaryCategories, setPrimaryCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [showModal, setShowModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [expandedCategories, setExpandedCategories] = useState(new Set());
-  const [viewMode, setViewMode] = useState('hierarchy'); // 'hierarchy' or 'flat'
-  const [currentLang, setCurrentLang] = useState('en'); // 'en', 'ar', or 'both'
+const ManageCategories: React.FC = () => {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [primaryCategories, setPrimaryCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<'hierarchy' | 'flat'>('hierarchy');
+  const [currentLang, setCurrentLang] = useState<'en' | 'ar' | 'both'>('en');
 
   useEffect(() => {
     loadCategories();
     loadPrimaryCategories();
   }, [viewMode, currentLang]);
 
-  const loadCategories = async () => {
+  const loadCategories = async (): Promise<void> => {
     try {
       setLoading(true);
       const langParam = currentLang === 'both' ? null : currentLang;
@@ -682,7 +167,7 @@ export default function ManageCategories() {
       setCategories(categoryArray);
       
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
       console.error('Error loading categories:', err);
       setCategories([]);
     } finally {
@@ -690,7 +175,7 @@ export default function ManageCategories() {
     }
   };
 
-  const loadPrimaryCategories = async () => {
+  const loadPrimaryCategories = async (): Promise<void> => {
     try {
       const data = await categoryAPI.getPrimary();
       setPrimaryCategories(ensureArray(data));
@@ -700,7 +185,7 @@ export default function ManageCategories() {
     }
   };
 
-  const handleSaveCategory = async (id, categoryData) => {
+  const handleSaveCategory = async (id: string | null, categoryData: CategoryFormData): Promise<void> => {
     try {
       if (id) {
         await categoryAPI.update(id, categoryData);
@@ -714,7 +199,7 @@ export default function ManageCategories() {
     }
   };
 
-  const handleDeleteCategory = async () => {
+  const handleDeleteCategory = async (): Promise<void> => {
     if (!selectedCategory) return;
     
     try {
@@ -724,11 +209,11 @@ export default function ManageCategories() {
       setShowDeleteModal(false);
       setSelectedCategory(null);
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     }
   };
 
-  const handleToggleExpand = (categoryId) => {
+  const handleToggleExpand = (categoryId: string): void => {
     const newExpanded = new Set(expandedCategories);
     if (newExpanded.has(categoryId)) {
       newExpanded.delete(categoryId);
@@ -738,9 +223,9 @@ export default function ManageCategories() {
     setExpandedCategories(newExpanded);
   };
 
-  const expandAll = () => {
-    const allIds = new Set();
-    const addIds = (categories) => {
+  const expandAll = (): void => {
+    const allIds = new Set<string>();
+    const addIds = (categories: Category[]): void => {
       const categoryArray = ensureArray(categories);
       categoryArray.forEach(cat => {
         const subcategories = ensureArray(cat.subcategories || cat.children);
@@ -754,14 +239,14 @@ export default function ManageCategories() {
     setExpandedCategories(allIds);
   };
 
-  const collapseAll = () => {
+  const collapseAll = (): void => {
     setExpandedCategories(new Set());
   };
 
   // Helper function to count total categories including subcategories
-  const countTotalCategories = (categories) => {
+  const countTotalCategories = (categories: Category[]): number => {
     let total = 0;
-    const count = (cats) => {
+    const count = (cats: Category[]): void => {
       const categoryArray = ensureArray(cats);
       categoryArray.forEach(cat => {
         total++;
@@ -821,7 +306,7 @@ export default function ManageCategories() {
               <label className="text-sm font-medium text-gray-700">View:</label>
               <select
                 value={viewMode}
-                onChange={(e) => setViewMode(e.target.value)}
+                onChange={(e) => setViewMode(e.target.value as 'hierarchy' | 'flat')}
                 className="px-3 py-1 border border-gray-300 rounded-md text-sm"
               >
                 <option value="hierarchy">Hierarchy</option>
@@ -834,7 +319,7 @@ export default function ManageCategories() {
               <label className="text-sm font-medium text-gray-700">Language:</label>
               <select
                 value={currentLang}
-                onChange={(e) => setCurrentLang(e.target.value)}
+                onChange={(e) => setCurrentLang(e.target.value as 'en' | 'ar' | 'both')}
                 className="px-3 py-1 border border-gray-300 rounded-md text-sm"
               >
                 <option value="en">English</option>
@@ -925,4 +410,6 @@ export default function ManageCategories() {
       />
     </div>
   );
-}
+};
+
+export default ManageCategories;
