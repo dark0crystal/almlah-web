@@ -4,6 +4,7 @@ import Destination from '@/components/destination/Destination';
 import Header from '@/components/Header';
 import Heading from '@/components/hero/Heading';
 import {getTranslations} from 'next-intl/server';
+import Places from './places/page';
  
 export default async function HomePage() {
   const t = await getTranslations('HomePage');
@@ -22,6 +23,9 @@ export default async function HomePage() {
         {/* <VerticalCard/> */}
         <Destination/>
 
+
+        <div className="h-[100vh]"/>
+        <Places/>
         <div className='h-screen'/>
       </div>
     </div>

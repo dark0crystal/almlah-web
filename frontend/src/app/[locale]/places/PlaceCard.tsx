@@ -53,48 +53,77 @@ export default function PlaceCard({ place }: PlaceCardProps) {
     .filter(Boolean)
     .join(' | ') || (locale === 'ar' ? 'سلطنة عمان' : 'Sultanate of Oman');
 
+  const getCategoryText = () => {
+    if (place.category) {
+      return locale === 'ar' ? place.category.name_ar : place.category.name_en;
+    }
+    return locale === 'ar' ? 'الأماكن والمشروبات' : 'Food & Beverages';
+  };
+
   return (
     <div 
-      className="relative rounded-2xl shadow-lg overflow-hidden transition-all duration-300 transform hover:scale-105 hover:shadow-xl cursor-pointer h-52 w-full"
+      className={`bg-white rounded-2xl  hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden  ${
+        isHovered ? 'transform -translate-y-1' : ''
+      } ${locale === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleCardClick}
     >
-      {!imageError ? (
-        <Image 
-          src={getImageSrc()}
-          alt={placeName}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className={`object-cover transition-transform duration-300 ${
-            isHovered ? 'scale-110' : 'scale-100'
-          }`}
-          onError={() => setImageError(true)}
-          priority={false}
-        />
-      ) : (
-        <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-          <div className="text-center">
-            <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-500 text-sm font-medium">{placeName}</p>
+      <div className="flex h-36 md:h-44">
+        {/* Image Section - Increased width and added padding */}
+        <div className="w-2/5 p-2 flex items-center">
+          <div className="relative w-full h-full rounded-2xl overflow-hidden">
+            {!imageError ? (
+              <Image 
+                src={getImageSrc()}
+                alt={placeName}
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 40vw, 30vw"
+                className={`object-cover transition-transform duration-300 ${
+                  isHovered ? 'scale-110' : 'scale-100'
+                }`}
+                onError={() => setImageError(true)}
+                priority={false}
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center rounded-2xl">
+                <MapPin className="w-8 h-8 text-gray-400" />
+              </div>
+            )}
+
+            {/* Corner logo/badge */}
+            {place.is_featured && (
+              <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm rounded-full p-1">
+                <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">
+                    {locale === 'ar' ? 'م' : 'F'}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      )}
-      
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-      
-      <div className={`absolute bottom-4 ${locale === 'ar' ? 'left-4 text-left' : 'right-4 text-right'}`}>
-        <h3 className="text-white text-xl font-bold mb-1 drop-shadow-lg">
-          {placeName}
-        </h3>
-        <p className="text-white/90 text-sm font-medium drop-shadow-md">
-          {locationString}
-        </p>
-        {place.rating && (
-          <div className={`flex items-center ${locale === 'ar' ? 'justify-start' : 'justify-end'} mt-1`}>
-            <span className="text-yellow-400 text-sm">{place.rating.toFixed(1)}</span>
+
+        {/* Content Section - Adjusted width and centered vertically */}
+        <div className={`flex-1 p-4 flex flex-col justify-center ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
+          {/* Header */}
+          <div>
+            {/* Place Name */}
+            <h3 className="font-bold text-gray-800 text-lg mb-1 line-clamp-1">
+              {placeName}
+            </h3>
+
+            {/* Location */}
+            <p className="text-gray-600 text-sm line-clamp-1 mb-2">
+              {locationString}
+            </p>
           </div>
-        )}
+
+          {/* Footer */}
+          <div className={`flex items-center justify-between ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
+
+          </div>
+        </div>
       </div>
     </div>
   );
