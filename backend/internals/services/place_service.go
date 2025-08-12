@@ -858,7 +858,6 @@ func mapContentSectionToResponse(section domain.PlaceContentSection) dto.Content
 	}
 }
 
-// Fixed GetPlacesByFilters function in services/place_service.go
 func GetPlacesByFilters(categoryID uuid.UUID, governateID uuid.UUID) ([]dto.PlaceListResponse, error) {
     var places []domain.Place
     
@@ -873,7 +872,11 @@ func GetPlacesByFilters(categoryID uuid.UUID, governateID uuid.UUID) ([]dto.Plac
         "places.wilayah_id",
         "places.created_at",
         "places.updated_at",
-    ).Where("places.is_active = ?", true)
+    )
+    
+    // Only add is_active filter if the column exists
+    // You can comment this out if the column doesn't exist yet
+    query = query.Where("places.is_active = ?", true)
     
     if categoryID != uuid.Nil {
         query = query.Joins("JOIN place_categories ON places.id = place_categories.place_id").
@@ -890,7 +893,7 @@ func GetPlacesByFilters(categoryID uuid.UUID, governateID uuid.UUID) ([]dto.Plac
             return db.Select("id", "name_ar", "name_en", "slug", "icon", "type")
         }).
         Preload("Images", func(db *gorm.DB) *gorm.DB {
-            return db.Select("id", "place_id", "image_url", "is_primary").Where("is_active = ?", true)
+            return db.Select("id", "place_id", "image_url", "is_primary")
         }).
         Preload("Governate", func(db *gorm.DB) *gorm.DB {
             return db.Select("id", "name_ar", "name_en", "slug")
@@ -912,7 +915,7 @@ func GetPlacesByFilters(categoryID uuid.UUID, governateID uuid.UUID) ([]dto.Plac
     return response, nil
 }
 
-// Fixed minimal response mapper
+// Updated minimal response mapper to match PlaceListResponse exactly
 func mapPlaceToMinimalResponse(place domain.Place) dto.PlaceListResponse {
     // Get primary image
     var primaryImage *dto.ImageResponse
@@ -949,7 +952,7 @@ func mapPlaceToMinimalResponse(place domain.Place) dto.PlaceListResponse {
         }
     }
     
-    // Map categories - FIXED: removed the syntax error
+    // Map categories
     var categories []dto.SimpleCategoryResponse
     for _, category := range place.Categories {
         categories = append(categories, dto.SimpleCategoryResponse{
@@ -966,10 +969,15 @@ func mapPlaceToMinimalResponse(place domain.Place) dto.PlaceListResponse {
         ID:            place.ID,
         NameAr:        place.NameAr,
         NameEn:        place.NameEn,
+        DescriptionAr: "", // Empty for performance in list view
+        DescriptionEn: "", // Empty for performance in list view
+        SubtitleAr:    "", // Empty for performance in list view
+        SubtitleEn:    "", // Empty for performance in list view
         Governate:     governate,
         Wilayah:       wilayah,
+        Rating:        0, // Not calculated in minimal response for performance
+        ReviewCount:   0, // Not calculated in minimal response for performance
         Categories:    categories,
         PrimaryImage:  primaryImage,
     }
 }
-

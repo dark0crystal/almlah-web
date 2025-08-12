@@ -21,9 +21,6 @@ export default function PlacesCardsWrapper() {
     error: locale === 'ar' ? 'خطأ' : 'Error',
     tryAgain: locale === 'ar' ? 'حاول مرة أخرى' : 'Try Again',
     title: locale === 'ar' ? 'الأماكن السياحية' : 'Tourism Places',
-    subtitle: locale === 'ar' 
-      ? 'اكتشف أجمل الوجهات السياحية في سلطنة عمان' 
-      : 'Discover the most beautiful tourist destinations in Oman',
     noResults: locale === 'ar' ? 'لم يتم العثور على أماكن سياحية' : 'No tourism places found',
     resultsCount: (count: number) => 
       locale === 'ar' 
@@ -81,7 +78,6 @@ export default function PlacesCardsWrapper() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">{text.title}</h1>
-        <p className="text-gray-600">{text.subtitle}</p>
       </div>
 
       {/* Filter */}
@@ -99,13 +95,13 @@ export default function PlacesCardsWrapper() {
         </div>
       )}
 
-      {/* Places Grid */}
+      {/* Places List - Single Column */}
       {places.length === 0 ? (
         <div className="p-8 text-center text-gray-500">
           <p className="text-lg">{text.noResults}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
           {places.map((place) => (
             <PlaceCard key={place.id} place={place} />
           ))}
