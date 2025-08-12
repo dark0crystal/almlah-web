@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { ChevronDown, MapPin } from "lucide-react";
 import { useParams } from "next/navigation";
-import { getAllGovernates } from "@/services/placesApi";
+import { fetchGovernates } from "@/services/placesApi";
 import { Governate } from "@/types";
 
 interface GovernateFilterProps {
@@ -25,7 +25,7 @@ export default function GovernateFilter({
     const loadGovernates = async () => {
       try {
         setLoading(true);
-        const data = await getAllGovernates();
+        const data = await fetchGovernates();
         setGovernates(data);
       } catch (error) {
         console.error('Error loading governates:', error);
@@ -76,13 +76,11 @@ export default function GovernateFilter({
 
       {isOpen && (
         <>
-          {/* Backdrop */}
           <div 
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
           
-          {/* Dropdown */}
           <div className="absolute top-full mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-lg z-20 max-h-64 overflow-y-auto">
             {/* All Governates Option */}
             <button
@@ -97,7 +95,6 @@ export default function GovernateFilter({
               {locale === 'ar' ? 'جميع المحافظات' : 'All Governates'}
             </button>
             
-            {/* Separator */}
             <div className="border-t border-gray-100" />
             
             {/* Governate Options */}

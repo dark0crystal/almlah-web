@@ -1,4 +1,3 @@
-// Enhanced Place Edit Component with Backend Image Management
 
 "use client"
 import React, { useState, useEffect } from 'react';
@@ -27,6 +26,7 @@ import {
 
 // Import the enhanced services from the previous component
 import { placeService } from '../../ManagePlaces'; // Adjust import path as needed
+import SimpleImageManager from '../../SimpleImageManager';
 
 // API Configuration
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:9000/api/v1';
@@ -1121,7 +1121,7 @@ export default function PlaceEdit() {
 
             {/* Images */}
             <div className="bg-white rounded-lg border p-6">
-              <PlaceImageManager 
+              <SimpleImageManager 
                 placeId={placeId}
                 onImageCountChange={setImageCount}
               />
