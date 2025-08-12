@@ -33,7 +33,7 @@ func MigrateDB() {
 		&domain.Advice{},
 		&domain.Category{},
 		&domain.PlaceImage{},
-		&domain.Category{},
+		&domain.PlaceCategory{},
 		&domain.Property{},
 		&domain.Recipe{},
 		&domain.Review{},
