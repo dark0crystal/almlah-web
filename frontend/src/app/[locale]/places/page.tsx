@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { MapPin, List, X } from "lucide-react";
 import PlacesCardsWrapper from "./PlacesCardsWrapper";
 import PlacesMap from "./PlacesMap";
+import GovernateFilter from "./GovernateFilterComponent";
 
 /**
  * Main Places component that renders the tourism places discovery page
@@ -29,14 +30,26 @@ export default function Places() {
     return locale === 'ar' ? 'الأماكن السياحية' : 'Places to Visit';
   };
 
-  const getFooterText = () => {
-    return locale === 'ar' ? 'تذييل الصفحة' : 'Footer';
-  };
-
   return (
-    <div className={`w-screen bg-white relative ${locale === 'ar' ? 'rtl' : 'ltr'}`}>
+    <div className={`w-full bg-white relative ${locale === 'ar' ? 'rtl' : 'ltr'}`}>
       
-      {/* Mobile Layout - Stack vertically, map takes priority */}
+      {/* Header Section - Title and Filter */}
+      <div className="bg-white border-b border-gray-200 px-5 xl:px-25 py-4">
+        <div className={`flex items-center justify-between ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
+          {/* Title on the right (or left in RTL) */}
+          <h1 className="text-3xl font-bold text-gray-800">{getPlacesToVisitText()}</h1>
+          
+          {/* Filter on the left (or right in RTL) */}
+          <div className="w-64">
+            <GovernateFilter 
+              selectedGovernateId={selectedGovernateId}
+              onGovernateChange={setSelectedGovernateId}
+            />
+          </div>
+        </div>
+      </div>
+      
+      {/* Mobile Layout - Map with overlay cards at bottom */}
       <div className="md:hidden w-full h-screen relative">
         {/* Full screen map for mobile */}
         <div className="w-full h-full">
@@ -57,9 +70,18 @@ export default function Places() {
           <List className="w-6 h-6 text-gray-700" />
         </button>
         
-        {/* Mobile places list overlay */}
+        {/* Mobile places cards overlay at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 z-40 max-h-60">
+          <PlacesCardsWrapper 
+            isMobileMapView={true}
+            selectedGovernateId={selectedGovernateId}
+            onGovernateChange={setSelectedGovernateId}
+          />
+        </div>
+
+        {/* Mobile places list full overlay */}
         {showPlacesList && (
-          <div className="absolute inset-0 z-40 bg-white">
+          <div className="absolute inset-0 z-50 bg-white">
             {/* Header with close button */}
             <div className={`flex items-center justify-between p-4 border-b border-gray-200 bg-white ${
               locale === 'ar' ? 'flex-row-reverse' : ''
@@ -76,10 +98,14 @@ export default function Places() {
               </button>
             </div>
             
-            {/* Places content */}
+            {/* Places content with padding */}
             <div className="h-full overflow-y-auto pb-20">
-              <div className="p-4">
-                <PlacesCardsWrapper />
+              <div className="px-5 py-4">
+                <PlacesCardsWrapper 
+                  isMobileMapView={false}
+                  selectedGovernateId={selectedGovernateId}
+                  onGovernateChange={setSelectedGovernateId}
+                />
               </div>
             </div>
           </div>
@@ -87,18 +113,24 @@ export default function Places() {
       </div>
 
       {/* -------------------------------------- */}
-      {/* Desktop Layout - Airbnb style: Places cards take 3/5, Map takes 2/5 */}
-      <div className="hidden large:flex min-h-screen">
-        {/* Places List Section */}
-        <div className="w-3/5 bg-white">
-          <div className="p-6">
-            <PlacesCardsWrapper />
+      {/* Desktop Layout - Cards and Map both 80vh */}
+      <div className="hidden large:flex">
+        {/* Places List Section - 80vh with scroll */}
+        <div className="w-3/5 bg-white flex justify-center">
+          <div className="w-full max-w-none px-5 xl:px-25 py-6">
+            <div className="h-[80vh]">
+              <PlacesCardsWrapper 
+                isMobileMapView={false}
+                selectedGovernateId={selectedGovernateId}
+                onGovernateChange={setSelectedGovernateId}
+              />
+            </div>
           </div>
         </div>
         
-        {/* Map Section - Sticky */}
+        {/* Map Section - 80vh */}
         <div className="w-2/5 bg-white border-l border-gray-200">
-          <div className="sticky top-20 h-[88vh]">
+          <div className="h-[80vh] p-4">
             <PlacesMap 
               selectedGovernateId={selectedGovernateId}
               searchQuery={searchQuery}
@@ -108,18 +140,24 @@ export default function Places() {
       </div>
       
       {/* -------------------------------------- */}
-      {/* Tablet Layout - Adjustments for medium screens */}
-      <div className="hidden md:flex large:hidden w-full min-h-screen flex-col">
-        {/* Places list takes full width on tablets */}
-        <div className="w-full">
-          <div className="p-6">
-            <PlacesCardsWrapper />
+      {/* Tablet Layout - Cards and Map both 80vh */}
+      <div className="hidden md:flex large:hidden w-full flex-col">
+        {/* Places list - 80vh with scroll */}
+        <div className="w-full flex justify-center">
+          <div className="w-full max-w-none px-5 xl:px-25 py-6">
+            <div className="h-[80vh]">
+              <PlacesCardsWrapper 
+                isMobileMapView={false}
+                selectedGovernateId={selectedGovernateId}
+                onGovernateChange={setSelectedGovernateId}
+              />
+            </div>
           </div>
         </div>
         
-        {/* Map takes full width below on tablets */}
+        {/* Map - 80vh */}
         <div className="w-full bg-white border-t border-gray-200">
-          <div className="h-[60vh] p-4">
+          <div className="h-[80vh] p-4">
             <PlacesMap 
               selectedGovernateId={selectedGovernateId}
               searchQuery={searchQuery}
@@ -128,12 +166,14 @@ export default function Places() {
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="bg-amber-100 h-[50vh] w-screen flex items-center justify-center">
-        <div className="text-2xl font-bold text-gray-700">
-          {getFooterText()}
+      {/* Footer - Centered with padding */}
+      {/* <div className="bg-amber-100 h-[50vh] w-full flex items-center justify-center">
+        <div className="px-5 xl:px-25">
+          <div className="text-2xl font-bold text-gray-700 text-center">
+            {getFooterText()}
+          </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }
