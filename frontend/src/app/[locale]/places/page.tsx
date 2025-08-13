@@ -166,14 +166,7 @@ export default function Places() {
         </div>
       </div>
 
-      {/* Footer - Centered with padding */}
-      {/* <div className="bg-amber-100 h-[50vh] w-full flex items-center justify-center">
-        <div className="px-5 xl:px-25">
-          <div className="text-2xl font-bold text-gray-700 text-center">
-            {getFooterText()}
-          </div>
-        </div>
-      </div> */}
+      
     </div>
   );
 }
