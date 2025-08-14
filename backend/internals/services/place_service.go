@@ -1,4 +1,4 @@
-// services/place_service.go - Fixed version without duplicates
+// services/place_service.go - Fixed version with coordinates
 package services
 
 import (
@@ -427,6 +427,67 @@ func SearchPlaces(query string) ([]dto.PlaceListResponse, error) {
 	return response, nil
 }
 
+// GetPlacesByFilters - Optimized function for filter endpoint
+func GetPlacesByFilters(categoryID uuid.UUID, governateID uuid.UUID) ([]dto.PlaceListResponse, error) {
+    var places []domain.Place
+    
+    // Select all fields including coordinates
+    query := config.DB.Select(
+        "places.id",
+        "places.name_ar",
+        "places.name_en",
+        "places.description_ar",
+        "places.description_en", 
+        "places.subtitle_ar",
+        "places.subtitle_en",
+        "places.latitude",      // FIXED: Include coordinates
+        "places.longitude",     // FIXED: Include coordinates
+        "places.governate_id",
+        "places.wilayah_id",
+        "places.created_at",
+        "places.updated_at",
+    )
+    
+    // Add is_active filter
+    query = query.Where("places.is_active = ?", true)
+    
+    if categoryID != uuid.Nil {
+        query = query.Joins("JOIN place_categories ON places.id = place_categories.place_id").
+            Where("place_categories.category_id = ?", categoryID)
+    }
+    
+    if governateID != uuid.Nil {
+        query = query.Where("places.governate_id = ?", governateID)
+    }
+    
+    // Preload relationships
+    err := query.
+        Preload("Categories", func(db *gorm.DB) *gorm.DB {
+            return db.Select("id", "name_ar", "name_en", "slug", "icon", "type")
+        }).
+        Preload("Images", func(db *gorm.DB) *gorm.DB {
+            return db.Select("id", "place_id", "image_url", "is_primary", "alt_text", "display_order")
+        }).
+        Preload("Governate", func(db *gorm.DB) *gorm.DB {
+            return db.Select("id", "name_ar", "name_en", "slug")
+        }).
+        Preload("Wilayah", func(db *gorm.DB) *gorm.DB {
+            return db.Select("id", "name_ar", "name_en", "slug")
+        }).
+        Find(&places).Error
+    
+    if err != nil {
+        return nil, err
+    }
+    
+    var response []dto.PlaceListResponse
+    for _, place := range places {
+        response = append(response, mapPlaceToListResponse(place))
+    }
+    
+    return response, nil
+}
+
 // Content Section Management
 
 func CreatePlaceContentSection(placeID uuid.UUID, req dto.CreateContentSectionRequest, userID uuid.UUID) (*dto.ContentSectionResponse, error) {
@@ -664,7 +725,7 @@ func CleanupOrphanedImages() error {
 	})
 }
 
-// Mapper Functions
+// FIXED: Mapper Functions with coordinates
 
 func mapPlaceToResponse(place domain.Place) dto.PlaceResponse {
 	var categories []dto.SimpleCategoryResponse
@@ -736,8 +797,8 @@ func mapPlaceToResponse(place domain.Place) dto.PlaceResponse {
 		SubtitleEn:      place.SubtitleEn,
 		Governate:       governate,
 		Wilayah:         wilayah,
-		Latitude:        place.Latitude,
-		Longitude:       place.Longitude,
+		Latitude:        place.Latitude,    // FIXED: Include coordinates
+		Longitude:       place.Longitude,   // FIXED: Include coordinates
 		Phone:           place.Phone,
 		Email:           place.Email,
 		Website:         place.Website,
@@ -751,6 +812,7 @@ func mapPlaceToResponse(place domain.Place) dto.PlaceResponse {
 	}
 }
 
+// FIXED: Include coordinates in list response
 func mapPlaceToListResponse(place domain.Place) dto.PlaceListResponse {
 	var categories []dto.SimpleCategoryResponse
 	for _, category := range place.Categories {
@@ -822,6 +884,8 @@ func mapPlaceToListResponse(place domain.Place) dto.PlaceListResponse {
 		SubtitleEn:    place.SubtitleEn,
 		Governate:     governate,
 		Wilayah:       wilayah,
+		Latitude:      place.Latitude,    // FIXED: Include coordinates
+		Longitude:     place.Longitude,   // FIXED: Include coordinates
 		Rating:        rating,
 		ReviewCount:   reviewCount,
 		Categories:    categories,
@@ -858,126 +922,4 @@ func mapContentSectionToResponse(section domain.PlaceContentSection) dto.Content
 	}
 }
 
-func GetPlacesByFilters(categoryID uuid.UUID, governateID uuid.UUID) ([]dto.PlaceListResponse, error) {
-    var places []domain.Place
-    
-    // Select only the essential fields for better performance
-    query := config.DB.Select(
-        "places.id",
-        "places.name_ar",
-        "places.name_en",
-        "places.latitude",
-        "places.longitude",
-        "places.governate_id",
-        "places.wilayah_id",
-        "places.created_at",
-        "places.updated_at",
-    )
-    
-    // Only add is_active filter if the column exists
-    // You can comment this out if the column doesn't exist yet
-    query = query.Where("places.is_active = ?", true)
-    
-    if categoryID != uuid.Nil {
-        query = query.Joins("JOIN place_categories ON places.id = place_categories.place_id").
-            Where("place_categories.category_id = ?", categoryID)
-    }
-    
-    if governateID != uuid.Nil {
-        query = query.Where("places.governate_id = ?", governateID)
-    }
-    
-    // Preload only what we need
-    err := query.
-        Preload("Categories", func(db *gorm.DB) *gorm.DB {
-            return db.Select("id", "name_ar", "name_en", "slug", "icon", "type")
-        }).
-        Preload("Images", func(db *gorm.DB) *gorm.DB {
-            return db.Select("id", "place_id", "image_url", "is_primary")
-        }).
-        Preload("Governate", func(db *gorm.DB) *gorm.DB {
-            return db.Select("id", "name_ar", "name_en", "slug")
-        }).
-        Preload("Wilayah", func(db *gorm.DB) *gorm.DB {
-            return db.Select("id", "name_ar", "name_en", "slug")
-        }).
-        Find(&places).Error
-    
-    if err != nil {
-        return nil, err
-    }
-    
-    var response []dto.PlaceListResponse
-    for _, place := range places {
-        response = append(response, mapPlaceToMinimalResponse(place))
-    }
-    
-    return response, nil
-}
-
-// Updated minimal response mapper to match PlaceListResponse exactly
-func mapPlaceToMinimalResponse(place domain.Place) dto.PlaceListResponse {
-    // Get primary image
-    var primaryImage *dto.ImageResponse
-    for _, img := range place.Images {
-        if img.IsPrimary {
-            primaryImage = &dto.ImageResponse{
-                ID:        img.ID,
-                URL:       img.ImageURL,
-                IsPrimary: img.IsPrimary,
-            }
-            break
-        }
-    }
-    
-    // Map governate
-    var governate *dto.SimpleGovernateResponse
-    if place.Governate != nil {
-        governate = &dto.SimpleGovernateResponse{
-            ID:     place.Governate.ID,
-            NameAr: place.Governate.NameAr,
-            NameEn: place.Governate.NameEn,
-            Slug:   place.Governate.Slug,
-        }
-    }
-    
-    // Map wilayah
-    var wilayah *dto.SimpleWilayahResponse
-    if place.Wilayah != nil {
-        wilayah = &dto.SimpleWilayahResponse{
-            ID:     place.Wilayah.ID,
-            NameAr: place.Wilayah.NameAr,
-            NameEn: place.Wilayah.NameEn,
-            Slug:   place.Wilayah.Slug,
-        }
-    }
-    
-    // Map categories
-    var categories []dto.SimpleCategoryResponse
-    for _, category := range place.Categories {
-        categories = append(categories, dto.SimpleCategoryResponse{
-            ID:     category.ID,
-            NameAr: category.NameAr,
-            NameEn: category.NameEn,
-            Slug:   category.Slug,
-            Icon:   category.Icon,
-            Type:   category.Type,
-        })
-    }
-    
-    return dto.PlaceListResponse{
-        ID:            place.ID,
-        NameAr:        place.NameAr,
-        NameEn:        place.NameEn,
-        DescriptionAr: "", // Empty for performance in list view
-        DescriptionEn: "", // Empty for performance in list view
-        SubtitleAr:    "", // Empty for performance in list view
-        SubtitleEn:    "", // Empty for performance in list view
-        Governate:     governate,
-        Wilayah:       wilayah,
-        Rating:        0, // Not calculated in minimal response for performance
-        ReviewCount:   0, // Not calculated in minimal response for performance
-        Categories:    categories,
-        PrimaryImage:  primaryImage,
-    }
-}
+// REMOVED: mapPlaceToMinimalResponse - Use mapPlaceToListResponse instead for consistency

@@ -77,18 +77,21 @@ type SimpleWilayahResponse struct {
 	Slug   string    `json:"slug"`
 }
 
+// Response DTOs - List response for places (minimal info for lists)
 type PlaceListResponse struct {
-	ID            uuid.UUID                `json:"id"`
-	NameAr        string                   `json:"name_ar"`
-	NameEn        string                   `json:"name_en"`
-	DescriptionAr string                   `json:"description_ar"`
-	DescriptionEn string                   `json:"description_en"`
-	SubtitleAr    string                   `json:"subtitle_ar"`
-	SubtitleEn    string                   `json:"subtitle_en"`
-	Governate     *SimpleGovernateResponse `json:"governate,omitempty"`
-	Wilayah       *SimpleWilayahResponse   `json:"wilayah,omitempty"`
-	Rating        float64                  `json:"rating"`
-	ReviewCount   int                      `json:"review_count"`
-	Categories    []SimpleCategoryResponse `json:"categories"`
-	PrimaryImage  *ImageResponse           `json:"primary_image"`
+    ID            uuid.UUID                      `json:"id"`
+    NameAr        string                         `json:"name_ar"`
+    NameEn        string                         `json:"name_en"`
+    DescriptionAr string                         `json:"description_ar"`
+    DescriptionEn string                         `json:"description_en"`
+    SubtitleAr    string                         `json:"subtitle_ar"`
+    SubtitleEn    string                         `json:"subtitle_en"`
+    Governate     *SimpleGovernateResponse       `json:"governate,omitempty"`
+    Wilayah       *SimpleWilayahResponse         `json:"wilayah,omitempty"`
+    Latitude      float64                        `json:"latitude"`     
+    Longitude     float64                        `json:"longitude"`    
+    Rating        float64                        `json:"rating"`
+    ReviewCount   int                            `json:"review_count"`
+    Categories    []SimpleCategoryResponse       `json:"categories"`
+    PrimaryImage  *ImageResponse                 `json:"primary_image,omitempty"`
 }
