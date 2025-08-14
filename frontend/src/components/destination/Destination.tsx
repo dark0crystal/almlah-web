@@ -1,6 +1,7 @@
 "use client"
 import React, { useState, useEffect } from 'react';
 import { MapPin, AlertCircle, Loader2 } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import DestinationCardWrapper from './DestinationCardsWrapper';
 import DestinationsMap from './DestinationsMap';
 
@@ -51,22 +52,12 @@ const getPrimaryImage = (images) => {
   return primaryImage?.url || primaryImage?.image_url;
 };
 
-// Function to get display name based on language preference
-const getDisplayName = (governorate, language = 'ar') => {
-  return language === 'ar' ? governorate.name_ar : governorate.name_en;
-};
-
-// Function to get display subtitle based on language preference
-const getDisplaySubtitle = (governorate, language = 'ar') => {
-  return language === 'ar' ? governorate.subtitle_ar : governorate.subtitle_en;
-};
-
 // Function to transform API data to component format
-const transformGovernorateData = (governorates, language = 'ar') => {
+const transformGovernorateData = (governorates) => {
   return governorates.map((gov, index) => ({
     id: gov.id,
-    name: getDisplayName(gov, language),
-    category: getDisplaySubtitle(gov, language) || getDisplayName(gov, language === 'ar' ? 'en' : 'ar'),
+    name: gov.name_en, // Default to English, will be handled by locale in component
+    category: gov.subtitle_en || gov.name_ar, // Default category
     image: getPrimaryImage(gov.images),
     coordinates: {
       x: gov.longitude ? ((gov.longitude + 180) * 100) / 360 : 50 + (index * 5), // Convert longitude to percentage
@@ -82,7 +73,8 @@ export default function Destination() {
   const [destinationList, setDestinationList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [language, setLanguage] = useState('ar'); // 'ar' or 'en'
+  const locale = useLocale(); // Get current locale
+  const t = useTranslations('destinations'); // Translations
 
   // Fetch governorates data on component mount
   useEffect(() => {
@@ -92,19 +84,19 @@ export default function Destination() {
         setError(null);
         
         const governorates = await fetchGovernoratesFromAPI();
-        const transformedData = transformGovernorateData(governorates, language);
+        const transformedData = transformGovernorateData(governorates);
         
         setDestinationList(transformedData);
       } catch (err) {
         console.error('Failed to load governorates:', err);
-        setError('Failed to load governorates. Please try again later.');
+        setError(locale === 'ar' ? 'فشل في تحميل المحافظات. يرجى المحاولة مرة أخرى.' : 'Failed to load governorates. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
     loadGovernorates();
-  }, [language]);
+  }, [locale]);
 
   // Retry function
   const handleRetry = () => {
@@ -116,29 +108,16 @@ export default function Destination() {
       try {
         setLoading(true);
         const governorates = await fetchGovernoratesFromAPI();
-        const transformedData = transformGovernorateData(governorates, language);
+        const transformedData = transformGovernorateData(governorates);
         setDestinationList(transformedData);
       } catch (err) {
-        setError('Failed to load governorates. Please try again later.');
+        setError(locale === 'ar' ? 'فشل في تحميل المحافظات. يرجى المحاولة مرة أخرى.' : 'Failed to load governorates. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
     loadGovernorates();
-  };
-
-  // Toggle language
-  const toggleLanguage = () => {
-    const newLanguage = language === 'ar' ? 'en' : 'ar';
-    setLanguage(newLanguage);
-    
-    // Transform existing data with new language
-    if (destinationList.length > 0) {
-      const governorates = destinationList.map(dest => dest.governorateData);
-      const transformedData = transformGovernorateData(governorates, newLanguage);
-      setDestinationList(transformedData);
-    }
   };
 
   // Loading state
@@ -149,7 +128,9 @@ export default function Destination() {
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-              <p className="text-gray-600">Loading governorates...</p>
+              <p className={`text-gray-600 ${locale === 'ar' ? 'font-arabic' : ''}`}>
+                {locale === 'ar' ? 'جاري تحميل المحافظات...' : 'Loading governorates...'}
+              </p>
             </div>
           </div>
         </div>
@@ -165,13 +146,15 @@ export default function Destination() {
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
               <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-red-800 mb-2">Error Loading Data</h3>
-              <p className="text-red-700 mb-4">{error}</p>
+              <h3 className={`text-lg font-semibold text-red-800 mb-2 ${locale === 'ar' ? 'font-arabic' : ''}`}>
+                {locale === 'ar' ? 'خطأ في تحميل البيانات' : 'Error Loading Data'}
+              </h3>
+              <p className={`text-red-700 mb-4 ${locale === 'ar' ? 'font-arabic' : ''}`}>{error}</p>
               <button
                 onClick={handleRetry}
-                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
+                className={`bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors ${locale === 'ar' ? 'font-arabic' : ''}`}
               >
-                Try Again
+                {locale === 'ar' ? 'حاول مرة أخرى' : 'Try Again'}
               </button>
             </div>
           </div>
@@ -182,43 +165,38 @@ export default function Destination() {
 
   return (
     <div className="w-[88vw]">
-      {/* Language Toggle */}
-      <div className="mb-4 flex justify-end">
-        <button
-          onClick={toggleLanguage}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
-        >
-          {language === 'ar' ? 'English' : 'العربية'}
-        </button>
-      </div>
-
-      <div className="flex flex-col md:flex-row h-[80vh]">
-        {/* Map Section - Top on mobile, Right on desktop */}
-        <div className="flex-1 order-1 md:order-2 md:mx-4">
+      {/* Desktop/Tablet Layout */}
+      <div className="hidden md:flex h-[80vh]">
+        {/* Cards Wrapper - Slightly wider sidebar */}
+        <div className="flex-[1] w-72">
+          <DestinationCardWrapper destinations={destinationList} />
+        </div>
+        {/* Map Section - Takes major width */}
+        <div className="flex-[4] ">
           <DestinationsMap 
             destinations={destinationList}
-            language={language}
+            language={locale}
           />
         </div>
+      </div>
 
-        {/* Destinations Cards Wrapper - Bottom on mobile, Left on desktop */}
-        <div className="flex-shrink-0 order-2 md:order-1">
-          <DestinationCardWrapper
+      {/* Mobile Layout */}
+      <div className="md:hidden relative">
+        {/* Map Section - Full height background on mobile */}
+        <div className="h-[80vh] w-full">
+          <DestinationsMap 
             destinations={destinationList}
-            language={language}
+            language={locale}
           />
+        </div>
+
+        {/* Cards Wrapper - Overlay at bottom on mobile */}
+        <div className="absolute bottom-4 left-4 right-4 z-10">
+          <DestinationCardWrapper destinations={destinationList} />
         </div>
       </div>
 
-      {/* Data Source Info */}
-      <div className="mt-4 text-center text-sm text-gray-500">
-        <p>
-          {language === 'ar' 
-            ? `عرض ${destinationList.length} محافظة عمانية` 
-            : `Showing ${destinationList.length} Omani Governorates`
-          }
-        </p>
-      </div>
+      
     </div>
   );
 }
