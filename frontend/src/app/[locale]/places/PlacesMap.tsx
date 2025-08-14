@@ -9,6 +9,13 @@ interface PlacesMapProps {
   searchQuery?: string;
 }
 
+declare global {
+  interface Window {
+    google: any;
+    initGoogleMap: () => void;
+  }
+}
+
 export default function PlacesMap({ selectedGovernateId }: PlacesMapProps) {
   const params = useParams();
   const locale = (params?.locale as string) || 'en';
@@ -16,15 +23,19 @@ export default function PlacesMap({ selectedGovernateId }: PlacesMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
+  const infoWindowRef = useRef<any>(null);
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [mapboxLoaded, setMapboxLoaded] = useState(false);
+  const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false);
+
+  // Your Google Maps API key - Replace with your actual API key
+  const GOOGLE_MAPS_API_KEY = 'AIzaSyBUxLKRFGzQm6LisWYqDby-H-YsacK47j0';
 
   // Localized text
   const text = {
     loading: locale === 'ar' ? 'جاري تحميل الخريطة...' : 'Loading map...',
-    mapboxLoading: locale === 'ar' ? 'جاري تحميل Mapbox...' : 'Loading Mapbox...',
+    googleMapsLoading: locale === 'ar' ? 'جاري تحميل خرائط جوجل...' : 'Loading Google Maps...',
     error: locale === 'ar' ? 'خطأ في تحميل الخريطة' : 'Error loading map',
     noPlaces: locale === 'ar' ? 'لم يتم العثور على أماكن' : 'No places found',
     mapTitle: locale === 'ar' ? 'الأماكن السياحية' : 'Tourism Places',
@@ -34,44 +45,53 @@ export default function PlacesMap({ selectedGovernateId }: PlacesMapProps) {
     retry: locale === 'ar' ? 'حاول مرة أخرى' : 'Try Again'
   };
 
-  // Load Mapbox GL JS dynamically
+  // Load Google Maps API dynamically
   useEffect(() => {
-    const loadMapbox = () => {
+    const loadGoogleMaps = () => {
       // Check if already loaded
-      if (window.mapboxgl) {
-        setMapboxLoaded(true);
+      if (window.google && window.google.maps) {
+        setGoogleMapsLoaded(true);
         return;
       }
 
-      // Load CSS
-      const link = document.createElement('link');
-      link.href = 'https://api.mapbox.com/mapbox-gl-js/v3.14.0/mapbox-gl.css';
-      link.rel = 'stylesheet';
-      document.head.appendChild(link);
-
-      // Load JS
-      const script = document.createElement('script');
-      script.src = 'https://api.mapbox.com/mapbox-gl-js/v3.14.0/mapbox-gl.js';
-      script.onload = () => {
-        console.log('Mapbox GL JS loaded successfully');
-        setMapboxLoaded(true);
+      // Create global callback function
+      window.initGoogleMap = () => {
+        console.log('Google Maps loaded successfully');
+        // Add a small delay to ensure all libraries are loaded
+        setTimeout(() => {
+          setGoogleMapsLoaded(true);
+        }, 100);
       };
+
+      // Load Google Maps script with the marker library
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=initGoogleMap&libraries=marker,places&v=weekly`;
+      script.async = true;
+      script.defer = true;
       script.onerror = () => {
-        console.error('Failed to load Mapbox GL JS');
-        setError('Failed to load map library');
+        console.error('Failed to load Google Maps');
+        setError('Failed to load Google Maps');
       };
       document.head.appendChild(script);
     };
 
-    loadMapbox();
+    loadGoogleMaps();
 
     return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
+      // Cleanup markers
+      if (markersRef.current) {
+        markersRef.current.forEach(marker => {
+          if (marker.setMap) {
+            marker.setMap(null);
+          }
+        });
+        markersRef.current = [];
+      }
+      if (infoWindowRef.current) {
+        infoWindowRef.current.close();
       }
     };
-  }, []);
+  }, [GOOGLE_MAPS_API_KEY]);
 
   // Fetch places
   useEffect(() => {
@@ -114,75 +134,67 @@ export default function PlacesMap({ selectedGovernateId }: PlacesMapProps) {
     loadPlaces();
   }, [selectedGovernateId]);
 
-  // Initialize map when Mapbox is loaded
+  // Initialize Google Map when Google Maps is loaded
   useEffect(() => {
-    if (!mapboxLoaded || !mapContainer.current || map.current) return;
+    if (!googleMapsLoaded || !mapContainer.current || map.current) return;
 
-    const mapboxgl = (window as any).mapboxgl;
-    if (!mapboxgl) {
-      setError('Mapbox GL not available');
+    const google = window.google;
+    if (!google || !google.maps) {
+      setError('Google Maps not available');
       return;
     }
 
     try {
-      // Set access token
-      mapboxgl.accessToken = 'pk.eyJ1IjoiYWxtbGFoIiwiYSI6ImNtZGo1YXUxMDBoaGQyanF5amUybzNueW4ifQ.URYquetQ0MFz1bPJ_5lLaA';
-      
       // Create map
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: [58.4, 23.6], // Oman center
+      map.current = new google.maps.Map(mapContainer.current, {
+        center: { lat: 23.6, lng: 58.4 }, // Oman center
         zoom: 6,
-        attributionControl: false
+        mapId: 'DEMO_MAP_ID', // Required for Advanced Markers
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        zoomControl: true,
+        mapTypeControl: true,
+        scaleControl: true,
+        streetViewControl: true,
+        rotateControl: true,
+        fullscreenControl: true,
+        styles: [
+          {
+            featureType: 'poi',
+            elementType: 'labels',
+            stylers: [{ visibility: 'off' }]
+          }
+        ]
       });
 
-      // Add navigation control
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      // Create info window
+      infoWindowRef.current = new google.maps.InfoWindow();
 
-      map.current.on('load', () => {
-        console.log('Map loaded successfully');
-      });
-
-      map.current.on('error', (e: any) => {
-        console.error('Map error:', e);
-        setError('Map failed to load');
-      });
+      console.log('Google Map initialized successfully');
 
     } catch (error) {
       console.error('Map initialization error:', error);
       setError('Failed to initialize map');
     }
-  }, [mapboxLoaded]);
+  }, [googleMapsLoaded]);
 
   // Add markers when places change
   useEffect(() => {
-    if (!map.current || !mapboxLoaded || loading || !places.length) return;
+    if (!map.current || !googleMapsLoaded || loading || !places.length) return;
 
-    const mapboxgl = (window as any).mapboxgl;
-    if (!mapboxgl) return;
+    const google = window.google;
+    if (!google || !google.maps) return;
 
     // Clear existing markers
-    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current.forEach(marker => {
+      if (marker.setMap) {
+        marker.setMap(null);
+      }
+    });
     markersRef.current = [];
 
     // Calculate bounds for multiple places
-    if (places.length > 1) {
-      const bounds = new mapboxgl.LngLatBounds();
-      places.forEach(place => {
-        bounds.extend([place.lng, place.lat]);
-      });
-      
-      map.current.fitBounds(bounds, {
-        padding: 50,
-        maxZoom: 12
-      });
-    } else if (places.length === 1) {
-      map.current.flyTo({
-        center: [places[0].lng, places[0].lat],
-        zoom: 12
-      });
-    }
+    const bounds = new google.maps.LatLngBounds();
+    let hasValidBounds = false;
 
     // Add markers
     places.forEach(place => {
@@ -199,50 +211,120 @@ export default function PlacesMap({ selectedGovernateId }: PlacesMapProps) {
           .filter(Boolean)
           .join(' | ');
 
-        const popupContent = `
-          <div style="font-family: system-ui, -apple-system, sans-serif; min-width: 200px; padding: 4px;">
-            <h3 style="font-weight: bold; margin-bottom: 8px; font-size: 16px; color: #1f2937;">
+        const position = { lat: place.lat, lng: place.lng };
+
+        // Create a custom marker element
+        const markerElement = document.createElement('div');
+        markerElement.innerHTML = `
+          <div style="
+            width: 32px;
+            height: 40px;
+            background: #3b82f6;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+          ">
+            <div style="
+              width: 12px;
+              height: 12px;
+              background: white;
+              border-radius: 50%;
+              transform: rotate(45deg);
+            "></div>
+          </div>
+        `;
+
+        // Try to use AdvancedMarkerElement if available, fallback to regular Marker
+        let marker;
+        if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
+          marker = new google.maps.marker.AdvancedMarkerElement({
+            map: map.current,
+            position: position,
+            content: markerElement,
+            title: name
+          });
+        } else {
+          // Fallback to regular marker
+          marker = new google.maps.Marker({
+            position: position,
+            map: map.current,
+            title: name,
+            icon: {
+              url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                <svg width="32" height="40" viewBox="0 0 32 40" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M16 0C7.2 0 0 7.2 0 16c0 12 16 24 16 24s16-12 16-24c0-8.8-7.2-16-16-16z" fill="#3b82f6"/>
+                  <circle cx="16" cy="16" r="6" fill="white"/>
+                </svg>
+              `),
+              scaledSize: new google.maps.Size(32, 40),
+              anchor: new google.maps.Point(16, 40)
+            }
+          });
+        }
+
+        // Create info window content
+        const infoContent = `
+          <div style="font-family: system-ui, -apple-system, sans-serif; min-width: 200px; padding: 8px;">
+            <h3 style="font-weight: bold; margin-bottom: 8px; font-size: 16px; color: #1f2937; margin-top: 0;">
               ${name}
             </h3>
             ${locationText ? `
-              <p style="font-size: 14px; margin-bottom: 4px; color: #6b7280;">
+              <p style="font-size: 14px; margin-bottom: 4px; color: #6b7280; margin: 4px 0;">
                 📍 ${locationText}
               </p>
             ` : ''}
-            <p style="font-size: 12px; color: #9ca3af; margin-top: 8px;">
+            <p style="font-size: 12px; color: #9ca3af; margin: 8px 0 0 0;">
               ${text.coordinates}: ${place.lat.toFixed(4)}, ${place.lng.toFixed(4)}
             </p>
           </div>
         `;
 
-        const marker = new mapboxgl.Marker({ 
-          color: '#3b82f6',
-          scale: 0.8
-        })
-          .setLngLat([place.lng, place.lat])
-          .setPopup(new mapboxgl.Popup({
-            offset: 25,
-            closeButton: true,
-            closeOnClick: false
-          }).setHTML(popupContent))
-          .addTo(map.current);
+        // Add click listener to marker
+        marker.addListener('click', () => {
+          infoWindowRef.current.setContent(infoContent);
+          infoWindowRef.current.open(map.current, marker);
+        });
 
         markersRef.current.push(marker);
+        bounds.extend(position);
+        hasValidBounds = true;
+
       } catch (error) {
         console.error('Error adding marker for place:', place.name_en, error);
       }
     });
 
-  }, [places, loading, locale, text.coordinates, mapboxLoaded]);
+    // Fit map to bounds or center on single place
+    if (hasValidBounds) {
+      if (places.length === 1) {
+        map.current.setCenter({ lat: places[0].lat, lng: places[0].lng });
+        map.current.setZoom(12);
+      } else {
+        map.current.fitBounds(bounds);
+        // Set max zoom to prevent over-zooming
+        const listener = google.maps.event.addListener(map.current, 'bounds_changed', () => {
+          if (map.current.getZoom() > 12) {
+            map.current.setZoom(12);
+          }
+          google.maps.event.removeListener(listener);
+        });
+      }
+    }
+
+  }, [places, loading, locale, text.coordinates, googleMapsLoaded]);
 
   // Loading state
-  if (loading || !mapboxLoaded) {
+  if (loading || !googleMapsLoaded) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-lg">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
           <div className="text-gray-600">
-            {loading ? text.loading : text.mapboxLoading}
+            {loading ? text.loading : text.googleMapsLoading}
           </div>
         </div>
       </div>

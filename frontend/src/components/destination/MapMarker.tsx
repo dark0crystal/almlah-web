@@ -2,8 +2,27 @@
 
 import React from 'react';
 import { MapPin } from 'lucide-react';
+import { useLocale } from 'next-intl';
 
-export default function MapMarker({ destination, isActive, onClick, language = 'ar' }) {
+export default function MapMarker({ destination, isActive, onClick }) {
+  const locale = useLocale();
+
+  // Get display name based on current locale
+  const getDisplayName = () => {
+    if (locale === 'ar') {
+      return destination.governorateData?.name_ar || destination.name;
+    }
+    return destination.governorateData?.name_en || destination.name;
+  };
+
+  // Get category/subtitle based on current locale
+  const getCategory = () => {
+    if (locale === 'ar') {
+      return destination.governorateData?.subtitle_ar || destination.category || 'محافظة عمانية';
+    }
+    return destination.governorateData?.subtitle_en || destination.category || 'Omani Governorate';
+  };
+
   // Handle image display
   const getImageSrc = () => {
     if (destination.image) {
@@ -38,7 +57,7 @@ export default function MapMarker({ destination, isActive, onClick, language = '
           {getImageSrc() ? (
             <img 
               src={getImageSrc()}
-              alt={destination.name}
+              alt={getDisplayName()}
               className="w-full h-full rounded-full object-cover"
               onError={(e) => {
                 // Hide image on error and show colored marker instead
@@ -55,31 +74,29 @@ export default function MapMarker({ destination, isActive, onClick, language = '
             }`}
             style={{ display: getImageSrc() ? 'none' : 'flex' }}
           >
-            {destination.name.charAt(0)}
+            {getDisplayName().charAt(0)}
           </div>
         </div>
         
         {/* Active state label */}
         {isActive && (
           <div className={`absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-white px-3 py-2 rounded-lg shadow-lg whitespace-nowrap border ${
-            language === 'ar' ? 'text-right' : 'text-left'
+            locale === 'ar' ? 'text-right font-arabic' : 'text-left'
           }`}>
             <span className="text-sm font-medium text-gray-900">
-              {destination.name}
+              {getDisplayName()}
             </span>
-            {destination.category && (
-              <div className="text-xs text-gray-600 mt-1">
-                {destination.category}
-              </div>
-            )}
+            <div className="text-xs text-gray-600 mt-1">
+              {getCategory()}
+            </div>
           </div>
         )}
 
         {/* Hover tooltip */}
         <div className={`absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none ${
           isActive ? 'hidden' : 'block'
-        }`}>
-          {destination.name}
+        } ${locale === 'ar' ? 'font-arabic' : ''}`}>
+          {getDisplayName()}
         </div>
 
         {/* Pulse animation for active marker */}

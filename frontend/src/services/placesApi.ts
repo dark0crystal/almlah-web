@@ -1,4 +1,4 @@
-// src/services/placesApi.ts - Simplified version
+// src/services/placesApi.ts - Fixed version
 import { Place, Governate } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000/api/v1";
@@ -78,40 +78,52 @@ export const fetchPlaces = async (governateId?: string | null): Promise<Place[]>
       return [];
     }
 
-    // Transform to frontend Place type
-    return placesData.map(place => ({
-      id: place.id,
-      name_ar: place.name_ar || '',
-      name_en: place.name_en || '',
-      description_ar: '',
-      description_en: '',
-      slug: '',
-      lat: place.latitude || 0,
-      lng: place.longitude || 0,
-      governate_id: place.governate?.id || '',
-      wilayah_id: place.wilayah?.id || '',
-      category_id: TOURISM_CATEGORY_ID,
-      primary_image: place.primary_image?.url || '',
-      is_featured: false,
-      is_active: true,
-      created_at: '',
-      updated_at: '',
-      governate: place.governate,
-      wilayah: place.wilayah,
-      images: place.primary_image ? [{
-        id: place.primary_image.id,
-        place_id: place.id,
-        image_url: place.primary_image.url,
-        alt_text_ar: '',
-        alt_text_en: '',
-        caption_ar: '',
-        caption_en: '',
-        is_primary: place.primary_image.is_primary,
-        display_order: 0,
+    // Transform to frontend Place type with proper coordinate mapping
+    const transformedPlaces = placesData.map(place => {
+      // Debug coordinate mapping
+      console.log(`Mapping place ${place.name_en}: backend lat=${place.latitude}, lng=${place.longitude}`);
+      
+      const transformedPlace: Place = {
+        id: place.id,
+        name_ar: place.name_ar || '',
+        name_en: place.name_en || '',
+        description_ar: '',
+        description_en: '',
+        slug: '',
+        // FIX: Properly map latitude and longitude from backend
+        lat: place.latitude || 0,
+        lng: place.longitude || 0,
+        governate_id: place.governate?.id || '',
+        wilayah_id: place.wilayah?.id || '',
+        category_id: TOURISM_CATEGORY_ID,
+        primary_image: place.primary_image?.url || '',
+        is_featured: false,
+        is_active: true,
         created_at: '',
-        updated_at: ''
-      }] : []
-    } as Place));
+        updated_at: '',
+        governate: place.governate,
+        wilayah: place.wilayah,
+        images: place.primary_image ? [{
+          id: place.primary_image.id,
+          place_id: place.id,
+          image_url: place.primary_image.url,
+          alt_text_ar: '',
+          alt_text_en: '',
+          caption_ar: '',
+          caption_en: '',
+          is_primary: place.primary_image.is_primary,
+          display_order: 0,
+          created_at: '',
+          updated_at: ''
+        }] : []
+      };
+      
+      console.log(`Transformed place ${place.name_en}: frontend lat=${transformedPlace.lat}, lng=${transformedPlace.lng}`);
+      return transformedPlace;
+    });
+
+    console.log('Final transformed places:', transformedPlaces);
+    return transformedPlaces;
 
   } catch (error) {
     console.error('Error fetching places:', error);
