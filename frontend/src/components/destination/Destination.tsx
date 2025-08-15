@@ -53,19 +53,19 @@ const getPrimaryImage = (images) => {
 };
 
 // Function to transform API data to component format
-const transformGovernorateData = (governorates) => {
+const transformGovernorateData = (governorates, locale) => {
   return governorates.map((gov, index) => ({
     id: gov.id,
-    name: gov.name_en, // Default to English, will be handled by locale in component
-    category: gov.subtitle_en || gov.name_ar, // Default category
+    name: locale === 'ar' ? gov.name_ar : gov.name_en,
+    category: locale === 'ar' ? gov.subtitle_ar : gov.subtitle_en,
     image: getPrimaryImage(gov.images),
     coordinates: {
-      x: gov.longitude ? ((gov.longitude + 180) * 100) / 360 : 50 + (index * 5), // Convert longitude to percentage
-      y: gov.latitude ? ((90 - gov.latitude) * 100) / 180 : 50 + (index * 3) // Convert latitude to percentage
+      x: gov.longitude ? ((gov.longitude + 180) * 100) / 360 : 50 + (index * 5),
+      y: gov.latitude ? ((90 - gov.latitude) * 100) / 180 : 50 + (index * 3)
     },
-    rating: 4.5, // Default rating since it's not in the API
+    rating: 4.5,
     isFavorite: false,
-    governorateData: gov // Keep original data for reference
+    governorateData: gov
   }));
 };
 
@@ -73,8 +73,8 @@ export default function Destination() {
   const [destinationList, setDestinationList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const locale = useLocale(); // Get current locale
-  const t = useTranslations('destinations'); // Translations
+  const locale = useLocale();
+  const t = useTranslations('destinations');
 
   // Fetch governorates data on component mount
   useEffect(() => {
@@ -84,34 +84,33 @@ export default function Destination() {
         setError(null);
         
         const governorates = await fetchGovernoratesFromAPI();
-        const transformedData = transformGovernorateData(governorates);
+        const transformedData = transformGovernorateData(governorates, locale);
         
         setDestinationList(transformedData);
       } catch (err) {
         console.error('Failed to load governorates:', err);
-        setError(locale === 'ar' ? 'فشل في تحميل المحافظات. يرجى المحاولة مرة أخرى.' : 'Failed to load governorates. Please try again later.');
+        setError(t('errors.loadFailed'));
       } finally {
         setLoading(false);
       }
     };
 
     loadGovernorates();
-  }, [locale]);
+  }, [locale, t]);
 
   // Retry function
   const handleRetry = () => {
     setDestinationList([]);
     setError(null);
     
-    // Re-trigger the useEffect
     const loadGovernorates = async () => {
       try {
         setLoading(true);
         const governorates = await fetchGovernoratesFromAPI();
-        const transformedData = transformGovernorateData(governorates);
+        const transformedData = transformGovernorateData(governorates, locale);
         setDestinationList(transformedData);
       } catch (err) {
-        setError(locale === 'ar' ? 'فشل في تحميل المحافظات. يرجى المحاولة مرة أخرى.' : 'Failed to load governorates. Please try again later.');
+        setError(t('errors.loadFailed'));
       } finally {
         setLoading(false);
       }
@@ -129,7 +128,7 @@ export default function Destination() {
             <div className="text-center">
               <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
               <p className={`text-gray-600 ${locale === 'ar' ? 'font-arabic' : ''}`}>
-                {locale === 'ar' ? 'جاري تحميل المحافظات...' : 'Loading governorates...'}
+                {t('loading')}
               </p>
             </div>
           </div>
@@ -147,14 +146,16 @@ export default function Destination() {
             <div className="text-center bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
               <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
               <h3 className={`text-lg font-semibold text-red-800 mb-2 ${locale === 'ar' ? 'font-arabic' : ''}`}>
-                {locale === 'ar' ? 'خطأ في تحميل البيانات' : 'Error Loading Data'}
+                {t('errors.title')}
               </h3>
-              <p className={`text-red-700 mb-4 ${locale === 'ar' ? 'font-arabic' : ''}`}>{error}</p>
+              <p className={`text-red-700 mb-4 ${locale === 'ar' ? 'font-arabic' : ''}`}>
+                {error}
+              </p>
               <button
                 onClick={handleRetry}
                 className={`bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors ${locale === 'ar' ? 'font-arabic' : ''}`}
               >
-                {locale === 'ar' ? 'حاول مرة أخرى' : 'Try Again'}
+                {t('errors.retry')}
               </button>
             </div>
           </div>
@@ -164,15 +165,26 @@ export default function Destination() {
   }
 
   return (
-    <div className="w-[88vw]">
+    <div className="w-[88vw] mt-8">
+      {/* Title Section */}
+      <div className="mt-10 mb-6">
+        <div></div>
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+            {t('title')}
+          </h1>
+          <p className="text-lg text-gray-600">
+            {t('subtitle')}
+          </p>
+        </div>
+      </div>
+
       {/* Desktop/Tablet Layout */}
       <div className="hidden md:flex h-[80vh]">
-        {/* Cards Wrapper - Slightly wider sidebar */}
         <div className="flex-[1] w-72">
           <DestinationCardWrapper destinations={destinationList} />
         </div>
-        {/* Map Section - Takes major width */}
-        <div className="flex-[4] ">
+        <div className="flex-[4]">
           <DestinationsMap 
             destinations={destinationList}
             language={locale}
@@ -182,21 +194,16 @@ export default function Destination() {
 
       {/* Mobile Layout */}
       <div className="md:hidden relative">
-        {/* Map Section - Full height background on mobile */}
         <div className="h-[80vh] w-full">
           <DestinationsMap 
             destinations={destinationList}
             language={locale}
           />
         </div>
-
-        {/* Cards Wrapper - Overlay at bottom on mobile */}
         <div className="absolute bottom-4 left-4 right-4 z-10">
           <DestinationCardWrapper destinations={destinationList} />
         </div>
       </div>
-
-      
     </div>
   );
 }
