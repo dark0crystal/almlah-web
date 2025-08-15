@@ -25,7 +25,7 @@ export default async function RootLayout({
   
   return (
     <html lang="ar" dir="rtl">
-      <body className="antialiased font-handicrafts">
+      <body className="antialiased font-handicrafts bg-[#f3f3eb]">
         <NextIntlClientProvider>
          <NavBar style=""/>
           {children}

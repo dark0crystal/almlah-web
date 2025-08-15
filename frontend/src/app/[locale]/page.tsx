@@ -8,7 +8,8 @@ import {getTranslations} from 'next-intl/server';
 import Places from './places/page';
 import WelcomingText from '@/components/hero/WelcomingText';
 import ArabicCardsLayout from '@/components/IntroSection/Cards';
- 
+import CategoryCardsWrapper from '@/components/cards/categoryCards/CategoryCardsWrapper';
+
 export default async function HomePage() {
   const t = await getTranslations('HomePage');
   return (
@@ -19,13 +20,11 @@ export default async function HomePage() {
         <Heading/>
         {/* <CategoryCard /> */}
         <ArabicCardsLayout/>
-        <h1 className='text-3xl font-bold'>
-          {t('title')}
-        </h1>
+        
         {/* <VerticalCard/> */}
         <Destination/>
         <div className="h-[100vh]"/>
-        <Places/>
+        <CategoryCardsWrapper />
         <div className='h-screen'/>
       </div>
     </div>
