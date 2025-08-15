@@ -1,49 +1,69 @@
+interface CategoryCardProps {
+  title: string;
+  subtitle?: string;
+  icon?: string;
+  bgColor: string;
+  textColor?: string;
+  onClick?: () => void;
+}
 
-import Image from "next/image";
-
-const categories = [
-  {
-    title: "حياك حياك ",
-    image: "/pic/card-1.jpeg",
-  },
-    {
-    title: "حياك حياك ",
-    image: "/pic/card-1.jpeg",
-  },
-    {
-    title: "حياك حياك ",
-    image: "/pic/card-1.jpeg",
-  },
-];
-
-export default function CategoryCard() {
+export default function CategoryCard({ 
+  title, 
+  subtitle, 
+  icon, 
+  bgColor, 
+  textColor = "text-white",
+  onClick 
+}: CategoryCardProps) {
   return (
-    <div className="px-4">
-      <div className="flex space-x-4 overflow-x-auto pb-4">
-        {categories.map((item, index) => (
-          <div
-            key={index}
-            className="relative min-w-[160px] h-[160px] rounded-xl overflow-hidden shadow-md shrink-0"
-          >
-            {/* Background Image */}
-            <Image
-              src={item.image}
-              alt={item.title}
-              fill
-              className="object-cover"
-            />
-
-            {/* Shadow Gradient Overlay */}
-             <div className="absolute inset-0 bg-gradient-to-tl from-[oklch(55.4%_0.135_66.442)] to-transparent" />
-
-            {/* Optional text (on top of shadow) */}
-            <div className="absolute bottom-2 right-2 text-white text-sm font-bold">
-              {item.title}
-            </div>
+    <div 
+      className={`
+        ${bgColor} 
+        ${textColor}
+        w-full 
+        aspect-square 
+        rounded-2xl 
+        p-6 
+        flex 
+        flex-col 
+        justify-between 
+        cursor-pointer 
+        hover:scale-105 
+        hover:shadow-lg 
+        transition-all 
+        duration-300 
+        relative 
+        overflow-hidden
+        group
+      `}
+      onClick={onClick}
+    >
+      {/* Background Pattern/Decoration */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-4 right-4 w-8 h-8 bg-white/20 rounded-full"></div>
+        <div className="absolute bottom-6 left-4 w-12 h-12 bg-white/10 rounded-lg rotate-12"></div>
+      </div>
+      
+      {/* Icon Section */}
+      {icon && (
+        <div className="flex justify-end">
+          <div className="w-8 h-8 flex items-center justify-center">
+            <span className="text-xl">{icon}</span>
           </div>
-        ))}
+        </div>
+      )}
+      
+      {/* Content Section */}
+      <div className="relative z-10">
+        <h3 className="text-xl font-bold mb-1 leading-tight">
+          {title}
+        </h3>
+        {subtitle && (
+          <p className="text-sm opacity-80 font-medium">
+            {subtitle}
+          </p>
+        )}
       </div>
     </div>
   );
-
 }
