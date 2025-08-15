@@ -238,7 +238,6 @@ export default function PostCardsWrapper({
           >
             <PostCard
               title={post.title}
-              description={post.description}
               image={post.image}
               author={post.author}
               date={post.date}

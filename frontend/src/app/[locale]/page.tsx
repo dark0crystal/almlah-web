@@ -9,6 +9,7 @@ import Places from './places/page';
 import WelcomingText from '@/components/hero/WelcomingText';
 import ArabicCardsLayout from '@/components/IntroSection/Cards';
 import CategoryCardsWrapper from '@/components/cards/categoryCards/CategoryCardsWrapper';
+import PostCardsWrapper from '@/components/cards/postCards/PostCardWrapper';
 
 export default async function HomePage() {
   const t = await getTranslations('HomePage');
@@ -23,8 +24,10 @@ export default async function HomePage() {
         
         {/* <VerticalCard/> */}
         <Destination/>
-        <div className="h-[100vh]"/>
+       
         <CategoryCardsWrapper />
+       
+        <PostCardsWrapper/>
         <div className='h-screen'/>
       </div>
     </div>
