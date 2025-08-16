@@ -327,7 +327,7 @@ export const fetchRecentPlaces = async (
       params.append('include_stats', 'true');
     }
 
-    const url = `${API_BASE_URL}/places/recent?${params.toString()}`;
+    const url = `${API_BASE_URL}/recent?${params.toString()}`;
     console.log('Fetching recent places from:', url);
 
     const response = await fetch(url, {
@@ -368,7 +368,7 @@ export const fetchRecentPlaces = async (
 // NEW: Get places statistics
 export const fetchPlacesStats = async (): Promise<PlacesStats> => {
   try {
-    const url = `${API_BASE_URL}/places/recent/stats`;
+    const url = `${API_BASE_URL}/recent/stats`;
     
     const response = await fetch(url, {
       headers: { 
@@ -401,7 +401,7 @@ export const fetchPlacesStats = async (): Promise<PlacesStats> => {
 // NEW: Get count of new places only
 export const fetchNewPlacesCount = async (): Promise<number> => {
   try {
-    const url = `${API_BASE_URL}/places/recent/count`;
+    const url = `${API_BASE_URL}/recent/count`;
     
     const response = await fetch(url, {
       headers: { 

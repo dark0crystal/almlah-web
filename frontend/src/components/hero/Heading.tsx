@@ -5,7 +5,7 @@ import alryam from "../../../public/alryam.png"
 
 export default function Heading() {
   return (
-    <div className="relative w-[88vw] h-[60vh] m-16 rounded-3xl overflow-hidden bg-[#fce7a1] flex items-center justify-center">
+    <div className="relative w-[88vw] h-[60vh] m-16 mb-0 rounded-3xl overflow-hidden bg-[#fce7a1] flex items-center justify-center">
       
       {/* Overlapping Images Background - Positioned at Bottom */}
       <div className="absolute bottom-0 left-0 right-0 h-1/2 z-0">

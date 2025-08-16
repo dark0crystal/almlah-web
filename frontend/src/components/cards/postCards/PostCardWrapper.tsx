@@ -1,6 +1,6 @@
 // PostCardsWrapper.tsx - Updated with navigation to place details
 "use client"
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PostCard from './PostCard';
 import { fetchRecentPlaces, transformRecentPlacesToPlaces, formatRelativeTime } from '../../../services/placesApi';
@@ -132,7 +132,7 @@ export default function PostCardsWrapper({
   };
 
   // Fetch data on component mount
-  React.useEffect(() => {
+  useEffect(() => {
     fetchPlaces();
   }, [categoryId, governateId, language]);
 
