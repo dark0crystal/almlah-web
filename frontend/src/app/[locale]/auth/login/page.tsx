@@ -1,35 +1,16 @@
+// app/auth/login/page.tsx - Updated to work with Zustand auth store
 "use client"
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, Mail, Lock, User, AlertTriangle, CheckCircle, Loader } from 'lucide-react';
 import { env, validateEnv } from '@/config/env';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuthStore } from '@/stores/authStore';
 
 // Validate environment variables on component mount
 if (typeof window !== 'undefined') {
   validateEnv();
 }
-
-// Token storage utility
-const tokenStorage = {
-  setToken: (token) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('authToken', token);
-    }
-  },
-  
-  getToken: () => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('authToken');
-    }
-    return null;
-  },
-  
-  removeToken: () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('authToken');
-    }
-  }
-};
 
 // API Service
 const authAPI = {
@@ -147,13 +128,6 @@ const GoogleSignIn = ({ onSuccess, onError, disabled }) => {
     try {
       const result = await authAPI.googleAuth(response.credential);
       console.log('Google auth successful:', result);
-      
-      // Store token in localStorage
-      if (result.token) {
-        tokenStorage.setToken(result.token);
-        console.log('Token stored successfully');
-      }
-      
       onSuccess(result);
     } catch (error) {
       console.error('Google auth failed:', error);
@@ -199,7 +173,7 @@ const GoogleSignIn = ({ onSuccess, onError, disabled }) => {
 };
 
 // Login Form Component
-const LoginForm = ({ onSuccess }) => {
+const LoginForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -208,6 +182,14 @@ const LoginForm = ({ onSuccess }) => {
     email: '',
     password: ''
   });
+
+  // Zustand store hooks
+  const { login } = useAuthStore();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Get redirect path from URL params (set by PageGuard)
+  const redirectTo = searchParams?.get('redirect') || '/dashboard';
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -236,6 +218,7 @@ const LoginForm = ({ onSuccess }) => {
     setSuccess('');
 
     try {
+      // Call your API
       const result = await authAPI.login({
         email: formData.email,
         password: formData.password
@@ -243,19 +226,41 @@ const LoginForm = ({ onSuccess }) => {
       
       console.log('Login successful:', result);
       
-      // Store token in localStorage
-      if (result.token) {
-        tokenStorage.setToken(result.token);
-        console.log('Token stored successfully:', result.token.substring(0, 20) + '...');
-      } else {
-        console.warn('No token received from login response');
-      }
+      // Use Zustand store to handle authentication
+      await login(result.token);
       
       setSuccess('Login successful!');
-      onSuccess(result);
+      
+      // Redirect to original page or dashboard
+      setTimeout(() => {
+        router.push(redirectTo);
+      }, 1000);
       
     } catch (error) {
       console.error('Login error:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (result) => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      // Use Zustand store for Google auth too
+      await login(result.token);
+      
+      setSuccess('Google login successful!');
+      
+      // Redirect to original page or dashboard
+      setTimeout(() => {
+        router.push(redirectTo);
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Google auth error:', error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -307,14 +312,7 @@ const LoginForm = ({ onSuccess }) => {
           <div className="mb-6">
             <GoogleSignIn 
               disabled={loading} 
-              onSuccess={(result) => {
-                // Store token from Google auth as well
-                if (result.token) {
-                  tokenStorage.setToken(result.token);
-                  console.log('Google token stored successfully');
-                }
-                onSuccess(result);
-              }}
+              onSuccess={handleGoogleSuccess}
               onError={(error) => setError(error)}
             />
             
@@ -406,51 +404,42 @@ const LoginForm = ({ onSuccess }) => {
 
 // Main Login Page Component
 const LoginPage = () => {
-  const [user, setUser] = useState(null);
-  const [authToken, setAuthToken] = useState(null);
+  const { isAuthenticated, isLoading } = useAuthStore();
+  const router = useRouter();
 
-  // Check for existing token on component mount
-  React.useEffect(() => {
-    const existingToken = tokenStorage.getToken();
-    if (existingToken) {
-      console.log('Existing token found:', existingToken.substring(0, 20) + '...');
-      setAuthToken(existingToken);
-      // Optionally verify token with backend here
+  // Check if user is already authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated()) {
+      // User is already logged in, redirect to dashboard
+      router.push('/dashboard');
     }
-  }, []);
+  }, [isAuthenticated, isLoading, router]);
 
-  const handleAuthSuccess = (result) => {
-    console.log('Auth success, result:', result);
-    
-    setUser(result.user);
-    setAuthToken(result.token);
-    
-    // Store token (redundant but ensures it's stored)
-    if (result.token) {
-      tokenStorage.setToken(result.token);
-    }
-    
-    // Add a small delay to show success message before redirect
-    setTimeout(() => {
-      // Redirect to dashboard or home page
-      window.location.href = '/dashboard';
-    }, 1500);
-  };
-
-  // Show success state if user is logged in
-  if (user && authToken) {
+  // Show loading while checking auth status
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="text-center">
-          <CheckCircle className="text-green-500 mx-auto mb-4" size={32} />
-          <p className="text-gray-600">Login successful! Redirecting...</p>
-          <p className="text-xs text-gray-400 mt-2">Token stored: {authToken.substring(0, 20)}...</p>
+          <Loader className="animate-spin text-blue-600 mx-auto mb-4" size={32} />
+          <p className="text-gray-600">Checking authentication...</p>
         </div>
       </div>
     );
   }
 
-  return <LoginForm onSuccess={handleAuthSuccess} />;
+  // Don't render login form if user is already authenticated
+  if (isAuthenticated()) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="text-center">
+          <CheckCircle className="text-green-500 mx-auto mb-4" size={32} />
+          <p className="text-gray-600">Already logged in! Redirecting...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <LoginForm />;
 };
 
 export default LoginPage;

@@ -10,6 +10,7 @@ import WelcomingText from '@/components/hero/WelcomingText';
 import ArabicCardsLayout from '@/components/IntroSection/Cards';
 import CategoryCardsWrapper from '@/components/cards/categoryCards/CategoryCardsWrapper';
 import PostCardsWrapper from '@/components/cards/postCards/PostCardWrapper';
+import ScrollAnimatedPng from '@/components/animated/MovingToKashtah';
 
 export default async function HomePage() {
   const t = await getTranslations('HomePage');
@@ -19,6 +20,7 @@ export default async function HomePage() {
         
         {/* <Header/> */}
         <Heading/>
+        <ScrollAnimatedPng/>
         {/* <CategoryCard /> */}
         <ArabicCardsLayout/>
         

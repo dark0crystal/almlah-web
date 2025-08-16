@@ -1,8 +1,11 @@
+// app/auth/signup/page.tsx - Updated to work with Zustand auth store
 "use client"
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, Mail, Lock, User, AlertTriangle, CheckCircle, Loader } from 'lucide-react';
 import { env, validateEnv } from '@/config/env';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/stores/authStore';
 
 // Validate environment variables on component mount
 if (typeof window !== 'undefined') {
@@ -105,7 +108,7 @@ const GoogleSignIn = ({ onSuccess, onError, disabled }) => {
 
       // Render the button
       google.accounts.id.renderButton(
-        document.getElementById('google-signin-button'),
+        document.getElementById('google-signup-button'),
         { 
           theme: 'outline', 
           size: 'large',
@@ -164,13 +167,13 @@ const GoogleSignIn = ({ onSuccess, onError, disabled }) => {
         )}
         {loading ? 'Signing up...' : 'Continue with Google'}
       </button>
-      <div id="google-signin-button" className="mt-2"></div>
+      <div id="google-signup-button" className="mt-2"></div>
     </div>
   );
 };
 
 // Signup Form Component
-const SignupForm = ({ onSuccess }) => {
+const SignupForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -184,6 +187,10 @@ const SignupForm = ({ onSuccess }) => {
     first_name: '',
     last_name: ''
   });
+
+  // Zustand store hooks
+  const { login } = useAuthStore();
+  const router = useRouter();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -225,10 +232,51 @@ const SignupForm = ({ onSuccess }) => {
         last_name: formData.last_name
       });
       
-      setSuccess('Registration successful! Please check your email for verification.');
-      onSuccess(result);
+      console.log('Registration successful:', result);
+      
+      // Check if the registration response includes a token (auto-login)
+      if (result.token) {
+        // User is automatically logged in after registration
+        await login(result.token);
+        setSuccess('Registration successful! Redirecting to dashboard...');
+        
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1500);
+      } else {
+        // User needs to verify email before login
+        setSuccess('Registration successful! Please check your email for verification.');
+        
+        // Redirect to login page after showing success message
+        setTimeout(() => {
+          router.push('/auth/login');
+        }, 3000);
+      }
       
     } catch (error) {
+      console.error('Registration error:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (result) => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      // Use Zustand store for Google auth
+      await login(result.token);
+      
+      setSuccess('Google signup successful! Redirecting to dashboard...');
+      
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 1500);
+      
+    } catch (error) {
+      console.error('Google auth error:', error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -280,7 +328,7 @@ const SignupForm = ({ onSuccess }) => {
           <div className="mb-6">
             <GoogleSignIn 
               disabled={loading} 
-              onSuccess={onSuccess}
+              onSuccess={handleGoogleSuccess}
               onError={(error) => setError(error)}
             />
             
@@ -438,28 +486,42 @@ const SignupForm = ({ onSuccess }) => {
 
 // Main Signup Page Component
 const SignupPage = () => {
-  const [user, setUser] = useState(null);
-  const [authToken, setAuthToken] = useState(null);
+  const { isAuthenticated, isLoading } = useAuthStore();
+  const router = useRouter();
 
-  const handleAuthSuccess = (result) => {
-    setUser(result.user);
-    setAuthToken(result.token);
-    // Redirect to dashboard or home page
-    window.location.href = '/dashboard';
-  };
+  // Check if user is already authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated()) {
+      // User is already logged in, redirect to dashboard
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, isLoading, router]);
 
-  if (user) {
+  // Show loading while checking auth status
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="text-center">
-          <CheckCircle className="text-green-500 mx-auto mb-4" size={32} />
-          <p className="text-gray-600">Registration successful! Redirecting...</p>
+          <Loader className="animate-spin text-blue-600 mx-auto mb-4" size={32} />
+          <p className="text-gray-600">Checking authentication...</p>
         </div>
       </div>
     );
   }
 
-  return <SignupForm onSuccess={handleAuthSuccess} />;
+  // Don't render signup form if user is already authenticated
+  if (isAuthenticated()) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="text-center">
+          <CheckCircle className="text-green-500 mx-auto mb-4" size={32} />
+          <p className="text-gray-600">Already logged in! Redirecting...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <SignupForm />;
 };
 
-export default SignupPage; 
+export default SignupPage;
