@@ -2,6 +2,7 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
 import rb3 from "../../../public/rb3.png"
+import khayma from "../../../public/khayma.png"
 
 interface ScrollAnimatedPngProps {
   imageUrl?: string;
@@ -14,11 +15,11 @@ interface ScrollAnimatedPngProps {
 const ScrollAnimatedPng: React.FC<ScrollAnimatedPngProps> = ({
   alt = "Animated PNG",
   className = "",
-  imageSize = "w-24 h-18",
+  imageSize = "w-46 h-38",
   moveRange = 200,
   staticImageUrl = "/static-image.png",
   staticImageAlt = "Static Image",
-  staticImageSize = "w-20 h-16"
+  staticImageSize = "w-50 h-50"
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   
@@ -35,7 +36,7 @@ const ScrollAnimatedPng: React.FC<ScrollAnimatedPngProps> = ({
   return (
     <div 
       ref={containerRef}
-      className={`relative h-[12vh] w-[88vw] mx-auto overflow-hidden ${className}`}
+      className={`relative h-[18vh] w-[88vw] mx-auto overflow-hidden ${className}`}
     >
       {/* PNG positioned at the bottom - starts from left edge */}
       <motion.div
@@ -56,7 +57,7 @@ const ScrollAnimatedPng: React.FC<ScrollAnimatedPngProps> = ({
       {/* Static image at the end (right side) */}
       <div className="absolute bottom-4 right-4 z-10">
         <motion.img
-          src={staticImageUrl}
+          src={khayma.src}
           alt={staticImageAlt}
           className={`${staticImageSize} object-contain drop-shadow-lg`}
           initial={{ opacity: 0, scale: 0.8 }}
