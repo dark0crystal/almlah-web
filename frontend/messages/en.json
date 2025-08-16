@@ -8,5 +8,42 @@
     "map":"الخريطة",
     "about":"من نحن",
     "dir":"ltr"
+  },
+  
+  
+  "categories": {
+    "title": "Categories",
+    "loading": "Loading categories...",
+    "noCategories": "No categories available",
+    "availableCount": "{{count}} categories available",
+    "errors": {
+      "title": "Error",
+      "loadFailed": "Failed to load categories. Please try again.",
+      "retry": "Retry"
+    },
+    "items": {
+      "restaurants": {
+        "name": "Restaurants",
+        "description": "Discover the best dining experiences"
+      },
+      "tourism": {
+        "name": "Tourism Places",
+        "description": "Explore amazing tourist destinations"
+      },
+      "hiking": {
+        "name": "Hiking",
+        "description": "Find the best hiking trails"
+      },
+      "recipes": {
+        "name": "Recipes",
+        "description": "Delicious recipes and cooking tips"
+      },
+      "generalInfo": {
+        "name": "General Info",
+        "description": "Useful information and tips"
+      }
+    }
   }
+
+
 }
