@@ -3,7 +3,7 @@ package handlers
 
 import (
 	"almlah/internals/api/rest"
-	"almlah/internals/cache" // Import your cache package
+	"almlah/internals/cache" 
 	"almlah/internals/dto"
 	"almlah/internals/middleware"
 	"almlah/internals/services"
@@ -31,6 +31,8 @@ func SetupCategoryRoutes(rh *rest.RestHandler) {
 	categories.Get("/secondary/:parentId", handler.GetSecondaryCategories)
 	categories.Get("/:id", handler.GetCategoryById)
 	categories.Get("/:id/subcategories", handler.GetSubcategories)
+
+
 
 	// Protected routes with RBAC
 	categories.Post("/", 
@@ -400,3 +402,4 @@ func (h *CategoryHandler) GetSubcategories(ctx *fiber.Ctx) error {
 
 	return ctx.JSON(utils.SuccessResponse("Subcategories retrieved successfully", subcategories))
 }
+

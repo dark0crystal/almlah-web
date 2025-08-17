@@ -146,17 +146,25 @@ func (h *PlaceHandler) GetPlace(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
 	}
 
-	// 🔧 REDIS CACHE: Try cache first
-	cacheKey := fmt.Sprintf("place_%s", id.String())
-	var place dto.PlaceResponse
+	// Get language parameter (default to "en")
+	lang := ctx.Query("lang", "en")
+	
+	// Validate language parameter
+	if lang != "ar" && lang != "en" {
+		lang = "en" // Default to English for invalid language codes
+	}
+
+	// 🔧 REDIS CACHE: Try cache first with language-specific key
+	cacheKey := fmt.Sprintf("place_%s_%s", id.String(), lang)
+	var place dto.PlaceResponseLocalized // FIXED: Use correct type
 	
 	if err := cache.Get(cacheKey, &place); err == nil {
 		ctx.Set("X-Cache", "HIT")
 		return ctx.JSON(utils.SuccessResponse("Place retrieved successfully", place))
 	}
 
-	// 🔄 ORIGINAL: Your existing database call
-	placePtr, err := services.GetPlaceByID(id)
+	// 🔄 ORIGINAL: Get place data from service
+	placePtr, err := services.GetPlaceByIDWithLanguage(id, lang)
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(utils.ErrorResponse("Place not found"))
 	}
@@ -167,7 +175,6 @@ func (h *PlaceHandler) GetPlace(ctx *fiber.Ctx) error {
 
 	return ctx.JSON(utils.SuccessResponse("Place retrieved successfully", *placePtr))
 }
-
 func (h *PlaceHandler) UpdatePlace(ctx *fiber.Ctx) error {
 	idStr := ctx.Params("id")
 	id, err := uuid.Parse(idStr)
@@ -484,3 +491,5 @@ func (h *PlaceHandler) GetPlacesByFilters(ctx *fiber.Ctx) error {
     
     return ctx.JSON(utils.SuccessResponse("Places retrieved successfully", places))
 }
+
+

@@ -21,7 +21,7 @@ func SetupRecentPlacesRoutes(rh *rest.RestHandler) {
 	handler := RecentPlacesHandler{}
 
 	// Recent places routes
-	recentPlaces := app.Group("/api/v1/places/recent")
+	recentPlaces := app.Group("/api/v1/recent")
 	
 	// Get recent places with smart fallback
 	recentPlaces.Get("/", handler.GetRecentPlaces)
