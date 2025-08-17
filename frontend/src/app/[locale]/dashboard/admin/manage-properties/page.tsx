@@ -65,6 +65,9 @@ const propertyAPI = {
   // FIXED: Only fetch primary categories for property management
   getPrimaryCategories: async () => {
     const response = await apiCall('/categories/primary');
+    // DEBUG: Log the full response to see the structure
+    console.log('Primary Categories API Response:', response);
+    console.log('Primary Categories Data:', response.data);
     return response.data;
   },
 
@@ -76,7 +79,7 @@ const propertyAPI = {
 
 const ManageProperties = () => {
   const [properties, setProperties] = useState([]);
-  const [primaryCategories, setPrimaryCategories] = useState([]); // FIXED: Renamed for clarity
+  const [primaryCategories, setPrimaryCategories] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -105,11 +108,27 @@ const ManageProperties = () => {
     try {
       const [propertiesData, categoriesData] = await Promise.all([
         propertyAPI.getProperties(filters),
-        propertyAPI.getPrimaryCategories() // FIXED: Only fetch primary categories
+        propertyAPI.getPrimaryCategories()
       ]);
+      
+      // DEBUG: Log the data to see what we're getting
+      console.log('Properties Data:', propertiesData);
+      console.log('Categories Data:', categoriesData);
+      
       setProperties(propertiesData);
-      setPrimaryCategories(categoriesData); // FIXED: Use specific state
+      setPrimaryCategories(categoriesData);
+      
+      // DEBUG: Log each category to see its structure
+      if (categoriesData && Array.isArray(categoriesData)) {
+        categoriesData.forEach((category, index) => {
+          console.log(`Category ${index}:`, category);
+          console.log(`Category ${index} name_en:`, category.name_en);
+          console.log(`Category ${index} name_ar:`, category.name_ar);
+        });
+      }
+      
     } catch (error) {
+      console.error('Load data error:', error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -196,6 +215,16 @@ const ManageProperties = () => {
           <p className="text-gray-600">Manage properties and their assignments to places</p>
         </div>
 
+        {/* DEBUG INFO - Remove in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
+            <h3 className="font-semibold">Debug Info:</h3>
+            <p>Primary Categories Count: {primaryCategories?.length || 0}</p>
+            <p>First Category: {JSON.stringify(primaryCategories?.[0] || 'None')}</p>
+            <p>Categories Array: {JSON.stringify(primaryCategories)}</p>
+          </div>
+        )}
+
         {/* Notifications */}
         {error && (
           <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-center">
@@ -237,11 +266,20 @@ const ManageProperties = () => {
                   className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">All Primary Categories</option>
-                  {primaryCategories && primaryCategories.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.name_en} ({category.name_ar})
-                    </option>
-                  ))}
+                  {primaryCategories && primaryCategories.map(category => {
+                    // DEBUG: Log each category being rendered
+                    console.log('Rendering category option:', category);
+                    
+                    // Try multiple possible name fields
+                    const displayName = category.name_en || category.NameEn || category.display_name || category.name || 'Unnamed Category';
+                    const arabicName = category.name_ar || category.NameAr || category.name_arabic || '';
+                    
+                    return (
+                      <option key={category.id} value={category.id}>
+                        {displayName} {arabicName && `(${arabicName})`}
+                      </option>
+                    );
+                  })}
                 </select>
 
                 {/* Icon Filter */}
@@ -337,10 +375,10 @@ const ManageProperties = () => {
                           )}
                           <div>
                             <div className="text-sm font-medium text-gray-900">
-                              {property.category?.name_en}
+                              {property.category?.name_en || property.category?.NameEn || 'No Name'}
                             </div>
                             <div className="text-sm text-gray-500" dir="rtl">
-                              {property.category?.name_ar}
+                              {property.category?.name_ar || property.category?.NameAr || 'لا يوجد اسم'}
                             </div>
                           </div>
                         </div>
@@ -408,7 +446,7 @@ const ManageProperties = () => {
         {showCreateModal && (
           <PropertyModal
             title="Create Property"
-            categories={primaryCategories} // FIXED: Pass primary categories only
+            categories={primaryCategories}
             onClose={() => setShowCreateModal(false)}
             onSave={handleCreateProperty}
           />
@@ -418,7 +456,7 @@ const ManageProperties = () => {
           <PropertyModal
             title="Edit Property"
             property={editingProperty}
-            categories={primaryCategories} // FIXED: Pass primary categories only
+            categories={primaryCategories}
             onClose={() => setEditingProperty(null)}
             onSave={handleUpdateProperty}
           />
@@ -443,6 +481,9 @@ const PropertyModal = ({ title, property, categories, onClose, onSave }) => {
     icon: property?.icon || ''
   });
   const [saving, setSaving] = useState(false);
+
+  // DEBUG: Log categories in modal
+  console.log('PropertyModal categories:', categories);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -519,11 +560,20 @@ const PropertyModal = ({ title, property, categories, onClose, onSave }) => {
                 required
               >
                 <option value="">Select Primary Category</option>
-                {categories && categories.map(category => (
-                  <option key={category.id} value={category.id}>
-                    {category.name_en} ({category.name_ar})
-                  </option>
-                ))}
+                {categories && categories.map(category => {
+                  // DEBUG: Log category being rendered
+                  console.log('Modal option category:', category);
+                  
+                  // Try multiple possible name fields
+                  const displayName = category.name_en || category.NameEn || category.display_name || category.name || 'Unnamed Category';
+                  const arabicName = category.name_ar || category.NameAr || category.name_arabic || '';
+                  
+                  return (
+                    <option key={category.id} value={category.id}>
+                      {displayName} {arabicName && `(${arabicName})`}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 

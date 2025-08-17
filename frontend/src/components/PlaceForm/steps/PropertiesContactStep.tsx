@@ -28,20 +28,26 @@ export const PropertiesContactStep: React.FC = () => {
   } = useForm<PropertiesContactFormData>({
     resolver: zodResolver(propertiesContactSchema),
     defaultValues: {
-      property_ids: formData.property_ids,
-      phone: formData.phone,
-      email: formData.email,
-      website: formData.website,
+      property_ids: formData.property_ids || [], // FIXED: Default to empty array
+      phone: formData.phone || '',
+      email: formData.email || '',
+      website: formData.website || '',
     }
   });
 
   const watchedPropertyIds = watch('property_ids');
 
   useEffect(() => {
-    if (formData.category_ids.length > 0) {
+    // FIXED: Fetch properties based on parent category, not child categories
+    if (formData.parent_category_id) {
+      console.log('Fetching properties for parent category:', formData.parent_category_id);
+      fetchProperties(formData.parent_category_id);
+    } else if (formData.category_ids && formData.category_ids.length > 0) {
+      // Fallback to first child category if no parent category is set
+      console.log('Fetching properties for child category:', formData.category_ids[0]);
       fetchProperties(formData.category_ids[0]);
     }
-  }, [formData.category_ids, fetchProperties]);
+  }, [formData.parent_category_id, formData.category_ids, fetchProperties]);
 
   const toggleProperty = (propertyId: string) => {
     const currentIds = watchedPropertyIds || [];
@@ -88,7 +94,7 @@ export const PropertiesContactStep: React.FC = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             <span className="ml-3 text-gray-600">Loading properties...</span>
           </div>
-        ) : properties.length > 0 ? (
+        ) : properties && properties.length > 0 ? ( // FIXED: Added null check
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {properties.map((property) => {
               const isSelected = watchedPropertyIds?.includes(property.id) || false;
@@ -116,7 +122,7 @@ export const PropertiesContactStep: React.FC = () => {
                         </svg>
                       )}
                     </div>
-                    <span className="text-xl">{property.icon}</span>
+                    <span className="text-xl">{property.icon || '🏷️'}</span>
                     <div className="flex-1">
                       <h5 className="font-medium text-gray-900 text-sm">{property.name_en}</h5>
                       <p className="text-xs text-gray-600">{property.name_ar}</p>
@@ -129,6 +135,9 @@ export const PropertiesContactStep: React.FC = () => {
         ) : (
           <div className="text-center py-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
             <p className="text-gray-600">No properties available for the selected category</p>
+            {!formData.parent_category_id && !formData.category_ids?.length && (
+              <p className="text-sm text-gray-500 mt-2">Please select a category first</p>
+            )}
           </div>
         )}
       </div>
@@ -214,6 +223,17 @@ export const PropertiesContactStep: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Debug Info (remove in production) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="bg-gray-100 p-4 rounded text-xs">
+          <p><strong>Debug Info:</strong></p>
+          <p>Parent Category: {formData.parent_category_id || 'None'}</p>
+          <p>Child Categories: {formData.category_ids?.join(', ') || 'None'}</p>
+          <p>Properties Length: {properties?.length || 'null/undefined'}</p>
+          <p>Loading: {isLoadingProperties ? 'Yes' : 'No'}</p>
+        </div>
+      )}
 
       {/* Navigation */}
       <div className="flex justify-between pt-6 border-t border-gray-200">
