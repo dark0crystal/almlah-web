@@ -69,3 +69,4 @@ func (p *Place) GetSubtitle(lang string) string {
 	}
 	return p.SubtitleEn
 }
+
