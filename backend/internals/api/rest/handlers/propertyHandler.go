@@ -1,3 +1,4 @@
+// handlers/property_handler.go - FIXED: Clean structure with CategoryID
 package handlers
 
 import (
@@ -28,6 +29,7 @@ func SetupPropertyRoutes(rh *rest.RestHandler) {
 	properties.Get("/", handler.GetProperties)
 	properties.Get("/simple", handler.GetSimpleProperties)
 	properties.Get("/:id", handler.GetPropertyByID)
+	// FIXED: Use category parameter name (for PRIMARY categories)
 	properties.Get("/category/:categoryId", handler.GetPropertiesByCategory)
 	properties.Get("/stats", handler.GetPropertyStats)
 
@@ -47,7 +49,7 @@ func SetupPropertyRoutes(rh *rest.RestHandler) {
 		middleware.RequirePermission("can_delete_property"),
 		handler.DeleteProperty)
 
-	// Place property management routes
+	// Place property management routes (unchanged)
 	placeProperties := properties.Group("/place-assignments", middleware.AuthRequiredWithRBAC)
 	placeProperties.Post("/assign",
 		middleware.RequirePermission("can_edit_place"),
@@ -68,35 +70,6 @@ func SetupPropertyRoutes(rh *rest.RestHandler) {
 		handler.BulkRemoveProperties)
 }
 
-func (h *PropertyHandler) CreateProperty(ctx *fiber.Ctx) error {
-	var req dto.CreatePropertyRequest
-	if err := ctx.BodyParser(&req); err != nil {
-		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body"))
-	}
-
-	if err := utils.ValidateStruct(req); err != nil {
-		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
-	}
-
-	userID := ctx.Locals("userID").(uuid.UUID)
-	
-	// 🔄 ORIGINAL: Your existing create logic
-	response, err := services.CreateProperty(req, userID)
-	if err != nil {
-		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
-	}
-
-	// 🔧 REDIS CACHE: Invalidate related caches after successful creation
-	go func() {
-		cache.DeletePattern("properties_filter_*")
-		cache.Delete("properties_simple")
-		cache.DeletePattern("properties_category_*")
-		cache.Delete("property_stats")
-	}()
-
-	return ctx.Status(http.StatusCreated).JSON(utils.SuccessResponse("Property created successfully", response))
-}
-
 func (h *PropertyHandler) GetProperties(ctx *fiber.Ctx) error {
 	// Parse query parameters for filtering
 	filter := &dto.PropertyFilterRequest{
@@ -104,7 +77,7 @@ func (h *PropertyHandler) GetProperties(ctx *fiber.Ctx) error {
 		Limit: 50, // Default limit
 	}
 
-	// Parse filters
+	// FIXED: Parse category filter (PRIMARY categories only)
 	if categoryIDStr := ctx.Query("category_id"); categoryIDStr != "" {
 		if categoryID, err := uuid.Parse(categoryIDStr); err == nil {
 			filter.CategoryID = &categoryID
@@ -133,7 +106,7 @@ func (h *PropertyHandler) GetProperties(ctx *fiber.Ctx) error {
 		}
 	}
 
-	// 🔧 REDIS CACHE: Create cache key based on filters
+	// FIXED: Create cache key based on category filter
 	cacheKey := fmt.Sprintf("properties_filter_%v_%v_%v_%d_%d", 
 		filter.CategoryID, filter.Search, filter.HasIcon, filter.Page, filter.Limit)
 	var properties []dto.PropertyListResponse
@@ -143,17 +116,75 @@ func (h *PropertyHandler) GetProperties(ctx *fiber.Ctx) error {
 		return ctx.JSON(utils.SuccessResponse("Properties retrieved successfully", properties))
 	}
 
-	// 🔄 ORIGINAL: Your existing database call
+	// Get properties from service
 	properties, err := services.GetProperties(filter)
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	// 🔧 REDIS CACHE: Store in cache (background, doesn't block response)
+	// Cache the result
 	go cache.Set(cacheKey, properties, cache.MediumTTL)
 	ctx.Set("X-Cache", "MISS")
 
 	return ctx.JSON(utils.SuccessResponse("Properties retrieved successfully", properties))
+}
+
+// FIXED: Handler for category-based property fetching (PRIMARY categories)
+func (h *PropertyHandler) GetPropertiesByCategory(ctx *fiber.Ctx) error {
+	categoryIdStr := ctx.Params("categoryId")
+	categoryId, err := uuid.Parse(categoryIdStr)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid category ID"))
+	}
+
+	// Cache key for category
+	cacheKey := fmt.Sprintf("properties_category_%s", categoryId.String())
+	var properties []dto.PropertyListResponse
+	
+	if err := cache.Get(cacheKey, &properties); err == nil {
+		ctx.Set("X-Cache", "HIT")
+		return ctx.JSON(utils.SuccessResponse("Properties retrieved successfully", properties))
+	}
+
+	// Get properties by category (PRIMARY category)
+	properties, err = services.GetPropertiesByCategory(categoryId)
+	if err != nil {
+		return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse(err.Error()))
+	}
+
+	// Cache the result
+	go cache.Set(cacheKey, properties, cache.LongTTL)
+	ctx.Set("X-Cache", "MISS")
+
+	return ctx.JSON(utils.SuccessResponse("Properties retrieved successfully", properties))
+}
+
+func (h *PropertyHandler) CreateProperty(ctx *fiber.Ctx) error {
+	var req dto.CreatePropertyRequest
+	if err := ctx.BodyParser(&req); err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body"))
+	}
+
+	if err := utils.ValidateStruct(req); err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
+	}
+
+	userID := ctx.Locals("userID").(uuid.UUID)
+	
+	response, err := services.CreateProperty(req, userID)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
+	}
+
+	// FIXED: Invalidate category cache patterns
+	go func() {
+		cache.DeletePattern("properties_filter_*")
+		cache.Delete("properties_simple")
+		cache.DeletePattern("properties_category_*") // FIXED
+		cache.Delete("property_stats")
+	}()
+
+	return ctx.Status(http.StatusCreated).JSON(utils.SuccessResponse("Property created successfully", response))
 }
 
 func (h *PropertyHandler) GetPropertyByID(ctx *fiber.Ctx) error {
@@ -163,7 +194,6 @@ func (h *PropertyHandler) GetPropertyByID(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid property ID"))
 	}
 
-	// 🔧 REDIS CACHE: Try cache first
 	cacheKey := fmt.Sprintf("property_%s", id.String())
 	var property dto.DetailedPropertyResponse
 	
@@ -172,13 +202,11 @@ func (h *PropertyHandler) GetPropertyByID(ctx *fiber.Ctx) error {
 		return ctx.JSON(utils.SuccessResponse("Property retrieved successfully", property))
 	}
 
-	// 🔄 ORIGINAL: Your existing database call
 	propertyPtr, err := services.GetPropertyByID(id)
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	// 🔧 REDIS CACHE: Store in cache (background, doesn't block response)
 	go cache.Set(cacheKey, *propertyPtr, cache.LongTTL)
 	ctx.Set("X-Cache", "MISS")
 
@@ -203,20 +231,19 @@ func (h *PropertyHandler) UpdateProperty(ctx *fiber.Ctx) error {
 
 	userID := ctx.Locals("userID").(uuid.UUID)
 	
-	// 🔄 ORIGINAL: Your existing update logic
 	property, err := services.UpdateProperty(id, req, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	// 🔧 REDIS CACHE: Invalidate related caches after successful update
+	// FIXED: Invalidate category cache patterns
 	go func() {
 		cache.Delete(fmt.Sprintf("property_%s", id.String()))
 		cache.DeletePattern("properties_filter_*")
-		cache.DeletePattern("properties_category_*")
+		cache.DeletePattern("properties_category_*") // FIXED
 		cache.Delete("properties_simple")
 		cache.Delete("property_stats")
-		cache.DeletePattern("place_properties_*") // Properties assigned to places
+		cache.DeletePattern("place_properties_*")
 	}()
 
 	return ctx.JSON(utils.SuccessResponse("Property updated successfully", property))
@@ -231,17 +258,16 @@ func (h *PropertyHandler) DeleteProperty(ctx *fiber.Ctx) error {
 
 	userID := ctx.Locals("userID").(uuid.UUID)
 	
-	// 🔄 ORIGINAL: Your existing delete logic
 	err = services.DeleteProperty(id, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	// 🔧 REDIS CACHE: Invalidate related caches after successful deletion
+	// FIXED: Invalidate category cache patterns
 	go func() {
 		cache.Delete(fmt.Sprintf("property_%s", id.String()))
 		cache.DeletePattern("properties_filter_*")
-		cache.DeletePattern("properties_category_*")
+		cache.DeletePattern("properties_category_*") // FIXED
 		cache.Delete("properties_simple")
 		cache.Delete("property_stats")
 		cache.DeletePattern("place_properties_*")
@@ -250,8 +276,8 @@ func (h *PropertyHandler) DeleteProperty(ctx *fiber.Ctx) error {
 	return ctx.JSON(utils.SuccessResponse("Property deleted successfully", nil))
 }
 
+// Keep all other handlers unchanged (GetSimpleProperties, GetPropertyStats, place property management, etc.)
 func (h *PropertyHandler) GetSimpleProperties(ctx *fiber.Ctx) error {
-	// 🔧 REDIS CACHE: Try cache first
 	cacheKey := "properties_simple"
 	var properties []dto.SimplePropertyResponse
 	
@@ -260,42 +286,11 @@ func (h *PropertyHandler) GetSimpleProperties(ctx *fiber.Ctx) error {
 		return ctx.JSON(utils.SuccessResponse("Properties retrieved successfully", properties))
 	}
 
-	// 🔄 ORIGINAL: Your existing database call
 	properties, err := services.GetSimpleProperties()
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	// 🔧 REDIS CACHE: Store in cache (background, doesn't block response)
-	go cache.Set(cacheKey, properties, cache.LongTTL)
-	ctx.Set("X-Cache", "MISS")
-
-	return ctx.JSON(utils.SuccessResponse("Properties retrieved successfully", properties))
-}
-
-func (h *PropertyHandler) GetPropertiesByCategory(ctx *fiber.Ctx) error {
-	categoryIdStr := ctx.Params("categoryId")
-	categoryId, err := uuid.Parse(categoryIdStr)
-	if err != nil {
-		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid category ID"))
-	}
-
-	// 🔧 REDIS CACHE: Try cache first
-	cacheKey := fmt.Sprintf("properties_category_%s", categoryId.String())
-	var properties []dto.PropertyListResponse
-	
-	if err := cache.Get(cacheKey, &properties); err == nil {
-		ctx.Set("X-Cache", "HIT")
-		return ctx.JSON(utils.SuccessResponse("Properties retrieved successfully", properties))
-	}
-
-	// 🔄 ORIGINAL: Your existing database call
-	properties, err = services.GetPropertiesByCategory(categoryId)
-	if err != nil {
-		return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse(err.Error()))
-	}
-
-	// 🔧 REDIS CACHE: Store in cache (background, doesn't block response)
 	go cache.Set(cacheKey, properties, cache.LongTTL)
 	ctx.Set("X-Cache", "MISS")
 
@@ -303,7 +298,6 @@ func (h *PropertyHandler) GetPropertiesByCategory(ctx *fiber.Ctx) error {
 }
 
 func (h *PropertyHandler) GetPropertyStats(ctx *fiber.Ctx) error {
-	// 🔧 REDIS CACHE: Try cache first
 	cacheKey := "property_stats"
 	var stats dto.PropertyStatsResponse
 	
@@ -312,21 +306,18 @@ func (h *PropertyHandler) GetPropertyStats(ctx *fiber.Ctx) error {
 		return ctx.JSON(utils.SuccessResponse("Property statistics retrieved successfully", stats))
 	}
 
-	// 🔄 ORIGINAL: Your existing database call
 	statsPtr, err := services.GetPropertyStats()
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	// 🔧 REDIS CACHE: Store in cache (background, doesn't block response)
-	go cache.Set(cacheKey, *statsPtr, cache.MediumTTL) // Stats change less frequently
+	go cache.Set(cacheKey, *statsPtr, cache.MediumTTL)
 	ctx.Set("X-Cache", "MISS")
 
 	return ctx.JSON(utils.SuccessResponse("Property statistics retrieved successfully", *statsPtr))
 }
 
-// Place Property Management Handlers
-
+// Place Property Management Handlers (unchanged)
 func (h *PropertyHandler) AssignPropertyToPlace(ctx *fiber.Ctx) error {
 	var req dto.AssignPropertyToPlaceRequest
 	if err := ctx.BodyParser(&req); err != nil {
@@ -339,16 +330,14 @@ func (h *PropertyHandler) AssignPropertyToPlace(ctx *fiber.Ctx) error {
 
 	userID := ctx.Locals("userID").(uuid.UUID)
 	
-	// 🔄 ORIGINAL: Your existing assignment logic
 	err := services.AssignPropertyToPlace(req, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	// 🔧 REDIS CACHE: Invalidate related caches after successful assignment
 	go func() {
 		cache.Delete(fmt.Sprintf("place_properties_%s", req.PlaceID.String()))
-		cache.Delete(fmt.Sprintf("place_%s", req.PlaceID.String())) // Place data may include properties
+		cache.Delete(fmt.Sprintf("place_%s", req.PlaceID.String()))
 	}()
 
 	return ctx.JSON(utils.SuccessResponse("Property assigned to place successfully", nil))
@@ -366,13 +355,11 @@ func (h *PropertyHandler) RemovePropertyFromPlace(ctx *fiber.Ctx) error {
 
 	userID := ctx.Locals("userID").(uuid.UUID)
 	
-	// 🔄 ORIGINAL: Your existing removal logic
 	err := services.RemovePropertyFromPlace(req, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	// 🔧 REDIS CACHE: Invalidate related caches after successful removal
 	go func() {
 		cache.Delete(fmt.Sprintf("place_properties_%s", req.PlaceID.String()))
 		cache.Delete(fmt.Sprintf("place_%s", req.PlaceID.String()))
@@ -388,7 +375,6 @@ func (h *PropertyHandler) GetPlaceProperties(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
 	}
 
-	// 🔧 REDIS CACHE: Try cache first
 	cacheKey := fmt.Sprintf("place_properties_%s", placeId.String())
 	var properties []dto.PlacePropertyResponse
 	
@@ -397,13 +383,11 @@ func (h *PropertyHandler) GetPlaceProperties(ctx *fiber.Ctx) error {
 		return ctx.JSON(utils.SuccessResponse("Place properties retrieved successfully", properties))
 	}
 
-	// 🔄 ORIGINAL: Your existing database call
 	properties, err = services.GetPlaceProperties(placeId)
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	// 🔧 REDIS CACHE: Store in cache (background, doesn't block response)
 	go cache.Set(cacheKey, properties, cache.MediumTTL)
 	ctx.Set("X-Cache", "MISS")
 
@@ -422,13 +406,11 @@ func (h *PropertyHandler) BulkAssignProperties(ctx *fiber.Ctx) error {
 
 	userID := ctx.Locals("userID").(uuid.UUID)
 	
-	// 🔄 ORIGINAL: Your existing bulk assignment logic
 	err := services.BulkAssignProperties(req, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	// 🔧 REDIS CACHE: Invalidate related caches after successful bulk assignment
 	go func() {
 		cache.Delete(fmt.Sprintf("place_properties_%s", req.PlaceID.String()))
 		cache.Delete(fmt.Sprintf("place_%s", req.PlaceID.String()))
@@ -449,13 +431,11 @@ func (h *PropertyHandler) BulkRemoveProperties(ctx *fiber.Ctx) error {
 
 	userID := ctx.Locals("userID").(uuid.UUID)
 	
-	// 🔄 ORIGINAL: Your existing bulk removal logic
 	err := services.BulkRemoveProperties(req, userID)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	// 🔧 REDIS CACHE: Invalidate related caches after successful bulk removal
 	go func() {
 		cache.Delete(fmt.Sprintf("place_properties_%s", req.PlaceID.String()))
 		cache.Delete(fmt.Sprintf("place_%s", req.PlaceID.String()))

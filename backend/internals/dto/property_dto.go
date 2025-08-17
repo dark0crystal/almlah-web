@@ -1,37 +1,36 @@
-// dto/property.go - UPDATED VERSION (renamed to avoid duplicates)
+// dto/property.go - CLEAN VERSION: Fixed naming conflict
 package dto
 
 import (
 	"time"
-
 	"github.com/google/uuid"
 )
 
-// Property DTOs
+// CLEAN: Property DTOs with single category field (PRIMARY categories only)
 type CreatePropertyRequest struct {
 	NameAr     string    `json:"name_ar" validate:"required,min=2,max=100"`
 	NameEn     string    `json:"name_en" validate:"required,min=2,max=100"`
-	CategoryID uuid.UUID `json:"category_id" validate:"required"`
-	Icon       *string   `json:"icon,omitempty"` // Optional icon
+	CategoryID uuid.UUID `json:"category_id" validate:"required"` // Must be PRIMARY category
+	Icon       *string   `json:"icon,omitempty"`
 }
 
 type UpdatePropertyRequest struct {
 	NameAr     *string    `json:"name_ar,omitempty" validate:"omitempty,min=2,max=100"`
 	NameEn     *string    `json:"name_en,omitempty" validate:"omitempty,min=2,max=100"`
-	CategoryID *uuid.UUID `json:"category_id,omitempty"`
-	Icon       *string    `json:"icon,omitempty"` // Optional icon, can be null to remove
+	CategoryID *uuid.UUID `json:"category_id,omitempty"` // Must be PRIMARY category
+	Icon       *string    `json:"icon,omitempty"`
 }
 
-// Renamed to avoid conflict with common_dto.go
+// FIXED: Use existing CategoryResponse from category_dto.go instead of redeclaring
 type DetailedPropertyResponse struct {
-	ID         uuid.UUID                  `json:"id"`
-	NameAr     string                     `json:"name_ar"`
-	NameEn     string                     `json:"name_en"`
-	CategoryID uuid.UUID                  `json:"category_id"`
-	Icon       *string                    `json:"icon,omitempty"`
-	Category   *DetailedCategoryResponse  `json:"category,omitempty"`
-	CreatedAt  time.Time                  `json:"created_at"`
-	UpdatedAt  time.Time                  `json:"updated_at"`
+	ID         uuid.UUID        `json:"id"`
+	NameAr     string           `json:"name_ar"`
+	NameEn     string           `json:"name_en"`
+	CategoryID uuid.UUID        `json:"category_id"`
+	Icon       *string          `json:"icon,omitempty"`
+	Category   *CategoryResponse `json:"category,omitempty"` // Uses existing CategoryResponse
+	CreatedAt  time.Time        `json:"created_at"`
+	UpdatedAt  time.Time        `json:"updated_at"`
 }
 
 type PropertyListResponse struct {
@@ -46,24 +45,23 @@ type PropertyListResponse struct {
 		NameEn      string    `json:"name_en"`
 		DisplayName string    `json:"display_name"`
 		Slug        string    `json:"slug"`
-		Type        string    `json:"type"`
+		Type        string    `json:"type"` // Should always be "primary"
+		Icon        string    `json:"icon"`
 	} `json:"category"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// Renamed to avoid conflict with common_dto.go
-type DetailedCategoryResponse struct {
-	ID          uuid.UUID `json:"id"`
-	NameAr      string    `json:"name_ar"`
-	NameEn      string    `json:"name_en"`
-	DisplayName string    `json:"display_name"`
-	Slug        string    `json:"slug"`
-	Icon        string    `json:"icon"`
-	Type        string    `json:"type"`
+// Filter requests
+type PropertyFilterRequest struct {
+	CategoryID *uuid.UUID `json:"category_id,omitempty"` // PRIMARY category only
+	Search     *string    `json:"search,omitempty"`
+	HasIcon    *bool      `json:"has_icon,omitempty"`
+	Page       int        `json:"page" validate:"min=1"`
+	Limit      int        `json:"limit" validate:"min=1,max=100"`
 }
 
-// Place Property DTOs
+// Place Property DTOs (unchanged)
 type AssignPropertyToPlaceRequest struct {
 	PlaceID    uuid.UUID `json:"place_id" validate:"required"`
 	PropertyID uuid.UUID `json:"property_id" validate:"required"`
@@ -91,15 +89,6 @@ type BulkAssignPropertiesRequest struct {
 type BulkRemovePropertiesRequest struct {
 	PlaceID     uuid.UUID   `json:"place_id" validate:"required"`
 	PropertyIDs []uuid.UUID `json:"property_ids" validate:"required,min=1"`
-}
-
-// Filter and search DTOs
-type PropertyFilterRequest struct {
-	CategoryID *uuid.UUID `json:"category_id,omitempty"`
-	Search     *string    `json:"search,omitempty"`
-	HasIcon    *bool      `json:"has_icon,omitempty"`
-	Page       int        `json:"page" validate:"min=1"`
-	Limit      int        `json:"limit" validate:"min=1,max=100"`
 }
 
 type PropertyStatsResponse struct {
