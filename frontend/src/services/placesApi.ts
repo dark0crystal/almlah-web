@@ -6,33 +6,61 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9
 // Tourism category ID
 const TOURISM_CATEGORY_ID = "9a5c3331-e22e-4e8e-bb3a-d0ce3c799017";
 
-interface BackendPlaceResponse {
+// Updated interface to match the backend localized response
+interface BackendPlaceLocalizedResponse {
   id: string;
-  name_ar: string;
-  name_en: string;
+  name: string;           // Single language name
+  description: string;    // Single language description
+  subtitle: string;       // Single language subtitle
   latitude: number;
   longitude: number;
   governate?: {
     id: string;
-    name_ar: string;
-    name_en: string;
+    name: string;         // Single language name
     slug: string;
   };
   wilayah?: {
     id: string;
-    name_ar: string;
-    name_en: string;
+    name: string;         // Single language name
     slug: string;
   };
-  primary_image?: {
+  phone?: string;
+  email?: string;
+  website?: string;
+  rating?: number;
+  review_count?: number;
+  images?: Array<{
     id: string;
     url: string;
+    alt_text: string;
     is_primary: boolean;
-  };
+    display_order: number;
+  }>;
+  content_sections?: Array<{
+    id: string;
+    section_type: string;
+    title: string;        // Single language title
+    content: string;      // Single language content
+    sort_order: number;
+    images?: Array<{
+      id: string;
+      image_url: string;
+      alt_text_ar: string;
+      alt_text_en: string;
+      caption_ar: string;
+      caption_en: string;
+      sort_order: number;
+    }>;
+  }>;
+  properties?: Array<{
+    id: string;
+    name: string;         // Single language name
+    icon: string;
+    type: string;
+  }>;
   categories?: Array<{
     id: string;
-    name_ar: string;
-    name_en: string;
+    name: string;         // Single language name
     slug: string;
     icon: string;
     type: string;
@@ -197,117 +225,7 @@ export const fetchPlaces = async (governateId?: string | null): Promise<Place[]>
   }
 };
 
-// NEW: Fetch full place details by ID
-export const fetchPlaceById = async (placeId: string): Promise<Place | null> => {
-  try {
-    const url = `${API_BASE_URL}/places/${placeId}`;
-    console.log('Fetching place details from:', url);
 
-    const response = await fetch(url, {
-      headers: { 
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      next: { revalidate: 1800 } // 30 minutes cache
-    });
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        console.warn('Place not found:', placeId);
-        return null;
-      }
-      const errorText = await response.text();
-      console.error('API Error:', errorText);
-      throw new Error(`Failed to fetch place details: ${response.status}`);
-    }
-
-    const responseData = await response.json();
-    console.log('Place details API Response:', responseData);
-
-    let placeData: BackendPlaceDetailsResponse;
-    if (responseData.success && responseData.data) {
-      placeData = responseData.data;
-    } else if (responseData.data) {
-      placeData = responseData.data;
-    } else {
-      console.error('Unexpected response format:', responseData);
-      return null;
-    }
-
-    // Transform to frontend Place type with full details
-    const transformedPlace: Place = {
-      id: placeData.id,
-      name_ar: placeData.name_ar || '',
-      name_en: placeData.name_en || '',
-      description_ar: placeData.description_ar || '',
-      description_en: placeData.description_en || '',
-      subtitle_ar: placeData.subtitle_ar || '',
-      subtitle_en: placeData.subtitle_en || '',
-      slug: placeData.name_en?.toLowerCase().replace(/\s+/g, '-') || '',
-      lat: placeData.latitude || 0,
-      lng: placeData.longitude || 0,
-      governate_id: placeData.governate?.id || '',
-      wilayah_id: placeData.wilayah?.id || '',
-      category_id: TOURISM_CATEGORY_ID,
-      primary_image: placeData.primary_image?.url || '',
-      phone: placeData.phone || '',
-      email: placeData.email || '',
-      website: placeData.website || '',
-      rating: placeData.rating || 0,
-      review_count: placeData.review_count || 0,
-      is_featured: false,
-      is_active: true,
-      created_at: '',
-      updated_at: '',
-      governate: placeData.governate,
-      wilayah: placeData.wilayah,
-      images: placeData.images?.map(img => ({
-        id: img.id,
-        place_id: img.place_id,
-        image_url: img.image_url,
-        alt_text_ar: img.alt_text || '',
-        alt_text_en: img.alt_text || '',
-        caption_ar: '',
-        caption_en: '',
-        is_primary: img.is_primary,
-        display_order: img.display_order,
-        created_at: '',
-        updated_at: ''
-      })) || [],
-      content_sections: placeData.content_sections?.map(section => ({
-        id: section.id,
-        section_type: section.section_type,
-        title_ar: section.title_ar,
-        title_en: section.title_en,
-        content_ar: section.content_ar,
-        content_en: section.content_en,
-        sort_order: section.sort_order,
-        images: section.images?.map(img => ({
-          id: img.id,
-          image_url: img.image_url,
-          alt_text_ar: img.alt_text_ar,
-          alt_text_en: img.alt_text_en,
-          caption_ar: img.caption_ar,
-          caption_en: img.caption_en,
-          sort_order: img.sort_order
-        })) || []
-      })) || [],
-      properties: placeData.properties?.map(prop => ({
-        id: prop.id,
-        name: prop.name,
-        icon: prop.icon,
-        type: prop.type
-      })) || []
-    };
-
-    console.log('Transformed place details:', transformedPlace);
-    return transformedPlace;
-
-  } catch (error) {
-    console.error('Error fetching place details:', error);
-    throw error;
-  }
-};
 
 // NEW: Get recent places using the optimized backend endpoint
 export const fetchRecentPlaces = async (
@@ -467,6 +385,140 @@ export const transformRecentPlacesToPlaces = (recentPlaces: PlaceWithNewStatus[]
     }] : [],
     isNew: place.is_new
   }));
+};
+
+// NEW: Fetch full place details by ID with language parameter
+export const fetchPlaceById = async (placeId: string, language: 'ar' | 'en' = 'ar'): Promise<Place | null> => {
+  try {
+    const url = `${API_BASE_URL}/places/${placeId}?lang=${language}`;
+    console.log('Fetching place details from:', url);
+
+    const response = await fetch(url, {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      next: { revalidate: 1800 } // 30 minutes cache
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        console.warn('Place not found:', placeId);
+        return null;
+      }
+      const errorText = await response.text();
+      console.error('API Error:', errorText);
+      throw new Error(`Failed to fetch place details: ${response.status}`);
+    }
+
+    const responseData = await response.json();
+    console.log('Place details API Response:', responseData);
+
+    let placeData: BackendPlaceLocalizedResponse;
+    if (responseData.success && responseData.data) {
+      placeData = responseData.data;
+    } else if (responseData.data) {
+      placeData = responseData.data;
+    } else {
+      console.error('Unexpected response format:', responseData);
+      return null;
+    }
+
+    // FIXED: Transform localized response to frontend Place type
+    const transformedPlace: Place = {
+      id: placeData.id,
+      // Map single language name to both language fields for compatibility
+      name_ar: language === 'ar' ? placeData.name : '',
+      name_en: language === 'en' ? placeData.name : '',
+      description_ar: language === 'ar' ? placeData.description : '',
+      description_en: language === 'en' ? placeData.description : '',
+      subtitle_ar: language === 'ar' ? placeData.subtitle : '',
+      subtitle_en: language === 'en' ? placeData.subtitle : '',
+      slug: placeData.name?.toLowerCase().replace(/\s+/g, '-') || '',
+      lat: placeData.latitude || 0,
+      lng: placeData.longitude || 0,
+      governate_id: placeData.governate?.id || '',
+      wilayah_id: placeData.wilayah?.id || '',
+      category_id: TOURISM_CATEGORY_ID,
+      primary_image: placeData.images?.find(img => img.is_primary)?.url || 
+                     placeData.images?.[0]?.url || '',
+      phone: placeData.phone || '',
+      email: placeData.email || '',
+      website: placeData.website || '',
+      rating: placeData.rating || 0,
+      review_count: placeData.review_count || 0,
+      is_featured: false,
+      is_active: true,
+      created_at: '',
+      updated_at: '',
+      governate: placeData.governate ? {
+        id: placeData.governate.id,
+        name_ar: language === 'ar' ? placeData.governate.name : '',
+        name_en: language === 'en' ? placeData.governate.name : '',
+        slug: placeData.governate.slug
+      } : undefined,
+      wilayah: placeData.wilayah ? {
+        id: placeData.wilayah.id,
+        name_ar: language === 'ar' ? placeData.wilayah.name : '',
+        name_en: language === 'en' ? placeData.wilayah.name : '',
+        slug: placeData.wilayah.slug
+      } : undefined,
+      // FIXED: Properly map all images
+      images: placeData.images?.map(img => ({
+        id: img.id,
+        place_id: placeData.id,
+        image_url: img.url,
+        alt_text_ar: img.alt_text || '',
+        alt_text_en: img.alt_text || '',
+        caption_ar: '',
+        caption_en: '',
+        is_primary: img.is_primary,
+        display_order: img.display_order,
+        created_at: '',
+        updated_at: ''
+      })) || [],
+      content_sections: placeData.content_sections?.map(section => ({
+        id: section.id,
+        section_type: section.section_type,
+        title_ar: language === 'ar' ? section.title : '',
+        title_en: language === 'en' ? section.title : '',
+        content_ar: language === 'ar' ? section.content : '',
+        content_en: language === 'en' ? section.content : '',
+        sort_order: section.sort_order,
+        images: section.images?.map(img => ({
+          id: img.id,
+          image_url: img.image_url,
+          alt_text_ar: img.alt_text_ar,
+          alt_text_en: img.alt_text_en,
+          caption_ar: img.caption_ar,
+          caption_en: img.caption_en,
+          sort_order: img.sort_order
+        })) || []
+      })) || [],
+      properties: placeData.properties?.map(prop => ({
+        id: prop.id,
+        name: prop.name,
+        icon: prop.icon,
+        type: prop.type
+      })) || [],
+      categories: placeData.categories?.map(cat => ({
+        id: cat.id,
+        name_ar: language === 'ar' ? cat.name : '',
+        name_en: language === 'en' ? cat.name : '',
+        slug: cat.slug,
+        icon: cat.icon,
+        type: cat.type
+      })) || []
+    };
+
+    console.log('Transformed place details:', transformedPlace);
+    console.log('Images count:', transformedPlace.images?.length || 0);
+    return transformedPlace;
+
+  } catch (error) {
+    console.error('Error fetching place details:', error);
+    throw error;
+  }
 };
 
 // NEW: Utility function to check if a place is new (client-side fallback)
