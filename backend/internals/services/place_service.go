@@ -923,3 +923,208 @@ func mapContentSectionToResponse(section domain.PlaceContentSection) dto.Content
 }
 
 // REMOVED: mapPlaceToMinimalResponse - Use mapPlaceToListResponse instead for consistency
+
+
+// New function with language parameter support
+func GetPlaceByIDWithLanguage(id uuid.UUID, lang string) (*dto.PlaceResponseLocalized, error) {
+	var place domain.Place
+
+	// FIXED: Make sure to preload ALL necessary relationships including Images
+	err := config.DB.Preload("Categories").
+		Preload("Properties.Property").
+		Preload("Images", func(db *gorm.DB) *gorm.DB {
+			return db.Order("is_primary DESC, display_order ASC") // Primary image first, then by display order
+		}).
+		Preload("Reviews").
+		Preload("Creator").
+		Preload("Governate").
+		Preload("Wilayah").
+		Preload("ContentSections", func(db *gorm.DB) *gorm.DB {
+			return db.Where("is_active = ?", true).Order("sort_order ASC")
+		}).
+		Preload("ContentSections.Images", func(db *gorm.DB) *gorm.DB {
+			return db.Order("sort_order ASC")
+		}).
+		First(&place, id).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	// FIXED: Use the correct mapper function for localized response
+	response := mapPlaceToLocalizedResponse(place, lang)
+
+	// Calculate rating and review count
+	if len(place.Reviews) > 0 {
+		var totalRating int
+		for _, review := range place.Reviews {
+			totalRating += review.Rating
+		}
+		response.Rating = float64(totalRating) / float64(len(place.Reviews))
+		response.ReviewCount = len(place.Reviews)
+	}
+
+	return &response, nil
+}
+
+
+
+// New mapper function for localized response
+func mapPlaceToLocalizedResponse(place domain.Place, lang string) dto.PlaceResponseLocalized {
+	var categories []dto.SimpleCategoryLocalized
+	for _, category := range place.Categories {
+		categories = append(categories, dto.SimpleCategoryLocalized{
+			ID:   category.ID,
+			Name: category.GetName(lang),
+			Slug: category.Slug,
+			Icon: category.Icon,
+			Type: category.Type,
+		})
+	}
+
+	var properties []dto.PropertyResponseLocalized
+	for _, pp := range place.Properties {
+		properties = append(properties, dto.PropertyResponseLocalized{
+			ID:   pp.Property.ID,
+			Name: pp.Property.GetName(lang),
+			Icon: pp.Property.Icon,
+			Type: "property",
+		})
+	}
+
+	// FIXED: Properly map all images, not just primary
+	var images []dto.ImageResponse
+	for _, img := range place.Images {
+		images = append(images, dto.ImageResponse{
+			ID:           img.ID,
+			URL:          img.ImageURL,
+			AltText:      img.AltText,
+			IsPrimary:    img.IsPrimary,
+			DisplayOrder: img.DisplayOrder,
+		})
+	}
+
+	var contentSections []dto.ContentSectionLocalized
+	for _, section := range place.ContentSections {
+		contentSections = append(contentSections, mapContentSectionToLocalizedResponse(section, lang))
+	}
+
+	// Map governate and wilayah with localized names
+	var governate *dto.SimpleGovernateLocalized
+	if place.Governate != nil {
+		governate = &dto.SimpleGovernateLocalized{
+			ID:   place.Governate.ID,
+			Name: place.Governate.GetName(lang),
+			Slug: place.Governate.Slug,
+		}
+	}
+
+	var wilayah *dto.SimpleWilayahLocalized
+	if place.Wilayah != nil {
+		wilayah = &dto.SimpleWilayahLocalized{
+			ID:   place.Wilayah.ID,
+			Name: place.Wilayah.GetName(lang),
+			Slug: place.Wilayah.Slug,
+		}
+	}
+
+	return dto.PlaceResponseLocalized{
+		ID:              place.ID,
+		Name:            place.GetName(lang),
+		Description:     place.GetDescription(lang),
+		Subtitle:        place.GetSubtitle(lang),
+		Governate:       governate,
+		Wilayah:         wilayah,
+		Latitude:        place.Latitude,
+		Longitude:       place.Longitude,
+		Phone:           place.Phone,
+		Email:           place.Email,
+		Website:         place.Website,
+		IsActive:        place.IsActive,
+		Categories:      categories,
+		Properties:      properties,
+		Images:          images, // FIXED: All images properly mapped
+		ContentSections: contentSections,
+		CreatedAt:       place.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		UpdatedAt:       place.UpdatedAt.Format("2006-01-02T15:04:05Z"),
+	}
+}
+
+
+func mapContentSectionToLocalizedResponse(section domain.PlaceContentSection, lang string) dto.ContentSectionLocalized {
+	var images []dto.ContentSectionImageResponse
+	for _, img := range section.Images {
+		images = append(images, dto.ContentSectionImageResponse{
+			ID:        img.ID,
+			ImageURL:  img.ImageURL,
+			AltTextAr: img.AltTextAr,
+			AltTextEn: img.AltTextEn,
+			CaptionAr: img.CaptionAr,
+			CaptionEn: img.CaptionEn,
+			SortOrder: img.SortOrder,
+		})
+	}
+
+	return dto.ContentSectionLocalized{
+		ID:          section.ID,
+		SectionType: section.SectionType,
+		Title:       section.GetTitle(lang),
+		Content:     section.GetContent(lang),
+		SortOrder:   section.SortOrder,
+		IsActive:    section.IsActive,
+		Images:      images,
+		CreatedAt:   section.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		UpdatedAt:   section.UpdatedAt.Format("2006-01-02T15:04:05Z"),
+	}
+}
+
+
+// services/place_service.go - Add this function to your place service
+
+func GetPlaceCompleteByID(placeID uuid.UUID) (*dto.PlaceResponse, error) {
+	var place domain.Place
+	
+	// Query with all related data using your existing pattern
+	err := config.DB.Preload("Categories").
+		Preload("Properties.Property").
+		Preload("Images", func(db *gorm.DB) *gorm.DB {
+			return db.Order("is_primary DESC, display_order ASC")
+		}).
+		Preload("Reviews").
+		Preload("Creator").
+		Preload("Governate").
+		Preload("Wilayah").
+		Preload("ContentSections", func(db *gorm.DB) *gorm.DB {
+			return db.Where("is_active = ?", true).Order("sort_order ASC")
+		}).
+		Preload("ContentSections.Images", func(db *gorm.DB) *gorm.DB {
+			return db.Order("sort_order ASC")
+		}).
+		Where("is_active = ?", true).
+		First(&place, placeID).Error
+	
+	if err != nil {
+		return nil, err
+	}
+
+	// Use your existing mapper function
+	response := mapPlaceToResponse(place)
+
+	// Calculate rating and review count using your existing pattern
+	if len(place.Reviews) > 0 {
+		var totalRating int
+		for _, review := range place.Reviews {
+			totalRating += review.Rating
+		}
+		response.Rating = float64(totalRating) / float64(len(place.Reviews))
+		response.ReviewCount = len(place.Reviews)
+	}
+
+	return &response, nil
+}
+
+
+
+
+
+
