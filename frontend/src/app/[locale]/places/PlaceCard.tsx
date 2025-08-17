@@ -18,26 +18,46 @@ export default function PlaceCard({ place }: PlaceCardProps) {
   const locale = (params?.locale as string) || 'en';
 
   const handleCardClick = () => {
-    router.push(`/${locale}/places/${place.id}`);
+    // Fixed navigation path to match your dynamic route structure
+    const navigationPath = locale 
+      ? `/${locale}/places/${place.id}` 
+      : `/places/${place.id}`;
+    
+    console.log('Navigating to:', navigationPath);
+    router.push(navigationPath);
   };
 
-  // Get image source
+  // Get image source with proper URL handling
   const getImageSrc = () => {
+    let imageUrl = '';
+    
+    // First try primary_image
     if (place.primary_image) {
-      try {
-        new URL(place.primary_image);
-        return place.primary_image;
-      } catch {
-        return `/images/${place.primary_image}`;
-      }
+      imageUrl = place.primary_image;
     }
-    
-    if (place.images && place.images.length > 0) {
+    // Then try images array
+    else if (place.images && place.images.length > 0) {
       const primaryImage = place.images.find(img => img.is_primary) || place.images[0];
-      return primaryImage.image_url;
+      imageUrl = primaryImage.image_url;
     }
     
-    return '/images/default-place.jpg';
+    // If no image found, return default
+    if (!imageUrl) {
+      return '/images/default-place.jpg';
+    }
+    
+    // If it's already a full URL, return as is
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    
+    // If it's a relative path, add API base URL
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000";
+    if (imageUrl.startsWith('/')) {
+      return `${API_BASE_URL}${imageUrl}`;
+    }
+    
+    return imageUrl;
   };
 
   // Get localized content
