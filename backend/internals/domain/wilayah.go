@@ -41,7 +41,6 @@ func (w *Wilayah) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-// Helper methods to get localized content
 func (w *Wilayah) GetName(lang string) string {
 	if lang == "ar" {
 		return w.NameAr
