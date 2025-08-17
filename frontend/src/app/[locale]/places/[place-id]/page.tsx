@@ -9,7 +9,7 @@ import { Place } from '@/types';
 
 interface PlaceDetailsProps {
   params?: {
-    id: string;
+    'place-id': string; // Match your file structure
   };
 }
 
@@ -22,41 +22,56 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
   // Get place ID from params or URL
   const urlParams = useParams();
   const router = useRouter();
-  const placeId = params?.id || urlParams?.id as string;
+  
+  // Extract place ID - handle both cases
+  const placeId = params?.['place-id'] || urlParams?.['place-id'] as string;
+  
+  console.log('PlaceDetails - placeId:', placeId);
+  console.log('PlaceDetails - params:', params);
+  console.log('PlaceDetails - urlParams:', urlParams);
 
+  // Updated loadPlace function - now fetches complete data in both languages
+  const loadPlace = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('Loading complete place data for ID:', placeId);
+      
+      // NEW: Use the complete endpoint to get both languages at once
+      const placeData = await fetchPlaceById(placeId);
+      
+      if (!placeData) {
+        setError('المكان غير موجود');
+        return;
+      }
+      
+      setPlace(placeData);
+      console.log('Complete place loaded successfully:', placeData);
+      console.log('Place has both languages:', {
+        ar: { name: placeData.name_ar, description: placeData.description_ar },
+        en: { name: placeData.name_en, description: placeData.description_en }
+      });
+      
+    } catch (err) {
+      console.error('Error loading place:', err);
+      setError(err instanceof Error ? err.message : 'حدث خطأ في تحميل بيانات المكان');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Updated useEffect - removed language dependency since we get both languages
   useEffect(() => {
     if (!placeId) {
+      console.error('No place ID found in params');
       setError('معرف المكان غير موجود');
       setLoading(false);
       return;
     }
 
-    const loadPlace = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        console.log('Loading place with ID:', placeId);
-        const placeData = await fetchPlaceById(placeId);
-        
-        if (!placeData) {
-          setError('المكان غير موجود');
-          return;
-        }
-        
-        setPlace(placeData);
-        console.log('Place loaded successfully:', placeData);
-        
-      } catch (err) {
-        console.error('Error loading place:', err);
-        setError(err instanceof Error ? err.message : 'حدث خطأ في تحميل بيانات المكان');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadPlace();
-  }, [placeId]);
+  }, [placeId]); // Removed language from dependency array
 
   // Update page title
   useEffect(() => {
@@ -185,9 +200,17 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
     );
   }
 
+  // Now we have complete place data with both languages
   const placeName = language === 'ar' ? place.name_ar : place.name_en;
   const placeDescription = language === 'ar' ? place.description_ar : place.description_en;
   const placeSubtitle = language === 'ar' ? place.subtitle_ar : place.subtitle_en;
+
+  console.log('Rendering place with complete data:', {
+    id: place.id,
+    names: { ar: place.name_ar, en: place.name_en },
+    descriptions: { ar: place.description_ar, en: place.description_en },
+    imagesCount: place.images?.length || 0
+  });
 
   return (
     <div className="bg-white text-black">
@@ -267,36 +290,3 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
     </div>
   );
 }
-
-// Alternative: Server Component version (if using App Router)
-// export async function generateStaticParams() {
-//   // You could pre-generate static params for popular places
-//   return [];
-// }
-
-// export async function generateMetadata({ params }: { params: { id: string } }) {
-//   try {
-//     const place = await fetchPlaceById(params.id);
-//     if (!place) {
-//       return {
-//         title: 'Place Not Found',
-//         description: 'The requested place could not be found.'
-//       };
-//     }
-    
-//     return {
-//       title: `${place.name_ar} - دليل الأماكن`,
-//       description: place.description_ar || place.subtitle_ar,
-//       openGraph: {
-//         title: place.name_ar,
-//         description: place.description_ar || place.subtitle_ar,
-//         images: place.primary_image ? [place.primary_image] : [],
-//       },
-//     };
-//   } catch (error) {
-//     return {
-//       title: 'Error Loading Place',
-//       description: 'An error occurred while loading the place details.'
-//     };
-//   }
-// }

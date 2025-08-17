@@ -1,4 +1,4 @@
-// app/auth/login/page.tsx - Updated to work with Zustand auth store
+// app/auth/login/page.tsx - Updated to work with new auth store
 "use client"
 import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, Mail, Lock, User, AlertTriangle, CheckCircle, Loader } from 'lucide-react';
@@ -229,7 +229,7 @@ const LoginForm = () => {
       // Use Zustand store to handle authentication
       await login(result.token);
       
-      setSuccess('Login successful!');
+      setSuccess('Login successful! Redirecting...');
       
       // Redirect to original page or dashboard
       setTimeout(() => {
@@ -252,7 +252,7 @@ const LoginForm = () => {
       // Use Zustand store for Google auth too
       await login(result.token);
       
-      setSuccess('Google login successful!');
+      setSuccess('Google login successful! Redirecting...');
       
       // Redirect to original page or dashboard
       setTimeout(() => {
@@ -404,19 +404,26 @@ const LoginForm = () => {
 
 // Main Login Page Component
 const LoginPage = () => {
-  const { isAuthenticated, isLoading } = useAuthStore();
+  const { isAuthenticated, isLoading, isInitialized } = useAuthStore();
   const router = useRouter();
+
+  // Initialize the auth store on first load
+  useEffect(() => {
+    if (!isInitialized) {
+      useAuthStore.getState().initialize();
+    }
+  }, [isInitialized]);
 
   // Check if user is already authenticated
   useEffect(() => {
-    if (!isLoading && isAuthenticated()) {
+    if (isInitialized && !isLoading && isAuthenticated()) {
       // User is already logged in, redirect to dashboard
       router.push('/dashboard');
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, isInitialized, router]);
 
   // Show loading while checking auth status
-  if (isLoading) {
+  if (!isInitialized || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="text-center">
