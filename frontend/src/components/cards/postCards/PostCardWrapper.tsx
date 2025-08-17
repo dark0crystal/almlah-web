@@ -1,6 +1,6 @@
-// PostCardsWrapper.tsx - Updated with navigation to place details
+// PostCardsWrapper.tsx - Updated with horizontal scrolling
 "use client"
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import PostCard from './PostCard';
 import { fetchRecentPlaces, transformRecentPlacesToPlaces, formatRelativeTime } from '../../../services/placesApi';
@@ -43,20 +43,16 @@ export default function PostCardsWrapper({
   const [posts, setPosts] = useState<PostData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showAll, setShowAll] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
   const [newPlacesCount, setNewPlacesCount] = useState(0);
   const [hasFallback, setHasFallback] = useState(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, scrollLeft: 0 });
+  const [lastScrollLeft, setLastScrollLeft] = useState(0);
   
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  
-  // Determine which posts to display
-  const displayedPosts = showAll 
-    ? posts 
-    : posts.slice(0, initialLimit);
-  
-  // Check if there are more posts to show
-  const hasMorePosts = posts.length > initialLimit;
 
   /**
    * Convert Place data to PostData format
@@ -131,10 +127,128 @@ export default function PostCardsWrapper({
     }
   };
 
+  /**
+   * Check scroll position and update button states
+   */
+  const checkScrollButtons = () => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    const maxScrollLeft = scrollWidth - clientWidth;
+    
+    setCanScrollLeft(scrollLeft > 5); // 5px threshold
+    setCanScrollRight(scrollLeft < maxScrollLeft - 5); // 5px threshold
+  };
+
+  /**
+   * Scroll left
+   */
+  const scrollLeft = () => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const cardWidth = 300; // Approximate card width + gap
+    const scrollAmount = cardWidth * 2; // Scroll 2 cards at a time
+    
+    container.scrollTo({
+      left: Math.max(0, container.scrollLeft - scrollAmount),
+      behavior: 'smooth'
+    });
+  };
+
+  /**
+   * Scroll right
+   */
+  const scrollRight = () => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const cardWidth = 300; // Approximate card width + gap
+    const scrollAmount = cardWidth * 2; // Scroll 2 cards at a time
+    const maxScrollLeft = container.scrollWidth - container.clientWidth;
+    
+    container.scrollTo({
+      left: Math.min(maxScrollLeft, container.scrollLeft + scrollAmount),
+      behavior: 'smooth'
+    });
+  };
+
+  /**
+   * Mouse drag functionality
+   */
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    setIsDragging(true);
+    setDragStart({
+      x: e.pageX - container.offsetLeft,
+      scrollLeft: container.scrollLeft
+    });
+    container.style.cursor = 'grabbing';
+    container.style.userSelect = 'none';
+  };
+
+  const handleMouseLeave = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      const container = scrollContainerRef.current;
+      if (container) {
+        container.style.cursor = 'grab';
+        container.style.userSelect = 'auto';
+      }
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.style.cursor = 'grab';
+      container.style.userSelect = 'auto';
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const x = e.pageX - container.offsetLeft;
+    const walk = (x - dragStart.x) * 2; // Scroll speed multiplier
+    container.scrollLeft = dragStart.scrollLeft - walk;
+  };
+
   // Fetch data on component mount
   useEffect(() => {
     fetchPlaces();
   }, [categoryId, governateId, language]);
+
+  // Set up scroll event listener and mouse events
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    // Initial check
+    const timeoutId = setTimeout(checkScrollButtons, 100);
+    
+    // Event listeners
+    container.addEventListener('scroll', checkScrollButtons);
+    window.addEventListener('resize', checkScrollButtons);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mouseleave', handleMouseLeave);
+
+    return () => {
+      clearTimeout(timeoutId);
+      container.removeEventListener('scroll', checkScrollButtons);
+      window.removeEventListener('resize', checkScrollButtons);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, [posts, isDragging]);
 
   const handlePostClick = (post: PostData) => {
     console.log(`🔗 Navigating to place: ${post.title} (ID: ${post.id})`);
@@ -145,24 +259,6 @@ export default function PostCardsWrapper({
     } else {
       console.warn('⚠️ No place ID found for navigation');
     }
-  };
-
-  const handleShowMore = () => {
-    setIsAnimating(true);
-    setShowAll(true);
-    
-    setTimeout(() => setIsAnimating(false), 300);
-  };
-
-  const handleShowLess = () => {
-    setIsAnimating(true);
-    setShowAll(false);
-    
-    setTimeout(() => {
-      setIsAnimating(false);
-      // Optional: Scroll to top of section
-      // document.querySelector('[data-posts-wrapper]')?.scrollIntoView({ behavior: 'smooth' });
-    }, 300);
   };
 
   const handleRetry = () => {
@@ -178,11 +274,11 @@ export default function PostCardsWrapper({
         </div>
         
         {/* Loading skeleton */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-          {Array.from({ length: initialLimit }).map((_, index) => (
+        <div className="flex gap-4 overflow-hidden">
+          {Array.from({ length: 5 }).map((_, index) => (
             <div
               key={index}
-              className="relative w-full aspect-square bg-gray-200 rounded-2xl animate-pulse"
+              className="flex-none w-64 aspect-square bg-gray-200 rounded-2xl animate-pulse"
             >
               <div className="absolute bottom-0 left-0 right-0 p-6">
                 <div className="h-4 bg-gray-300 rounded mb-2"></div>
@@ -277,92 +373,147 @@ export default function PostCardsWrapper({
           )}
         </div>
         
-        {/* Show More/Less Button */}
-        {hasMorePosts && (
-          <button 
-            onClick={showAll ? handleShowLess : handleShowMore}
-            disabled={isAnimating}
-            className={`
-              text-blue-600 hover:text-blue-800 font-medium text-sm 
-              flex items-center gap-1 transition-all duration-200
-              ${isAnimating ? 'opacity-50 cursor-not-allowed' : 'hover:gap-2'}
-            `}
-          >
-            {showAll 
-              ? (language === 'ar' ? 'عرض أقل' : 'Show Less')
-              : (language === 'ar' ? 'عرض المزيد' : 'Show More')
-            }
-            <svg 
-              className={`w-4 h-4 transition-transform duration-200 ${
-                showAll ? 'rotate-180' : ''
-              }`} 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
+        {/* Navigation Buttons */}
+        {posts.length > 3 && (
+          <div className="flex gap-2">
+            <button
+              onClick={scrollLeft}
+              disabled={!canScrollLeft}
+              className={`
+                p-2 rounded-full border border-gray-300 transition-all duration-200
+                ${canScrollLeft 
+                  ? 'bg-white hover:bg-gray-50 text-gray-700 shadow-sm hover:shadow-md' 
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                }
+              `}
+              aria-label={language === 'ar' ? 'التمرير يساراً' : 'Scroll left'}
             >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M19 9l-7 7-7-7" 
-              />
-            </svg>
-          </button>
+              <svg 
+                className={`w-5 h-5 ${language === 'ar' ? 'rotate-180' : ''}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M15 19l-7-7 7-7" 
+                />
+              </svg>
+            </button>
+            
+            <button
+              onClick={scrollRight}
+              disabled={!canScrollRight}
+              className={`
+                p-2 rounded-full border border-gray-300 transition-all duration-200
+                ${canScrollRight 
+                  ? 'bg-white hover:bg-gray-50 text-gray-700 shadow-sm hover:shadow-md' 
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                }
+              `}
+              aria-label={language === 'ar' ? 'التمرير يميناً' : 'Scroll right'}
+            >
+              <svg 
+                className={`w-5 h-5 ${language === 'ar' ? 'rotate-180' : ''}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M9 5l7 7-7 7" 
+                />
+              </svg>
+            </button>
+          </div>
         )}
       </div>
       
       {/* Posts Count Indicator */}
-      {hasMorePosts && (
-        <div className="mb-4 text-sm text-gray-600">
-          {language === 'ar' 
-            ? `عرض ${displayedPosts.length} من ${posts.length} مكان`
-            : `Showing ${displayedPosts.length} of ${posts.length} places`
-          }
-        </div>
-      )}
+      <div className="mb-4 text-sm text-gray-600">
+        {language === 'ar' 
+          ? `${posts.length} مكان متاح`
+          : `${posts.length} places available`
+        }
+      </div>
       
-      {/* Posts Grid */}
-      <div 
-        className={`
-          grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6
-          transition-all duration-300 ease-in-out
-          ${isAnimating ? 'opacity-75 scale-98' : 'opacity-100 scale-100'}
-        `}
-      >
-        {displayedPosts.map((post, index) => (
-          <div
-            key={post.id}
-            className={`
-              transform transition-all duration-300 ease-out
-              ${showAll && index >= initialLimit 
-                ? 'animate-fadeInUp' 
-                : ''
-              }
-            `}
-            style={{
-              animationDelay: showAll && index >= initialLimit 
-                ? `${(index - initialLimit) * 100}ms` 
-                : '0ms'
-            }}
-          >
-            <PostCard
-              title={post.title}
-              description={post.description}
-              image={post.image}
-              author={post.author}
-              date={post.date}
-              category={post.category}
-              isNew={post.isNew}
-              onClick={() => handlePostClick(post)}
-            />
-          </div>
-        ))}
+      {/* Scrollable Posts Container */}
+      <div className="relative">
+        <div 
+          ref={scrollContainerRef}
+          className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-hide py-4 px-4 cursor-grab active:cursor-grabbing"
+          style={{
+            scrollbarWidth: 'none', // Firefox
+            msOverflowStyle: 'none', // IE/Edge
+            margin: '0 -1rem', // Negative margin to compensate for horizontal padding
+          }}
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeave}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
+        >
+          {posts.map((post) => (
+            <div
+              key={post.id}
+              className="flex-none w-64 sm:w-72 md:w-80"
+              style={{ 
+                pointerEvents: isDragging ? 'none' : 'auto' 
+              }}
+            >
+              <PostCard
+                title={post.title}
+                description={post.description}
+                image={post.image}
+                author={post.author}
+                date={post.date}
+                category={post.category}
+                isNew={post.isNew}
+                onClick={() => !isDragging && handlePostClick(post)}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Scroll Indicators (optional - subtle gradient overlays) */}
+        {posts.length > 3 && (
+          <>
+            {canScrollLeft && (
+              <div 
+                className={`
+                  absolute left-0 top-0 bottom-4 w-8 bg-gradient-to-r from-white to-transparent 
+                  pointer-events-none z-10
+                  ${language === 'ar' ? 'hidden' : ''}
+                `} 
+              />
+            )}
+            
+            {canScrollRight && (
+              <div 
+                className={`
+                  absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-white to-transparent 
+                  pointer-events-none z-10
+                  ${language === 'ar' ? 'hidden' : ''}
+                `} 
+              />
+            )}
+          </>
+        )}
       </div>
 
-      {/* Loading indicator for animations */}
-      {isAnimating && (
-        <div className="flex justify-center items-center mt-6">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+      {/* Scroll Hint for Mobile */}
+      {posts.length > 1 && (
+        <div className="flex justify-center mt-4 sm:hidden">
+          <div className="flex items-center text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+            </svg>
+            {language === 'ar' ? 'اسحب للتصفح' : 'Swipe to browse'}
+          </div>
         </div>
       )}
 
@@ -372,15 +523,26 @@ export default function PostCardsWrapper({
           <strong>Debug Info:</strong><br />
           Total places: {posts.length} | 
           New places: {newPlacesCount} | 
-          Displayed: {displayedPosts.length} | 
           Language: {language} |
           Type: {type} |
-          Has Fallback: {hasFallback ? 'Yes' : 'No'}
+          Has Fallback: {hasFallback ? 'Yes' : 'No'} |
+          Can Scroll Left: {canScrollLeft ? 'Yes' : 'No'} |
+          Can Scroll Right: {canScrollRight ? 'Yes' : 'No'}
           {categoryId && ` | Category: ${categoryId}`}
           {governateId && ` | Governate: ${governateId}`}
           {wilayahId && ` | Wilayah: ${wilayahId}`}
         </div>
       )}
+
+      <style jsx>{`
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 }
