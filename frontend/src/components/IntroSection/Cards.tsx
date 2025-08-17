@@ -37,28 +37,34 @@ export function WideCard() {
   );
 }
 
-// Card2.tsx - Small Card (Bottom Left)
 export function SmallCard1() {
   return (
     <div className="relative w-full h-48 bg-[#F5E6A8] rounded-3xl overflow-hidden">
-
-      {/* Image at bottom */}
-      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-20">
-        <Image
-          src={samhah}
-          alt="Reading image"
-          width={80}
-          height={60}
-          className="object-cover rounded-t-xl"
-        />
+      {/* Main text - at the top */}
+      <div className="absolute top-6 left-0 right-0 flex justify-center">
+        <h3 className="text-6xl font-black text-black z-40">
+          مراحب
+        </h3>
       </div>
-
-      {/* Arabic Text */}
-      <div className="absolute top-16 right-4 left-4 z-30">
-        <h3 className="text-black font-black text-lg md:text-xl text-center leading-tight">
-          لا تحب القراءة؟
-          <br />
-          اسمع مقالاتنا
+      
+      {/* First shadow - slightly below */}
+      <div className="absolute top-16 left-0 right-0 flex justify-center">
+        <h3 className="text-6xl font-black text-[#E6D085] z-30">
+          مراحب
+        </h3>
+      </div>
+      
+      {/* Second shadow - middle */}
+      <div className="absolute top-26 left-0 right-0 flex justify-center">
+        <h3 className="text-6xl font-black text-[#E6D085] z-20">
+          مراحب
+        </h3>
+      </div>
+      
+      {/* Third shadow - near bottom */}
+      <div className="absolute top-36 left-0 right-0 flex justify-center">
+        <h3 className="text-6xl font-black text-[#E6D085] z-10">
+          مراحب
         </h3>
       </div>
     </div>
