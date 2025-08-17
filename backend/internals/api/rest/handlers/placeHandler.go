@@ -30,10 +30,12 @@ func SetupPlaceRoutes(rh *rest.RestHandler) {
 	places.Get("/", handler.GetPlaces)
 	places.Get("/search", handler.SearchPlaces)
 	places.Get("/:id", handler.GetPlace)
+	places.Get("/:id/complete", handler.GetPlaceComplete) // NEW: Complete endpoint
 	places.Get("/category/:categoryId", handler.GetPlacesByCategory)
 	places.Get("/governate/:governateId", handler.GetPlacesByGovernate)
 	places.Get("/wilayah/:wilayahId", handler.GetPlacesByWilayah)
 	places.Get("/filter/:category_id?/:governate_id?", handler.GetPlacesByFilters)
+	
 	// Protected routes with RBAC
 	places.Post("/", 
 		middleware.AuthRequiredWithRBAC, 
@@ -63,6 +65,72 @@ func SetupPlaceRoutes(rh *rest.RestHandler) {
 	contentSections.Delete("/:sectionId", 
 		middleware.LoadUserWithPermissions(), 
 		handler.DeleteContentSection)
+}
+
+func (h *PlaceHandler) GetPlaceComplete(ctx *fiber.Ctx) error {
+	idStr := ctx.Params("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
+	}
+
+	// 🔧 REDIS CACHE: Try cache first (no language suffix since it contains both languages)
+	cacheKey := fmt.Sprintf("place_complete_%s", id.String())
+	var place dto.PlaceResponse
+	
+	if err := cache.Get(cacheKey, &place); err == nil {
+		ctx.Set("X-Cache", "HIT")
+		return ctx.JSON(utils.SuccessResponse("Place retrieved successfully", place))
+	}
+
+	// 🔄 Get complete place data from service (both languages)
+	placePtr, err := services.GetPlaceCompleteByID(id)
+	if err != nil {
+		return ctx.Status(http.StatusNotFound).JSON(utils.ErrorResponse("Place not found"))
+	}
+
+	// 🔧 REDIS CACHE: Store in cache (background, doesn't block response)
+	go cache.Set(cacheKey, *placePtr, cache.MediumTTL)
+	ctx.Set("X-Cache", "MISS")
+
+	return ctx.JSON(utils.SuccessResponse("Place retrieved successfully", *placePtr))
+}
+
+func (h *PlaceHandler) GetPlace(ctx *fiber.Ctx) error {
+	idStr := ctx.Params("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
+	}
+
+	// Get language parameter (default to "en")
+	lang := ctx.Query("lang", "en")
+	
+	// Validate language parameter
+	if lang != "ar" && lang != "en" {
+		lang = "en" // Default to English for invalid language codes
+	}
+
+	// 🔧 REDIS CACHE: Try cache first with language-specific key
+	cacheKey := fmt.Sprintf("place_%s_%s", id.String(), lang)
+	var place dto.PlaceResponseLocalized
+	
+	if err := cache.Get(cacheKey, &place); err == nil {
+		ctx.Set("X-Cache", "HIT")
+		return ctx.JSON(utils.SuccessResponse("Place retrieved successfully", place))
+	}
+
+	// 🔄 ORIGINAL: Get place data from service
+	placePtr, err := services.GetPlaceByIDWithLanguage(id, lang)
+	if err != nil {
+		return ctx.Status(http.StatusNotFound).JSON(utils.ErrorResponse("Place not found"))
+	}
+
+	// 🔧 REDIS CACHE: Store in cache (background, doesn't block response)
+	go cache.Set(cacheKey, *placePtr, cache.MediumTTL)
+	ctx.Set("X-Cache", "MISS")
+
+	return ctx.JSON(utils.SuccessResponse("Place retrieved successfully", *placePtr))
 }
 
 func (h *PlaceHandler) CreatePlace(ctx *fiber.Ctx) error {
@@ -139,42 +207,6 @@ func (h *PlaceHandler) GetPlaces(ctx *fiber.Ctx) error {
 	return ctx.JSON(utils.SuccessResponse("Places retrieved successfully", places))
 }
 
-func (h *PlaceHandler) GetPlace(ctx *fiber.Ctx) error {
-	idStr := ctx.Params("id")
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid place ID"))
-	}
-
-	// Get language parameter (default to "en")
-	lang := ctx.Query("lang", "en")
-	
-	// Validate language parameter
-	if lang != "ar" && lang != "en" {
-		lang = "en" // Default to English for invalid language codes
-	}
-
-	// 🔧 REDIS CACHE: Try cache first with language-specific key
-	cacheKey := fmt.Sprintf("place_%s_%s", id.String(), lang)
-	var place dto.PlaceResponseLocalized // FIXED: Use correct type
-	
-	if err := cache.Get(cacheKey, &place); err == nil {
-		ctx.Set("X-Cache", "HIT")
-		return ctx.JSON(utils.SuccessResponse("Place retrieved successfully", place))
-	}
-
-	// 🔄 ORIGINAL: Get place data from service
-	placePtr, err := services.GetPlaceByIDWithLanguage(id, lang)
-	if err != nil {
-		return ctx.Status(http.StatusNotFound).JSON(utils.ErrorResponse("Place not found"))
-	}
-
-	// 🔧 REDIS CACHE: Store in cache (background, doesn't block response)
-	go cache.Set(cacheKey, *placePtr, cache.MediumTTL)
-	ctx.Set("X-Cache", "MISS")
-
-	return ctx.JSON(utils.SuccessResponse("Place retrieved successfully", *placePtr))
-}
 func (h *PlaceHandler) UpdatePlace(ctx *fiber.Ctx) error {
 	idStr := ctx.Params("id")
 	id, err := uuid.Parse(idStr)
@@ -197,7 +229,9 @@ func (h *PlaceHandler) UpdatePlace(ctx *fiber.Ctx) error {
 
 	// 🔧 REDIS CACHE: Invalidate related caches after successful update
 	go func() {
-		cache.Delete(fmt.Sprintf("place_%s", id.String()))
+		cache.Delete(fmt.Sprintf("place_%s_ar", id.String()))
+		cache.Delete(fmt.Sprintf("place_%s_en", id.String()))
+		cache.Delete(fmt.Sprintf("place_complete_%s", id.String())) // NEW: Invalidate complete cache
 		cache.Delete("places_all")
 		cache.DeletePattern("places_category_*")
 		cache.DeletePattern("places_governate_*")
@@ -225,7 +259,9 @@ func (h *PlaceHandler) DeletePlace(ctx *fiber.Ctx) error {
 
 	// 🔧 REDIS CACHE: Invalidate related caches after successful deletion
 	go func() {
-		cache.Delete(fmt.Sprintf("place_%s", id.String()))
+		cache.Delete(fmt.Sprintf("place_%s_ar", id.String()))
+		cache.Delete(fmt.Sprintf("place_%s_en", id.String()))
+		cache.Delete(fmt.Sprintf("place_complete_%s", id.String())) // NEW: Invalidate complete cache
 		cache.Delete(fmt.Sprintf("place_images_%s", id.String()))
 		cache.Delete("places_all")
 		cache.DeletePattern("places_category_*")
@@ -381,7 +417,9 @@ func (h *PlaceHandler) CreateContentSection(ctx *fiber.Ctx) error {
 
 	// 🔧 REDIS CACHE: Invalidate place cache after adding content section
 	go func() {
-		cache.Delete(fmt.Sprintf("place_%s", placeId.String()))
+		cache.Delete(fmt.Sprintf("place_%s_ar", placeId.String()))
+		cache.Delete(fmt.Sprintf("place_%s_en", placeId.String()))
+		cache.Delete(fmt.Sprintf("place_complete_%s", placeId.String())) // NEW: Invalidate complete cache
 	}()
 
 	return ctx.Status(http.StatusCreated).JSON(utils.SuccessResponse("Content section created successfully", section))
@@ -412,7 +450,11 @@ func (h *PlaceHandler) UpdateContentSection(ctx *fiber.Ctx) error {
 	// 🔧 REDIS CACHE: Invalidate related place cache
 	placeIdStr := ctx.Params("placeId")
 	if placeId, err := uuid.Parse(placeIdStr); err == nil {
-		go cache.Delete(fmt.Sprintf("place_%s", placeId.String()))
+		go func() {
+			cache.Delete(fmt.Sprintf("place_%s_ar", placeId.String()))
+			cache.Delete(fmt.Sprintf("place_%s_en", placeId.String()))
+			cache.Delete(fmt.Sprintf("place_complete_%s", placeId.String())) // NEW: Invalidate complete cache
+		}()
 	}
 
 	return ctx.JSON(utils.SuccessResponse("Content section updated successfully", section))
@@ -437,16 +479,15 @@ func (h *PlaceHandler) DeleteContentSection(ctx *fiber.Ctx) error {
 	placeIdStr := ctx.Params("placeId")
 	if placeId, err := uuid.Parse(placeIdStr); err == nil {
 		go func() {
-			cache.Delete(fmt.Sprintf("place_%s", placeId.String()))
+			cache.Delete(fmt.Sprintf("place_%s_ar", placeId.String()))
+			cache.Delete(fmt.Sprintf("place_%s_en", placeId.String()))
+			cache.Delete(fmt.Sprintf("place_complete_%s", placeId.String())) // NEW: Invalidate complete cache
 			cache.Delete(fmt.Sprintf("content_section_images_%s", sectionId.String()))
 		}()
 	}
 
 	return ctx.JSON(utils.SuccessResponse("Content section and all associated images deleted successfully", nil))
 }
-
-
-// -----
 
 func (h *PlaceHandler) GetPlacesByFilters(ctx *fiber.Ctx) error {
     // Get path parameters
@@ -491,5 +532,3 @@ func (h *PlaceHandler) GetPlacesByFilters(ctx *fiber.Ctx) error {
     
     return ctx.JSON(utils.SuccessResponse("Places retrieved successfully", places))
 }
-
-
