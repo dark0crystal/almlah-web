@@ -84,13 +84,39 @@ func CreatePlace(req dto.CreatePlaceRequest, userID uuid.UUID) (*dto.PlaceRespon
 		return nil, err
 	}
 
-	// Associate categories by UUIDs
+	// FIXED: Associate BOTH parent and child categories
 	if len(categoryUUIDs) > 0 {
-		var categories []domain.Category
-		config.DB.Where("id IN ?", categoryUUIDs).Find(&categories)
+		// Get all categories (both parent and children)
+		var allCategoriesToAssign []domain.Category
+		config.DB.Where("id IN ?", categoryUUIDs).Find(&allCategoriesToAssign)
 
-		if err := config.DB.Model(&place).Association("Categories").Replace(&categories); err != nil {
-			return nil, err
+		// Create a set to track unique category IDs to avoid duplicates
+		uniqueCategoryIDs := make(map[uuid.UUID]bool)
+		var finalCategories []domain.Category
+
+		// Add child categories
+		for _, category := range allCategoriesToAssign {
+			if !uniqueCategoryIDs[category.ID] {
+				finalCategories = append(finalCategories, category)
+				uniqueCategoryIDs[category.ID] = true
+			}
+
+			// FIXED: If this is a secondary category, also add its parent
+			if category.Type == "secondary" && category.ParentID != nil {
+				if !uniqueCategoryIDs[*category.ParentID] {
+					var parentCategory domain.Category
+					err := config.DB.First(&parentCategory, *category.ParentID).Error
+					if err == nil {
+						finalCategories = append(finalCategories, parentCategory)
+						uniqueCategoryIDs[*category.ParentID] = true
+					}
+				}
+			}
+		}
+
+		// Associate all unique categories with the place
+		if err := config.DB.Model(&place).Association("Categories").Replace(&finalCategories); err != nil {
+			return nil, fmt.Errorf("failed to associate categories: %v", err)
 		}
 	}
 
@@ -139,6 +165,7 @@ func CreatePlace(req dto.CreatePlaceRequest, userID uuid.UUID) (*dto.PlaceRespon
 
 	return GetPlaceByID(place.ID)
 }
+
 
 func GetPlaces() ([]dto.PlaceListResponse, error) {
 	var places []domain.Place
@@ -289,11 +316,17 @@ func UpdatePlace(id uuid.UUID, req dto.UpdatePlaceRequest, userID uuid.UUID) (*d
 
 	// Update categories if provided
 	if len(req.CategoryIDs) > 0 {
+		// Ensure parent categories are included
+		allCategoryIDs, err := ensureParentCategoriesIncluded(req.CategoryIDs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to process categories: %v", err)
+		}
+
 		var categories []domain.Category
-		config.DB.Where("id IN ?", req.CategoryIDs).Find(&categories)
+		config.DB.Where("id IN ?", allCategoryIDs).Find(&categories)
 
 		if err := config.DB.Model(&place).Association("Categories").Replace(&categories); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to update categories: %v", err)
 		}
 	}
 
@@ -1081,6 +1114,7 @@ func mapContentSectionToLocalizedResponse(section domain.PlaceContentSection, la
 
 // services/place_service.go - Add this function to your place service
 
+
 func GetPlaceCompleteByID(placeID uuid.UUID) (*dto.PlaceResponse, error) {
 	var place domain.Place
 	
@@ -1122,6 +1156,46 @@ func GetPlaceCompleteByID(placeID uuid.UUID) (*dto.PlaceResponse, error) {
 
 	return &response, nil
 }
+
+
+// FIXED: Helper function to ensure parent categories are included
+func ensureParentCategoriesIncluded(categoryIDs []uuid.UUID) ([]uuid.UUID, error) {
+	if len(categoryIDs) == 0 {
+		return categoryIDs, nil
+	}
+
+	// Get all categories
+	var categories []domain.Category
+	err := config.DB.Where("id IN ?", categoryIDs).Find(&categories).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Track unique IDs
+	uniqueIDs := make(map[uuid.UUID]bool)
+	result := make([]uuid.UUID, 0)
+
+	// Add original categories
+	for _, id := range categoryIDs {
+		if !uniqueIDs[id] {
+			uniqueIDs[id] = true
+			result = append(result, id)
+		}
+	}
+
+	// Add parent categories for secondary categories
+	for _, category := range categories {
+		if category.Type == "secondary" && category.ParentID != nil {
+			if !uniqueIDs[*category.ParentID] {
+				uniqueIDs[*category.ParentID] = true
+				result = append(result, *category.ParentID)
+			}
+		}
+	}
+
+	return result, nil
+}
+
 
 
 

@@ -1,4 +1,4 @@
-// services/property_service.go
+// services/property_service.go - CLEAN VERSION: Fixed type conflicts
 package services
 
 import (
@@ -14,12 +14,12 @@ import (
 	"gorm.io/gorm"
 )
 
-// Property Management
+// CLEAN: Property Management with PRIMARY categories only
 func CreateProperty(req dto.CreatePropertyRequest, createdBy uuid.UUID) (*dto.DetailedPropertyResponse, error) {
-	// Check if category exists
+	// Validate that category exists and is PRIMARY
 	var category domain.Category
-	if err := config.DB.First(&category, req.CategoryID).Error; err != nil {
-		return nil, errors.New("category not found")
+	if err := config.DB.Where("id = ? AND type = ?", req.CategoryID, "primary").First(&category).Error; err != nil {
+		return nil, errors.New("category not found or is not a primary category")
 	}
 
 	// Check if property with same name already exists in this category
@@ -101,7 +101,10 @@ func GetProperties(filter *dto.PropertyFilterRequest) ([]dto.PropertyListRespons
 		propResponse.Category.ID = property.Category.ID
 		propResponse.Category.NameAr = property.Category.NameAr
 		propResponse.Category.NameEn = property.Category.NameEn
-		propResponse.Category.DisplayName = property.Category.NameEn // Use NameEn as DisplayName
+		propResponse.Category.DisplayName = property.Category.NameEn
+		propResponse.Category.Slug = property.Category.Slug
+		propResponse.Category.Type = property.Category.Type
+		propResponse.Category.Icon = property.Category.Icon
 
 		response = append(response, propResponse)
 	}
@@ -132,14 +135,23 @@ func GetPropertyByID(id uuid.UUID) (*dto.DetailedPropertyResponse, error) {
 		response.Icon = &property.Icon
 	}
 
-	// Set category if loaded
+	// FIXED: Use existing CategoryResponse from category_dto.go
 	if property.Category.ID != uuid.Nil {
-		response.Category = &dto.DetailedCategoryResponse{
-			ID:          property.Category.ID,
-			NameAr:      property.Category.NameAr,
-			NameEn:      property.Category.NameEn,
-			DisplayName: property.Category.NameEn, // Use NameEn as DisplayName
-			// Add other category fields if they exist in your domain.Category
+		response.Category = &dto.CategoryResponse{
+			ID:            property.Category.ID,
+			NameAr:        property.Category.NameAr,
+			NameEn:        property.Category.NameEn,
+			Slug:          property.Category.Slug,
+			DescriptionAr: property.Category.DescriptionAr,
+			DescriptionEn: property.Category.DescriptionEn,
+			Icon:          property.Category.Icon,
+			Type:          property.Category.Type,
+			ParentID:      property.Category.ParentID,
+			IsActive:      property.Category.IsActive,
+			SortOrder:     property.Category.SortOrder,
+			PlaceCount:    getPlaceCountForCategory(property.Category.ID), // Helper function from category service
+			CreatedAt:     property.Category.CreatedAt.Format("2006-01-02T15:04:05Z"),
+			UpdatedAt:     property.Category.UpdatedAt.Format("2006-01-02T15:04:05Z"),
 		}
 	}
 
@@ -163,10 +175,10 @@ func UpdateProperty(id uuid.UUID, req dto.UpdatePropertyRequest, updatedBy uuid.
 		property.NameEn = *req.NameEn
 	}
 	if req.CategoryID != nil {
-		// Check if new category exists
+		// Validate that new category exists and is PRIMARY
 		var category domain.Category
-		if err := config.DB.First(&category, *req.CategoryID).Error; err != nil {
-			return nil, errors.New("category not found")
+		if err := config.DB.Where("id = ? AND type = ?", *req.CategoryID, "primary").First(&category).Error; err != nil {
+			return nil, errors.New("category not found or is not a primary category")
 		}
 		property.CategoryID = *req.CategoryID
 	}
@@ -227,7 +239,15 @@ func DeleteProperty(id uuid.UUID, deletedBy uuid.UUID) error {
 	return nil
 }
 
-// Place Property Management
+// Get properties by category (PRIMARY category only)
+func GetPropertiesByCategory(categoryID uuid.UUID) ([]dto.PropertyListResponse, error) {
+	filter := &dto.PropertyFilterRequest{
+		CategoryID: &categoryID,
+	}
+	return GetProperties(filter)
+}
+
+// Place Property Management (unchanged)
 func AssignPropertyToPlace(req dto.AssignPropertyToPlaceRequest, assignedBy uuid.UUID) error {
 	// Check if place exists
 	var place domain.Place
@@ -317,7 +337,7 @@ func GetPlaceProperties(placeID uuid.UUID) ([]dto.PlacePropertyResponse, error) 
 	return response, nil
 }
 
-// Bulk operations
+// Bulk operations (unchanged)
 func BulkAssignProperties(req dto.BulkAssignPropertiesRequest, assignedBy uuid.UUID) error {
 	// Check if place exists
 	var place domain.Place
@@ -390,13 +410,6 @@ func GetSimpleProperties() ([]dto.SimplePropertyResponse, error) {
 	return response, nil
 }
 
-func GetPropertiesByCategory(categoryID uuid.UUID) ([]dto.PropertyListResponse, error) {
-	filter := &dto.PropertyFilterRequest{
-		CategoryID: &categoryID,
-	}
-	return GetProperties(filter)
-}
-
 func GetPropertyStats() (*dto.PropertyStatsResponse, error) {
 	var stats dto.PropertyStatsResponse
 
@@ -433,3 +446,4 @@ func GetPropertyStats() (*dto.PropertyStatsResponse, error) {
 
 	return &stats, nil
 }
+
