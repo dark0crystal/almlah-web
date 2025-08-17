@@ -1,4 +1,4 @@
-// stores/usePlaceStore.ts - Updated to use proper bucket structure
+// stores/usePlaceStore.ts - Updated with correct properties management
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { SupabaseStorageService } from '../services/supabaseStorage';
@@ -128,12 +128,15 @@ export interface Wilayah {
   slug: string;
 }
 
+// FIXED: Updated Property interface to match API response
 export interface Property {
   id: string;
   name_ar: string;
   name_en: string;
   category_id: string;
-  icon: string;
+  icon?: string;
+  description_ar?: string;
+  description_en?: string;
 }
 
 interface PlaceStore {
@@ -167,12 +170,16 @@ interface PlaceStore {
   setErrors: (errors: Record<string, string>) => void;
   clearErrors: () => void;
   
-  // API actions (keeping existing implementations)
+  // API actions
   fetchParentCategories: () => Promise<void>;
   fetchChildCategories: (parentId: string) => Promise<void>;
   fetchGovernorates: () => Promise<void>;
   fetchWilayahs: (governateId: string) => Promise<void>;
+  
+  // FIXED: Updated properties management
   fetchProperties: (categoryId: string) => Promise<void>;
+  fetchPropertiesByFilter: (filter?: PropertyFilter) => Promise<void>;
+  clearProperties: () => void;
   
   // Image handling (for temporary storage during form)
   addImage: (image: PlaceImage) => void;
@@ -191,6 +198,15 @@ interface PlaceStore {
   uploadPlaceImages: (placeId: string, images: PlaceImage[]) => Promise<boolean>;
   uploadContentSectionImages: (placeId: string, sectionId: string, images: ContentSectionImage[]) => Promise<boolean>;
   resetForm: () => void;
+}
+
+// FIXED: Added PropertyFilter interface for flexible fetching
+interface PropertyFilter {
+  category_id?: string;
+  search?: string;
+  has_icon?: boolean;
+  page?: number;
+  limit?: number;
 }
 
 const defaultFormData: PlaceFormData = {
@@ -315,19 +331,103 @@ export const usePlaceStore = create<PlaceStore>()(
         }
       },
       
-      fetchProperties: async (categoryId) => {
-        set({ isLoadingProperties: true });
+      // FIXED: Updated to use correct endpoint for category-based property fetching
+      fetchProperties: async (categoryId: string) => {
+        set({ isLoadingProperties: true, properties: [] });
+        
         try {
-          const response = await fetch(`${API_BASE_URL}/api/v1/properties?category_id=${categoryId}`);
-          const result = await response.json();
-          if (result.success) {
-            set({ properties: result.data });
+          console.log(`Fetching properties for category: ${categoryId}`);
+          
+          // FIXED: Use the correct endpoint that matches your Go handler
+          const response = await fetch(`${API_BASE_URL}/api/v1/properties/category/${categoryId}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              // Add auth header if your endpoint requires authentication
+              // ...getAuthHeaders(),
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
+
+          const result = await response.json();
+          
+          if (result.success && Array.isArray(result.data)) {
+            console.log(`Fetched ${result.data.length} properties for category ${categoryId}`);
+            set({ properties: result.data });
+          } else {
+            console.warn('Invalid response format:', result);
+            set({ properties: [] });
+          }
+          
         } catch (error) {
           console.error('Failed to fetch properties:', error);
+          set({ 
+            properties: [],
+            errors: { properties: 'Failed to load properties. Please try again.' }
+          });
         } finally {
           set({ isLoadingProperties: false });
         }
+      },
+
+      // FIXED: Added flexible property fetching with filters
+      fetchPropertiesByFilter: async (filter: PropertyFilter = {}) => {
+        set({ isLoadingProperties: true, properties: [] });
+        
+        try {
+          // Build query parameters
+          const params = new URLSearchParams();
+          
+          if (filter.category_id) params.append('category_id', filter.category_id);
+          if (filter.search) params.append('search', filter.search);
+          if (filter.has_icon !== undefined) params.append('has_icon', filter.has_icon.toString());
+          if (filter.page) params.append('page', filter.page.toString());
+          if (filter.limit) params.append('limit', filter.limit.toString());
+
+          const queryString = params.toString();
+          const url = `${API_BASE_URL}/api/v1/properties${queryString ? `?${queryString}` : ''}`;
+          
+          console.log('Fetching properties with filter:', filter);
+          console.log('Request URL:', url);
+          
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+          
+          if (result.success && Array.isArray(result.data)) {
+            console.log(`Fetched ${result.data.length} properties with filter`);
+            set({ properties: result.data });
+          } else {
+            console.warn('Invalid response format:', result);
+            set({ properties: [] });
+          }
+          
+        } catch (error) {
+          console.error('Failed to fetch properties with filter:', error);
+          set({ 
+            properties: [],
+            errors: { properties: 'Failed to load properties. Please try again.' }
+          });
+        } finally {
+          set({ isLoadingProperties: false });
+        }
+      },
+
+      // FIXED: Added clear properties function
+      clearProperties: () => {
+        set({ properties: [] });
       },
       
       // Image management (keeping existing)
@@ -433,7 +533,17 @@ export const usePlaceStore = create<PlaceStore>()(
 
           console.log('Submitting form data:', formData);
 
-          // Prepare the data for place creation (without image files)
+          // FIXED: Prepare category_ids to include both parent and child categories
+          const allCategoryIds = [...formData.category_ids]; // Start with child categories
+          
+          // Add parent category if it exists and is not already in the list
+          if (formData.parent_category_id && !allCategoryIds.includes(formData.parent_category_id)) {
+            allCategoryIds.unshift(formData.parent_category_id); // Add parent at the beginning
+          }
+
+          console.log('Final category IDs to submit:', allCategoryIds);
+
+          // Prepare the data for place creation
           const requestData = {
             name_ar: formData.name_ar,
             name_en: formData.name_en,
@@ -448,7 +558,9 @@ export const usePlaceStore = create<PlaceStore>()(
             longitude: formData.longitude || 0,
             governate_id: formData.governate_id || null,
             wilayah_id: formData.wilayah_id || null,
-            category_ids: formData.category_ids,
+            
+            // FIXED: Send all category IDs (parent + children)
+            category_ids: allCategoryIds,
             property_ids: formData.property_ids,
             
             // Send empty arrays - images will be uploaded separately
@@ -463,6 +575,8 @@ export const usePlaceStore = create<PlaceStore>()(
               images: [] // Content section images handled separately
             }))
           };
+
+          console.log('Request data to be sent:', requestData);
 
           // Create the place first
           const response = await fetch(`${API_BASE_URL}/api/v1/places`, {
@@ -493,7 +607,6 @@ export const usePlaceStore = create<PlaceStore>()(
             const imageUploadSuccess = await get().uploadPlaceImages(placeId, formData.images);
             if (!imageUploadSuccess) {
               console.warn('Place created but image upload failed');
-              // Don't fail the entire process - place was created successfully
             }
           }
 
@@ -501,7 +614,7 @@ export const usePlaceStore = create<PlaceStore>()(
           for (const section of formData.content_sections) {
             if (section.images && section.images.length > 0) {
               console.log(`Uploading images for content section: ${section.title_en}`);
-              const sectionId = section.id; // Assuming the section ID is returned from place creation
+              const sectionId = section.id;
               if (sectionId) {
                 const sectionImageUploadSuccess = await get().uploadContentSectionImages(
                   placeId, 
@@ -531,7 +644,6 @@ export const usePlaceStore = create<PlaceStore>()(
           set({ isSubmitting: false });
         }
       },
-
       // Upload place images using proper file structure
       uploadPlaceImages: async (placeId: string, images: PlaceImage[]) => {
         try {
@@ -667,5 +779,3 @@ export const usePlaceStore = create<PlaceStore>()(
     })
   )
 );
-
-

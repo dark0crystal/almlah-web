@@ -1,6 +1,5 @@
-// stores/authStore.ts
+// stores/authStore.ts - Updated to store token as 'authToken' in localStorage
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 // Types
 interface User {
@@ -37,6 +36,7 @@ interface AuthState {
   logout: () => void;
   refreshUserData: () => Promise<void>;
   initialize: () => Promise<void>;
+  loadUserData: (authToken: string) => Promise<void>;
 
   // Computed getters
   isAuthenticated: () => boolean;
@@ -75,140 +75,176 @@ class AuthAPI {
   }
 }
 
-// Create Zustand store
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      // Initial state
-      user: null,
-      token: null,
-      isLoading: false,
-      isInitialized: false,
+// Helper functions for localStorage token management
+const getTokenFromStorage = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('authToken');
+};
 
-      // Initialize auth from localStorage
-      initialize: async () => {
-        const state = get();
-        if (state.isInitialized) return;
+const setTokenInStorage = (token: string): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('authToken', token);
+};
 
-        set({ isLoading: true });
+const removeTokenFromStorage = (): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('authToken');
+  // Also remove old format if it exists
+  localStorage.removeItem('auth-storage');
+};
 
-        try {
-          // Get token from persisted state
-          const { token } = state;
-          
-          if (token) {
-            await get().loadUserData(token);
-          }
-        } catch (error) {
-          console.error('Auth initialization error:', error);
-          // Clear invalid token
-          set({ user: null, token: null });
-        } finally {
-          set({ isLoading: false, isInitialized: true });
-        }
-      },
+// Create Zustand store (without persist middleware)
+export const useAuthStore = create<AuthState>()((set, get) => ({
+  // Initial state
+  user: null,
+  token: null,
+  isLoading: false,
+  isInitialized: false,
 
-      // Load user data from API
-      loadUserData: async (authToken: string) => {
-        try {
-          const [profileResponse, permissionsResponse, rolesResponse] = await Promise.all([
-            AuthAPI.getUserProfile(authToken),
-            AuthAPI.getUserPermissions(authToken),
-            AuthAPI.getUserRoles(authToken)
-          ]);
+  // Initialize auth from localStorage
+  initialize: async () => {
+    const state = get();
+    if (state.isInitialized) return;
 
-          const userData: User = {
-            ...profileResponse.data.user,
-            permissions: permissionsResponse.data.map((p: any) => p.name),
-            roles: rolesResponse.data
-          };
+    set({ isLoading: true });
 
-          set({ 
-            user: userData, 
-            token: authToken,
-            isLoading: false 
-          });
-
-        } catch (error) {
-          console.error('Failed to load user data:', error);
-          throw error;
-        }
-      },
-
-      // Login function
-      login: async (authToken: string) => {
-        set({ isLoading: true });
-        try {
-          await get().loadUserData(authToken);
-        } catch (error) {
-          set({ isLoading: false });
-          throw error;
-        }
-      },
-
-      // Logout function
-      logout: () => {
-        set({ 
-          user: null, 
-          token: null, 
-          isLoading: false 
-        });
-      },
-
-      // Refresh user data
-      refreshUserData: async () => {
-        const { token } = get();
-        if (!token) return;
-
-        try {
-          await get().loadUserData(token);
-        } catch (error) {
-          console.error('Failed to refresh user data:', error);
-          get().logout();
-        }
-      },
-
-      // Computed getters
-      isAuthenticated: () => {
-        const { user, token } = get();
-        return !!user && !!token;
-      },
-
-      hasRole: (roleName: string) => {
-        const { user } = get();
-        if (!user?.roles) return false;
-        return user.roles.some(role => role.name === roleName && role.isActive);
-      },
-
-      hasAnyRole: (roleNames: string[]) => {
-        const { hasRole } = get();
-        return roleNames.some(roleName => hasRole(roleName));
-      },
-
-      hasPermission: (permission: string) => {
-        const { user, hasRole } = get();
-        if (!user?.permissions) return false;
-        // Super admin has all permissions
-        if (hasRole('super_admin')) return true;
-        return user.permissions.includes(permission);
-      },
-
-      hasAnyPermission: (permissions: string[]) => {
-        const { hasPermission } = get();
-        return permissions.some(permission => hasPermission(permission));
-      },
-    }),
-    {
-      name: 'auth-storage', // localStorage key
-      partialize: (state) => ({ 
-        token: state.token,
-        user: state.user 
-      }), // Only persist token and user
+    try {
+      // Get token from localStorage
+      const token = getTokenFromStorage();
+      
+      if (token) {
+        set({ token });
+        await get().loadUserData(token);
+      }
+    } catch (error) {
+      console.error('Auth initialization error:', error);
+      // Clear invalid token
+      removeTokenFromStorage();
+      set({ user: null, token: null });
+    } finally {
+      set({ isLoading: false, isInitialized: true });
     }
-  )
-);
+  },
+
+  // Load user data from API
+  loadUserData: async (authToken: string) => {
+    try {
+      const [profileResponse, permissionsResponse, rolesResponse] = await Promise.all([
+        AuthAPI.getUserProfile(authToken),
+        AuthAPI.getUserPermissions(authToken),
+        AuthAPI.getUserRoles(authToken)
+      ]);
+
+      const userData: User = {
+        ...profileResponse.data.user,
+        permissions: permissionsResponse.data.map((p: any) => p.name),
+        roles: rolesResponse.data
+      };
+
+      set({ 
+        user: userData, 
+        token: authToken,
+        isLoading: false 
+      });
+
+      // Store token in localStorage
+      setTokenInStorage(authToken);
+
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+      // Clear invalid token
+      removeTokenFromStorage();
+      set({ user: null, token: null });
+      throw error;
+    }
+  },
+
+  // Login function
+  login: async (authToken: string) => {
+    set({ isLoading: true });
+    try {
+      await get().loadUserData(authToken);
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  // Logout function
+  logout: () => {
+    removeTokenFromStorage();
+    set({ 
+      user: null, 
+      token: null, 
+      isLoading: false 
+    });
+  },
+
+  // Refresh user data
+  refreshUserData: async () => {
+    const { token } = get();
+    if (!token) {
+      // Try to get token from localStorage
+      const storedToken = getTokenFromStorage();
+      if (storedToken) {
+        set({ token: storedToken });
+        await get().loadUserData(storedToken);
+        return;
+      }
+      return;
+    }
+
+    try {
+      await get().loadUserData(token);
+    } catch (error) {
+      console.error('Failed to refresh user data:', error);
+      get().logout();
+    }
+  },
+
+  // Computed getters
+  isAuthenticated: () => {
+    const { user, token } = get();
+    return !!user && !!token;
+  },
+
+  hasRole: (roleName: string) => {
+    const { user } = get();
+    if (!user?.roles) return false;
+    return user.roles.some(role => role.name === roleName && role.isActive);
+  },
+
+  hasAnyRole: (roleNames: string[]) => {
+    const { hasRole } = get();
+    return roleNames.some(roleName => hasRole(roleName));
+  },
+
+  hasPermission: (permission: string) => {
+    const { user, hasRole } = get();
+    if (!user?.permissions) return false;
+    // Super admin has all permissions
+    if (hasRole('super_admin')) return true;
+    return user.permissions.includes(permission);
+  },
+
+  hasAnyPermission: (permissions: string[]) => {
+    const { hasPermission } = get();
+    return permissions.some(permission => hasPermission(permission));
+  },
+}));
 
 // Initialize auth on app start (call this once in your app)
 export const initializeAuth = async () => {
   await useAuthStore.getState().initialize();
+};
+
+// Helper function to get current token (useful for API calls)
+export const getAuthToken = (): string | null => {
+  const state = useAuthStore.getState();
+  return state.token || getTokenFromStorage();
+};
+
+// Helper function to check if user is authenticated (useful for API calls)
+export const isAuthenticated = (): boolean => {
+  return useAuthStore.getState().isAuthenticated();
 };
