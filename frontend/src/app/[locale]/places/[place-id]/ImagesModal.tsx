@@ -16,6 +16,15 @@ export default function ImagesModal({
   initialIndex = 0 
 }: ImagesModalProps) {
   const [selectedIndex, setSelectedIndex] = useState(initialIndex);
+  const [imageErrors, setImageErrors] = useState<{[key: number]: boolean}>({});
+
+  console.log('ImagesModal - received images:', images);
+
+  // Handle individual image errors
+  const handleImageError = (index: number) => {
+    console.log('Modal image failed to load at index:', index);
+    setImageErrors(prev => ({ ...prev, [index]: true }));
+  };
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -53,6 +62,27 @@ export default function ImagesModal({
     setSelectedIndex(selectedIndex < images.length - 1 ? selectedIndex + 1 : 0);
   };
 
+  // Function to get image URL with fallback
+  const getImageUrl = (imageUrl: string) => {
+    if (!imageUrl) return '/images/default-place.jpg';
+    
+    // If it's already a full URL, return as is
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    
+    // If it's a relative path, you might need to add your API base URL
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000";
+    if (imageUrl.startsWith('/')) {
+      return `${API_BASE_URL}${imageUrl}`;
+    }
+    
+    return imageUrl;
+  };
+
+  const currentImageUrl = getImageUrl(images[selectedIndex]);
+  const hasCurrentImageError = imageErrors[selectedIndex];
+
   return (
     <div className="fixed inset-0 bg-black/95 backdrop-blur-sm z-[9999] flex flex-col items-center justify-center p-4">
       {/* Close button */}
@@ -74,18 +104,27 @@ export default function ImagesModal({
         {/* Main Image */}
         <div className="relative w-full max-w-4xl h-[50vh] sm:h-[60vh] md:h-[70vh] mb-4 md:mb-6">
           <div className="relative w-full h-full rounded-xl md:rounded-2xl overflow-hidden shadow-2xl">
-            <Image
-              src={images[selectedIndex]}
-              alt={`صورة ${selectedIndex + 1} من ${placeName}`}
-              fill
-              className="object-contain"
-              priority
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 80vw"
-              onError={(e) => {
-                console.error('Failed to load image:', images[selectedIndex]);
-                // You could set a fallback image here
-              }}
-            />
+            {hasCurrentImageError ? (
+              <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                <div className="text-center text-white">
+                  <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <p>فشل تحميل الصورة</p>
+                </div>
+              </div>
+            ) : (
+              <Image
+                src={currentImageUrl}
+                alt={`صورة ${selectedIndex + 1} من ${placeName}`}
+                fill
+                className="object-contain"
+                priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 80vw"
+                onError={() => handleImageError(selectedIndex)}
+                onLoad={() => console.log('Modal image loaded successfully:', selectedIndex)}
+              />
+            )}
           </div>
         </div>
 
@@ -97,26 +136,40 @@ export default function ImagesModal({
         {/* Thumbnails Container */}
         <div className="w-full max-w-4xl">
           <div className="flex gap-2 md:gap-4 justify-center overflow-x-auto pb-2 px-2">
-            {images.map((img, i) => (
-              <button
-                key={i}
-                onClick={() => setSelectedIndex(i)}
-                className={`relative flex-shrink-0 w-16 h-12 sm:w-20 sm:h-16 md:w-24 md:h-18 lg:w-28 lg:h-20 rounded-lg md:rounded-xl overflow-hidden border-2 md:border-4 transition-all duration-200 hover:scale-105 ${
-                  i === selectedIndex
-                    ? "border-white shadow-lg"
-                    : "border-transparent opacity-70 hover:opacity-100"
-                }`}
-                aria-label={`عرض الصورة ${i + 1}`}
-              >
-                <Image
-                  src={img}
-                  alt={`صورة مصغرة ${i + 1}`}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 640px) 64px, (max-width: 768px) 80px, (max-width: 1024px) 96px, 112px"
-                />
-              </button>
-            ))}
+            {images.map((img, i) => {
+              const thumbnailUrl = getImageUrl(img);
+              const hasThumbnailError = imageErrors[i];
+              
+              return (
+                <button
+                  key={i}
+                  onClick={() => setSelectedIndex(i)}
+                  className={`relative flex-shrink-0 w-16 h-12 sm:w-20 sm:h-16 md:w-24 md:h-18 lg:w-28 lg:h-20 rounded-lg md:rounded-xl overflow-hidden border-2 md:border-4 transition-all duration-200 hover:scale-105 ${
+                    i === selectedIndex
+                      ? "border-white shadow-lg"
+                      : "border-transparent opacity-70 hover:opacity-100"
+                  }`}
+                  aria-label={`عرض الصورة ${i + 1}`}
+                >
+                  {hasThumbnailError ? (
+                    <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  ) : (
+                    <Image
+                      src={thumbnailUrl}
+                      alt={`صورة مصغرة ${i + 1}`}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 64px, (max-width: 768px) 80px, (max-width: 1024px) 96px, 112px"
+                      onError={() => handleImageError(i)}
+                    />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
