@@ -62,8 +62,9 @@ const propertyAPI = {
     });
   },
 
-  getCategories: async () => {
-    const response = await apiCall('/categories');
+  // FIXED: Only fetch primary categories for property management
+  getPrimaryCategories: async () => {
+    const response = await apiCall('/categories/primary');
     return response.data;
   },
 
@@ -75,7 +76,7 @@ const propertyAPI = {
 
 const ManageProperties = () => {
   const [properties, setProperties] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [primaryCategories, setPrimaryCategories] = useState([]); // FIXED: Renamed for clarity
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -104,10 +105,10 @@ const ManageProperties = () => {
     try {
       const [propertiesData, categoriesData] = await Promise.all([
         propertyAPI.getProperties(filters),
-        propertyAPI.getCategories()
+        propertyAPI.getPrimaryCategories() // FIXED: Only fetch primary categories
       ]);
       setProperties(propertiesData);
-      setCategories(categoriesData);
+      setPrimaryCategories(categoriesData); // FIXED: Use specific state
     } catch (error) {
       setError(error.message);
     } finally {
@@ -229,16 +230,16 @@ const ManageProperties = () => {
                   />
                 </div>
 
-                {/* Category Filter */}
+                {/* Category Filter - FIXED: Only show primary categories */}
                 <select
                   value={filters.category_id}
                   onChange={(e) => handleFilterChange('category_id', e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="">All Categories</option>
-                  {categories && categories.map(category => (
+                  <option value="">All Primary Categories</option>
+                  {primaryCategories && primaryCategories.map(category => (
                     <option key={category.id} value={category.id}>
-                      {category.display_name || category.name_en}
+                      {category.name_en} ({category.name_ar})
                     </option>
                   ))}
                 </select>
@@ -303,7 +304,7 @@ const ManageProperties = () => {
                       Property
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Category
+                      Primary Category
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Icon
@@ -324,21 +325,31 @@ const ManageProperties = () => {
                           <div className="text-sm font-medium text-gray-900">
                             {property.name_en}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-500" dir="rtl">
                             {property.name_ar}
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                          {property.category.display_name || property.category.name_en}
-                        </span>
+                        <div className="flex items-center">
+                          {property.category?.icon && (
+                            <span className="text-lg mr-2">{property.category.icon}</span>
+                          )}
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {property.category?.name_en}
+                            </div>
+                            <div className="text-sm text-gray-500" dir="rtl">
+                              {property.category?.name_ar}
+                            </div>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {property.icon ? (
                           <div className="flex items-center">
-                            <Image className="w-4 h-4 text-green-600 mr-1" />
-                            <span className="text-sm text-gray-600">Has icon</span>
+                            <span className="text-xl mr-2">{property.icon}</span>
+                            <span className="text-sm text-green-600">Has icon</span>
                           </div>
                         ) : (
                           <span className="text-sm text-gray-400">No icon</span>
@@ -397,7 +408,7 @@ const ManageProperties = () => {
         {showCreateModal && (
           <PropertyModal
             title="Create Property"
-            categories={categories}
+            categories={primaryCategories} // FIXED: Pass primary categories only
             onClose={() => setShowCreateModal(false)}
             onSave={handleCreateProperty}
           />
@@ -407,7 +418,7 @@ const ManageProperties = () => {
           <PropertyModal
             title="Edit Property"
             property={editingProperty}
-            categories={categories}
+            categories={primaryCategories} // FIXED: Pass primary categories only
             onClose={() => setEditingProperty(null)}
             onSave={handleUpdateProperty}
           />
@@ -499,7 +510,7 @@ const PropertyModal = ({ title, property, categories, onClose, onSave }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Category *
+                Primary Category *
               </label>
               <select
                 value={formData.category_id}
@@ -507,10 +518,10 @@ const PropertyModal = ({ title, property, categories, onClose, onSave }) => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
                 required
               >
-                <option value="">Select Category</option>
+                <option value="">Select Primary Category</option>
                 {categories && categories.map(category => (
                   <option key={category.id} value={category.id}>
-                    {category.display_name || category.name_en}
+                    {category.name_en} ({category.name_ar})
                   </option>
                 ))}
               </select>
@@ -525,7 +536,7 @@ const PropertyModal = ({ title, property, categories, onClose, onSave }) => {
                 value={formData.icon}
                 onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                placeholder="Icon name or URL"
+                placeholder="🏷️ or icon name"
               />
               <p className="text-xs text-gray-500 mt-1">
                 Leave empty if no icon is needed
@@ -585,7 +596,7 @@ const StatsModal = ({ stats, onClose }) => {
           </div>
 
           <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Properties by Category</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Properties by Primary Category</h3>
             <div className="space-y-2">
               {Object.entries(stats.properties_per_category || {}).map(([category, count]) => (
                 <div key={category} className="flex justify-between items-center p-2 bg-gray-50 rounded">
