@@ -2,6 +2,8 @@
 package dto
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -23,6 +25,60 @@ type PlaceSearchParams struct {
 	WilayahID   string `json:"wilayah_id"`
 	Limit       int    `json:"limit"`
 	Offset      int    `json:"offset"`
+}
+
+// PlaceResponseComplete represents a complete place with both languages
+type PlaceCompleteResponse struct {
+	ID            string                        `json:"id"`
+	NameAr        string                        `json:"name_ar"`
+	NameEn        string                        `json:"name_en"`
+	DescriptionAr string                        `json:"description_ar"`
+	DescriptionEn string                        `json:"description_en"`
+	SubtitleAr    string                        `json:"subtitle_ar"`
+	SubtitleEn    string                        `json:"subtitle_en"`
+	Slug          string                        `json:"slug"`
+	Latitude      float64                       `json:"latitude"`
+	Longitude     float64                       `json:"longitude"`
+	Phone         *string                       `json:"phone,omitempty"`
+	Email         *string                       `json:"email,omitempty"`
+	Website       *string                       `json:"website,omitempty"`
+	Rating        *float64                      `json:"rating,omitempty"`
+	ReviewCount   *int                          `json:"review_count,omitempty"`
+	IsFeatured    bool                          `json:"is_featured"`
+	IsActive      bool                          `json:"is_active"`
+	CreatedAt     time.Time                     `json:"created_at"`
+	UpdatedAt     time.Time                     `json:"updated_at"`
+	Governate     *GovernateResponse            `json:"governate,omitempty"`
+	Wilayah       *WilayahResponse              `json:"wilayah,omitempty"`
+	Images        []PlaceImageCompleteResponse  `json:"images,omitempty"`
+	ContentSections []ContentSectionCompleteResponse `json:"content_sections,omitempty"`
+	Properties    []PlacePropertyResponse       `json:"properties,omitempty"`
+	Categories    []CategoryResponse            `json:"categories,omitempty"`
+}
+type PlaceImageCompleteResponse struct {
+	ID          string    `json:"id"`
+	PlaceID     string    `json:"place_id"`
+	ImageURL    string    `json:"image_url"`
+	AltTextAr   string    `json:"alt_text_ar"`
+	AltTextEn   string    `json:"alt_text_en"`
+	CaptionAr   string    `json:"caption_ar"`
+	CaptionEn   string    `json:"caption_en"`
+	IsPrimary   bool      `json:"is_primary"`
+	DisplayOrder int      `json:"display_order"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+// ContentSectionCompleteResponse represents content section with both languages
+type ContentSectionCompleteResponse struct {
+	ID          string                            `json:"id"`
+	SectionType string                            `json:"section_type"`
+	TitleAr     string                            `json:"title_ar"`
+	TitleEn     string                            `json:"title_en"`
+	ContentAr   string                            `json:"content_ar"`
+	ContentEn   string                            `json:"content_en"`
+	SortOrder   int                               `json:"sort_order"`
+	Images      []ContentSectionImageResponse     `json:"images,omitempty"`
 }
 
 // Request DTOs for creating/updating places
@@ -146,6 +202,74 @@ type ContentSectionImageResponse struct {
 	CaptionEn string    `json:"caption_en"`
 	SortOrder int       `json:"sort_order"`
 }
+
+// Add to dto/place_dto.go
+
+// Localized response for a specific language
+type PlaceResponseLocalized struct {
+	ID              uuid.UUID                      `json:"id"`
+	Name            string                         `json:"name"`            // Single language name
+	Description     string                         `json:"description"`     // Single language description  
+	Subtitle        string                         `json:"subtitle"`        // Single language subtitle
+	Governate       *SimpleGovernateLocalized      `json:"governate,omitempty"`
+	Wilayah         *SimpleWilayahLocalized        `json:"wilayah,omitempty"`
+	Latitude        float64                        `json:"latitude"`
+	Longitude       float64                        `json:"longitude"`
+	Phone           string                         `json:"phone"`
+	Email           string                         `json:"email"`
+	Website         string                         `json:"website"`
+	Rating          float64                        `json:"rating"`
+	ReviewCount     int                            `json:"review_count"`
+	IsActive        bool                           `json:"is_active"`
+	Categories      []SimpleCategoryLocalized      `json:"categories"`
+	Properties      []PropertyResponseLocalized    `json:"properties"`
+	Images          []ImageResponse                `json:"images"`
+	ContentSections []ContentSectionLocalized     `json:"content_sections"`
+	CreatedAt       string                         `json:"created_at"`
+	UpdatedAt       string                         `json:"updated_at"`
+}
+
+// Localized nested types
+type SimpleGovernateLocalized struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+	Slug string    `json:"slug"`
+}
+
+type SimpleWilayahLocalized struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+	Slug string    `json:"slug"`
+}
+
+type SimpleCategoryLocalized struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+	Slug string    `json:"slug"`
+	Icon string    `json:"icon"`
+	Type string    `json:"type"`
+}
+
+type PropertyResponseLocalized struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+	Icon string    `json:"icon"`
+	Type string    `json:"type"`
+}
+
+type ContentSectionLocalized struct {
+	ID          uuid.UUID                     `json:"id"`
+	SectionType string                        `json:"section_type"`
+	Title       string                        `json:"title"`      // Single language title
+	Content     string                        `json:"content"`    // Single language content
+	SortOrder   int                           `json:"sort_order"`
+	IsActive    bool                          `json:"is_active"`
+	Images      []ContentSectionImageResponse `json:"images"`
+	CreatedAt   string                        `json:"created_at"`
+	UpdatedAt   string                        `json:"updated_at"`
+}
+
+
 
 // Helper methods for CreatePlaceRequest
 func (r *CreatePlaceRequest) GetGovernateUUID() (*uuid.UUID, error) {
