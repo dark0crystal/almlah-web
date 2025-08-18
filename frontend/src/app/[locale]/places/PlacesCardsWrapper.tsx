@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from 'next-intl';
 import PlaceCard from "./PlaceCard";
@@ -11,13 +11,17 @@ interface PlacesCardsWrapperProps {
   selectedGovernateId?: string | null;
   onGovernateChange?: (governateId: string | null) => void;
   categoryId: string; // Required category ID prop
+  selectedPlaceId?: string | null;
+  onPlaceClick?: (placeId: string) => void;
 }
 
 export default function PlacesCardsWrapper({
   isMobileMapView = false,
   selectedGovernateId,
   onGovernateChange,
-  categoryId
+  categoryId,
+  selectedPlaceId,
+  onPlaceClick
 }: PlacesCardsWrapperProps) {
   const params = useParams();
   const locale = (params?.locale as string) || 'en';
@@ -26,6 +30,7 @@ export default function PlacesCardsWrapper({
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Fetch places when governate or category changes
   useEffect(() => {
@@ -55,6 +60,20 @@ export default function PlacesCardsWrapper({
       loadPlaces();
     }
   }, [selectedGovernateId, categoryId, t]);
+
+  // Scroll to selected place when selectedPlaceId changes
+  useEffect(() => {
+    if (selectedPlaceId && scrollContainerRef.current) {
+      const selectedElement = scrollContainerRef.current.querySelector(`[data-place-id="${selectedPlaceId}"]`);
+      if (selectedElement) {
+        selectedElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'start'
+        });
+      }
+    }
+  }, [selectedPlaceId]);
 
   if (loading) {
     return (
@@ -91,10 +110,22 @@ export default function PlacesCardsWrapper({
           </div>
         ) : (
           <div className="px-4 py-3">
-            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+            <div 
+              ref={scrollContainerRef}
+              className="flex gap-3 overflow-x-auto scrollbar-hide pb-2"
+            >
               {places.map((place) => (
-                <div key={place.id} className="flex-shrink-0 w-80">
-                  <PlaceCard place={place} locale={locale} />
+                <div 
+                  key={place.id} 
+                  className="flex-shrink-0 w-80"
+                  data-place-id={place.id}
+                >
+                  <PlaceCard 
+                    place={place} 
+                    locale={locale}
+                    isSelected={selectedPlaceId === place.id}
+                    onPlaceClick={onPlaceClick}
+                  />
                 </div>
               ))}
             </div>
@@ -114,10 +145,20 @@ export default function PlacesCardsWrapper({
           </div>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto">
+        <div 
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto"
+        >
           <div className="space-y-4 pr-2">
             {places.map((place) => (
-              <PlaceCard key={place.id} place={place} locale={locale} />
+              <div key={place.id} data-place-id={place.id}>
+                <PlaceCard 
+                  place={place} 
+                  locale={locale}
+                  isSelected={selectedPlaceId === place.id}
+                  onPlaceClick={onPlaceClick}
+                />
+              </div>
             ))}
           </div>
         </div>

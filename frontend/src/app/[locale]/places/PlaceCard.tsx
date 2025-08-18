@@ -9,15 +9,22 @@ import { Place } from "@/types";
 interface PlaceCardProps {
   place: Place;
   locale: string;
+  isSelected?: boolean;
+  onPlaceClick?: (placeId: string) => void;
 }
 
-export default function PlaceCard({ place, locale }: PlaceCardProps) {
+export default function PlaceCard({ place, locale, isSelected = false, onPlaceClick }: PlaceCardProps) {
   const router = useRouter();
   const t = useTranslations('places');
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
 
   const handleCardClick = () => {
+    // Call onPlaceClick if provided (for map interaction)
+    if (onPlaceClick) {
+      onPlaceClick(place.id);
+    }
+    
     // Fixed navigation path to match your dynamic route structure
     const navigationPath = locale 
       ? `/${locale}/places/${place.id}` 
@@ -82,8 +89,12 @@ export default function PlaceCard({ place, locale }: PlaceCardProps) {
 
   return (
     <div 
-      className={`bg-white rounded-2xl  hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden  ${
-        isHovered ? 'transform -translate-y-1' : ''
+      className={`bg-white rounded-2xl hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden ${
+        isSelected 
+          ? 'border-2 border-blue-500 shadow-lg transform -translate-y-1' 
+          : 'border border-gray-200'
+      } ${
+        isHovered && !isSelected ? 'transform -translate-y-1' : ''
       } ${locale === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
