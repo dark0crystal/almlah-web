@@ -1,71 +1,74 @@
 // categoryData.ts
+import rb3 from "../../../../public/rb3.png";
+import chai from "../../../../public/chai.png"
+// Import other images from your public folder
+// import finjanImage from "../../../../public/finjan.png";
+// import riyadhImage from "../../../../public/riyadh.png";
+// import lastSoundImage from "../../../../public/last-sound.png";
+// import shakraImage from "../../../../public/shakra.png";
+// import audiobookImage from "../../../../public/audiobook.png";
+// import cinemaImage from "../../../../public/cinema.png";
+// import technologyImage from "../../../../public/technology.png";
+// import sportsImage from "../../../../public/sports.png";
+
 export interface CategoryData {
   title: string;
   subtitle?: string;
   icon?: string;
   bgColor: string;
-  bgImage?: string; // Background image URL
+  bgImage?: string | any; // Can be string URL or imported image
   textColor?: string;
-  slug?: string; // for navigation
 }
 
 export const categoriesData: CategoryData[] = [
   {
-    title: "فنجان",
-    subtitle: "بودكاست",
+    title: "أماكن سياحية",
+    subtitle: "سياحة",
     icon: "🎙️",
     bgColor: "bg-gradient-to-br from-orange-400 to-pink-400",
-    bgImage: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=400&h=400&fit=crop&crop=center",
-    slug: "finjan-podcast"
+    bgImage: rb3, // Use imported image or "/finjan.png" for direct path
   },
   {
-    title: "دليلة الرياض",
+    title: "مطاعم",
     subtitle: "جديد",
     icon: "🌟",
     bgColor: "bg-gradient-to-br from-green-500 to-emerald-600",
-    bgImage: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=400&fit=crop&crop=center",
-    slug: "riyadh-guide"
+    bgImage: chai, // Direct path to public folder
   },
   {
-    title: "الصوت الأخير",
+    title: "كبيسات",
     icon: "📚",
     bgColor: "bg-gradient-to-br from-orange-500 to-red-500",
-    bgImage: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=400&fit=crop&crop=center",
-    slug: "last-sound"
+    bgImage: chai,
   },
   {
     title: "شكرة",
     icon: "💎",
     bgColor: "bg-gradient-to-br from-gray-600 to-gray-800",
-    bgImage: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=400&fit=crop&crop=center",
-    slug: "shakra"
+    bgImage: chai,
   },
   {
     title: "كتاب مسموع",
     icon: "🎧",
     bgColor: "bg-gradient-to-br from-indigo-600 to-purple-700",
-    bgImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=center",
-    slug: "audiobook"
+    bgImage: "/audiobook.png",
   },
   {
     title: "النشرة السينمائية",
     icon: "🎬",
     bgColor: "bg-gradient-to-br from-teal-500 to-cyan-600",
-    bgImage: "https://images.unsplash.com/photo-1489599517064-0754c955f22f?w=400&h=400&fit=crop&crop=center",
-    slug: "cinema-newsletter"
+    bgImage: "/cinema.png",
   },
   {
     title: "تكنولوجيا",
     icon: "💻",
     bgColor: "bg-gradient-to-br from-blue-500 to-blue-700",
-    bgImage: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=400&fit=crop&crop=center",
-    slug: "technology"
+    bgImage: "/technology.png",
   },
   {
     title: "رياضة",
     icon: "⚽",
     bgColor: "bg-gradient-to-br from-red-500 to-pink-600",
-    bgImage: "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=400&h=400&fit=crop&crop=center",
-    slug: "sports"
+    bgImage: "/sports.png",
   },
 ];

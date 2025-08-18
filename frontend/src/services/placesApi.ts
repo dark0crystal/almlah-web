@@ -1,87 +1,56 @@
-// src/services/placesApi.ts - Updated version with new functions
+// src/services/placesApi.ts - Updated to work with actual backend response and scalable categories
 import { Place, Governate } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000/api/v1";
 
-// Tourism category ID
-const TOURISM_CATEGORY_ID = "9a5c3331-e22e-4e8e-bb3a-d0ce3c799017";
+// CATEGORY IDS - Add your hardcoded category IDs here
+export const CATEGORY_IDS = {
+  TOURISM: "9a5c3331-e22e-4e8e-bb3a-d0ce3c799017",
+  RESTAURANTS: "ef8ae8b3-9643-4204-bc93-fc239ade5b40", // NEW: Restaurant category ID
+  FOOD_BEVERAGES: "another-category-id-here",
+  ENTERTAINMENT: "yet-another-category-id-here",
+  // Add more categories as needed
+} as const;
 
-// Updated interface to match the backend localized response
-interface BackendPlaceLocalizedResponse {
+// Type for category keys
+export type CategoryType = keyof typeof CATEGORY_IDS;
+
+// Actual backend response format from your Go service (dto.PlaceResponse)
+interface BackendPlaceCompleteResponse {
   id: string;
-  name: string;           // Single language name
-  description: string;    // Single language description
-  subtitle: string;       // Single language subtitle
-  latitude: number;
-  longitude: number;
-  governate?: {
-    id: string;
-    name: string;         // Single language name
-    slug: string;
-  };
-  wilayah?: {
-    id: string;
-    name: string;         // Single language name
-    slug: string;
-  };
-  phone?: string;
-  email?: string;
-  website?: string;
-  rating?: number;
-  review_count?: number;
-  images?: Array<{
-    id: string;
-    url: string;
-    alt_text: string;
-    is_primary: boolean;
-    display_order: number;
-  }>;
-  content_sections?: Array<{
-    id: string;
-    section_type: string;
-    title: string;        // Single language title
-    content: string;      // Single language content
-    sort_order: number;
-    images?: Array<{
-      id: string;
-      image_url: string;
-      alt_text_ar: string;
-      alt_text_en: string;
-      caption_ar: string;
-      caption_en: string;
-      sort_order: number;
-    }>;
-  }>;
-  properties?: Array<{
-    id: string;
-    name: string;         // Single language name
-    icon: string;
-    type: string;
-  }>;
-  categories?: Array<{
-    id: string;
-    name: string;         // Single language name
-    slug: string;
-    icon: string;
-    type: string;
-  }>;
-}
-
-// Extended interface for full place details
-interface BackendPlaceDetailsResponse extends BackendPlaceResponse {
+  name_ar: string;
+  name_en: string;
   description_ar: string;
   description_en: string;
   subtitle_ar: string;
   subtitle_en: string;
+  slug?: string;
+  latitude: number;
+  longitude: number;
+  governate?: {
+    id: string;
+    name_ar: string;
+    name_en: string;
+    slug: string;
+  };
+  wilayah?: {
+    id: string;
+    name_ar: string;
+    name_en: string;
+    slug: string;
+  };
   phone?: string;
   email?: string;
   website?: string;
   rating?: number;
   review_count?: number;
+  is_featured?: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
   images?: Array<{
     id: string;
-    place_id: string;
-    image_url: string;
+    url: string;
     alt_text: string;
     is_primary: boolean;
     display_order: number;
@@ -94,6 +63,7 @@ interface BackendPlaceDetailsResponse extends BackendPlaceResponse {
     content_ar: string;
     content_en: string;
     sort_order: number;
+    is_active: boolean;
     images?: Array<{
       id: string;
       image_url: string;
@@ -103,6 +73,8 @@ interface BackendPlaceDetailsResponse extends BackendPlaceResponse {
       caption_en: string;
       sort_order: number;
     }>;
+    created_at: string;
+    updated_at: string;
   }>;
   properties?: Array<{
     id: string;
@@ -110,9 +82,42 @@ interface BackendPlaceDetailsResponse extends BackendPlaceResponse {
     icon: string;
     type: string;
   }>;
+  categories?: Array<{
+    id: string;
+    name_ar: string;
+    name_en: string;
+    slug: string;
+    icon: string;
+    type: string;
+  }>;
 }
 
-// New interfaces for recent places
+interface BackendPlaceResponse {
+  id: string;
+  name_ar: string;
+  name_en: string;
+  latitude: number;
+  longitude: number;
+  governate?: {
+    id: string;
+    name_ar: string;
+    name_en: string;
+    slug: string;
+  };
+  wilayah?: {
+    id: string;
+    name_ar: string;
+    name_en: string;
+    slug: string;
+  };
+  primary_image?: {
+    id: string;
+    url: string;
+    is_primary: boolean;
+  };
+}
+
+// NEW interfaces for recent places
 interface PlaceWithNewStatus extends BackendPlaceResponse {
   is_new: boolean;
   created_at?: string;
@@ -133,11 +138,14 @@ interface PlacesStats {
   last_updated: string;
 }
 
-// Single function to fetch places with optional governate filter
-export const fetchPlaces = async (governateId?: string | null): Promise<Place[]> => {
+// UPDATED: Main function to fetch places by category and optional governate filter
+export const fetchPlaces = async (
+  categoryId: string, 
+  governateId?: string | null
+): Promise<Place[]> => {
   try {
     // Build URL: /places/filter/{categoryId}/{governateId?}
-    let url = `${API_BASE_URL}/places/filter/${TOURISM_CATEGORY_ID}`;
+    let url = `${API_BASE_URL}/places/filter/${categoryId}`;
     if (governateId) {
       url += `/${governateId}`;
     }
@@ -167,6 +175,10 @@ export const fetchPlaces = async (governateId?: string | null): Promise<Place[]>
       placesData = responseData.data;
     } else if (Array.isArray(responseData.data)) {
       placesData = responseData.data;
+    } else if (responseData.success && responseData.data === null) {
+      // Handle null data case - no places found for this category/governate combination
+      console.log('No places found for the specified filters');
+      return [];
     } else {
       console.error('Unexpected response format:', responseData);
       return [];
@@ -189,7 +201,7 @@ export const fetchPlaces = async (governateId?: string | null): Promise<Place[]>
         lng: place.longitude || 0,
         governate_id: place.governate?.id || '',
         wilayah_id: place.wilayah?.id || '',
-        category_id: TOURISM_CATEGORY_ID,
+        category_id: categoryId,
         primary_image: place.primary_image?.url || '',
         is_featured: false,
         is_active: true,
@@ -225,7 +237,274 @@ export const fetchPlaces = async (governateId?: string | null): Promise<Place[]>
   }
 };
 
+// CONVENIENCE FUNCTIONS: Helper functions for specific categories
+export const fetchTourismPlaces = async (governateId?: string | null): Promise<Place[]> => {
+  return fetchPlaces(CATEGORY_IDS.TOURISM, governateId);
+};
 
+export const fetchRestaurantPlaces = async (governateId?: string | null): Promise<Place[]> => {
+  return fetchPlaces(CATEGORY_IDS.RESTAURANTS, governateId);
+};
+
+export const fetchFoodBeveragePlaces = async (governateId?: string | null): Promise<Place[]> => {
+  return fetchPlaces(CATEGORY_IDS.FOOD_BEVERAGES, governateId);
+};
+
+export const fetchEntertainmentPlaces = async (governateId?: string | null): Promise<Place[]> => {
+  return fetchPlaces(CATEGORY_IDS.ENTERTAINMENT, governateId);
+};
+
+// UTILITY: Get category name for display
+export const getCategoryName = (categoryType: CategoryType, locale: 'ar' | 'en' = 'en'): string => {
+  const names = {
+    TOURISM: { ar: 'السياحة', en: 'Tourism' },
+    RESTAURANTS: { ar: 'المطاعم', en: 'Restaurants' },
+    FOOD_BEVERAGES: { ar: 'الأطعمة والمشروبات', en: 'Food & Beverages' },
+    ENTERTAINMENT: { ar: 'الترفيه', en: 'Entertainment' },
+  };
+  
+  return names[categoryType]?.[locale] || categoryType;
+};
+
+// MAIN FUNCTION: Get complete place data with both languages (works with actual backend)
+export const fetchPlaceById = async (placeId: string): Promise<Place | null> => {
+  try {
+    const url = `${API_BASE_URL}/places/${placeId}/complete`;
+    console.log('Fetching complete place from:', url);
+
+    const response = await fetch(url, {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      next: { revalidate: 1800 } // 30 minutes cache
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        console.warn('Place not found:', placeId);
+        return null;
+      }
+      const errorText = await response.text();
+      console.error('API Error:', errorText);
+      throw new Error(`Failed to fetch place details: ${response.status}`);
+    }
+
+    const responseData = await response.json();
+    console.log('Complete place API Response:', responseData);
+
+    let placeData: BackendPlaceCompleteResponse;
+    if (responseData.success && responseData.data) {
+      placeData = responseData.data;
+    } else if (responseData.data) {
+      placeData = responseData.data;
+    } else {
+      console.error('Unexpected response format:', responseData);
+      return null;
+    }
+
+    // Transform backend PlaceResponse to frontend Place type
+    const transformedPlace: Place = {
+      id: placeData.id,
+      name_ar: placeData.name_ar || '',
+      name_en: placeData.name_en || '',
+      description_ar: placeData.description_ar || '',
+      description_en: placeData.description_en || '',
+      subtitle_ar: placeData.subtitle_ar || '',
+      subtitle_en: placeData.subtitle_en || '',
+      slug: placeData.slug || placeData.name_en?.toLowerCase().replace(/\s+/g, '-') || '',
+      lat: placeData.latitude || 0,
+      lng: placeData.longitude || 0,
+      governate_id: placeData.governate?.id || '',
+      wilayah_id: placeData.wilayah?.id || '',
+      category_id: placeData.categories?.[0]?.id || '',
+      primary_image: placeData.images?.find(img => img.is_primary)?.url || 
+                     placeData.images?.[0]?.url || '',
+      phone: placeData.phone || '',
+      email: placeData.email || '',
+      website: placeData.website || '',
+      rating: placeData.rating || 0,
+      review_count: placeData.review_count || 0,
+      is_featured: placeData.is_featured || false,
+      is_active: placeData.is_active || true,
+      created_at: placeData.created_at || '',
+      updated_at: placeData.updated_at || '',
+      governate: placeData.governate,
+      wilayah: placeData.wilayah,
+      // FIXED: Map images correctly from backend format
+      images: placeData.images?.map(img => ({
+        id: img.id,
+        place_id: placeData.id, // Use placeData.id since backend doesn't include place_id in image
+        image_url: img.url, // Backend uses 'url' not 'image_url'
+        alt_text_ar: img.alt_text || '', // Backend only has alt_text, not separate ar/en
+        alt_text_en: img.alt_text || '',
+        caption_ar: '',
+        caption_en: '',
+        is_primary: img.is_primary,
+        display_order: img.display_order,
+        created_at: '',
+        updated_at: ''
+      })) || [],
+      // FIXED: Map content sections correctly
+      content_sections: placeData.content_sections?.map(section => ({
+        id: section.id,
+        section_type: section.section_type,
+        title_ar: section.title_ar || '',
+        title_en: section.title_en || '',
+        content_ar: section.content_ar || '',
+        content_en: section.content_en || '',
+        sort_order: section.sort_order,
+        images: section.images?.map(img => ({
+          id: img.id,
+          image_url: img.image_url,
+          alt_text_ar: img.alt_text_ar,
+          alt_text_en: img.alt_text_en,
+          caption_ar: img.caption_ar,
+          caption_en: img.caption_en,
+          sort_order: img.sort_order
+        })) || []
+      })) || [],
+      properties: placeData.properties?.map(prop => ({
+        id: prop.id,
+        name: prop.name,
+        icon: prop.icon,
+        type: prop.type
+      })) || [],
+      categories: placeData.categories?.map(cat => ({
+        id: cat.id,
+        name_ar: cat.name_ar || '',
+        name_en: cat.name_en || '',
+        slug: cat.slug,
+        icon: cat.icon,
+        type: cat.type
+      })) || []
+    };
+
+    console.log('Transformed complete place:', transformedPlace);
+    console.log('Images count:', transformedPlace.images?.length || 0);
+    console.log('Content sections count:', transformedPlace.content_sections?.length || 0);
+    return transformedPlace;
+
+  } catch (error) {
+    console.error('Error fetching complete place:', error);
+    throw error;
+  }
+};
+
+// DEPRECATED: Keep for backward compatibility only (language-specific endpoint)
+export const fetchPlaceByIdWithLanguage = async (placeId: string, language: 'ar' | 'en' = 'ar'): Promise<Place | null> => {
+  console.warn('fetchPlaceByIdWithLanguage is deprecated. Use fetchPlaceById instead for complete data.');
+  
+  try {
+    const url = `${API_BASE_URL}/places/${placeId}?lang=${language}`;
+    
+    const response = await fetch(url, {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      next: { revalidate: 1800 }
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      throw new Error(`Failed to fetch place details: ${response.status}`);
+    }
+
+    const responseData = await response.json();
+    const placeData = responseData.data;
+
+    // Map to Place interface but with limited language data
+    const transformedPlace: Place = {
+      id: placeData.id,
+      name_ar: language === 'ar' ? placeData.name : '',
+      name_en: language === 'en' ? placeData.name : '',
+      description_ar: language === 'ar' ? placeData.description : '',
+      description_en: language === 'en' ? placeData.description : '',
+      subtitle_ar: language === 'ar' ? placeData.subtitle : '',
+      subtitle_en: language === 'en' ? placeData.subtitle : '',
+      slug: placeData.name?.toLowerCase().replace(/\s+/g, '-') || '',
+      lat: placeData.latitude || 0,
+      lng: placeData.longitude || 0,
+      governate_id: placeData.governate?.id || '',
+      wilayah_id: placeData.wilayah?.id || '',
+      category_id: placeData.categories?.[0]?.id || '',
+      primary_image: placeData.images?.find((img: any) => img.is_primary)?.url || 
+                     placeData.images?.[0]?.url || '',
+      phone: placeData.phone || '',
+      email: placeData.email || '',
+      website: placeData.website || '',
+      rating: placeData.rating || 0,
+      review_count: placeData.review_count || 0,
+      is_featured: false,
+      is_active: true,
+      created_at: '',
+      updated_at: '',
+      governate: placeData.governate ? {
+        id: placeData.governate.id,
+        name_ar: language === 'ar' ? placeData.governate.name : '',
+        name_en: language === 'en' ? placeData.governate.name : '',
+        slug: placeData.governate.slug
+      } : undefined,
+      wilayah: placeData.wilayah ? {
+        id: placeData.wilayah.id,
+        name_ar: language === 'ar' ? placeData.wilayah.name : '',
+        name_en: language === 'en' ? placeData.wilayah.name : '',
+        slug: placeData.wilayah.slug
+      } : undefined,
+      images: placeData.images?.map((img: any) => ({
+        id: img.id,
+        place_id: placeData.id,
+        image_url: img.url,
+        alt_text_ar: img.alt_text || '',
+        alt_text_en: img.alt_text || '',
+        caption_ar: '',
+        caption_en: '',
+        is_primary: img.is_primary,
+        display_order: img.display_order,
+        created_at: '',
+        updated_at: ''
+      })) || [],
+      content_sections: placeData.content_sections?.map((section: any) => ({
+        id: section.id,
+        section_type: section.section_type,
+        title_ar: language === 'ar' ? section.title : '',
+        title_en: language === 'en' ? section.title : '',
+        content_ar: language === 'ar' ? section.content : '',
+        content_en: language === 'en' ? section.content : '',
+        sort_order: section.sort_order,
+        images: section.images?.map((img: any) => ({
+          id: img.id,
+          image_url: img.image_url,
+          alt_text_ar: img.alt_text_ar,
+          alt_text_en: img.alt_text_en,
+          caption_ar: img.caption_ar,
+          caption_en: img.caption_en,
+          sort_order: img.sort_order
+        })) || []
+      })) || [],
+      properties: placeData.properties?.map((prop: any) => ({
+        id: prop.id,
+        name: prop.name,
+        icon: prop.icon,
+        type: prop.type
+      })) || [],
+      categories: placeData.categories?.map((cat: any) => ({
+        id: cat.id,
+        name_ar: language === 'ar' ? cat.name : '',
+        name_en: language === 'en' ? cat.name : '',
+        slug: cat.slug,
+        icon: cat.icon,
+        type: cat.type
+      })) || []
+    };
+
+    return transformedPlace;
+  } catch (error) {
+    console.error('Error fetching place details:', error);
+    throw error;
+  }
+};
 
 // NEW: Get recent places using the optimized backend endpoint
 export const fetchRecentPlaces = async (
@@ -362,7 +641,7 @@ export const transformRecentPlacesToPlaces = (recentPlaces: PlaceWithNewStatus[]
     lng: place.longitude || 0,
     governate_id: place.governate?.id || '',
     wilayah_id: place.wilayah?.id || '',
-    category_id: TOURISM_CATEGORY_ID,
+    category_id: '', // Will be filled by the specific category function
     primary_image: place.primary_image?.url || '',
     is_featured: false,
     is_active: true,
@@ -385,140 +664,6 @@ export const transformRecentPlacesToPlaces = (recentPlaces: PlaceWithNewStatus[]
     }] : [],
     isNew: place.is_new
   }));
-};
-
-// NEW: Fetch full place details by ID with language parameter
-export const fetchPlaceById = async (placeId: string, language: 'ar' | 'en' = 'ar'): Promise<Place | null> => {
-  try {
-    const url = `${API_BASE_URL}/places/${placeId}?lang=${language}`;
-    console.log('Fetching place details from:', url);
-
-    const response = await fetch(url, {
-      headers: { 
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      next: { revalidate: 1800 } // 30 minutes cache
-    });
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        console.warn('Place not found:', placeId);
-        return null;
-      }
-      const errorText = await response.text();
-      console.error('API Error:', errorText);
-      throw new Error(`Failed to fetch place details: ${response.status}`);
-    }
-
-    const responseData = await response.json();
-    console.log('Place details API Response:', responseData);
-
-    let placeData: BackendPlaceLocalizedResponse;
-    if (responseData.success && responseData.data) {
-      placeData = responseData.data;
-    } else if (responseData.data) {
-      placeData = responseData.data;
-    } else {
-      console.error('Unexpected response format:', responseData);
-      return null;
-    }
-
-    // FIXED: Transform localized response to frontend Place type
-    const transformedPlace: Place = {
-      id: placeData.id,
-      // Map single language name to both language fields for compatibility
-      name_ar: language === 'ar' ? placeData.name : '',
-      name_en: language === 'en' ? placeData.name : '',
-      description_ar: language === 'ar' ? placeData.description : '',
-      description_en: language === 'en' ? placeData.description : '',
-      subtitle_ar: language === 'ar' ? placeData.subtitle : '',
-      subtitle_en: language === 'en' ? placeData.subtitle : '',
-      slug: placeData.name?.toLowerCase().replace(/\s+/g, '-') || '',
-      lat: placeData.latitude || 0,
-      lng: placeData.longitude || 0,
-      governate_id: placeData.governate?.id || '',
-      wilayah_id: placeData.wilayah?.id || '',
-      category_id: TOURISM_CATEGORY_ID,
-      primary_image: placeData.images?.find(img => img.is_primary)?.url || 
-                     placeData.images?.[0]?.url || '',
-      phone: placeData.phone || '',
-      email: placeData.email || '',
-      website: placeData.website || '',
-      rating: placeData.rating || 0,
-      review_count: placeData.review_count || 0,
-      is_featured: false,
-      is_active: true,
-      created_at: '',
-      updated_at: '',
-      governate: placeData.governate ? {
-        id: placeData.governate.id,
-        name_ar: language === 'ar' ? placeData.governate.name : '',
-        name_en: language === 'en' ? placeData.governate.name : '',
-        slug: placeData.governate.slug
-      } : undefined,
-      wilayah: placeData.wilayah ? {
-        id: placeData.wilayah.id,
-        name_ar: language === 'ar' ? placeData.wilayah.name : '',
-        name_en: language === 'en' ? placeData.wilayah.name : '',
-        slug: placeData.wilayah.slug
-      } : undefined,
-      // FIXED: Properly map all images
-      images: placeData.images?.map(img => ({
-        id: img.id,
-        place_id: placeData.id,
-        image_url: img.url,
-        alt_text_ar: img.alt_text || '',
-        alt_text_en: img.alt_text || '',
-        caption_ar: '',
-        caption_en: '',
-        is_primary: img.is_primary,
-        display_order: img.display_order,
-        created_at: '',
-        updated_at: ''
-      })) || [],
-      content_sections: placeData.content_sections?.map(section => ({
-        id: section.id,
-        section_type: section.section_type,
-        title_ar: language === 'ar' ? section.title : '',
-        title_en: language === 'en' ? section.title : '',
-        content_ar: language === 'ar' ? section.content : '',
-        content_en: language === 'en' ? section.content : '',
-        sort_order: section.sort_order,
-        images: section.images?.map(img => ({
-          id: img.id,
-          image_url: img.image_url,
-          alt_text_ar: img.alt_text_ar,
-          alt_text_en: img.alt_text_en,
-          caption_ar: img.caption_ar,
-          caption_en: img.caption_en,
-          sort_order: img.sort_order
-        })) || []
-      })) || [],
-      properties: placeData.properties?.map(prop => ({
-        id: prop.id,
-        name: prop.name,
-        icon: prop.icon,
-        type: prop.type
-      })) || [],
-      categories: placeData.categories?.map(cat => ({
-        id: cat.id,
-        name_ar: language === 'ar' ? cat.name : '',
-        name_en: language === 'en' ? cat.name : '',
-        slug: cat.slug,
-        icon: cat.icon,
-        type: cat.type
-      })) || []
-    };
-
-    console.log('Transformed place details:', transformedPlace);
-    console.log('Images count:', transformedPlace.images?.length || 0);
-    return transformedPlace;
-
-  } catch (error) {
-    console.error('Error fetching place details:', error);
-    throw error;
-  }
 };
 
 // NEW: Utility function to check if a place is new (client-side fallback)

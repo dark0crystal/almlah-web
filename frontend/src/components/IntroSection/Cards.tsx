@@ -107,9 +107,9 @@ export function SmallCard2() {
       {/* Arabic Text */}
       <div className="absolute top-16 right-4 left-4 z-30">
         <h3 className="text-black font-black text-lg md:text-xl text-center leading-tight">
-          كل يوم، كتاب
+          كل يوم،مكان
           <br />
-          عربيّ جديد
+          سياحي جديد
         </h3>
       </div>
     </div>
