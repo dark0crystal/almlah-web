@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface GovernateLoadingSkeletonProps {
   language?: 'ar' | 'en';
@@ -14,13 +15,15 @@ export default function GovernateLoadingSkeleton({
 }: GovernateLoadingSkeletonProps) {
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
+  
+  const t = useTranslations('governate.loading');
 
   // Loading steps for progress indication
   const loadingSteps = [
-    { ar: 'جاري تحميل بيانات المحافظة...', en: 'Loading governate data...' },
-    { ar: 'جاري تحميل الصور...', en: 'Loading images...' },
-    { ar: 'جاري تحميل الولايات...', en: 'Loading wilayahs...' },
-    { ar: 'جاري الانتهاء...', en: 'Finalizing...' }
+    t('governateData'),
+    t('images'),
+    t('wilayahs'),
+    t('finalizing')
   ];
 
   useEffect(() => {
@@ -49,7 +52,7 @@ export default function GovernateLoadingSkeleton({
 
   const getCurrentStepText = () => {
     if (loadingText) return loadingText;
-    return loadingSteps[currentStep]?.[language] || (language === 'ar' ? 'جاري التحميل...' : 'Loading...');
+    return loadingSteps[currentStep] || t('general');
   };
 
   return (
