@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useTranslations } from 'next-intl';
 import PlaceCard from "./PlaceCard";
 import { fetchPlaces } from "@/services/placesApi";
 import { Place } from "@/types";
@@ -20,19 +21,11 @@ export default function PlacesCardsWrapper({
 }: PlacesCardsWrapperProps) {
   const params = useParams();
   const locale = (params?.locale as string) || 'en';
+  const t = useTranslations('places');
   
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Localized text
-  const text = {
-    loading: locale === 'ar' ? 'جاري تحميل الأماكن...' : 'Loading places...',
-    error: locale === 'ar' ? 'خطأ' : 'Error',
-    tryAgain: locale === 'ar' ? 'حاول مرة أخرى' : 'Try Again',
-    title: locale === 'ar' ? 'الأماكن' : 'Places',
-    noResults: locale === 'ar' ? 'لم يتم العثور على أماكن' : 'No places found',
-  };
 
   // Fetch places when governate or category changes
   useEffect(() => {
@@ -50,7 +43,7 @@ export default function PlacesCardsWrapper({
         setPlaces(data);
       } catch (err: any) {
         console.error('Error loading places:', err);
-        setError(err.message || text.error);
+        setError(err.message || t('error'));
         setPlaces([]);
       } finally {
         setLoading(false);
@@ -61,14 +54,14 @@ export default function PlacesCardsWrapper({
     if (categoryId) {
       loadPlaces();
     }
-  }, [selectedGovernateId, categoryId, text.error]);
+  }, [selectedGovernateId, categoryId, t]);
 
   if (loading) {
     return (
       <div className="p-4 flex justify-center items-center min-h-[200px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
-          <div className="text-lg">{text.loading}</div>
+          <div className="text-lg">{t('loadingPlaces')}</div>
         </div>
       </div>
     );
@@ -77,12 +70,12 @@ export default function PlacesCardsWrapper({
   if (error) {
     return (
       <div className="p-4 text-red-500 text-center">
-        <div className="text-lg font-semibold">{text.error}: {error}</div>
+        <div className="text-lg font-semibold">{t('error')}: {error}</div>
         <button 
           onClick={() => window.location.reload()}
           className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
-          {text.tryAgain}
+          {t('tryAgain')}
         </button>
       </div>
     );
@@ -94,14 +87,14 @@ export default function PlacesCardsWrapper({
       <div className="w-full bg-white border-t border-gray-200 shadow-lg">
         {places.length === 0 ? (
           <div className="p-6 text-center text-gray-500">
-            <p className="text-base">{text.noResults}</p>
+            <p className="text-base">{t('noResults')}</p>
           </div>
         ) : (
           <div className="px-4 py-3">
             <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
               {places.map((place) => (
                 <div key={place.id} className="flex-shrink-0 w-80">
-                  <PlaceCard place={place} />
+                  <PlaceCard place={place} locale={locale} />
                 </div>
               ))}
             </div>
@@ -117,14 +110,14 @@ export default function PlacesCardsWrapper({
       {places.length === 0 ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center text-gray-500">
-            <p className="text-lg">{text.noResults}</p>
+            <p className="text-lg">{t('noResults')}</p>
           </div>
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto">
           <div className="space-y-4 pr-2">
             {places.map((place) => (
-              <PlaceCard key={place.id} place={place} />
+              <PlaceCard key={place.id} place={place} locale={locale} />
             ))}
           </div>
         </div>

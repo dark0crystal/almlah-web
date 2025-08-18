@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Place } from '@/types';
 
 interface AboutAndLocationProps {
@@ -7,11 +8,13 @@ interface AboutAndLocationProps {
 }
 
 export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLocationProps) {
+  const t = useTranslations('placeDetails.about');
+  
   const placeName = language === 'ar' ? place.name_ar : place.name_en;
   const description = language === 'ar' ? place.description_ar : place.description_en;
   const subtitle = language === 'ar' ? place.subtitle_ar : place.subtitle_en;
   const governateName = language === 'ar' ? place.governate?.name_ar : place.governate?.name_en;
-  const wilayahName = language === 'ar' ? place.wilayah?.name_ar : place.wilayah?.name_en;
+  const wilayahName = language === 'ar' ? place.governate?.name_ar : place.governate?.name_en;
 
   // Get content sections (about section)
   const aboutSection = place.content_sections?.find(section => 
@@ -20,7 +23,7 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
 
   const aboutTitle = aboutSection 
     ? (language === 'ar' ? aboutSection.title_ar : aboutSection.title_en)
-    : (language === 'ar' ? 'نبذة عن المكان' : 'About the Place');
+    : t('title');
 
   const aboutContent = aboutSection 
     ? (language === 'ar' ? aboutSection.content_ar : aboutSection.content_en)
@@ -34,9 +37,9 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
 
   // Default suitable for tags if none from API
   const defaultTags = [
-    { name: language === 'ar' ? 'العائلات' : 'Families', icon: '👨‍👩‍👧‍👦' },
-    { name: language === 'ar' ? 'الأصدقاء' : 'Friends', icon: '👫' },
-    { name: language === 'ar' ? 'السياحة' : 'Tourism', icon: '🏛️' }
+    { name: t('suitableFor.families'), icon: '👨‍👩‍👧‍👦' },
+    { name: t('suitableFor.friends'), icon: '👫' },
+    { name: t('suitableFor.tourism'), icon: '🏛️' }
   ];
 
   const tagsToShow = suitableForTags.length > 0 ? suitableForTags : defaultTags;
@@ -68,7 +71,7 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
       try {
         await navigator.clipboard.writeText(window.location.href);
         // You might want to show a toast notification here
-        alert(language === 'ar' ? 'تم نسخ الرابط!' : 'Link copied!');
+        alert(t('share.linkCopied'));
       } catch (error) {
         console.error('Failed to copy link:', error);
       }
@@ -89,7 +92,7 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
             <button 
               onClick={handleShare}
               className="p-2 hover:bg-gray-200 rounded-full transition-colors"
-              aria-label={language === 'ar' ? 'مشاركة' : 'Share'}
+              aria-label={t('share.button')}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
@@ -109,10 +112,7 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
                 {placeName}
               </h2>
               <p className="text-gray-700 leading-relaxed text-sm md:text-base">
-                {aboutContent || (language === 'ar' 
-                  ? 'لا توجد معلومات تفصيلية متاحة حالياً عن هذا المكان.'
-                  : 'No detailed information is currently available for this place.'
-                )}
+                {aboutContent || t('noDescription')}
               </p>
               
               {/* Additional content sections */}
@@ -152,7 +152,7 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 text-sm">
-                    {language === 'ar' ? 'المعلومات' : 'Information'}
+                    {t('info.title')}
                   </span>
                 </div>
                 
@@ -160,7 +160,7 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
                   {governateName && (
                     <div className="flex justify-between">
                       <span className="text-gray-900 font-medium">
-                        {language === 'ar' ? 'المنطقة:' : 'Region:'}
+                        {t('info.region')}:
                       </span>
                       <span className="text-gray-600 text-sm">{governateName}</span>
                     </div>
@@ -169,7 +169,7 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
                   {wilayahName && (
                     <div className="flex justify-between">
                       <span className="text-gray-900 font-medium">
-                        {language === 'ar' ? 'الولاية:' : 'Wilayah:'}
+                        {t('info.wilayah')}:
                       </span>
                       <span className="text-gray-600 text-sm">{wilayahName}</span>
                     </div>
@@ -178,7 +178,7 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
                   {place.rating && place.rating > 0 && (
                     <div className="flex justify-between">
                       <span className="text-gray-900 font-medium">
-                        {language === 'ar' ? 'التقييم:' : 'Rating:'}
+                        {t('info.rating')}:
                       </span>
                       <div className="flex items-center gap-1">
                         <span className="text-gray-600 text-sm">{place.rating.toFixed(1)}</span>
@@ -194,10 +194,10 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
                   
                   <div className="flex justify-between">
                     <span className="text-gray-900 font-medium">
-                      {language === 'ar' ? 'العمر:' : 'Age:'}
+                      {t('info.age')}:
                     </span>
                     <span className="text-gray-600 text-sm">
-                      {language === 'ar' ? 'الجميع' : 'All ages'}
+                      {t('info.allAges')}
                     </span>
                   </div>
                 </div>
@@ -208,7 +208,7 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
             {(place.phone || place.email || place.website) && (
               <div className="bg-white rounded-2xl shadow-sm p-6">
                 <h3 className="font-medium text-gray-900 mb-4">
-                  {language === 'ar' ? 'معلومات التواصل' : 'Contact Information'}
+                  {t('contact.title')}
                 </h3>
                 <div className="space-y-3">
                   {place.phone && (
@@ -238,7 +238,7 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:underline text-sm"
                       >
-                        {language === 'ar' ? 'الموقع الإلكتروني' : 'Website'}
+                        {t('contact.website')}
                       </a>
                     </div>
                   )}
@@ -249,7 +249,7 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
             {/* Suitable For Tags */}
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <h3 className="font-medium text-gray-900 mb-4">
-                {language === 'ar' ? 'مناسب لـ' : 'Suitable for'}
+                {t('suitableFor.title')}
               </h3>
               <div className="flex flex-wrap gap-2">
                 {tagsToShow.slice(0, 6).map((tag, index) => (
@@ -268,7 +268,7 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-medium text-gray-900">
-                  {language === 'ar' ? 'ساعات العمل' : 'Opening Hours'}
+                  {t('hours.title')}
                 </h3>
                 <button className="text-gray-400">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -277,7 +277,7 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
                 </button>
               </div>
               <p className="text-gray-600 text-sm">
-                {language === 'ar' ? 'يومياً 24 ساعة' : 'Open 24 hours'}
+                {t('hours.open24')}
               </p>
             </div>
 
@@ -306,7 +306,7 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
                         </svg>
                       </div>
                       <p className="text-sm text-gray-600">
-                        {language === 'ar' ? 'الموقع غير متاح' : 'Location not available'}
+                        {t('location.notAvailable')}
                       </p>
                     </div>
                   </div>
@@ -329,7 +329,7 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  📍 {language === 'ar' ? 'الموقع' : 'Location'}
+                  📍 {t('location.button')}
                 </button>
               </div>
             </div>

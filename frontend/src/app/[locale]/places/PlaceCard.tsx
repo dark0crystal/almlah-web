@@ -2,20 +2,20 @@
 import { useState } from "react";
 import { MapPin } from "lucide-react";
 import Image from "next/image";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useTranslations } from 'next-intl';
 import { Place } from "@/types";
 
 interface PlaceCardProps {
   place: Place;
+  locale: string;
 }
 
-export default function PlaceCard({ place }: PlaceCardProps) {
+export default function PlaceCard({ place, locale }: PlaceCardProps) {
   const router = useRouter();
-  const params = useParams();
+  const t = useTranslations('places');
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
-
-  const locale = (params?.locale as string) || 'en';
 
   const handleCardClick = () => {
     // Fixed navigation path to match your dynamic route structure
@@ -71,13 +71,13 @@ export default function PlaceCard({ place }: PlaceCardProps) {
 
   const locationString = [governateName, wilayahName]
     .filter(Boolean)
-    .join(' | ') || (locale === 'ar' ? 'سلطنة عمان' : 'Sultanate of Oman');
+    .join(' | ') || t('sultanateOman');
 
   const getCategoryText = () => {
     if (place.category) {
       return locale === 'ar' ? place.category.name_ar : place.category.name_en;
     }
-    return locale === 'ar' ? 'الأماكن والمشروبات' : 'Food & Beverages';
+    return t('foodBeverages');
   };
 
   return (
