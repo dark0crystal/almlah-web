@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 interface ImagesModalProps {
   images: string[];
@@ -15,6 +16,7 @@ export default function ImagesModal({
   onClose, 
   initialIndex = 0 
 }: ImagesModalProps) {
+  const t = useTranslations('placeDetails.images');
   const [selectedIndex, setSelectedIndex] = useState(initialIndex);
   const [imageErrors, setImageErrors] = useState<{[key: number]: boolean}>({});
 
@@ -62,22 +64,34 @@ export default function ImagesModal({
     setSelectedIndex(selectedIndex < images.length - 1 ? selectedIndex + 1 : 0);
   };
 
-  // Function to get image URL with fallback
+  // Function to get image URL with proper fallback and debugging
   const getImageUrl = (imageUrl: string) => {
-    if (!imageUrl) return '/images/default-place.jpg';
+    console.log('Modal processing image URL:', imageUrl);
+    
+    if (!imageUrl) {
+      console.log('No image URL provided, using default');
+      return '/images/default-place.jpg';
+    }
     
     // If it's already a full URL, return as is
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      console.log('Full URL detected, using as is:', imageUrl);
       return imageUrl;
     }
     
-    // If it's a relative path, you might need to add your API base URL
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000";
+    // If it's a relative path starting with /, construct full URL
     if (imageUrl.startsWith('/')) {
-      return `${API_BASE_URL}${imageUrl}`;
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000";
+      const fullUrl = `${API_BASE_URL}${imageUrl}`;
+      console.log('Modal constructed full URL from relative path:', fullUrl);
+      return fullUrl;
     }
     
-    return imageUrl;
+    // If it's a relative path without /, add API base URL
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000";
+    const fullUrl = `${API_BASE_URL}/${imageUrl}`;
+    console.log('Modal constructed full URL from relative path:', fullUrl);
+    return fullUrl;
   };
 
   const currentImageUrl = getImageUrl(images[selectedIndex]);
@@ -89,7 +103,7 @@ export default function ImagesModal({
       <button
         onClick={onClose}
         className="absolute top-4 right-4 md:top-6 md:right-6 text-black text-xl md:text-2xl bg-white hover:bg-gray-100 rounded-full w-8 h-8 md:w-10 md:h-10 flex items-center justify-center shadow-lg transition-colors duration-200 z-10"
-        aria-label="إغلاق معرض الصور"
+        aria-label={t('closeGallery')}
       >
         ✕
       </button>
@@ -110,19 +124,23 @@ export default function ImagesModal({
                   <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  <p>فشل تحميل الصورة</p>
+                  <p>{t('loadFailed')}</p>
                 </div>
               </div>
             ) : (
               <Image
                 src={currentImageUrl}
-                alt={`صورة ${selectedIndex + 1} من ${placeName}`}
+                alt={t('imageOf', { placeName, index: selectedIndex + 1, total: images.length })}
                 fill
                 className="object-contain"
                 priority
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 80vw"
-                onError={() => handleImageError(selectedIndex)}
-                onLoad={() => console.log('Modal image loaded successfully:', selectedIndex)}
+                onError={() => {
+                  console.error('Modal image failed to load:', currentImageUrl);
+                  handleImageError(selectedIndex);
+                }}
+                onLoad={() => console.log('Modal image loaded successfully:', selectedIndex, currentImageUrl)}
+                unoptimized={currentImageUrl.startsWith('http://localhost:9000')} // Disable optimization for local development
               />
             )}
           </div>
@@ -149,7 +167,7 @@ export default function ImagesModal({
                       ? "border-white shadow-lg"
                       : "border-transparent opacity-70 hover:opacity-100"
                   }`}
-                  aria-label={`عرض الصورة ${i + 1}`}
+                  aria-label={t('viewImage', { index: i + 1 })}
                 >
                   {hasThumbnailError ? (
                     <div className="w-full h-full bg-gray-700 flex items-center justify-center">
@@ -160,11 +178,15 @@ export default function ImagesModal({
                   ) : (
                     <Image
                       src={thumbnailUrl}
-                      alt={`صورة مصغرة ${i + 1}`}
+                      alt={t('thumbnail', { index: i + 1 })}
                       fill
                       className="object-cover"
                       sizes="(max-width: 640px) 64px, (max-width: 768px) 80px, (max-width: 1024px) 96px, 112px"
-                      onError={() => handleImageError(i)}
+                      onError={() => {
+                        console.error('Thumbnail failed to load:', thumbnailUrl);
+                        handleImageError(i);
+                      }}
+                      unoptimized={thumbnailUrl.startsWith('http://localhost:9000')} // Disable optimization for local development
                     />
                   )}
                 </button>
@@ -180,7 +202,7 @@ export default function ImagesModal({
           <button
             onClick={goToPrevious}
             className="hidden md:block absolute left-4 lg:left-8 top-1/2 transform -translate-y-1/2 text-white bg-black/30 hover:bg-black/50 rounded-full w-12 h-12 flex items-center justify-center transition-all duration-200 backdrop-blur-sm"
-            aria-label="الصورة السابقة"
+            aria-label={t('previousImage')}
           >
             ←
           </button>
@@ -188,7 +210,7 @@ export default function ImagesModal({
           <button
             onClick={goToNext}
             className="hidden md:block absolute right-4 lg:right-8 top-1/2 transform -translate-y-1/2 text-white bg-black/30 hover:bg-black/50 rounded-full w-12 h-12 flex items-center justify-center transition-all duration-200 backdrop-blur-sm"
-            aria-label="الصورة التالية"
+            aria-label={t('nextImage')}
           >
             →
           </button>

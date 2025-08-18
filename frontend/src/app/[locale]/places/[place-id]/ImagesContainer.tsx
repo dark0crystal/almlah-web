@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import ImagesModal from "./ImagesModal";
 
 // Updated to match the corrected backend response format
@@ -23,6 +24,7 @@ export default function PlaceImagesContainer({
   images, 
   placeName = "المكان" 
 }: PlaceImagesContainerProps) {
+  const t = useTranslations('placeDetails.images');
   const [showModal, setShowModal] = useState(false);
   const [imageErrors, setImageErrors] = useState<{[key: string]: boolean}>({});
 
@@ -55,7 +57,7 @@ export default function PlaceImagesContainer({
             <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <p>لا توجد صور متاحة</p>
+            <p>{t('noImages')}</p>
           </div>
         </div>
       </div>
@@ -64,33 +66,44 @@ export default function PlaceImagesContainer({
 
   const remainingImageCount = Math.max(0, sortedImages.length - 3);
 
-  // Function to get image URL with fallback
+  // Function to get image URL with proper fallback and debugging
   const getImageUrl = (imageUrl: string) => {
-    if (!imageUrl) return '/images/default-place.jpg';
+    console.log('Processing image URL:', imageUrl);
+    
+    if (!imageUrl) {
+      console.log('No image URL provided, using default');
+      return '/images/default-place.jpg';
+    }
     
     // If it's already a full URL, return as is
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      console.log('Full URL detected, using as is:', imageUrl);
       return imageUrl;
     }
     
-    // If it's a relative path, you might need to add your API base URL
-    // Adjust this based on your API setup
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000";
+    // If it's a relative path starting with /, construct full URL
     if (imageUrl.startsWith('/')) {
-      return `${API_BASE_URL}${imageUrl}`;
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000";
+      const fullUrl = `${API_BASE_URL}${imageUrl}`;
+      console.log('Constructed full URL from relative path:', fullUrl);
+      return fullUrl;
     }
     
-    return imageUrl;
+    // If it's a relative path without /, add API base URL
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000";
+    const fullUrl = `${API_BASE_URL}/${imageUrl}`;
+    console.log('Constructed full URL from relative path:', fullUrl);
+    return fullUrl;
   };
 
   // Function to render image with error handling
   const renderImage = (img: PlaceImage, className: string, onClick?: () => void) => {
     const imageUrl = getImageUrl(img.image_url);
     // FIXED: Handle alt text properly - backend sends single alt_text, but we have fallbacks
-    const altText = img.alt_text || img.alt_text_ar || img.alt_text_en || `صورة ${placeName}`;
+    const altText = img.alt_text || img.alt_text_ar || img.alt_text_en || t('imageOf', { placeName });
     const hasError = imageErrors[img.id];
 
-    console.log(`Rendering image ${img.id}:`, imageUrl);
+    console.log(`Rendering image ${img.id}:`, { originalUrl: img.image_url, processedUrl: imageUrl, altText });
 
     if (hasError) {
       return (
@@ -99,7 +112,7 @@ export default function PlaceImagesContainer({
             <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <p className="text-xs">فشل تحميل الصورة</p>
+            <p className="text-xs">{t('loadFailed')}</p>
           </div>
         </div>
       );
@@ -112,10 +125,14 @@ export default function PlaceImagesContainer({
           alt={altText}
           fill
           className="object-cover transition-transform duration-300 group-hover:scale-105"
-          onError={() => handleImageError(img.id)}
-          onLoad={() => console.log('Image loaded successfully:', img.id)}
+          onError={() => {
+            console.error('Image failed to load:', imageUrl);
+            handleImageError(img.id);
+          }}
+          onLoad={() => console.log('Image loaded successfully:', img.id, imageUrl)}
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           priority={img.is_primary}
+          unoptimized={imageUrl.startsWith('http://localhost:9000')} // Disable optimization for local development
         />
       </div>
     );
