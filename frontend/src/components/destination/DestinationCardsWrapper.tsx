@@ -17,23 +17,26 @@ export default function DestinationCardWrapper({ destinations, highlightedDestin
       if (destinationIndex !== -1) {
         // Desktop/tablet scroll (vertical)
         if (desktopScrollRef.current) {
+          const container = desktopScrollRef.current.parentElement; // The scrollable container
           const cardElement = desktopScrollRef.current.children[destinationIndex];
-          if (cardElement) {
-            cardElement.scrollIntoView({
-              behavior: 'smooth',
-              block: 'start'
+          if (cardElement && container) {
+            const cardTop = cardElement.offsetTop;
+            container.scrollTo({
+              top: cardTop,
+              behavior: 'smooth'
             });
           }
         }
         
         // Mobile scroll (horizontal)
         if (mobileScrollRef.current) {
+          const container = mobileScrollRef.current.parentElement; // The scrollable container
           const cardElement = mobileScrollRef.current.children[destinationIndex];
-          if (cardElement) {
-            cardElement.scrollIntoView({
-              behavior: 'smooth',
-              block: 'nearest',
-              inline: 'start'
+          if (cardElement && container) {
+            const cardLeft = cardElement.offsetLeft;
+            container.scrollTo({
+              left: cardLeft,
+              behavior: 'smooth'
             });
           }
         }
