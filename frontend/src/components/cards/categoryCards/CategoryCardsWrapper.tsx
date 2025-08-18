@@ -1,6 +1,7 @@
 // CategoryCardsWrapper.tsx
 "use client"
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import CategoryCard from './CategoryCard';
 import { categoriesData } from './staticCategoryData';
 
@@ -16,6 +17,7 @@ export default function CategoryCardsWrapper({
   
   const [showAll, setShowAll] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const router = useRouter();
   
   // Determine which categories to display
   const displayedCategories = showAll 
@@ -28,23 +30,20 @@ export default function CategoryCardsWrapper({
   const handleCategoryClick = (categoryTitle: string, slug?: string) => {
     console.log(`Clicked category: ${categoryTitle}`);
     
-    // Example navigation options:
-    
-    // Option 1: Using Next.js router
-    // import { useRouter } from 'next/router';
-    // const router = useRouter();
-    // if (slug) router.push(`/category/${slug}`);
-    
-    // Option 2: Using React Router
-    // import { useNavigate } from 'react-router-dom';
-    // const navigate = useNavigate();
-    // if (slug) navigate(`/category/${slug}`);
-    
-    // Option 3: Simple window location
-    // if (slug) window.location.href = `/category/${slug}`;
-    
-    // Option 4: Custom event
-    // window.dispatchEvent(new CustomEvent('categoryClicked', { detail: { title: categoryTitle, slug } }));
+    // Navigate to places page with category filter
+    if (slug) {
+      // Option 1: Navigate to places page with category as query parameter
+      router.push(`/places?category=${slug}`);
+      
+      // Option 2: Navigate to dedicated category page that shows places
+      // router.push(`/places/category/${slug}`);
+      
+      // Option 3: Navigate to places page with category in the path
+      // router.push(`/places/${slug}`);
+    } else {
+      // Fallback: navigate to general places page
+      router.push('/places');
+    }
   };
 
   const handleShowMore = () => {
@@ -144,7 +143,7 @@ export default function CategoryCardsWrapper({
               bgColor={category.bgColor}
               bgImage={category.bgImage}
               textColor={category.textColor}
-              onClick={() => handleCategoryClick(category.title, category.slug)}
+              onClick={() => handleCategoryClick(category.title)}
             />
           </div>
         ))}
