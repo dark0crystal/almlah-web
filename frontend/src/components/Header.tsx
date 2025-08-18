@@ -1,4 +1,5 @@
 import { Search, ChevronDown } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface HeaderProps {
   title?: string;
@@ -10,10 +11,16 @@ interface HeaderProps {
 }
 
 export default function Header({ 
-  title = "شمال الشرقية", 
-  subtitle = "حيث الصحراء القاحلة",
+  title, 
+  subtitle, 
   backgroundImage, 
 }: HeaderProps) {
+  const t = useTranslations('header');
+  
+  // Use translations if no custom title/subtitle provided
+  const headerTitle = title || t('defaultTitle');
+  const headerSubtitle = subtitle || t('defaultSubtitle');
+
   return (
     <div className="w-full bg-gray-50 mt-6">
       {/* Hero Section */}
@@ -40,16 +47,16 @@ export default function Header({
             {/* Text Content */}
             <div className="text-white max-w-lg">
               <h2 className="text-3xl md:text-4xl font-bold mb-2 leading-tight">
-                {title.includes(' ') ? (
+                {headerTitle.includes(' ') ? (
                   <>
-                    {title.split(' ').slice(0, -2).join(' ')} <span className="text-emerald-300">{title.split(' ').slice(-2).join(' ')}</span>
+                    {headerTitle.split(' ').slice(0, -2).join(' ')} <span className="text-emerald-300">{headerTitle.split(' ').slice(-2).join(' ')}</span>
                   </>
                 ) : (
-                  <span className="text-emerald-300">{title}</span>
+                  <span className="text-emerald-300">{headerTitle}</span>
                 )}
               </h2>
               <h3 className="text-2xl md:text-3xl font-bold mb-6">
-                {subtitle}
+                {headerSubtitle}
               </h3>
               
             </div>
