@@ -1,102 +1,340 @@
 "use client"
 import { useState } from "react";
-import { MapPin, Star, Clock, ChevronDown, ChevronUp, X, List } from "lucide-react";
-import PlacesModal from "./RestaurantsModal";
-import PlacesCardsWrapper from "./RestaurantsCardsWrapper";
-import PlacesMap from "./RestaurantsMap";
+import { useParams } from "next/navigation";
+import { Utensils, List, X } from "lucide-react";
+import RestaurantsCardsWrapper from "./RestaurantsCardsWrapper";
+import RestaurantsMap from "./RestaurantsMap";
+import RestaurantGovernateFilter from "./RestaurantGovernateFilterComponent";
+
+// Restaurant category ID - you'll need to update this with the actual restaurant category ID
+const RESTAURANT_CATEGORY_ID = "9a5c3331-e22e-4e8e-bb3a-d0ce3c799018";
 
 /**
- * Main Places component that renders the places discovery page
+ * Main Restaurants component that renders the restaurants discovery page
  * Features responsive layout with full-screen map on mobile and split view on desktop
+ * Now includes governate filtering and proper localization
  */
 export default function Restaurants() {
-  // State to control modal expansion (collapsed vs expanded height)
-  const [isExpanded, setIsExpanded] = useState(false);
+  const params = useParams();
+  const locale = (params?.locale as string) || 'en';
   
-  // State to control mobile view toggle between map and places list
-  const [showPlacesList, setShowPlacesList] = useState(false);
+  // State to control mobile view toggle between map and restaurants list
+  const [showRestaurantsList, setShowRestaurantsList] = useState(false);
+  
+  // State for sharing filters between components
+  const [selectedGovernateId, setSelectedGovernateId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+  const getToggleButtonText = () => {
+    return locale === 'ar' ? 'قائمة المطاعم' : 'Restaurants List';
+  };
+
+  const getRestaurantsText = () => {
+    return locale === 'ar' ? 'المطاعم' : 'Restaurants';
+  };
 
   return (
-
-    <div className="w-screen bg-white relative">
+    <div className={`w-full bg-white relative ${locale === 'ar' ? 'rtl' : 'ltr'}`}>
       
-      {/* Mobile Layout - Stack vertically, map takes priority */}
+      {/* Header Section - Title and Filter */}
+      <div className="bg-white border-b border-gray-200 px-5 xl:px-25 py-4">
+        <div className={`flex items-center justify-between ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
+          {/* Title on the right (or left in RTL) */}
+          <h1 className="text-3xl font-bold text-gray-800">{getRestaurantsText()}</h1>
+          
+          {/* Filter on the left (or right in RTL) */}
+          <div className="w-64">
+            <RestaurantGovernateFilter 
+              selectedGovernateId={selectedGovernateId}
+              onGovernateChange={setSelectedGovernateId}
+            />
+          </div>
+        </div>
+      </div>
+      
+      {/* Mobile Layout - Map with overlay cards at bottom */}
       <div className="md:hidden w-full h-screen relative">
         {/* Full screen map for mobile */}
         <div className="w-full h-full">
-          <PlacesMap />
+          <RestaurantsMap 
+            selectedGovernateId={selectedGovernateId}
+            searchQuery={searchQuery}
+            restaurantCategoryId={RESTAURANT_CATEGORY_ID}
+          />
         </div>
         
         {/* Mobile toggle button - floating */}
         <button
-          onClick={() => setShowPlacesList(!showPlacesList)}
-          className="absolute top-4 right-4 z-50 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
+          onClick={() => setShowRestaurantsList(!showRestaurantsList)}
+          className={`absolute top-4 z-50 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 ${
+            locale === 'ar' ? 'left-4' : 'right-4'
+          }`}
+          aria-label={getToggleButtonText()}
         >
           <List className="w-6 h-6 text-gray-700" />
         </button>
         
-        {/* Mobile places list overlay */}
-        {showPlacesList && (
-          <div className="absolute inset-0 z-40 bg-white">
+        {/* Mobile restaurants cards overlay at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 z-40 max-h-60">
+          <RestaurantsCardsWrapper 
+            isMobileMapView={true}
+            selectedGovernateId={selectedGovernateId}
+            onGovernateChange={setSelectedGovernateId}
+            restaurantCategoryId={RESTAURANT_CATEGORY_ID}
+          />
+        </div>
+
+        {/* Mobile restaurants list full overlay */}
+        {showRestaurantsList && (
+          <div className="absolute inset-0 z-50 bg-white">
             {/* Header with close button */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
-              <h2 className="text-xl font-bold text-gray-800">Places to Visit</h2>
+            <div className={`flex items-center justify-between p-4 border-b border-gray-200 bg-white ${
+              locale === 'ar' ? 'flex-row-reverse' : ''
+            }`}>
+              <h2 className="text-xl font-bold text-gray-800">
+                {getRestaurantsText()}
+              </h2>
               <button
-                onClick={() => setShowPlacesList(false)}
+                onClick={() => setShowRestaurantsList(false)}
                 className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                aria-label={locale === 'ar' ? 'إغلاق' : 'Close'}
               >
                 <X className="w-6 h-6 text-gray-600" />
               </button>
-
             </div>
             
-            {/* Places content */}
+            {/* Restaurants content with padding */}
             <div className="h-full overflow-y-auto pb-20">
-              <PlacesCardsWrapper />
+              <div className="px-5 py-4">
+                <RestaurantsCardsWrapper 
+                  isMobileMapView={false}
+                  selectedGovernateId={selectedGovernateId}
+                  onGovernateChange={setSelectedGovernateId}
+                  restaurantCategoryId={RESTAURANT_CATEGORY_ID}
+                />
+              </div>
             </div>
           </div>
         )}
       </div>
 
-        {/* -------------------------------------- */}
-       {/* Desktop Layout - Airbnb style: Places cards take 4/7, Map takes 3/7 */}
-        <div className="hidden large:flex min-h-screen">
-          {/* Places List Section */}
-          <div className="w-3/5 bg-white">
-            <div className="p-6">
-              <PlacesCardsWrapper />
+      {/* -------------------------------------- */}
+      {/* Desktop Layout - Cards and Map both 80vh */}
+      <div className="hidden large:flex">
+        {/* Restaurants List Section - 80vh with scroll */}
+        <div className="w-3/5 bg-white flex justify-center">
+          <div className="w-full max-w-none px-5 xl:px-25 py-6">
+            <div className="h-[80vh]">
+              <RestaurantsCardsWrapper 
+                isMobileMapView={false}
+                selectedGovernateId={selectedGovernateId}
+                onGovernateChange={setSelectedGovernateId}
+                restaurantCategoryId={RESTAURANT_CATEGORY_ID}
+              />
             </div>
           </div>
+        </div>
+        
+        {/* Map Section - 80vh */}
+        <div className="w-2/5 bg-white border-l border-gray-200">
+          <div className="h-[80vh] p-4">
+            <RestaurantsMap 
+              selectedGovernateId={selectedGovernateId}
+              searchQuery={searchQuery}
+              restaurantCategoryId={RESTAURANT_CATEGORY_ID}
+            />
+          </div>
+        </div>
+      </div>
+      
+      {/* -------------------------------------- */}
+      {/* Tablet Layout - Cards and Map both 80vh */}
+      <div className="hidden md:flex large:hidden w-full flex-col">
+        {/* Restaurants list - 80vh with scroll */}
+        <div className="w-full flex justify-center">
+          <div className="w-full max-w-none px-5 xl:px-25 py-6">
+            <div className="h-[80vh]">
+              <RestaurantsCardsWrapper 
+                isMobileMapView={false}
+                selectedGovernateId={selectedGovernateId}
+                onGovernateChange={setSelectedGovernateId}
+                restaurantCategoryId={RESTAURANT_CATEGORY_ID}
+              />
+            </div>
+          </div>
+        </div>
+        
+        {/* Map - 80vh */}
+        <div className="w-full bg-white border-t border-gray-200">
+          <div className="h-[80vh] p-4">
+            <RestaurantsMap 
+              selectedGovernateId={selectedGovernateId}
+              searchQuery={searchQuery}
+              restaurantCategoryId={RESTAURANT_CATEGORY_ID}
+            />
+          </div>
+        </div>
+      </div>
+
+      
+    </div>
+  );
+}
+  const params = useParams();
+  const locale = (params?.locale as string) || 'en';
   
-          {/* Map Section - Sticky */}
-          <div className="w-2/5 bg-white border-l border-gray-200">
-            <div className="sticky top-20 h-[88vh]">
-              <PlacesMap/>
-            </div>
-          </div>
-        </div>
+  // State to control mobile view toggle between map and restaurants list
+  const [showRestaurantsList, setShowRestaurantsList] = useState(false);
+  
+  // State for sharing filters between components
+  const [selectedGovernateId, setSelectedGovernateId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
-       {/* -------------------------------------- */}
-      {/* Tablet Layout - Adjustments for medium screens */}
-      <div className="hidden md:flex large:hidden  w-full h-screen">
-        <div className=" w-full h-screen">
-          {/* Places list takes 1/3 on tablets */}
-          <div className="w-full h-screen overflow-hidden border-l border-gray-200">
-            <div className="h-full overflow-y-auto">
-              <PlacesCardsWrapper />
-            </div>
-          </div>
-          {/* Map takes 2/3 of the screen on tablets */}
-          <div className=" bg-white w-full sticky top-20 h-[88vh]">
-            <PlacesMap />
-          </div>
+  const getToggleButtonText = () => {
+    return locale === 'ar' ? 'قائمة المطاعم' : 'Restaurants List';
+  };
+
+  const getRestaurantsText = () => {
+    return locale === 'ar' ? 'المطاعم' : 'Restaurants';
+  };
+
+  return (
+    <div className={`w-full bg-white relative ${locale === 'ar' ? 'rtl' : 'ltr'}`}>
+      
+      {/* Header Section - Title and Filter */}
+      <div className="bg-white border-b border-gray-200 px-5 xl:px-25 py-4">
+        <div className={`flex items-center justify-between ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
+          {/* Title on the right (or left in RTL) */}
+          <h1 className="text-3xl font-bold text-gray-800">{getRestaurantsText()}</h1>
           
+          {/* Filter on the left (or right in RTL) */}
+          <div className="w-64">
+            <RestaurantGovernateFilter 
+              selectedGovernateId={selectedGovernateId}
+              onGovernateChange={setSelectedGovernateId}
+            />
+          </div>
+        </div>
+      </div>
+      
+      {/* Mobile Layout - Map with overlay cards at bottom */}
+      <div className="md:hidden w-full h-screen relative">
+        {/* Full screen map for mobile */}
+        <div className="w-full h-full">
+          <RestaurantsMap 
+            selectedGovernateId={selectedGovernateId}
+            searchQuery={searchQuery}
+          />
+        </div>
+        
+        {/* Mobile toggle button - floating */}
+        <button
+          onClick={() => setShowRestaurantsList(!showRestaurantsList)}
+          className={`absolute top-4 z-50 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 ${
+            locale === 'ar' ? 'left-4' : 'right-4'
+          }`}
+          aria-label={getToggleButtonText()}
+        >
+          <List className="w-6 h-6 text-gray-700" />
+        </button>
+        
+        {/* Mobile restaurants cards overlay at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 z-40 max-h-60">
+          <RestaurantsCardsWrapper 
+            isMobileMapView={true}
+            selectedGovernateId={selectedGovernateId}
+            onGovernateChange={setSelectedGovernateId}
+          />
+        </div>
+
+        {/* Mobile restaurants list full overlay */}
+        {showRestaurantsList && (
+          <div className="absolute inset-0 z-50 bg-white">
+            {/* Header with close button */}
+            <div className={`flex items-center justify-between p-4 border-b border-gray-200 bg-white ${
+              locale === 'ar' ? 'flex-row-reverse' : ''
+            }`}>
+              <h2 className="text-xl font-bold text-gray-800">
+                {getRestaurantsText()}
+              </h2>
+              <button
+                onClick={() => setShowRestaurantsList(false)}
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                aria-label={locale === 'ar' ? 'إغلاق' : 'Close'}
+              >
+                <X className="w-6 h-6 text-gray-600" />
+              </button>
+            </div>
+            
+            {/* Restaurants content with padding */}
+            <div className="h-full overflow-y-auto pb-20">
+              <div className="px-5 py-4">
+                <RestaurantsCardsWrapper 
+                  isMobileMapView={false}
+                  selectedGovernateId={selectedGovernateId}
+                  onGovernateChange={setSelectedGovernateId}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* -------------------------------------- */}
+      {/* Desktop Layout - Cards and Map both 80vh */}
+      <div className="hidden large:flex">
+        {/* Restaurants List Section - 80vh with scroll */}
+        <div className="w-3/5 bg-white flex justify-center">
+          <div className="w-full max-w-none px-5 xl:px-25 py-6">
+            <div className="h-[80vh]">
+              <RestaurantsCardsWrapper 
+                isMobileMapView={false}
+                selectedGovernateId={selectedGovernateId}
+                onGovernateChange={setSelectedGovernateId}
+              />
+            </div>
+          </div>
+        </div>
+        
+        {/* Map Section - 80vh */}
+        <div className="w-2/5 bg-white border-l border-gray-200">
+          <div className="h-[80vh] p-4">
+            <RestaurantsMap 
+              selectedGovernateId={selectedGovernateId}
+              searchQuery={searchQuery}
+            />
+          </div>
+        </div>
+      </div>
+      
+      {/* -------------------------------------- */}
+      {/* Tablet Layout - Cards and Map both 80vh */}
+      <div className="hidden md:flex large:hidden w-full flex-col">
+        {/* Restaurants list - 80vh with scroll */}
+        <div className="w-full flex justify-center">
+          <div className="w-full max-w-none px-5 xl:px-25 py-6">
+            <div className="h-[80vh]">
+              <RestaurantsCardsWrapper 
+                isMobileMapView={false}
+                selectedGovernateId={selectedGovernateId}
+                onGovernateChange={setSelectedGovernateId}
+              />
+            </div>
+          </div>
+        </div>
+        
+        {/* Map - 80vh */}
+        <div className="w-full bg-white border-t border-gray-200">
+          <div className="h-[80vh] p-4">
+            <RestaurantsMap 
+              selectedGovernateId={selectedGovernateId}
+              searchQuery={searchQuery}
+            />
+          </div>
         </div>
       </div>
 
-      <div className="bg-amber-100 h-[50vh] w-screen">
-        Footer
-      </div>
+      
     </div>
   );
 }

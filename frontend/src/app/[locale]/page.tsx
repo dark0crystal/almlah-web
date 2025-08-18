@@ -1,12 +1,6 @@
-
-import CategoryCard from '@/components/cards/categoryCards/CategoryCard';
-import VerticalCard from '@/components/cards/verticalCards/VerticalCard';
 import Destination from '@/components/destination/Destination';
-import Header from '@/components/Header';
 import Heading from '@/components/hero/Heading';
 import {getTranslations} from 'next-intl/server';
-import Places from './places/page';
-import WelcomingText from '@/components/hero/WelcomingText';
 import ArabicCardsLayout from '@/components/IntroSection/Cards';
 import CategoryCardsWrapper from '@/components/cards/categoryCards/CategoryCardsWrapper';
 import PostCardsWrapper from '@/components/cards/postCards/PostCardWrapper';
@@ -23,11 +17,13 @@ export default async function HomePage() {
         <ScrollAnimatedPng/>
         {/* <CategoryCard /> */}
         <ArabicCardsLayout/>
+
+        <CategoryCardsWrapper />
         
         {/* <VerticalCard/> */}
         <Destination/>
        
-        <CategoryCardsWrapper />
+        
        
         <PostCardsWrapper/>
         <div className='h-screen'/>
