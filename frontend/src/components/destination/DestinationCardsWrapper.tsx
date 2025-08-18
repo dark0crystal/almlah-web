@@ -1,11 +1,52 @@
 "use client"
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import DestinationCard from './DestinationCard';
 
-export default function DestinationCardWrapper({ destinations }) {
+export default function DestinationCardWrapper({ destinations, highlightedDestination, onDestinationHighlight }) {
   const locale = useLocale();
+  const desktopScrollRef = useRef(null);
+  const mobileScrollRef = useRef(null);
+
+  // Scroll to highlighted destination
+  useEffect(() => {
+    if (highlightedDestination && destinations.length > 0) {
+      const destinationIndex = destinations.findIndex(d => d.id === highlightedDestination);
+      
+      if (destinationIndex !== -1) {
+        // Desktop/tablet scroll (vertical)
+        if (desktopScrollRef.current) {
+          const cardElement = desktopScrollRef.current.children[destinationIndex];
+          if (cardElement) {
+            cardElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
+        }
+        
+        // Mobile scroll (horizontal)
+        if (mobileScrollRef.current) {
+          const cardElement = mobileScrollRef.current.children[destinationIndex];
+          if (cardElement) {
+            cardElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'nearest',
+              inline: 'start'
+            });
+          }
+        }
+
+        // Clear highlight after animation
+        setTimeout(() => {
+          if (onDestinationHighlight) {
+            onDestinationHighlight(null);
+          }
+        }, 2000);
+      }
+    }
+  }, [highlightedDestination, destinations, onDestinationHighlight]);
 
   if (!destinations || destinations.length === 0) {
     return null; // Don't show anything if no destinations
@@ -16,10 +57,17 @@ export default function DestinationCardWrapper({ destinations }) {
       {/* Mobile: Horizontal Scrollable Container */}
       <div className="md:hidden p-3">
         <div className="overflow-x-auto scrollbar-hide">
-          <div className="flex gap-3 pb-2" style={{ width: 'max-content' }}>
+          <div 
+            ref={mobileScrollRef}
+            className="flex gap-3 pb-2" 
+            style={{ width: 'max-content' }}
+          >
             {destinations.map(destination => (
               <div key={destination.id} className="flex-shrink-0 w-48">
-                <DestinationCard destination={destination} />
+                <DestinationCard 
+                  destination={destination} 
+                  isHighlighted={destination.id === highlightedDestination}
+                />
               </div>
             ))}
           </div>
@@ -27,11 +75,14 @@ export default function DestinationCardWrapper({ destinations }) {
       </div>
 
       {/* Desktop/Tablet: Vertical Scrollable Container */}
-      <div className="hidden md:block h-full overflow-y-auto ">
-        <div className="space-y-3">
+      <div className="hidden md:block h-full overflow-y-auto">
+        <div ref={desktopScrollRef} className="space-y-3">
           {destinations.map(destination => (
             <div key={destination.id} className="w-full">
-              <DestinationCard destination={destination} />
+              <DestinationCard 
+                destination={destination} 
+                isHighlighted={destination.id === highlightedDestination}
+              />
             </div>
           ))}
         </div>
