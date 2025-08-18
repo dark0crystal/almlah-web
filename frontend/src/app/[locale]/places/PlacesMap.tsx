@@ -1,93 +1,52 @@
 "use client"
 import React, { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
+import Script from 'next/script'
+import { useTranslations } from 'next-intl'
 import { fetchPlaces } from '@/services/placesApi'
 import { Place } from '@/types'
+import { createPlaceMarker, createPlacePopupContent } from '@/components/places/PlaceMarker'
 
 interface PlacesMapProps {
   selectedGovernateId?: string | null;
   searchQuery?: string;
   categoryId: string; // Required category ID prop
+  onMarkerClick?: (placeId: string) => void;
+  selectedPlaceId?: string | null;
 }
 
+// Extend Window interface for Mapbox
 declare global {
   interface Window {
-    google: any;
-    initGoogleMap: () => void;
+    mapboxgl: any;
   }
 }
 
-export default function PlacesMap({ selectedGovernateId, categoryId }: PlacesMapProps) {
+export default function PlacesMap({ selectedGovernateId, categoryId, onMarkerClick, selectedPlaceId }: PlacesMapProps) {
   const params = useParams();
   const locale = (params?.locale as string) || 'en';
+  const t = useTranslations('places');
   
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
-  const infoWindowRef = useRef<any>(null);
+  const markers = useRef<any[]>([]);
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [scriptsLoaded, setScriptsLoaded] = useState(false);
 
-  // Your Google Maps API key - Replace with your actual API key
-  const GOOGLE_MAPS_API_KEY = 'AIzaSyBUxLKRFGzQm6LisWYqDby-H-YsacK47j0';
+  // Mapbox access token
+  const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiYWxtbGFoIiwiYSI6ImNtZGo1YXUxMDBoaGQyanF5amUybzNueW4ifQ.URYquetQ0MFz1bPJ_5lLaA';
 
-  // Localized text
-  const text = {
-    loading: locale === 'ar' ? 'جاري تحميل الخريطة...' : 'Loading map...',
-    googleMapsLoading: locale === 'ar' ? 'جاري تحميل خرائط جوجل...' : 'Loading Google Maps...',
-    error: locale === 'ar' ? 'خطأ في تحميل الخريطة' : 'Error loading map',
-    noPlaces: locale === 'ar' ? 'لم يتم العثور على أماكن' : 'No places found',
-    mapTitle: locale === 'ar' ? 'الأماكن' : 'Places',
-    placesCount: (count: number) => 
-      locale === 'ar' ? `${count} مكان على الخريطة` : `${count} places on map`,
-    coordinates: locale === 'ar' ? 'الإحداثيات' : 'Coordinates',
-    retry: locale === 'ar' ? 'حاول مرة أخرى' : 'Try Again'
+  // Oman's geographic bounds
+  const OMAN_BOUNDS = {
+    center: [58.4059, 23.5859] as [number, number], // Muscat coordinates as center
+    bounds: [
+      [51.9999, 16.6333], // Southwest coordinates
+      [60.0000, 26.3959]  // Northeast coordinates
+    ] as [[number, number], [number, number]]
   };
-
-  // Load Google Maps API dynamically
-  useEffect(() => {
-    const loadGoogleMaps = () => {
-      if (window.google && window.google.maps) {
-        setGoogleMapsLoaded(true);
-        return;
-      }
-
-      window.initGoogleMap = () => {
-        console.log('Google Maps loaded successfully');
-        setTimeout(() => {
-          setGoogleMapsLoaded(true);
-        }, 100);
-      };
-
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=initGoogleMap&libraries=marker,places&v=weekly`;
-      script.async = true;
-      script.defer = true;
-      script.onerror = () => {
-        console.error('Failed to load Google Maps');
-        setError('Failed to load Google Maps');
-      };
-      document.head.appendChild(script);
-    };
-
-    loadGoogleMaps();
-
-    return () => {
-      if (markersRef.current) {
-        markersRef.current.forEach(marker => {
-          if (marker.setMap) {
-            marker.setMap(null);
-          }
-        });
-        markersRef.current = [];
-      }
-      if (infoWindowRef.current) {
-        infoWindowRef.current.close();
-      }
-    };
-  }, [GOOGLE_MAPS_API_KEY]);
 
   // Fetch places with category ID
   useEffect(() => {
@@ -97,14 +56,13 @@ export default function PlacesMap({ selectedGovernateId, categoryId }: PlacesMap
         setError(null);
         console.log('Loading places for categoryId:', categoryId, 'governateId:', selectedGovernateId);
         
-        // Use the updated fetchPlaces function with category ID
         const data = await fetchPlaces(categoryId, selectedGovernateId);
         console.log('Places loaded:', data);
         
         // Filter places with valid coordinates
         const validPlaces = data.filter(place => {
-          const hasValidLat = place.lat && !isNaN(place.lat) && place.lat !== 0 && Math.abs(place.lat) <= 90;
-          const hasValidLng = place.lng && !isNaN(place.lng) && place.lng !== 0 && Math.abs(place.lng) <= 180;
+          const hasValidLat = place.lat != null && !isNaN(place.lat) && Math.abs(place.lat) <= 90;
+          const hasValidLng = place.lng != null && !isNaN(place.lng) && Math.abs(place.lng) <= 180;
           
           console.log(`Place ${place.name_en}: lat=${place.lat}, lng=${place.lng}, valid=${hasValidLat && hasValidLng}`);
           
@@ -114,7 +72,7 @@ export default function PlacesMap({ selectedGovernateId, categoryId }: PlacesMap
         console.log('Valid places with coordinates:', validPlaces);
         
         if (validPlaces.length === 0 && data.length > 0) {
-          console.warn('No places have valid coordinates. All places have lat/lng = 0');
+          console.warn('No places have valid coordinates.');
           setError('No places have valid coordinates');
         }
         
@@ -128,251 +86,246 @@ export default function PlacesMap({ selectedGovernateId, categoryId }: PlacesMap
       }
     };
 
-    // Only load if we have a valid categoryId
     if (categoryId) {
       loadPlaces();
     }
   }, [selectedGovernateId, categoryId]);
 
-  // Initialize Google Map when Google Maps is loaded
+  // Initialize map when scripts are loaded
   useEffect(() => {
-    if (!googleMapsLoaded || !mapContainer.current || map.current) return;
+    if (!scriptsLoaded || map.current || !mapContainer.current) return;
 
-    const google = window.google;
-    if (!google || !google.maps) {
-      setError('Google Maps not available');
+    const mapboxgl = window.mapboxgl;
+    
+    if (!mapboxgl) {
+      console.error('Mapbox GL JS not loaded');
+      return;
+    }
+
+    // Set access token
+    mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
+
+    if (!mapboxgl.accessToken) {
+      console.error('Mapbox access token not found');
       return;
     }
 
     try {
-      map.current = new google.maps.Map(mapContainer.current, {
-        center: { lat: 23.6, lng: 58.4 }, // Oman center
+      // Initialize Mapbox map centered on Oman
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: OMAN_BOUNDS.center,
         zoom: 6,
-        mapId: 'DEMO_MAP_ID',
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        zoomControl: true,
-        mapTypeControl: true,
-        scaleControl: true,
-        streetViewControl: true,
-        rotateControl: true,
-        fullscreenControl: true,
-        styles: [
-          {
-            featureType: 'poi',
-            elementType: 'labels',
-            stylers: [{ visibility: 'off' }]
-          }
-        ]
+        maxBounds: OMAN_BOUNDS.bounds // Restrict map to Oman
       });
 
-      infoWindowRef.current = new google.maps.InfoWindow();
-      console.log('Google Map initialized successfully');
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
+      map.current.on('load', () => {
+        setMapLoaded(true);
+      });
+
+      // Cleanup function
+      return () => {
+        if (map.current) {
+          map.current.remove();
+          map.current = null;
+        }
+      };
     } catch (error) {
-      console.error('Map initialization error:', error);
-      setError('Failed to initialize map');
+      console.error('Error initializing map:', error);
     }
-  }, [googleMapsLoaded]);
+  }, [scriptsLoaded]);
 
   // Add markers when places change
   useEffect(() => {
-    if (!map.current || !googleMapsLoaded || loading || !places.length) return;
-
-    const google = window.google;
-    if (!google || !google.maps) return;
-
-    // Clear existing markers
-    markersRef.current.forEach(marker => {
-      if (marker.setMap) {
-        marker.setMap(null);
-      }
+    console.log('Marker effect conditions:', { 
+      hasMap: !!map.current, 
+      mapLoaded, 
+      placesLength: places.length,
+      placesWithCoords: places.filter(p => p.lat != null && p.lng != null).length
     });
-    markersRef.current = [];
-
-    const bounds = new google.maps.LatLngBounds();
-    let hasValidBounds = false;
-
-    // Add markers
-    places.forEach(place => {
-      try {
-        const name = locale === 'ar' ? place.name_ar : place.name_en;
-        const governateName = locale === 'ar' 
-          ? place.governate?.name_ar 
-          : place.governate?.name_en;
-        const wilayahName = locale === 'ar' 
-          ? place.wilayah?.name_ar 
-          : place.wilayah?.name_en;
-
-        const locationText = [governateName, wilayahName]
-          .filter(Boolean)
-          .join(' | ');
-
-        const position = { lat: place.lat, lng: place.lng };
-
-        // Create a custom marker element
-        const markerElement = document.createElement('div');
-        markerElement.innerHTML = `
-          <div style="
-            width: 32px;
-            height: 40px;
-            background: #3b82f6;
-            border-radius: 50% 50% 50% 0;
-            transform: rotate(-45deg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            cursor: pointer;
-          ">
-            <div style="
-              width: 12px;
-              height: 12px;
-              background: white;
-              border-radius: 50%;
-              transform: rotate(45deg);
-            "></div>
-          </div>
-        `;
-
-        let marker;
-        if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
-          marker = new google.maps.marker.AdvancedMarkerElement({
-            map: map.current,
-            position: position,
-            content: markerElement,
-            title: name
-          });
-        } else {
-          marker = new google.maps.Marker({
-            position: position,
-            map: map.current,
-            title: name,
-            icon: {
-              url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                <svg width="32" height="40" viewBox="0 0 32 40" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M16 0C7.2 0 0 7.2 0 16c0 12 16 24 16 24s16-12 16-24c0-8.8-7.2-16-16-16z" fill="#3b82f6"/>
-                  <circle cx="16" cy="16" r="6" fill="white"/>
-                </svg>
-              `),
-              scaledSize: new google.maps.Size(32, 40),
-              anchor: new google.maps.Point(16, 40)
-            }
-          });
-        }
-
-        const infoContent = `
-          <div style="font-family: system-ui, -apple-system, sans-serif; min-width: 200px; padding: 8px;">
-            <h3 style="font-weight: bold; margin-bottom: 8px; font-size: 16px; color: #1f2937; margin-top: 0;">
-              ${name}
-            </h3>
-            ${locationText ? `
-              <p style="font-size: 14px; margin-bottom: 4px; color: #6b7280; margin: 4px 0;">
-                📍 ${locationText}
-              </p>
-            ` : ''}
-            <p style="font-size: 12px; color: #9ca3af; margin: 8px 0 0 0;">
-              ${text.coordinates}: ${place.lat.toFixed(4)}, ${place.lng.toFixed(4)}
-            </p>
-          </div>
-        `;
-
-        marker.addListener('click', () => {
-          infoWindowRef.current.setContent(infoContent);
-          infoWindowRef.current.open(map.current, marker);
-        });
-
-        markersRef.current.push(marker);
-        bounds.extend(position);
-        hasValidBounds = true;
-
-      } catch (error) {
-        console.error('Error adding marker for place:', place.name_en, error);
-      }
-    });
-
-    // Fit map to bounds or center on single place
-    if (hasValidBounds) {
-      if (places.length === 1) {
-        map.current.setCenter({ lat: places[0].lat, lng: places[0].lng });
-        map.current.setZoom(12);
-      } else {
-        map.current.fitBounds(bounds);
-        const listener = google.maps.event.addListener(map.current, 'bounds_changed', () => {
-          if (map.current.getZoom() > 12) {
-            map.current.setZoom(12);
-          }
-          google.maps.event.removeListener(listener);
-        });
-      }
+    
+    if (!map.current || !mapLoaded || !places.length) {
+      console.log('Skipping marker creation - conditions not met');
+      return;
     }
 
-  }, [places, loading, locale, text.coordinates, googleMapsLoaded]);
+    const mapboxgl = window.mapboxgl;
+    if (!mapboxgl) {
+      console.error('Mapbox GL not available');
+      return;
+    }
 
-  // Loading state
-  if (loading || !googleMapsLoaded) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-lg">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
-          <div className="text-gray-600">
-            {loading ? text.loading : text.googleMapsLoading}
-          </div>
-        </div>
-      </div>
-    );
-  }
+    console.log('Clearing existing markers:', markers.current.length);
+    // Clear existing markers
+    markers.current.forEach(marker => {
+      if (marker && marker.remove) {
+        marker.remove();
+      }
+    });
+    markers.current = [];
 
-  // Error state
-  if (error) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-lg">
-        <div className="text-center">
-          <div className="text-red-500 text-lg mb-2">{text.error}</div>
-          <div className="text-gray-600 mb-4">{error}</div>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            {text.retry}
-          </button>
-        </div>
-      </div>
-    );
-  }
+    let markersCreated = 0;
+    
+    // Add new markers for each place
+    places.forEach((place, index) => {
+      if (place.lat != null && place.lng != null) {
+        console.log(`Creating marker ${index + 1} for ${place.name_en} at [${place.lng}, ${place.lat}]`);
+        
+        try {
+          const { markerElement, name } = createPlaceMarker(
+            place, 
+            locale, 
+            t('coordinates'),
+            onMarkerClick,
+            selectedPlaceId
+          );
+          
+          const popupContent = createPlacePopupContent(place, locale, t('coordinates'));
 
-  // No places state
-  if (places.length === 0 && !loading) {
-    const message = error === 'No places have valid coordinates' 
-      ? (locale === 'ar' ? 'الأماكن المحملة لا تحتوي على إحداثيات صالحة' : 'Loaded places do not have valid coordinates')
-      : text.noPlaces;
-      
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-lg">
-        <div className="text-center text-gray-500">
-          <div className="text-lg">{message}</div>
-          {error === 'No places have valid coordinates' && (
-            <div className="text-sm mt-2 text-gray-400">
-              {locale === 'ar' ? 'يرجى إضافة إحداثيات للأماكن في قاعدة البيانات' : 'Please add coordinates to places in database'}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
+          // Create popup
+          const popup = new mapboxgl.Popup({
+            offset: 30,
+            closeOnClick: true
+          }).setHTML(popupContent);
+
+          // Create marker with proper coordinates
+          const coordinates = [place.lng, place.lat];
+          console.log(`Setting marker at coordinates:`, coordinates);
+          
+          const marker = new mapboxgl.Marker(markerElement)
+            .setLngLat(coordinates)
+            .setPopup(popup)
+            .addTo(map.current);
+
+          markers.current.push(marker);
+          markersCreated++;
+          
+          console.log(`Marker ${index + 1} created successfully`);
+        } catch (error) {
+          console.error(`Error creating marker ${index + 1}:`, error);
+        }
+      } else {
+        console.log(`Skipping place ${place.name_en} - no valid coordinates (lat: ${place.lat}, lng: ${place.lng})`);
+      }
+    });
+    
+    console.log(`Total markers created: ${markersCreated} out of ${places.length} places`);
+
+    // Fit map to show all markers
+    if (markersCreated > 0) {
+      const validPlaces = places.filter(p => 
+        p.lat != null && p.lng != null
+      );
+
+      if (validPlaces.length > 1) {
+        console.log('Fitting map to show all markers');
+        const coordinates = validPlaces.map(p => [p.lng!, p.lat!]);
+        console.log('Marker coordinates:', coordinates);
+
+        const bounds = new mapboxgl.LngLatBounds();
+        coordinates.forEach(coord => bounds.extend(coord));
+
+        map.current.fitBounds(bounds, {
+          padding: 50,
+          duration: 1000
+        });
+      } else if (validPlaces.length === 1) {
+        console.log('Centering map on single place');
+        const center = [validPlaces[0].lng!, validPlaces[0].lat!];
+        console.log('Center coordinates:', center);
+        
+        map.current.flyTo({
+          center: center,
+          zoom: 12,
+          duration: 1000
+        });
+      }
+    } else {
+      console.warn('No markers created - cannot fit map bounds');
+    }
+  }, [places, mapLoaded, locale, t, onMarkerClick, selectedPlaceId]);
 
   return (
-    <div className="w-full h-full relative">
-      <div
-        ref={mapContainer}
-        className="w-full h-full rounded-lg"
-        style={{ minHeight: '400px' }}
+    <div className="w-full h-full relative flex justify-center items-center">
+      {/* Load Mapbox GL JS CSS */}
+      <link
+        href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
+        rel="stylesheet"
       />
       
-      {/* Info overlay */}
-      <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-3 z-10">
-        <div className="text-sm font-medium text-gray-700">{text.mapTitle}</div>
-        <div className="text-xs text-gray-500">{text.placesCount(places.length)}</div>
-      </div>
+      {/* Load Mapbox GL JS Script */}
+      <Script
+        src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"
+        onLoad={() => setScriptsLoaded(true)}
+        onError={(e) => console.error('Failed to load Mapbox GL JS:', e)}
+      />
+      
+      {/* Map container */}
+      <div
+        ref={mapContainer}
+        className="w-full h-full min-h-[400px] rounded-lg"
+        style={{ minHeight: '400px' }}
+      />
+
+      {/* Loading overlay */}
+      {(!scriptsLoaded || !mapLoaded || loading) && (
+        <div className="absolute inset-0 bg-gray-100 rounded-lg flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+            <p className="text-gray-600 text-sm">
+              {loading 
+                ? t('loadingPlaces')
+                : !scriptsLoaded 
+                ? t('scriptsLoading') 
+                : t('loadingMap')
+              }
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Error state */}
+      {error && !loading && (
+        <div className="absolute inset-0 bg-gray-100 rounded-lg flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-red-500 text-lg mb-2">{t('errorLoadingMap')}</div>
+            <div className="text-gray-600 mb-4">{error}</div>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              {t('retry')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* No places state */}
+      {!loading && !error && places.length === 0 && (
+        <div className="absolute inset-0 bg-gray-100 rounded-lg flex items-center justify-center">
+          <div className="text-center text-gray-500">
+            <div className="text-lg">{t('noPlaces')}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Map info overlay */}
+      {mapLoaded && places.length > 0 && (
+        <div className="absolute top-4 left-4 bg-white bg-opacity-90 backdrop-blur-sm rounded-lg p-3 shadow-lg">
+          <div className={`text-sm ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
+            <p className="font-semibold text-gray-800">
+              {t('mapTitle')}
+            </p>
+            <p className="text-gray-600">
+              {t('placesCount', { count: places.length })}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
