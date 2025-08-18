@@ -7,6 +7,7 @@ import { Place } from '@/types'
 interface PlacesMapProps {
   selectedGovernateId?: string | null;
   searchQuery?: string;
+  categoryId: string; // Required category ID prop
 }
 
 declare global {
@@ -16,7 +17,7 @@ declare global {
   }
 }
 
-export default function PlacesMap({ selectedGovernateId }: PlacesMapProps) {
+export default function PlacesMap({ selectedGovernateId, categoryId }: PlacesMapProps) {
   const params = useParams();
   const locale = (params?.locale as string) || 'en';
   
@@ -38,7 +39,7 @@ export default function PlacesMap({ selectedGovernateId }: PlacesMapProps) {
     googleMapsLoading: locale === 'ar' ? 'جاري تحميل خرائط جوجل...' : 'Loading Google Maps...',
     error: locale === 'ar' ? 'خطأ في تحميل الخريطة' : 'Error loading map',
     noPlaces: locale === 'ar' ? 'لم يتم العثور على أماكن' : 'No places found',
-    mapTitle: locale === 'ar' ? 'الأماكن السياحية' : 'Tourism Places',
+    mapTitle: locale === 'ar' ? 'الأماكن' : 'Places',
     placesCount: (count: number) => 
       locale === 'ar' ? `${count} مكان على الخريطة` : `${count} places on map`,
     coordinates: locale === 'ar' ? 'الإحداثيات' : 'Coordinates',
@@ -48,22 +49,18 @@ export default function PlacesMap({ selectedGovernateId }: PlacesMapProps) {
   // Load Google Maps API dynamically
   useEffect(() => {
     const loadGoogleMaps = () => {
-      // Check if already loaded
       if (window.google && window.google.maps) {
         setGoogleMapsLoaded(true);
         return;
       }
 
-      // Create global callback function
       window.initGoogleMap = () => {
         console.log('Google Maps loaded successfully');
-        // Add a small delay to ensure all libraries are loaded
         setTimeout(() => {
           setGoogleMapsLoaded(true);
         }, 100);
       };
 
-      // Load Google Maps script with the marker library
       const script = document.createElement('script');
       script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=initGoogleMap&libraries=marker,places&v=weekly`;
       script.async = true;
@@ -78,7 +75,6 @@ export default function PlacesMap({ selectedGovernateId }: PlacesMapProps) {
     loadGoogleMaps();
 
     return () => {
-      // Cleanup markers
       if (markersRef.current) {
         markersRef.current.forEach(marker => {
           if (marker.setMap) {
@@ -93,15 +89,16 @@ export default function PlacesMap({ selectedGovernateId }: PlacesMapProps) {
     };
   }, [GOOGLE_MAPS_API_KEY]);
 
-  // Fetch places
+  // Fetch places with category ID
   useEffect(() => {
     const loadPlaces = async () => {
       try {
         setLoading(true);
         setError(null);
-        console.log('Loading places for governate:', selectedGovernateId);
+        console.log('Loading places for categoryId:', categoryId, 'governateId:', selectedGovernateId);
         
-        const data = await fetchPlaces(selectedGovernateId);
+        // Use the updated fetchPlaces function with category ID
+        const data = await fetchPlaces(categoryId, selectedGovernateId);
         console.log('Places loaded:', data);
         
         // Filter places with valid coordinates
@@ -131,8 +128,11 @@ export default function PlacesMap({ selectedGovernateId }: PlacesMapProps) {
       }
     };
 
-    loadPlaces();
-  }, [selectedGovernateId]);
+    // Only load if we have a valid categoryId
+    if (categoryId) {
+      loadPlaces();
+    }
+  }, [selectedGovernateId, categoryId]);
 
   // Initialize Google Map when Google Maps is loaded
   useEffect(() => {
@@ -145,11 +145,10 @@ export default function PlacesMap({ selectedGovernateId }: PlacesMapProps) {
     }
 
     try {
-      // Create map
       map.current = new google.maps.Map(mapContainer.current, {
         center: { lat: 23.6, lng: 58.4 }, // Oman center
         zoom: 6,
-        mapId: 'DEMO_MAP_ID', // Required for Advanced Markers
+        mapId: 'DEMO_MAP_ID',
         mapTypeId: google.maps.MapTypeId.ROADMAP,
         zoomControl: true,
         mapTypeControl: true,
@@ -166,9 +165,7 @@ export default function PlacesMap({ selectedGovernateId }: PlacesMapProps) {
         ]
       });
 
-      // Create info window
       infoWindowRef.current = new google.maps.InfoWindow();
-
       console.log('Google Map initialized successfully');
 
     } catch (error) {
@@ -192,7 +189,6 @@ export default function PlacesMap({ selectedGovernateId }: PlacesMapProps) {
     });
     markersRef.current = [];
 
-    // Calculate bounds for multiple places
     const bounds = new google.maps.LatLngBounds();
     let hasValidBounds = false;
 
@@ -238,7 +234,6 @@ export default function PlacesMap({ selectedGovernateId }: PlacesMapProps) {
           </div>
         `;
 
-        // Try to use AdvancedMarkerElement if available, fallback to regular Marker
         let marker;
         if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
           marker = new google.maps.marker.AdvancedMarkerElement({
@@ -248,7 +243,6 @@ export default function PlacesMap({ selectedGovernateId }: PlacesMapProps) {
             title: name
           });
         } else {
-          // Fallback to regular marker
           marker = new google.maps.Marker({
             position: position,
             map: map.current,
@@ -266,7 +260,6 @@ export default function PlacesMap({ selectedGovernateId }: PlacesMapProps) {
           });
         }
 
-        // Create info window content
         const infoContent = `
           <div style="font-family: system-ui, -apple-system, sans-serif; min-width: 200px; padding: 8px;">
             <h3 style="font-weight: bold; margin-bottom: 8px; font-size: 16px; color: #1f2937; margin-top: 0;">
@@ -283,7 +276,6 @@ export default function PlacesMap({ selectedGovernateId }: PlacesMapProps) {
           </div>
         `;
 
-        // Add click listener to marker
         marker.addListener('click', () => {
           infoWindowRef.current.setContent(infoContent);
           infoWindowRef.current.open(map.current, marker);
@@ -305,7 +297,6 @@ export default function PlacesMap({ selectedGovernateId }: PlacesMapProps) {
         map.current.setZoom(12);
       } else {
         map.current.fitBounds(bounds);
-        // Set max zoom to prevent over-zooming
         const listener = google.maps.event.addListener(map.current, 'bounds_changed', () => {
           if (map.current.getZoom() > 12) {
             map.current.setZoom(12);

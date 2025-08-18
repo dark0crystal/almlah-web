@@ -9,37 +9,44 @@ interface PlacesCardsWrapperProps {
   isMobileMapView?: boolean;
   selectedGovernateId?: string | null;
   onGovernateChange?: (governateId: string | null) => void;
+  categoryId: string; // Required category ID prop
 }
 
-export default function PlacesCardsWrapper({ 
-  isMobileMapView = false, 
+export default function PlacesCardsWrapper({
+  isMobileMapView = false,
   selectedGovernateId,
-  onGovernateChange 
+  onGovernateChange,
+  categoryId
 }: PlacesCardsWrapperProps) {
   const params = useParams();
   const locale = (params?.locale as string) || 'en';
-    
+  
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Localized text
   const text = {
-    loading: locale === 'ar' ? 'جاري تحميل الأماكن السياحية...' : 'Loading tourism places...',
+    loading: locale === 'ar' ? 'جاري تحميل الأماكن...' : 'Loading places...',
     error: locale === 'ar' ? 'خطأ' : 'Error',
     tryAgain: locale === 'ar' ? 'حاول مرة أخرى' : 'Try Again',
-    title: locale === 'ar' ? 'الأماكن السياحية' : 'Tourism Places',
-    noResults: locale === 'ar' ? 'لم يتم العثور على أماكن سياحية' : 'No tourism places found',
-   
+    title: locale === 'ar' ? 'الأماكن' : 'Places',
+    noResults: locale === 'ar' ? 'لم يتم العثور على أماكن' : 'No places found',
   };
 
-  // Fetch places when governate changes
+  // Fetch places when governate or category changes
   useEffect(() => {
     const loadPlaces = async () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await fetchPlaces(selectedGovernateId);
+        
+        console.log('Loading places with categoryId:', categoryId, 'governateId:', selectedGovernateId);
+        
+        // Use the updated fetchPlaces function with category ID and governate ID
+        const data = await fetchPlaces(categoryId, selectedGovernateId);
+        
+        console.log('Places loaded:', data);
         setPlaces(data);
       } catch (err: any) {
         console.error('Error loading places:', err);
@@ -50,8 +57,11 @@ export default function PlacesCardsWrapper({
       }
     };
 
-    loadPlaces();
-  }, [selectedGovernateId, text.error]);
+    // Only load if we have a valid categoryId
+    if (categoryId) {
+      loadPlaces();
+    }
+  }, [selectedGovernateId, categoryId, text.error]);
 
   if (loading) {
     return (
@@ -82,9 +92,6 @@ export default function PlacesCardsWrapper({
   if (isMobileMapView) {
     return (
       <div className="w-full bg-white border-t border-gray-200 shadow-lg">
-       
-
-        {/* Horizontally scrollable cards */}
         {places.length === 0 ? (
           <div className="p-6 text-center text-gray-500">
             <p className="text-base">{text.noResults}</p>
@@ -107,8 +114,6 @@ export default function PlacesCardsWrapper({
   // Desktop/tablet view - vertical stack with scrollable container
   return (
     <div className={`${locale === 'ar' ? 'rtl' : 'ltr'} h-full flex flex-col`}>
-     
-      {/* Places List - Single Column with scroll */}
       {places.length === 0 ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center text-gray-500">
