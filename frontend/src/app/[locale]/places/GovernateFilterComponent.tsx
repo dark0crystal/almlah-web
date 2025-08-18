@@ -1,21 +1,22 @@
 "use client"
 import { useState, useEffect } from "react";
 import { ChevronDown, MapPin } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useTranslations } from 'next-intl';
 import { fetchGovernates } from "@/services/placesApi";
 import { Governate } from "@/types";
 
 interface GovernateFilterProps {
   selectedGovernateId: string | null;
   onGovernateChange: (governateId: string | null) => void;
+  locale: string;
 }
 
 export default function GovernateFilter({ 
   selectedGovernateId, 
-  onGovernateChange 
+  onGovernateChange,
+  locale 
 }: GovernateFilterProps) {
-  const params = useParams();
-  const locale = (params?.locale as string) || 'en';
+  const t = useTranslations('places');
   
   const [governates, setGovernates] = useState<Governate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,14 +43,13 @@ export default function GovernateFilter({
   };
 
   const selectedGovernate = governates.find(g => g.id === selectedGovernateId);
-  const selectedName = selectedGovernate ? getGovernateName(selectedGovernate) : 
-    (locale === 'ar' ? 'جميع المحافظات' : 'All Governates');
+  const selectedName = selectedGovernate ? getGovernateName(selectedGovernate) : t('allGovernates');
 
   if (loading) {
     return (
       <div className="w-full h-12 rounded-full border border-gray-200 bg-white px-4 flex items-center">
         <div className="text-gray-500">
-          {locale === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+          {t('loading')}
         </div>
       </div>
     );
@@ -63,8 +63,8 @@ export default function GovernateFilter({
           isOpen ? 'ring-2 ring-blue-500 border-blue-500' : ''
         }`}
       >
-        <div className="flex items-center">
-          <MapPin className="w-5 h-5 text-gray-400 mr-2" />
+        <div className={`flex items-center ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
+          <MapPin className={`w-5 h-5 text-gray-400 ${locale === 'ar' ? 'ml-2' : 'mr-2'}`} />
           <span className="text-gray-700 truncate">{selectedName}</span>
         </div>
         <ChevronDown 
@@ -88,11 +88,13 @@ export default function GovernateFilter({
                 onGovernateChange(null);
                 setIsOpen(false);
               }}
-              className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+              className={`w-full px-4 py-3 hover:bg-gray-50 transition-colors ${
+                locale === 'ar' ? 'text-right' : 'text-left'
+              } ${
                 !selectedGovernateId ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
               }`}
             >
-              {locale === 'ar' ? 'جميع المحافظات' : 'All Governates'}
+              {t('allGovernates')}
             </button>
             
             <div className="border-t border-gray-100" />
@@ -105,7 +107,9 @@ export default function GovernateFilter({
                   onGovernateChange(governate.id);
                   setIsOpen(false);
                 }}
-                className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                className={`w-full px-4 py-3 hover:bg-gray-50 transition-colors ${
+                  locale === 'ar' ? 'text-right' : 'text-left'
+                } ${
                   selectedGovernateId === governate.id 
                     ? 'bg-blue-50 text-blue-700' 
                     : 'text-gray-700'

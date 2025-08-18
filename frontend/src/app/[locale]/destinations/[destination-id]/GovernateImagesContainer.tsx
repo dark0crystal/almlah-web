@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useState } from "react";
+import { useTranslations } from 'next-intl';
 import GovernateImagesModal from "./GovernateImagesModal";
 import { GovernateImage, getGovernateImageUrl, getSortedImages } from '@/services/governateApi';
 
@@ -17,6 +18,8 @@ export default function GovernateImagesContainer({
 }: GovernateImagesContainerProps) {
   const [showModal, setShowModal] = useState(false);
   const [imageErrors, setImageErrors] = useState<{[key: string]: boolean}>({});
+  
+  const t = useTranslations('governate.images');
 
   console.log('GovernateImagesContainer - received images:', images);
 
@@ -42,7 +45,7 @@ export default function GovernateImagesContainer({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <p>{language === 'ar' ? 'لا توجد صور متاحة للمحافظة' : 'No images available for this governate'}</p>
+            <p>{t('noImages')}</p>
           </div>
         </div>
       </div>
@@ -54,7 +57,7 @@ export default function GovernateImagesContainer({
   // Function to render image with error handling
   const renderImage = (img: GovernateImage, className: string, onClick?: () => void) => {
     const imageUrl = getGovernateImageUrl(img.image_url);
-    const altText = img.alt_text || `${language === 'ar' ? 'صورة' : 'Image of'} ${governateName}`;
+    const altText = img.alt_text || `${t('imageOf')} ${governateName}`;
     const hasError = imageErrors[img.id];
 
     console.log(`Rendering governate image ${img.id}:`, imageUrl);
@@ -67,7 +70,7 @@ export default function GovernateImagesContainer({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <p className="text-xs">{language === 'ar' ? 'فشل تحميل الصورة' : 'Failed to load image'}</p>
+            <p className="text-xs">{t('loadImageFailure')}</p>
           </div>
         </div>
       );
@@ -92,7 +95,7 @@ export default function GovernateImagesContainer({
         {/* Primary image indicator */}
         {img.is_primary && (
           <div className="absolute top-3 left-3 bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-medium">
-            {language === 'ar' ? 'الرئيسية' : 'Primary'}
+            {t('primary')}
           </div>
         )}
       </div>
@@ -142,7 +145,7 @@ export default function GovernateImagesContainer({
                     <div className="text-white text-center">
                       <div className="text-3xl font-bold mb-1">+{remainingImageCount}</div>
                       <div className="text-sm">
-                        {language === 'ar' ? 'المزيد من الصور' : 'More photos'}
+                        {t('morePhotos')}
                       </div>
                     </div>
                   </div>
