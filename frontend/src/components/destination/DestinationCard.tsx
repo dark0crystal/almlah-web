@@ -1,14 +1,16 @@
 "use client"
 import React from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 
 // Fallback image for governorates without images
 const fallbackImage = '/img5.jpeg';
 
-export default function DestinationCard({ destination }) {
+export default function DestinationCard({ destination, isHighlighted = false }) {
   const locale = useLocale(); // Get current locale from next-intl
-  
+  const router = useRouter();
+
   // Get display name based on current locale
   const getDisplayName = () => {
     if (locale === 'ar') {
@@ -33,10 +35,20 @@ export default function DestinationCard({ destination }) {
     return fallbackImage;
   };
 
+  // Handle card click navigation
+  const handleCardClick = () => {
+    router.push(`/${locale}/destinations/${destination.id}`);
+  };
+
   const hasImage = destination.image && destination.image !== '';
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 w-full  mx-auto">
+    <div 
+      className={`bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 w-full mx-auto cursor-pointer ${
+        isHighlighted ? 'ring-2 ring-blue-500 shadow-lg scale-105' : ''
+      }`}
+      onClick={handleCardClick}
+    >
       {/* Image Section */}
       <div className="p-2">
         <div className="relative w-full aspect-[5/3] overflow-hidden rounded-2xl">
@@ -63,16 +75,16 @@ export default function DestinationCard({ destination }) {
         )}
         </div>
       </div>
-                
+                     
       {/* Text content - matching the image layout */}
-      <div className="py-2 px-6  text-center">
+      <div className="py-2 px-6 text-center">
         {/* Subtitle - smaller text in the middle */}
         <p className={`text-gray-600 text-sm mb-0.5 line-clamp-1 ${
           locale === 'ar' ? 'text-right font-arabic' : 'text-left'
         }`}>
           {getSubtitle()}
         </p>
-        
+                
         {/* Main title - larger text at the bottom */}
         <h3 className={`text-gray-900 text-xl font-medium leading-tight line-clamp-1 ${
           locale === 'ar' ? 'text-right font-arabic' : 'text-left'

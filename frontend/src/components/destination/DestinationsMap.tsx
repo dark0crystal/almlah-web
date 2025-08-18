@@ -1,13 +1,14 @@
 "use client"
 import React, { useEffect, useRef, useState } from 'react';
-import MapMarker from './MapMarker';
+import Script from 'next/script';
 
-export default function DestinationsMap({ destinations = [], language = 'ar' }) {
+export default function DestinationsMap({ destinations = [], language = 'ar', onMarkerClick }) {
     const mapContainer = useRef(null);
     const map = useRef(null);
     const markers = useRef([]);
     const [activeDestination, setActiveDestination] = useState(null);
     const [mapLoaded, setMapLoaded] = useState(false);
+    const [scriptsLoaded, setScriptsLoaded] = useState(false);
 
     // Oman's geographic bounds for better map centering
     const OMAN_BOUNDS = {
@@ -18,11 +19,13 @@ export default function DestinationsMap({ destinations = [], language = 'ar' }) 
         ]
     };
 
-    useEffect(() => {
-        // Only initialize map once
-        if (map.current) return;
+    // Your Mapbox access token (hardcoded as in original)
+    const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiYWxtbGFoIiwiYSI6ImNtZGo1YXUxMDBoaGQyanF5amUybzNueW4ifQ.URYquetQ0MFz1bPJ_5lLaA';
 
-        // Check if Mapbox is loaded
+    // Initialize map when scripts are loaded
+    useEffect(() => {
+        if (!scriptsLoaded || map.current || !mapContainer.current) return;
+
         const mapboxgl = window.mapboxgl;
         
         if (!mapboxgl) {
@@ -30,8 +33,8 @@ export default function DestinationsMap({ destinations = [], language = 'ar' }) 
             return;
         }
 
-        // Set your Mapbox access token
-        mapboxgl.accessToken = 'pk.eyJ1IjoiYWxtbGFoIiwiYSI6ImNtZGo1YXUxMDBoaGQyanF5amUybzNueW4ifQ.URYquetQ0MFz1bPJ_5lLaA'
+        // Set access token
+        mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
 
         if (!mapboxgl.accessToken) {
             console.error('Mapbox access token not found');
@@ -59,12 +62,13 @@ export default function DestinationsMap({ destinations = [], language = 'ar' }) 
             return () => {
                 if (map.current) {
                     map.current.remove();
+                    map.current = null;
                 }
             };
         } catch (error) {
             console.error('Error initializing map:', error);
         }
-    }, []);
+    }, [scriptsLoaded]);
 
     // Add markers when destinations change
     useEffect(() => {
@@ -168,6 +172,11 @@ export default function DestinationsMap({ destinations = [], language = 'ar' }) 
                         zoom: 8,
                         duration: 1000
                     });
+
+                    // Notify parent component about marker click
+                    if (onMarkerClick) {
+                        onMarkerClick(destination.id);
+                    }
                 });
 
                 markers.current.push(marker);
@@ -195,27 +204,22 @@ export default function DestinationsMap({ destinations = [], language = 'ar' }) 
                 });
             }
         }
-    }, [destinations, mapLoaded, language]);
-
-    if (!process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN) {
-        return (
-            <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-3xl">
-                <div className="text-center text-gray-600">
-                    <p className="text-lg font-semibold mb-2">Map Configuration Required</p>
-                    <p className="text-sm">Please set NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN in your environment variables</p>
-                </div>
-            </div>
-        );
-    }
+    }, [destinations, mapLoaded, language, onMarkerClick]);
 
     return (
         <div className="w-full h-full relative flex justify-center items-center">
-            {/* Load Mapbox GL JS and CSS */}
+            {/* Load Mapbox GL JS CSS */}
             <link
                 href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
                 rel="stylesheet"
             />
-            <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+            
+            {/* Load Mapbox GL JS Script */}
+            <Script
+                src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"
+                onLoad={() => setScriptsLoaded(true)}
+                onError={(e) => console.error('Failed to load Mapbox GL JS:', e)}
+            />
                         
             {/* Map container */}
             <div
@@ -225,12 +229,15 @@ export default function DestinationsMap({ destinations = [], language = 'ar' }) 
             />
 
             {/* Loading overlay */}
-            {!mapLoaded && (
+            {(!scriptsLoaded || !mapLoaded) && (
                 <div className="absolute inset-0 bg-gray-100 rounded-3xl flex items-center justify-center">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
                         <p className="text-gray-600 text-sm">
-                            {language === 'ar' ? 'جاري تحميل الخريطة...' : 'Loading map...'}
+                            {!scriptsLoaded 
+                                ? (language === 'ar' ? 'جاري تحميل المكتبات...' : 'Loading libraries...') 
+                                : (language === 'ar' ? 'جاري تحميل الخريطة...' : 'Loading map...')
+                            }
                         </p>
                     </div>
                 </div>
