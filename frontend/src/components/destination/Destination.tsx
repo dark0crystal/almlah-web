@@ -73,6 +73,7 @@ export default function Destination() {
   const [destinationList, setDestinationList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [highlightedDestination, setHighlightedDestination] = useState(null);
   const locale = useLocale();
   const t = useTranslations('destinations');
 
@@ -97,6 +98,16 @@ export default function Destination() {
 
     loadGovernorates();
   }, [locale, t]);
+
+  // Handle marker click - highlight corresponding card
+  const handleMarkerClick = (destinationId) => {
+    setHighlightedDestination(destinationId);
+  };
+
+  // Clear highlight
+  const handleClearHighlight = () => {
+    setHighlightedDestination(null);
+  };
 
   // Retry function
   const handleRetry = () => {
@@ -182,12 +193,17 @@ export default function Destination() {
       {/* Desktop/Tablet Layout */}
       <div className="hidden md:flex h-[80vh]">
         <div className="flex-[1] w-72">
-          <DestinationCardWrapper destinations={destinationList} />
+          <DestinationCardWrapper 
+            destinations={destinationList} 
+            highlightedDestination={highlightedDestination}
+            onDestinationHighlight={handleClearHighlight}
+          />
         </div>
         <div className="flex-[4]">
           <DestinationsMap 
             destinations={destinationList}
             language={locale}
+            onMarkerClick={handleMarkerClick}
           />
         </div>
       </div>
@@ -198,10 +214,15 @@ export default function Destination() {
           <DestinationsMap 
             destinations={destinationList}
             language={locale}
+            onMarkerClick={handleMarkerClick}
           />
         </div>
         <div className="absolute bottom-4 left-4 right-4 z-10">
-          <DestinationCardWrapper destinations={destinationList} />
+          <DestinationCardWrapper 
+            destinations={destinationList} 
+            highlightedDestination={highlightedDestination}
+            onDestinationHighlight={handleClearHighlight}
+          />
         </div>
       </div>
     </div>
