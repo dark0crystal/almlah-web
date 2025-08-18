@@ -42,7 +42,7 @@ export default function SearchBar({
     <div className={`w-full h-14 rounded-3xl border bg-white mb-4 px-4 flex items-center transition-all ${
       isFocused ? "ring-2 ring-blue-500 border-blue-500" : "border-gray-200"
     } ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
-      <Search className="w-5 h-5 text-gray-400 mx-2" />
+      <Search className={`w-5 h-5 text-gray-400 ${locale === 'ar' ? 'ml-2' : 'mr-2'}`} />
       <input
         type="text"
         value={query}
@@ -58,7 +58,7 @@ export default function SearchBar({
       {query && (
         <button
           onClick={handleClear}
-          className="p-1 rounded-full hover:bg-gray-100 transition-colors ml-2"
+          className={`p-1 rounded-full hover:bg-gray-100 transition-colors ${locale === 'ar' ? 'mr-2' : 'ml-2'}`}
         >
           <X className="w-5 h-5 text-gray-400" />
         </button>

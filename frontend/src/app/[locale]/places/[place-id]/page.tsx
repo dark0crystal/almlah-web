@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 import Header from "@/components/Header";
 import ImagesContainer from "./ImagesContainer";
 import AboutAndLocation from "./AboutAndLocation";
@@ -17,7 +18,11 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
   const [place, setPlace] = useState<Place | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [language] = useState<'ar' | 'en'>('ar'); // You can make this dynamic
+  
+  // Use next-intl for proper internationalization
+  const t = useTranslations('placeDetails');
+  const locale = useLocale();
+  const language = locale as 'ar' | 'en';
   
   // Get place ID from params or URL
   const urlParams = useParams();
@@ -29,6 +34,7 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
   console.log('PlaceDetails - placeId:', placeId);
   console.log('PlaceDetails - params:', params);
   console.log('PlaceDetails - urlParams:', urlParams);
+  console.log('PlaceDetails - current locale:', locale);
 
   // Updated loadPlace function - now fetches complete data in both languages
   const loadPlace = async () => {
@@ -42,7 +48,7 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
       const placeData = await fetchPlaceById(placeId);
       
       if (!placeData) {
-        setError('المكان غير موجود');
+        setError(t('errors.notFound'));
         return;
       }
       
@@ -55,7 +61,7 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
       
     } catch (err) {
       console.error('Error loading place:', err);
-      setError(err instanceof Error ? err.message : 'حدث خطأ في تحميل بيانات المكان');
+      setError(err instanceof Error ? err.message : t('errors.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -65,7 +71,7 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
   useEffect(() => {
     if (!placeId) {
       console.error('No place ID found in params');
-      setError('معرف المكان غير موجود');
+      setError(t('errors.noPlaceId'));
       setLoading(false);
       return;
     }
@@ -77,9 +83,9 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
   useEffect(() => {
     if (place) {
       const placeName = language === 'ar' ? place.name_ar : place.name_en;
-      document.title = `${placeName} - دليل الأماكن`;
+      document.title = `${placeName} - ${t('pageTitle')}`;
     }
-  }, [place, language]);
+  }, [place, language, t]);
 
   if (loading) {
     return (
@@ -145,7 +151,7 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              {language === 'ar' ? 'عذراً، لم نتمكن من تحميل بيانات المكان' : 'Sorry, we could not load the place data'}
+              {t('errors.loadFailedTitle')}
             </h2>
             <p className="text-gray-600 mb-6">{error}</p>
             <div className="space-x-4">
@@ -153,13 +159,13 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
                 onClick={() => window.location.reload()}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors"
               >
-                {language === 'ar' ? 'إعادة المحاولة' : 'Try Again'}
+                {t('actions.tryAgain')}
               </button>
               <button
                 onClick={() => router.back()}
                 className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg transition-colors"
               >
-                {language === 'ar' ? 'العودة' : 'Go Back'}
+                {t('actions.goBack')}
               </button>
             </div>
           </div>
@@ -180,19 +186,16 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              {language === 'ar' ? 'المكان غير موجود' : 'Place not found'}
+              {t('errors.notFound')}
             </h2>
             <p className="text-gray-600 mb-6">
-              {language === 'ar' 
-                ? 'لم يتم العثور على المكان المطلوب أو قد يكون غير متاح حالياً'
-                : 'The requested place was not found or may be currently unavailable'
-              }
+              {t('errors.notFoundDescription')}
             </p>
             <button
               onClick={() => router.back()}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors"
             >
-              {language === 'ar' ? 'العودة' : 'Go Back'}
+              {t('actions.goBack')}
             </button>
           </div>
         </div>
@@ -224,7 +227,7 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
               onClick={() => router.back()}
               className="hover:text-gray-900 transition-colors"
             >
-              {language === 'ar' ? 'الأماكن' : 'Places'}
+              {t('navigation.places')}
             </button>
             <span className="mx-2">/</span>
             {place.governate && (
@@ -241,10 +244,7 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
         <div className="mb-8">
           <h1 className="text-4xl md:text-5xl font-extrabold mb-4">{placeName}</h1>
           <p className="text-lg text-gray-700">
-            {placeDescription || placeSubtitle || (language === 'ar' 
-              ? 'استكشف هذا المكان الرائع' 
-              : 'Explore this amazing place'
-            )}
+            {placeDescription || placeSubtitle || t('defaultDescription')}
           </p>
           
           {/* Additional metadata */}
@@ -277,6 +277,60 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
           images={place.images || []} 
           placeName={placeName}
         />
+
+        {/* Debug information for images */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-4 p-4 bg-gray-100 rounded-lg">
+            <h3 className="text-sm font-semibold mb-2">Debug Info (Development Only)</h3>
+            <div className="text-xs space-y-1">
+              <p>Total images: {place.images?.length || 0}</p>
+              <p>Primary image: {place.primary_image || 'None'}</p>
+              <p>API Base URL: {process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:9000'}</p>
+              {place.images && place.images.length > 0 && (
+                <div>
+                  <p className="font-semibold">Image URLs:</p>
+                  {place.images.map((img, index) => (
+                    <div key={img.id} className="ml-2">
+                      <p>Image {index + 1}: {img.image_url}</p>
+                      <p>  - Is Primary: {img.is_primary ? 'Yes' : 'No'}</p>
+                      <p>  - Display Order: {img.display_order}</p>
+                    </div>
+                  ))}
+                  
+                  {/* Test image display */}
+                  <div className="mt-4">
+                    <p className="font-semibold">Test Image Display:</p>
+                    {place.images.slice(0, 2).map((img, index) => {
+                      const testUrl = img.image_url.startsWith('http') 
+                        ? img.image_url 
+                        : `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:9000'}${img.image_url.startsWith('/') ? img.image_url : `/${img.image_url}`}`;
+                      
+                      return (
+                        <div key={img.id} className="mt-2 p-2 border rounded">
+                          <p>Test Image {index + 1}:</p>
+                          <p className="text-xs text-gray-600">Original: {img.image_url}</p>
+                          <p className="text-xs text-gray-600">Processed: {testUrl}</p>
+                          <div className="mt-2 w-32 h-24 bg-gray-200 rounded overflow-hidden">
+                            <img 
+                              src={testUrl} 
+                              alt={`Test ${index + 1}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                console.error('Test image failed to load:', testUrl);
+                                e.currentTarget.style.display = 'none';
+                              }}
+                              onLoad={() => console.log('Test image loaded successfully:', testUrl)}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* About and Location */}
         <AboutAndLocation 
