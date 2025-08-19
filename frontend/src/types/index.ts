@@ -30,12 +30,42 @@ export interface Category {
   updated_at: string;
 }
 
+export interface Property {
+  id: string;
+  name: string;
+  icon: string;
+  type: string;
+}
+
+export interface ContentSection {
+  id: string;
+  section_type: string;
+  title_ar: string;
+  title_en: string;
+  content_ar: string;
+  content_en: string;
+  sort_order: number;
+  images?: ContentSectionImage[];
+}
+
+export interface ContentSectionImage {
+  id: string;
+  image_url?: string;
+  alt_text_ar?: string;
+  alt_text_en?: string;
+  caption_ar?: string;
+  caption_en?: string;
+  sort_order: number;
+}
+
 export interface Place {
   id: string;
   name_ar: string;
   name_en: string;
   description_ar?: string;
   description_en?: string;
+  subtitle_ar?: string;
+  subtitle_en?: string;
   slug: string;
   lat?: number;
   lng?: number;
@@ -43,7 +73,11 @@ export interface Place {
   wilayah_id: string;
   category_id: string;
   primary_image?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
   rating?: number;
+  review_count?: number;
   duration?: string;
   is_featured: boolean;
   is_active: boolean;
@@ -55,6 +89,9 @@ export interface Place {
   wilayah?: Wilayah;
   category?: Category;
   images?: PlaceImage[];
+  content_sections?: ContentSection[];
+  properties?: Property[];
+  categories?: Category[];
 }
 
 export interface PlaceImage {
