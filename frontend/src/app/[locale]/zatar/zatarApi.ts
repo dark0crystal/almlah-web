@@ -19,6 +19,7 @@ interface ZatarRecommendation {
   closing_time?: string;
   price_range?: string;
   image_url?: string;
+  image_urls?: string[];
 }
 
 interface ZatarResponse {

@@ -191,7 +191,7 @@ export default function Destination() {
       </div>
 
       {/* Desktop/Tablet Layout */}
-      <div className="hidden md:flex h-[80vh]">
+      <div className="hidden md:flex h-[80vh] gap-4">
         <div className="flex-[1] w-72">
           <DestinationCardWrapper 
             destinations={destinationList} 
