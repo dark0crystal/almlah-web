@@ -77,6 +77,7 @@ export default function Restaurants() {
             categoryId={restaurantCategoryId}
             selectedGovernateId={selectedGovernateId}
             searchQuery={searchQuery}
+            locale={locale}
           />
         </div>
         
@@ -159,6 +160,7 @@ export default function Restaurants() {
               categoryId={restaurantCategoryId}
               selectedGovernateId={selectedGovernateId}
               searchQuery={searchQuery}
+              locale={locale}
             />
           </div>
         </div>
@@ -188,6 +190,7 @@ export default function Restaurants() {
               categoryId={restaurantCategoryId}
               selectedGovernateId={selectedGovernateId}
               searchQuery={searchQuery}
+              locale={locale}
             />
           </div>
         </div>
