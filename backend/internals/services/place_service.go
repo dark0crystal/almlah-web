@@ -147,18 +147,20 @@ func CreatePlace(req dto.CreatePlaceRequest, userID uuid.UUID) (*dto.PlaceRespon
 				return nil, err
 			}
 
-			// Create section images if provided
+			// Create section images if provided and valid
 			for _, imgReq := range sectionReq.Images {
-				sectionImage := domain.PlaceContentSectionImage{
-					SectionID: section.ID,
-					ImageURL:  imgReq.ImageURL,
-					AltTextAr: imgReq.AltTextAr,
-					AltTextEn: imgReq.AltTextEn,
-					CaptionAr: imgReq.CaptionAr,
-					CaptionEn: imgReq.CaptionEn,
-					SortOrder: imgReq.SortOrder,
+				if imgReq.ImageURL != "" {
+					sectionImage := domain.PlaceContentSectionImage{
+						SectionID: section.ID,
+						ImageURL:  imgReq.ImageURL,
+						AltTextAr: imgReq.AltTextAr,
+						AltTextEn: imgReq.AltTextEn,
+						CaptionAr: imgReq.CaptionAr,
+						CaptionEn: imgReq.CaptionEn,
+						SortOrder: imgReq.SortOrder,
+					}
+					config.DB.Create(&sectionImage)
 				}
-				config.DB.Create(&sectionImage)
 			}
 		}
 	}
@@ -555,18 +557,20 @@ func CreatePlaceContentSection(placeID uuid.UUID, req dto.CreateContentSectionRe
 		return nil, err
 	}
 
-	// Create section images if provided
+	// Create section images if provided and valid
 	for _, imgReq := range req.Images {
-		sectionImage := domain.PlaceContentSectionImage{
-			SectionID: section.ID,
-			ImageURL:  imgReq.ImageURL,
-			AltTextAr: imgReq.AltTextAr,
-			AltTextEn: imgReq.AltTextEn,
-			CaptionAr: imgReq.CaptionAr,
-			CaptionEn: imgReq.CaptionEn,
-			SortOrder: imgReq.SortOrder,
+		if imgReq.ImageURL != "" {
+			sectionImage := domain.PlaceContentSectionImage{
+				SectionID: section.ID,
+				ImageURL:  imgReq.ImageURL,
+				AltTextAr: imgReq.AltTextAr,
+				AltTextEn: imgReq.AltTextEn,
+				CaptionAr: imgReq.CaptionAr,
+				CaptionEn: imgReq.CaptionEn,
+				SortOrder: imgReq.SortOrder,
+			}
+			config.DB.Create(&sectionImage)
 		}
-		config.DB.Create(&sectionImage)
 	}
 
 	return GetContentSectionByID(section.ID)

@@ -147,7 +147,7 @@ type UpdateContentSectionRequest struct {
 }
 
 type CreateContentSectionImageRequest struct {
-	ImageURL   string `json:"image_url" validate:"required"`
+	ImageURL   string `json:"image_url" validate:"omitempty,url"`
 	AltTextAr  string `json:"alt_text_ar"`
 	AltTextEn  string `json:"alt_text_en"`
 	CaptionAr  string `json:"caption_ar"`
