@@ -26,7 +26,7 @@ export const locationSchema = z.object({
 // Content Section Image Schema
 export const contentSectionImageSchema = z.object({
   id: z.string().optional(),
-  image_url: z.string().url('Invalid image URL'),
+  image_url: z.string().url('Invalid image URL').optional(),
   alt_text_ar: z.string().optional(),
   alt_text_en: z.string().optional(),
   caption_ar: z.string().optional(),

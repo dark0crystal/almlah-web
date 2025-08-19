@@ -1,15 +1,15 @@
 // src/services/governateApi.ts - API service for governate data
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST ? `${process.env.NEXT_PUBLIC_API_HOST}/api/v1` : "http://localhost:9000/api/v1";
 
 // Types based on your backend DTOs
 export interface GovernateImage {
   id: string;
-  governate_id: string;
-  image_url: string;
+  governate_id?: string;
+  url: string;
   alt_text: string;
   is_primary: boolean;
   display_order: number;
-  upload_date: string;
+  upload_date?: string;
 }
 
 export interface SimpleWilayah {
@@ -198,28 +198,37 @@ export const fetchGovernateImages = async (governateId: string): Promise<Governa
 
 // Utility functions
 export const getGovernateImageUrl = (imageUrl: string): string => {
-  if (!imageUrl) return '/images/default-governate.jpg';
+  console.log('getGovernateImageUrl called with:', imageUrl);
+  
+  if (!imageUrl) {
+    console.log('No imageUrl provided, returning default');
+    return '/img1.jpeg'; // Using existing image as fallback
+  }
   
   // If it's already a full URL, return as is
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    console.log('Full URL detected, returning as is:', imageUrl);
     return imageUrl;
   }
   
   // If it's a relative path, add API base URL
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000";
+  const API_BASE = process.env.NEXT_PUBLIC_API_HOST || "http://localhost:9000";
   if (imageUrl.startsWith('/')) {
-    return `${API_BASE}${imageUrl}`;
+    const fullUrl = `${API_BASE}${imageUrl}`;
+    console.log('Relative URL detected, converted to:', fullUrl);
+    return fullUrl;
   }
   
+  console.log('Returning imageUrl as is (no modification needed):', imageUrl);
   return imageUrl;
 };
 
 export const getPrimaryImage = (images: GovernateImage[]): string => {
-  if (!images || images.length === 0) return '/images/default-governate.jpg';
+  if (!images || images.length === 0) return '/img1.jpeg'; // Using existing image as fallback
   
   // Find primary image or use first image
   const primaryImage = images.find(img => img.is_primary) || images[0];
-  return getGovernateImageUrl(primaryImage.image_url);
+  return getGovernateImageUrl(primaryImage.url);
 };
 
 export const getSortedImages = (images: GovernateImage[]): GovernateImage[] => {
