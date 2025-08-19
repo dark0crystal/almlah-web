@@ -14,22 +14,32 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const locale = useLocale() as 'ar' | 'en';
 
   // Single text to repeat
-  const text = locale === 'ar' ? 'مـــــــراااااحــــــــب' : 'ALMLAH';
+  const text = locale === 'ar' ? 'حَـــــــــــيّــــــهـــــــــم' : 'ALMLAH';
 
   // Calculate how many times to repeat text to fill screen
   const [repeatedTexts, setRepeatedTexts] = useState<string[]>([]);
+  const [columnsCount, setColumnsCount] = useState(3);
 
   useEffect(() => {
-    // Calculate texts needed based on viewport height
-    const calculateTextsNeeded = () => {
+    // Calculate texts needed based on viewport height and columns needed based on width
+    const calculateLayout = () => {
       const screenHeight = window.innerHeight || 800;
-      const needed = Math.ceil(screenHeight / 80); // Approximate texts needed
-      setRepeatedTexts(Array.from({ length: needed }, () => text));
+      const screenWidth = window.innerWidth || 1200;
+      
+      // Calculate vertical texts needed
+      const textsNeeded = Math.ceil(screenHeight / 80);
+      setRepeatedTexts(Array.from({ length: textsNeeded }, () => text));
+      
+      // Calculate horizontal columns that can fit
+      // Each column: 400px width + 144px margin (mx-18 = 72px on each side)
+      const columnWidth = 400 + 144; // 544px per column
+      const maxColumns = Math.floor(screenWidth / columnWidth);
+      setColumnsCount(Math.max(1, maxColumns)); // At least 1 column
     };
 
-    calculateTextsNeeded();
-    window.addEventListener('resize', calculateTextsNeeded);
-    return () => window.removeEventListener('resize', calculateTextsNeeded);
+    calculateLayout();
+    window.addEventListener('resize', calculateLayout);
+    return () => window.removeEventListener('resize', calculateLayout);
   }, [text]);
 
   useEffect(() => {
@@ -69,65 +79,33 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       }`}
       style={{ backgroundColor: '#f3f3eb' }}
     >
-      {/* Vertical Text Pattern - Full Width */}
-      <div className="w-full h-full flex justify-between py-4 overflow-hidden">
+      {/* Vertical Text Pattern - Dynamic Columns */}
+      <div className="w-full h-full flex justify-center items-start py-4 overflow-hidden">
         
-        {/* Left Column */}
-        <div className="flex flex-col justify-start items-center w-1/3">
-          {repeatedTexts.map((textItem, index) => (
-            <div
-              key={`left-${index}`}
-              className={`text-5xl md:text-6xl lg:text-8xl font-bold text-gray-800 transition-all duration-300 mb-2 ${
-                animatedWords.includes(index)
-                  ? 'opacity-100 translate-y-0'
-                  : 'opacity-0 translate-y-4'
-              }`}
-              style={{
-                transitionDelay: `${index * 50}ms`
-              }}
-            >
-              {textItem}
-            </div>
-          ))}
-        </div>
-
-        {/* Center Column */}
-        <div className="flex flex-col justify-start items-center w-1/3">
-          {repeatedTexts.map((textItem, index) => (
-            <div
-              key={`center-${index}`}
-              className={`text-5xl md:text-6xl lg:text-8xl font-bold text-gray-800 transition-all duration-300 mb-2 ${
-                animatedWords.includes(index)
-                  ? 'opacity-100 translate-y-0'
-                  : 'opacity-0 translate-y-4'
-              }`}
-              style={{
-                transitionDelay: `${index * 50 + 16}ms` // Slight offset
-              }}
-            >
-              {textItem}
-            </div>
-          ))}
-        </div>
-
-        {/* Right Column */}
-        <div className="flex flex-col justify-start items-center w-1/3">
-          {repeatedTexts.map((textItem, index) => (
-            <div
-              key={`right-${index}`}
-              className={`text-5xl md:text-6xl lg:text-8xl font-bold text-gray-800 transition-all duration-300 mb-2 ${
-                animatedWords.includes(index)
-                  ? 'opacity-100 translate-y-0'
-                  : 'opacity-0 translate-y-4'
-              }`}
-              style={{
-                transitionDelay: `${index * 50 + 33}ms` // Different offset
-              }}
-            >
-              {textItem}
-            </div>
-          ))}
-        </div>
+        {/* Dynamic Columns */}
+        {Array.from({ length: columnsCount }, (_, columnIndex) => (
+          <div key={columnIndex} className="flex flex-col justify-start items-center mx-18" style={{ width: '400px' }}>
+            {repeatedTexts.map((textItem, index) => (
+              <div
+                key={`column-${columnIndex}-${index}`}
+                className={`font-bold transition-all duration-300 whitespace-nowrap text-center ${
+                  animatedWords.includes(index)
+                    ? 'opacity-100 translate-y-0'
+                    : 'opacity-0 translate-y-4'
+                }`}
+                style={{
+                  fontSize: '80px',
+                  lineHeight: '90px',
+                  marginBottom: '30px',
+                  color: '#f6bf0c',
+                  transitionDelay: `${index * 50 + columnIndex * 16}ms`
+                }}
+              >
+                {textItem}
+              </div>
+            ))}
+          </div>
+        ))}
         
       </div>
 
