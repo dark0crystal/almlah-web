@@ -51,24 +51,24 @@ export const categoriesData: CategoryData[] = [
     title: "كتاب مسموع",
     icon: "🎧",
     bgColor: "bg-gradient-to-br from-indigo-600 to-purple-700",
-    bgImage: "/audiobook.png",
+    bgImage: chai,
   },
   {
     title: "النشرة السينمائية",
     icon: "🎬",
     bgColor: "bg-gradient-to-br from-teal-500 to-cyan-600",
-    bgImage: "/cinema.png",
+    bgImage: chai,
   },
   {
     title: "تكنولوجيا",
     icon: "💻",
     bgColor: "bg-gradient-to-br from-blue-500 to-blue-700",
-    bgImage: "/technology.png",
+    bgImage: chai,
   },
   {
     title: "رياضة",
     icon: "⚽",
     bgColor: "bg-gradient-to-br from-red-500 to-pink-600",
-    bgImage: "/sports.png",
+    bgImage: chai,
   },
 ];

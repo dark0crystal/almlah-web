@@ -5,7 +5,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9
 
 // CATEGORY IDS - Add your hardcoded category IDs here
 export const CATEGORY_IDS = {
-  TOURISM: "9a5c3331-e22e-4e8e-bb3a-d0ce3c799017",
+  TOURISM: "70f3cab9-5222-4716-b8ac-d76a399dcf3d",
   RESTAURANTS: "ef8ae8b3-9643-4204-bc93-fc239ade5b40", // NEW: Restaurant category ID
   FOOD_BEVERAGES: "another-category-id-here",
   ENTERTAINMENT: "yet-another-category-id-here",
