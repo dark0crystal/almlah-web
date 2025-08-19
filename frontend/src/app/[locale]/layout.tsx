@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
+import { getMessages } from 'next-intl/server';
 import "./globals.css";
+import ClientLayoutWrapper from "@/components/layout/ClientLayoutWrapper";
 import NavBar from "@/components/navbar/Navbar";
 
 export const metadata: Metadata = {
@@ -22,13 +24,21 @@ export default async function RootLayout({
   if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
+
+  // Get messages for the locale
+  const messages = await getMessages();
+  
+  // Determine text direction based on locale
+  const isRTL = locale === 'ar';
+  const dir = isRTL ? 'rtl' : 'ltr';
   
   return (
-    <html lang="ar" dir="rtl">
+    <html lang={locale} dir={dir}>
       <body className="antialiased font-handicrafts bg-[#f3f3eb]">
-        <NextIntlClientProvider>
-         <NavBar style=""/>
-          {children}
+        <NextIntlClientProvider messages={messages}>
+          <ClientLayoutWrapper navbar={<NavBar style="" />}>
+            {children}
+          </ClientLayoutWrapper>
         </NextIntlClientProvider>
       </body>
     </html>

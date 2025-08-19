@@ -7,6 +7,8 @@ import GovernateImagesContainer from "./GovernateImagesContainer";
 import GovernateInfoSidebar from "./GovernateInfoSidebar";
 import GovernateLoadingSkeleton from "./GovernateLoadingSkeleton";
 import GovernateErrorComponent from "./GovernateErrorComponent";
+import DestinationPlacesWrapper from "./DestinationPlacesWrapper";
+import WilayahCardsWrapper from "./WilayahCardsWrapper";
 import { fetchGovernateById, fetchGovernateWilayahs, GovernateDetails, SimpleWilayah } from '@/services/governateApi';
 
 interface GovernateDetailsProps {
@@ -305,6 +307,24 @@ export default function GovernateDetailsPage({ params }: GovernateDetailsProps) 
                 </div>
               </div>
             )}
+
+            {/* Wilayahs Section */}
+            {wilayahs && wilayahs.length > 0 && (
+              <div className="mt-12">
+                <WilayahCardsWrapper 
+                  wilayahs={wilayahs}
+                  governateName={governateName}
+                />
+              </div>
+            )}
+
+            {/* Places to Visit Section */}
+            <div className="mt-12">
+              <DestinationPlacesWrapper 
+                governateId={governate.id}
+                locale={locale}
+              />
+            </div>
           </div>
 
           {/* Sidebar */}
