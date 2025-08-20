@@ -295,7 +295,14 @@ export const DescriptionContentStep: React.FC = () => {
                   section={section}
                   index={index}
                   onSave={(updatedSection) => handleSaveSection(index, updatedSection)}
-                  onCancel={() => setEditingSectionIndex(null)}
+                  onCancel={() => {
+                    // If it's a new section (empty fields), remove it
+                    if (!section.section_type && !section.title_en && !section.title_ar) {
+                      removeContentSection(index);
+                    }
+                    setEditingSectionIndex(null);
+                    setShowAddSection(false);
+                  }}
                 />
               ) : (
                 <div className="border border-gray-200 rounded-xl p-4 hover:border-gray-300 transition-colors">
@@ -339,20 +346,6 @@ export const DescriptionContentStep: React.FC = () => {
               )}
             </div>
           ))}
-
-          {/* New Section Form */}
-          {showAddSection && editingSectionIndex === formData.content_sections.length - 1 && (
-            <ContentSectionForm
-              section={formData.content_sections[formData.content_sections.length - 1]}
-              index={formData.content_sections.length - 1}
-              onSave={(updatedSection) => handleSaveSection(formData.content_sections.length - 1, updatedSection)}
-              onCancel={() => {
-                removeContentSection(formData.content_sections.length - 1);
-                setShowAddSection(false);
-                setEditingSectionIndex(null);
-              }}
-            />
-          )}
         </div>
 
         {formData.content_sections.length === 0 && (

@@ -1,6 +1,8 @@
 // PostCard.tsx
 "use client"
 
+import Image from 'next/image';
+
 interface PostCardProps {
   title: string;
   description?: string;
@@ -29,10 +31,11 @@ export default function PostCard({
       
       {/* Image Container */}
       <div className="relative aspect-[4/3] overflow-hidden">
-        <img
+        <Image
           src={image || '/placeholder-image.jpg'}
           alt={title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
         />
         
         {/* Category Badge - Positioned over image */}
