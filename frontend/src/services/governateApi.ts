@@ -196,6 +196,61 @@ export const fetchGovernateImages = async (governateId: string): Promise<Governa
   }
 };
 
+// Wilayah image interface
+export interface WilayahImage {
+  id: string;
+  wilayah_id: string;
+  url: string;
+  alt_text: string;
+  is_primary: boolean;
+  display_order: number;
+  upload_date?: string;
+}
+
+// Extended wilayah interface with images
+export interface WilayahWithImages extends SimpleWilayah {
+  image_url?: string;
+  place_count?: number;
+  images?: WilayahImage[];
+}
+
+// Fetch wilayah images
+export const fetchWilayahImages = async (wilayahId: string): Promise<WilayahImage[]> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/wilayahs/${wilayahId}/images`, {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      next: { revalidate: 1800 }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error:', errorText);
+      throw new Error(`Failed to fetch wilayah images: ${response.status}`);
+    }
+
+    const responseData = await response.json();
+    console.log('Wilayah Images API Response:', responseData);
+
+    let imagesData: WilayahImage[] = [];
+    if (responseData.success && Array.isArray(responseData.data)) {
+      imagesData = responseData.data;
+    } else if (Array.isArray(responseData.data)) {
+      imagesData = responseData.data;
+    } else {
+      console.error('Unexpected response format:', responseData);
+      return [];
+    }
+
+    return imagesData;
+  } catch (error) {
+    console.error('Error fetching wilayah images:', error);
+    return []; // Return empty array instead of throwing
+  }
+};
+
 // Utility functions
 export const getGovernateImageUrl = (imageUrl: string): string => {
   console.log('getGovernateImageUrl called with:', imageUrl);
@@ -232,6 +287,44 @@ export const getPrimaryImage = (images: GovernateImage[]): string => {
 };
 
 export const getSortedImages = (images: GovernateImage[]): GovernateImage[] => {
+  return [...(images || [])].sort((a, b) => {
+    // Primary image first
+    if (a.is_primary && !b.is_primary) return -1;
+    if (!a.is_primary && b.is_primary) return 1;
+    // Then by display order
+    return a.display_order - b.display_order;
+  });
+};
+
+// Wilayah image utility functions
+export const getWilayahImageUrl = (imageUrl: string): string => {
+  if (!imageUrl) {
+    return '/img1.jpeg'; // Default fallback image
+  }
+  
+  // If it's already a full URL, return as is
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  
+  // If it's a relative path, add API base URL
+  const API_BASE = process.env.NEXT_PUBLIC_API_HOST || "http://localhost:9000";
+  if (imageUrl.startsWith('/')) {
+    return `${API_BASE}${imageUrl}`;
+  }
+  
+  return imageUrl;
+};
+
+export const getPrimaryWilayahImage = (images: WilayahImage[]): string => {
+  if (!images || images.length === 0) return '/img1.jpeg';
+  
+  // Find primary image or use first image
+  const primaryImage = images.find(img => img.is_primary) || images[0];
+  return getWilayahImageUrl(primaryImage.url);
+};
+
+export const getSortedWilayahImages = (images: WilayahImage[]): WilayahImage[] => {
   return [...(images || [])].sort((a, b) => {
     // Primary image first
     if (a.is_primary && !b.is_primary) return -1;
