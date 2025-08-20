@@ -43,7 +43,7 @@ export const DishModal: React.FC<DishModalProps> = ({ dish, isOpen, onClose }) =
           
           {/* Modal */}
           <motion.div
-            className="relative bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+            className="relative bg-white rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden shadow-2xl mx-4"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
@@ -57,10 +57,10 @@ export const DishModal: React.FC<DishModalProps> = ({ dish, isOpen, onClose }) =
               <XMarkIcon className="w-6 h-6 text-gray-600" />
             </button>
 
-            <div className="flex flex-col md:flex-row h-full">
+            <div className="flex flex-col lg:flex-row h-full">
               {/* Image Carousel Section */}
-              <div className="md:w-2/3 relative bg-gray-100">
-                <div className="relative h-64 md:h-96 lg:h-[500px] overflow-hidden">
+              <div className="lg:w-2/3 relative bg-gray-100">
+                <div className="relative h-64 sm:h-80 md:h-96 lg:h-[500px] overflow-hidden">
                   {dish.images.length > 0 ? (
                     <>
                       <motion.img
@@ -148,11 +148,11 @@ export const DishModal: React.FC<DishModalProps> = ({ dish, isOpen, onClose }) =
               </div>
 
               {/* Information Section */}
-              <div className="md:w-1/3 p-6 bg-white overflow-y-auto">
+              <div className="lg:w-1/3 p-4 sm:p-6 bg-white overflow-y-auto">
                 <div className="space-y-6">
                   {/* Dish name */}
                   <div>
-                    <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
                       {dish.name}
                     </h1>
                     <div className="flex items-center space-x-2">
@@ -164,7 +164,7 @@ export const DishModal: React.FC<DishModalProps> = ({ dish, isOpen, onClose }) =
 
                   {/* Description */}
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-800 mb-3">About This Dish</h2>
+                    <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">About This Dish</h2>
                     <p className="text-gray-600 leading-relaxed">
                       {dish.description}
                     </p>
@@ -172,17 +172,17 @@ export const DishModal: React.FC<DishModalProps> = ({ dish, isOpen, onClose }) =
 
                   {/* Additional info */}
                   <div className="space-y-4">
-                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-4">
-                      <h3 className="font-semibold text-gray-800 mb-2">Regional Specialty</h3>
-                      <p className="text-gray-600 text-sm">
+                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 sm:p-4">
+                      <h3 className="font-semibold text-gray-800 mb-2 text-sm sm:text-base">Regional Specialty</h3>
+                      <p className="text-gray-600 text-xs sm:text-sm">
                         This traditional dish is particularly popular in the {dish.governorate.replace('-', ' ')} region of Oman, 
                         where it has been prepared for generations using authentic local ingredients and cooking methods.
                       </p>
                     </div>
 
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4">
-                      <h3 className="font-semibold text-gray-800 mb-2">Cultural Significance</h3>
-                      <p className="text-gray-600 text-sm">
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 sm:p-4">
+                      <h3 className="font-semibold text-gray-800 mb-2 text-sm sm:text-base">Cultural Significance</h3>
+                      <p className="text-gray-600 text-xs sm:text-sm">
                         Traditional Omani cuisine reflects the country&apos;s rich maritime heritage and position 
                         along ancient trade routes, incorporating spices and cooking techniques from various cultures.
                       </p>
