@@ -370,6 +370,7 @@ func DeletePlace(id uuid.UUID, userID uuid.UUID) error {
 	return config.DB.Delete(&place).Error
 }
 
+
 // Place Query Functions
 
 func GetPlacesByCategory(categoryID uuid.UUID) ([]dto.PlaceListResponse, error) {
@@ -641,6 +642,7 @@ func DeletePlaceContentSection(id uuid.UUID, userID uuid.UUID) error {
 
 	return config.DB.Delete(&section).Error
 }
+
 
 func GetContentSectionByID(id uuid.UUID) (*dto.ContentSectionResponse, error) {
 	var section domain.PlaceContentSection
