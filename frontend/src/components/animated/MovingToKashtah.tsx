@@ -1,6 +1,6 @@
 "use client"
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { useRef } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import rb3 from "../../../public/rb3.png"
 import khayma from "../../../public/khayma.png"
 
@@ -22,6 +22,8 @@ const ScrollAnimatedPng: React.FC<ScrollAnimatedPngProps> = ({
   staticImageSize = "w-50 h-50"
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [scrollDirection, setScrollDirection] = useState<'down' | 'up'>('down');
+  const [lastScrollY, setLastScrollY] = useState(0);
   
   // Track scroll progress relative to the container
   const { scrollYProgress } = useScroll({
@@ -29,19 +31,55 @@ const ScrollAnimatedPng: React.FC<ScrollAnimatedPngProps> = ({
     offset: ["start end", "end start"]
   });
   
-  // Calculate responsive movement - move across most of the component width but stop before the static image
-  // Using vw units to make it responsive, stopping at about 75% of the component width
-  const x = useTransform(scrollYProgress, [0, 1], ["0vw", "66vw"]);
+  // Detect scroll direction
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY > lastScrollY) {
+        setScrollDirection('down');
+      } else if (currentScrollY < lastScrollY) {
+        setScrollDirection('up');
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+  
+  // Calculate horizontal movement from left to right of container
+  const x = useTransform(scrollYProgress, [0, 1], ["0%", "calc(100% - 200px)"]);
+  
+  // Calculate vertical position based on scroll direction (within 100px container)
+  const y = useTransform(scrollYProgress, [0, 1], 
+    scrollDirection === 'down' ? ["0px", "20px"] : ["-20px", "0px"]
+  );
+  
+  // Create inverted y transform for upward movement (always call this hook)
+  const yInverted = useTransform(y, (value) => -parseFloat(value.replace('px', '')) + 'px');
+  
+  // Calculate rotation based on scroll direction
+  const rotateY = scrollDirection === 'up' ? 180 : 0;
   
   return (
     <div 
       ref={containerRef}
-      className={`relative h-[18vh] w-[88vw] mx-auto overflow-hidden ${className}`}
+      className={`relative mx-auto overflow-hidden ${className}`}
+      style={{ height: '100px', width: '88vw' }}
     >
-      {/* PNG positioned at the bottom - starts from left edge */}
+      {/* PNG that moves based on scroll direction */}
       <motion.div
-        style={{ x }}
-        className="absolute bottom-4 left-0 z-10"
+        style={{ 
+          x,
+          y: scrollDirection === 'down' ? y : yInverted
+        }}
+        className={`absolute z-10 ${scrollDirection === 'down' ? 'bottom-0' : 'top-0'} left-0`}
+        animate={{
+          rotateY: rotateY
+        }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
       >
         <motion.img
           src={rb3.src}
@@ -55,7 +93,7 @@ const ScrollAnimatedPng: React.FC<ScrollAnimatedPngProps> = ({
       </motion.div>
 
       {/* Static image at the end (right side) */}
-      <div className="absolute bottom-4 right-4 z-10">
+      <div className="absolute bottom-0 right-0 z-10">
         <motion.img
           src={khayma.src}
           alt={staticImageAlt}

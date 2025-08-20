@@ -105,7 +105,7 @@ export default function Heading() {
       </div>
                    
       {/* Text */}
-      <h1 className="relative z-50 text-black font-extrabold text-4xl md:text-6xl text-center leading-relaxed px-4">
+      <h1 className="relative z-10 text-black font-extrabold text-4xl md:text-6xl text-center leading-relaxed px-4">
         الــــمـــلاح ، <br className="md:hidden" />
         رفيق دربك إلي يدل كل مــــكـــان
       </h1>
