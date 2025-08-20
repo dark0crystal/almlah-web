@@ -668,47 +668,6 @@ func getBaseURL() string {
 	return baseURL
 }
 
-func deleteImageFromStorage(imageURL string) error {
-	if imageURL == "" {
-		return nil
-	}
-
-	// Extract file path from URL
-	if !strings.Contains(imageURL, "/uploads/") {
-		// External image URL, skip deletion
-		return nil
-	}
-
-	// Extract the path after /uploads/
-	parts := strings.Split(imageURL, "/uploads/")
-	if len(parts) < 2 {
-		return fmt.Errorf("invalid image URL format: %s", imageURL)
-	}
-
-	// Construct local file path
-	filePath := filepath.Join("uploads", parts[1])
-
-	// Check if file exists
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return nil
-	}
-
-	// Delete the file
-	if err := os.Remove(filePath); err != nil {
-		return fmt.Errorf("failed to delete file %s: %v", filePath, err)
-	}
-
-	// Try to remove empty directories
-	dir := filepath.Dir(filePath)
-	for dir != "uploads" && dir != "." {
-		if err := os.Remove(dir); err != nil {
-			break
-		}
-		dir = filepath.Dir(dir)
-	}
-
-	return nil
-}
 
 // Maintenance Utilities
 

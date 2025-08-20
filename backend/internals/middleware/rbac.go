@@ -5,6 +5,7 @@ import (
 	"almlah/config"
 	"almlah/internals/domain"
 	"almlah/internals/utils"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -300,4 +301,13 @@ func CanPerformActionOnResource(ctx *fiber.Ctx, action, resourceType string, res
 	}
 
 	return false
+}
+
+// Helper function to get user ID from context
+func GetUserIDFromContext(ctx *fiber.Ctx) (uuid.UUID, error) {
+	userID, ok := ctx.Locals("userID").(uuid.UUID)
+	if !ok {
+		return uuid.Nil, fmt.Errorf("user ID not found in context")
+	}
+	return userID, nil
 }

@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -78,6 +79,50 @@ func (s *SupabaseService) DeleteFile(filePath string) error {
 
 	fmt.Printf("✅ Successfully deleted file from Supabase: %s\n", actualPath)
 	return nil
+}
+
+// UploadFile uploads a file to Supabase Storage
+func (s *SupabaseService) UploadFile(file interface{}, filePath string, contentType string) (string, error) {
+	if s.baseURL == "" || s.apiKey == "" || s.bucketName == "" {
+		return "", fmt.Errorf("supabase not configured for file upload")
+	}
+
+	var fileReader io.Reader
+	switch f := file.(type) {
+	case []byte:
+		fileReader = bytes.NewReader(f)
+	case io.Reader:
+		fileReader = f
+	default:
+		return "", fmt.Errorf("unsupported file type")
+	}
+
+	url := fmt.Sprintf("%s/storage/v1/object/%s/%s", s.baseURL, s.bucketName, filePath)
+	
+	req, err := http.NewRequest("POST", url, fileReader)
+	if err != nil {
+		return "", fmt.Errorf("failed to create upload request: %v", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+s.apiKey)
+	req.Header.Set("Content-Type", contentType)
+	req.Header.Set("apikey", s.apiKey)
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to execute upload request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		return "", fmt.Errorf("failed to upload file to Supabase: status %d", resp.StatusCode)
+	}
+
+	// Return the public URL
+	publicURL := fmt.Sprintf("%s/storage/v1/object/public/%s/%s", s.baseURL, s.bucketName, filePath)
+	fmt.Printf("✅ Successfully uploaded file to Supabase: %s\n", publicURL)
+	
+	return publicURL, nil
 }
 
 // extractFilePathFromURL extracts the file path from a Supabase URL
@@ -1051,6 +1096,13 @@ func DeleteDishImageFromStorage(imageURL string) error {
 	}
 	// For local storage or other providers
 	return deleteImageFromStorage(imageURL)
+}
+
+// GENERAL FILE UPLOAD FUNCTIONS
+
+func UploadFileToStorage(file interface{}, filePath string, contentType string) (string, error) {
+	// Upload to Supabase storage
+	return supabaseService.UploadFile(file, filePath, contentType)
 }
 
 // DeleteImageFromStorage is a helper function for cleaning up local images
