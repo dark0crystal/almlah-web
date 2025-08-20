@@ -274,15 +274,15 @@ export default function ManageWilayah() {
         sort_order: wilayah.sort_order?.toString() || ''
       });
       
-      // Load existing images from API response or legacy format
+      // Load existing images from API response
       const images: ExistingImage[] = wilayah.images?.map(img => ({
         id: img.id,
-        path: img.image_url ? img.image_url.replace(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_STORAGE_BUCKET}/`, '') : '',
+        path: img.url ? img.url.replace(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_STORAGE_BUCKET}/`, '') : '',
         alt_text: img.alt_text || '',
         caption: '', // Wilayah images don't have captions
         is_primary: img.is_primary || false,
         display_order: img.display_order || 0,
-        url: img.image_url
+        url: img.url
       })) || [];
       
       setExistingImages(images);
@@ -476,7 +476,7 @@ export default function ManageWilayah() {
       // Delete associated images from storage
       if (wilayah.images && wilayah.images.length > 0) {
         for (const image of wilayah.images) {
-          const imagePath = image.image_url ? image.image_url.replace(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_STORAGE_BUCKET}/`, '') : '';
+          const imagePath = image.url ? image.url.replace(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_STORAGE_BUCKET}/`, '') : '';
           if (imagePath) {
             await SupabaseStorageService.deleteFile(process.env.NEXT_PUBLIC_STORAGE_BUCKET || 'media-bucket', imagePath);
           }

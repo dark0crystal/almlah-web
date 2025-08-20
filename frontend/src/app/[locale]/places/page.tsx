@@ -67,10 +67,10 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
   }
 
   return (
-    <div className={`w-full bg-white relative ${locale === 'ar' ? 'rtl' : 'ltr'}`}>
+    <div className={`w-full relative ${locale === 'ar' ? 'rtl' : 'ltr'}`}>
       
       {/* Header Section - Title and Filter */}
-      <div className="bg-white border-b border-gray-200 px-5 xl:px-25 py-4">
+      <div className="border-b border-gray-200 px-5 xl:px-25 py-4">
         <div className={`flex items-center justify-between ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
           {/* Title on the right (or left in RTL) */}
           <h1 className="text-3xl font-bold text-gray-800">{getPlacesToVisitText()}</h1>
@@ -124,9 +124,9 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
 
         {/* Mobile places list full overlay */}
         {showPlacesList && (
-          <div className="absolute inset-0 z-50 bg-white">
+          <div className="absolute inset-0 z-50">
             {/* Header with close button */}
-            <div className={`flex items-center justify-between p-4 border-b border-gray-200 bg-white ${
+            <div className={`flex items-center justify-between p-4 border-b border-gray-200 ${
               locale === 'ar' ? 'flex-row-reverse' : ''
             }`}>
               <h2 className="text-xl font-bold text-gray-800">
@@ -160,25 +160,23 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
 
       {/* -------------------------------------- */}
       {/* Desktop Layout - Cards and Map both 80vh */}
-      <div className="hidden large:flex">
+      <div className="hidden large:flex gap-4 px-5 xl:px-25">
         {/* Places List Section - 80vh with scroll */}
-        <div className="w-3/5 bg-white flex justify-center">
-          <div className="w-full max-w-none px-5 xl:px-25 py-6">
-            <div className="h-[80vh]">
-              <PlacesCardsWrapper 
-                isMobileMapView={false}
-                categoryId={categoryId}
-                selectedGovernateId={selectedGovernateId}
-                onGovernateChange={setSelectedGovernateId}
-                selectedPlaceId={selectedPlaceId}
-                onPlaceClick={setSelectedPlaceId}
-              />
-            </div>
+        <div className="w-3/5 rounded-lg shadow-sm">
+          <div className="h-[80vh] p-4">
+            <PlacesCardsWrapper 
+              isMobileMapView={false}
+              categoryId={categoryId}
+              selectedGovernateId={selectedGovernateId}
+              onGovernateChange={setSelectedGovernateId}
+              selectedPlaceId={selectedPlaceId}
+              onPlaceClick={setSelectedPlaceId}
+            />
           </div>
         </div>
         
         {/* Map Section - 80vh */}
-        <div className="w-2/5 bg-white border-l border-gray-200">
+        <div className="w-2/5 rounded-lg shadow-sm">
           <div className="h-[80vh] p-4">
             <PlacesMap 
               categoryId={categoryId}
@@ -193,25 +191,23 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
       
       {/* -------------------------------------- */}
       {/* Tablet Layout - Cards and Map both 80vh */}
-      <div className="hidden md:flex large:hidden w-full flex-col">
+      <div className="hidden md:flex large:hidden w-full flex-col gap-4 px-5 xl:px-25">
         {/* Places list - 80vh with scroll */}
-        <div className="w-full flex justify-center">
-          <div className="w-full max-w-none px-5 xl:px-25 py-6">
-            <div className="h-[80vh]">
-              <PlacesCardsWrapper 
-                isMobileMapView={false}
-                categoryId={categoryId}
-                selectedGovernateId={selectedGovernateId}
-                onGovernateChange={setSelectedGovernateId}
-                selectedPlaceId={selectedPlaceId}
-                onPlaceClick={setSelectedPlaceId}
-              />
-            </div>
+        <div className="w-full rounded-lg shadow-sm">
+          <div className="h-[80vh] p-4">
+            <PlacesCardsWrapper 
+              isMobileMapView={false}
+              categoryId={categoryId}
+              selectedGovernateId={selectedGovernateId}
+              onGovernateChange={setSelectedGovernateId}
+              selectedPlaceId={selectedPlaceId}
+              onPlaceClick={setSelectedPlaceId}
+            />
           </div>
         </div>
         
         {/* Map - 80vh */}
-        <div className="w-full bg-white border-t border-gray-200">
+        <div className="w-full rounded-lg shadow-sm">
           <div className="h-[80vh] p-4">
             <PlacesMap 
               categoryId={categoryId}
