@@ -69,6 +69,7 @@ export default function PlaceCard({ place, locale, isSelected = false, onPlaceCl
 
   // Get localized content
   const placeName = locale === 'ar' ? place.name_ar : place.name_en;
+  const placeSubtitle = locale === 'ar' ? place.subtitle_ar : place.subtitle_en;
   const governateName = place.governate 
     ? (locale === 'ar' ? place.governate.name_ar : place.governate.name_en)
     : '';
@@ -89,7 +90,7 @@ export default function PlaceCard({ place, locale, isSelected = false, onPlaceCl
 
   return (
     <div 
-      className={`bg-white rounded-2xl hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden ${
+      className={`rounded-2xl hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden ${
         isSelected 
           ? 'border-2 border-blue-500 shadow-lg transform -translate-y-1' 
           : 'border border-gray-200'
@@ -100,9 +101,9 @@ export default function PlaceCard({ place, locale, isSelected = false, onPlaceCl
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleCardClick}
     >
-      <div className="flex h-36 md:h-44">
-        {/* Image Section - Increased width and added padding */}
-        <div className="w-2/5 p-2 flex items-center">
+      <div className="flex h-36 sm:h-40 md:h-44">
+        {/* Image Section - Responsive width: smaller on mobile, half on larger screens */}
+        <div className="w-2/5 sm:w-2/5 md:w-1/2 p-2 flex items-center">
           <div className="relative w-full h-full rounded-2xl overflow-hidden">
             {!imageError ? (
               <Image 
@@ -139,15 +140,25 @@ export default function PlaceCard({ place, locale, isSelected = false, onPlaceCl
         <div className={`flex-1 p-4 flex flex-col justify-center ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
           {/* Header */}
           <div>
-            {/* Place Name */}
-            <h3 className="font-bold text-gray-800 text-lg mb-1 line-clamp-1">
+            {/* Location - Now at top with black color and map marker */}
+            <div className="flex items-center gap-1 mb-3">
+              <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-black flex-shrink-0" />
+              <p className="text-black text-xs sm:text-sm md:text-base lg:text-sm line-clamp-1 font-medium">
+                {locationString}
+              </p>
+            </div>
+
+            {/* Place Name - Bigger and responsive, now under location */}
+            <h3 className="font-bold text-gray-800 text-xl sm:text-2xl md:text-3xl lg:text-2xl mb-1 line-clamp-2 leading-tight">
               {placeName}
             </h3>
 
-            {/* Location */}
-            <p className="text-gray-600 text-sm line-clamp-1 mb-2">
-              {locationString}
-            </p>
+            {/* Subtitle - Show if available */}
+            {placeSubtitle && (
+              <p className="text-gray-700 text-sm sm:text-base md:text-lg lg:text-base font-medium mb-2 line-clamp-1">
+                {placeSubtitle}
+              </p>
+            )}
           </div>
 
           {/* Footer */}

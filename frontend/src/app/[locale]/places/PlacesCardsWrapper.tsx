@@ -103,7 +103,7 @@ export default function PlacesCardsWrapper({
   // Mobile map view - horizontal scrollable cards
   if (isMobileMapView) {
     return (
-      <div className="w-full bg-white border-t border-gray-200 shadow-lg">
+      <div className="w-full border-t border-gray-200 shadow-lg">
         {places.length === 0 ? (
           <div className="p-6 text-center text-gray-500">
             <p className="text-base">{t('noResults')}</p>
@@ -149,7 +149,7 @@ export default function PlacesCardsWrapper({
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto"
         >
-          <div className="space-y-4 pr-2">
+          <div className="space-y-4">
             {places.map((place) => (
               <div key={place.id} data-place-id={place.id}>
                 <PlaceCard 
