@@ -416,7 +416,7 @@ func DeletePlaceImageWithSupabaseCleanup(imageID uuid.UUID, userID uuid.UUID) er
 
 	imageURL := image.ImageURL
 
-	if err := tx.Delete(&domain.PlaceImage{}, "id = ?", imageID).Error; err != nil {
+	if err := tx.Unscoped().Delete(&domain.PlaceImage{}, "id = ?", imageID).Error; err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to delete image: %v", err)
 	}
@@ -442,7 +442,10 @@ func DeletePlaceImageWithSupabaseCleanup(imageID uuid.UUID, userID uuid.UUID) er
 				fmt.Printf("⚠️ Warning: Failed to delete image from Supabase %s: %v\n", imageURL, err)
 			}
 		} else {
-			fmt.Printf("ℹ️ Skipping Supabase deletion for non-Supabase URL: %s\n", imageURL)
+			// Delete from local storage for local images
+			if err := deleteImageFromStorage(imageURL); err != nil {
+				fmt.Printf("⚠️ Warning: Failed to delete image from local storage %s: %v\n", imageURL, err)
+			}
 		}
 	}()
 
@@ -650,7 +653,7 @@ func DeleteContentSectionImageWithSupabaseCleanup(imageID uuid.UUID, userID uuid
 
 	imageURL := image.ImageURL
 
-	if err := config.DB.Delete(&domain.PlaceContentSectionImage{}, "id = ?", imageID).Error; err != nil {
+	if err := config.DB.Unscoped().Delete(&domain.PlaceContentSectionImage{}, "id = ?", imageID).Error; err != nil {
 		return fmt.Errorf("failed to delete image: %v", err)
 	}
 
@@ -658,6 +661,11 @@ func DeleteContentSectionImageWithSupabaseCleanup(imageID uuid.UUID, userID uuid
 		if supabaseService.IsSupabaseURL(imageURL) {
 			if err := supabaseService.DeleteFile(imageURL); err != nil {
 				fmt.Printf("⚠️ Warning: Failed to delete image from Supabase %s: %v\n", imageURL, err)
+			}
+		} else {
+			// Delete from local storage for local images
+			if err := deleteImageFromStorage(imageURL); err != nil {
+				fmt.Printf("⚠️ Warning: Failed to delete image from local storage %s: %v\n", imageURL, err)
 			}
 		}
 	}()
@@ -744,40 +752,74 @@ func DeletePlaceWithSupabaseCleanup(placeID uuid.UUID, userID uuid.UUID) error {
 
 	fmt.Printf("🗂️ Found %d Supabase URLs to delete\n", len(supabaseURLsToDelete))
 
+	// First collect review images for deletion
+	var reviews []domain.Review
+	if err := tx.Preload("Images").Where("place_id = ?", placeID).Find(&reviews).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to find reviews: %v", err)
+	}
+	
+	// Collect review images URLs for Supabase deletion
+	for _, review := range reviews {
+		for _, img := range review.Images {
+			if img.ImageURL != "" && supabaseService.IsSupabaseURL(img.ImageURL) {
+				supabaseURLsToDelete = append(supabaseURLsToDelete, img.ImageURL)
+			}
+		}
+	}
+
+	// Delete review images (hard delete)
+	if err := tx.Unscoped().Where("review_id IN (SELECT id FROM reviews WHERE place_id = ?)", placeID).Delete(&domain.ReviewImage{}).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to delete review images: %v", err)
+	}
+
+	// Delete content section images (hard delete)
 	for _, section := range place.ContentSections {
-		if err := tx.Where("section_id = ?", section.ID).Delete(&domain.PlaceContentSectionImage{}).Error; err != nil {
+		if err := tx.Unscoped().Where("section_id = ?", section.ID).Delete(&domain.PlaceContentSectionImage{}).Error; err != nil {
 			tx.Rollback()
 			return fmt.Errorf("failed to delete content section images: %v", err)
 		}
 	}
 
-	if err := tx.Where("place_id = ?", placeID).Delete(&domain.PlaceContentSection{}).Error; err != nil {
+	// Delete content sections (hard delete)
+	if err := tx.Unscoped().Where("place_id = ?", placeID).Delete(&domain.PlaceContentSection{}).Error; err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to delete content sections: %v", err)
 	}
 
-	if err := tx.Where("place_id = ?", placeID).Delete(&domain.PlaceImage{}).Error; err != nil {
+	// Delete place images (hard delete)
+	if err := tx.Unscoped().Where("place_id = ?", placeID).Delete(&domain.PlaceImage{}).Error; err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to delete place images: %v", err)
 	}
 
-	if err := tx.Exec("DELETE FROM place_categories WHERE place_id = ?", placeID).Error; err != nil {
-		fmt.Printf("⚠️ Warning: Could not delete place categories: %v\n", err)
+	// Delete reviews (hard delete)
+	if err := tx.Unscoped().Where("place_id = ?", placeID).Delete(&domain.Review{}).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to delete place reviews: %v", err)
 	}
 
-	if err := tx.Where("place_id = ?", placeID).Delete(&domain.PlaceProperty{}).Error; err != nil {
-		fmt.Printf("⚠️ Warning: Could not delete place properties: %v\n", err)
+	// Delete user favorites (hard delete)
+	if err := tx.Unscoped().Where("place_id = ?", placeID).Delete(&domain.UserFavorite{}).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to delete place favorites: %v", err)
 	}
 
-	if err := tx.Where("place_id = ?", placeID).Delete(&domain.Review{}).Error; err != nil {
-		fmt.Printf("⚠️ Warning: Could not delete place reviews: %v\n", err)
+	// Delete place properties (hard delete)
+	if err := tx.Unscoped().Where("place_id = ?", placeID).Delete(&domain.PlaceProperty{}).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to delete place properties: %v", err)
 	}
 
-	if err := tx.Where("place_id = ?", placeID).Delete(&domain.UserFavorite{}).Error; err != nil {
-		fmt.Printf("⚠️ Warning: Could not delete place favorites: %v\n", err)
+	// Clean up place categories associations (hard delete)
+	if err := tx.Unscoped().Exec("DELETE FROM place_categories WHERE place_id = ?", placeID).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to delete place categories: %v", err)
 	}
 
-	if err := tx.Delete(&domain.Place{}, "id = ?", placeID).Error; err != nil {
+	// Delete the place itself (hard delete)
+	if err := tx.Unscoped().Delete(&domain.Place{}, "id = ?", placeID).Error; err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to delete place: %v", err)
 	}
@@ -839,12 +881,12 @@ func DeletePlaceContentSectionWithSupabaseCleanup(sectionID uuid.UUID, userID uu
 
 	fmt.Printf("🗂️ Found %d Supabase URLs to delete for content section\n", len(supabaseURLsToDelete))
 
-	if err := tx.Where("section_id = ?", sectionID).Delete(&domain.PlaceContentSectionImage{}).Error; err != nil {
+	if err := tx.Unscoped().Where("section_id = ?", sectionID).Delete(&domain.PlaceContentSectionImage{}).Error; err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to delete section images: %v", err)
 	}
 
-	if err := tx.Delete(&domain.PlaceContentSection{}, "id = ?", sectionID).Error; err != nil {
+	if err := tx.Unscoped().Delete(&domain.PlaceContentSection{}, "id = ?", sectionID).Error; err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to delete content section: %v", err)
 	}
@@ -998,6 +1040,24 @@ func HealthCheckSupabaseService() error {
 		supabaseService.apiKey[:8], 
 		supabaseService.apiKey[len(supabaseService.apiKey)-8:])
 	
+	return nil
+}
+
+// DISH IMAGE UTILITY FUNCTIONS
+
+func DeleteDishImageFromStorage(imageURL string) error {
+	if supabaseService.IsSupabaseURL(imageURL) {
+		return supabaseService.DeleteFile(imageURL)
+	}
+	// For local storage or other providers
+	return deleteImageFromStorage(imageURL)
+}
+
+// DeleteImageFromStorage is a helper function for cleaning up local images
+func deleteImageFromStorage(imagePath string) error {
+	// This is a placeholder for local file deletion
+	// Implementation depends on your local storage strategy
+	fmt.Printf("🗑️ Local storage cleanup for: %s\n", imagePath)
 	return nil
 }
 

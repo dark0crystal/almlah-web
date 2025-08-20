@@ -51,9 +51,8 @@ func MigrateDB() {
 		&domain.RolePermission{},
 		&domain.UserRole{},
 		&domain.GovernateImage{},
-
-
-		
+		&domain.Dish{},
+		&domain.DishImage{},
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)
