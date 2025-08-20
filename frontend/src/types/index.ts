@@ -58,6 +58,12 @@ export interface ContentSectionImage {
   sort_order: number;
 }
 
+export interface Car {
+  id: string;
+  name: string;
+  image: string;
+}
+
 export interface Place {
   id: string;
   name_ar: string;
@@ -106,4 +112,12 @@ export interface PlaceImage {
   display_order: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface Dish {
+  id: string;
+  name: string;
+  description: string;
+  images: string[];
+  governorate: string;
 }
