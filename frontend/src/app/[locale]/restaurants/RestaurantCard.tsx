@@ -83,7 +83,7 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
 
   return (
     <div 
-      className={`bg-white rounded-2xl hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden border border-gray-100 ${
+      className={`rounded-2xl hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden border border-gray-100 ${
         isHovered ? 'transform -translate-y-1' : ''
       } ${locale === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}
       onMouseEnter={() => setIsHovered(true)}

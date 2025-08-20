@@ -84,7 +84,7 @@ export default function RestaurantsCardsWrapper({
   // Mobile map view - horizontal scrollable cards
   if (isMobileMapView) {
     return (
-      <div className="w-full bg-white border-t border-gray-200 shadow-lg">
+      <div className="w-full border-t border-gray-200 shadow-lg">
         {restaurants.length === 0 ? (
           <div className="p-6 text-center text-gray-500">
             <p className="text-base">{t('noResults')}</p>
@@ -115,7 +115,7 @@ export default function RestaurantsCardsWrapper({
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto">
-          <div className="space-y-4 pr-2">
+          <div className="space-y-4">
             {restaurants.map((restaurant) => (
               <RestaurantCard key={restaurant.id} restaurant={restaurant} />
             ))}
