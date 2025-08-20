@@ -1,7 +1,7 @@
 // src/services/placesApi.ts - Updated to work with actual backend response and scalable categories
 import { Place, Governate } from "@/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST ? `${process.env.NEXT_PUBLIC_API_HOST}/api/v1` : "http://localhost:9000/api/v1";
 
 // CATEGORY IDS - Add your hardcoded category IDs here
 export const CATEGORY_IDS = {
