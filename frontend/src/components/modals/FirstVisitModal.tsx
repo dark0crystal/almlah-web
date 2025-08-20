@@ -1,6 +1,7 @@
 "use client"
 import React, { useState, useEffect, useRef } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { Car } from '@/types';
 
 const cars: Car[] = [
@@ -18,6 +19,7 @@ interface FirstVisitModalProps {
 }
 
 export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClose, onCarSelect }) => {
+  const t = useTranslations('firstVisitModal');
   const [currentCarIndex, setCurrentCarIndex] = useState(0);
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -173,8 +175,8 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
         {/* Modal content */}
         <div className="flex flex-col items-center justify-center min-h-screen">
           <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2 sm:mb-4">Welcome to Almlah!</h2>
-            <p className="text-white/80 text-lg sm:text-xl">Choose your preferred vehicle for exploring Oman</p>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2 sm:mb-4">{t('welcome')}</h2>
+            <p className="text-white/80 text-lg sm:text-xl">{t('subtitle')}</p>
           </div>
 
           {/* Car slider */}
@@ -250,7 +252,7 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
                     </h3>
                     {selectedCar?.id === cars[currentCarIndex].id && (
                       <p className="text-sm sm:text-base mt-1 font-medium text-white/90">
-                        Selected Vehicle
+                        {t('selectedVehicle')}
                       </p>
                     )}
                   </div>
@@ -325,7 +327,7 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
               onClick={handleSkip}
               className="px-6 py-3 text-white/70 hover:text-white transition-colors text-lg"
             >
-              Skip for now
+              {t('skipForNow')}
             </button>
             <button
               onClick={handleConfirm}
@@ -338,7 +340,7 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
                 backgroundColor: selectedCar ? 'white' : '#ccc'
               }}
             >
-              Continue
+              {t('continue')}
             </button>
           </div>
         </div>
