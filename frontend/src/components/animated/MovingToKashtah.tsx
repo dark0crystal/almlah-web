@@ -49,8 +49,8 @@ const ScrollAnimatedPng: React.FC<ScrollAnimatedPngProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
   
-  // Calculate horizontal movement from left to right of container
-  const x = useTransform(scrollYProgress, [0, 1], ["0%", "calc(100% - 200px)"]);
+  // Calculate horizontal movement within the container (88vw - image width)
+  const x = useTransform(scrollYProgress, [0, 1], ["0px", "calc(88vw - 200px)"]);
   
   // Calculate vertical position based on scroll direction (within 100px container)
   const y = useTransform(scrollYProgress, [0, 1], 
@@ -93,7 +93,7 @@ const ScrollAnimatedPng: React.FC<ScrollAnimatedPngProps> = ({
       </motion.div>
 
       {/* Static image at the end (right side) */}
-      <div className="absolute bottom-0 right-0 z-10">
+      <div className="absolute bottom-0 right-0 z-10 pointer-events-auto">
         <motion.img
           src={khayma.src}
           alt={staticImageAlt}

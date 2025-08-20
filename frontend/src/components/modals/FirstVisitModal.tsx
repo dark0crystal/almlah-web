@@ -1,6 +1,6 @@
 "use client"
-import React, { useState } from 'react';
-import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import React, { useState, useEffect, useRef } from 'react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Car } from '@/types';
 
 const cars: Car[] = [
@@ -21,6 +21,77 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
   const [currentCarIndex, setCurrentCarIndex] = useState(0);
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [dominantColors, setDominantColors] = useState<{ [key: string]: string }>({});
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  const extractDominantColor = (imageSrc: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve('#3B82F6');
+          return;
+        }
+
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        const colorCount: { [key: string]: number } = {};
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const alpha = data[i + 3];
+
+          if (alpha > 128) {
+            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+            if (brightness > 50 && brightness < 200) {
+              const key = `${Math.floor(r / 32) * 32},${Math.floor(g / 32) * 32},${Math.floor(b / 32) * 32}`;
+              colorCount[key] = (colorCount[key] || 0) + 1;
+            }
+          }
+        }
+
+        let maxCount = 0;
+        let dominantColor = '#3B82F6';
+        for (const color in colorCount) {
+          if (colorCount[color] > maxCount) {
+            maxCount = colorCount[color];
+            const [r, g, b] = color.split(',').map(Number);
+            dominantColor = `rgb(${r}, ${g}, ${b})`;
+          }
+        }
+        resolve(dominantColor);
+      };
+      img.onerror = () => resolve('#3B82F6');
+      img.src = imageSrc;
+    });
+  };
+
+  useEffect(() => {
+    const loadColors = async () => {
+      const colors: { [key: string]: string } = {};
+      for (const car of cars) {
+        colors[car.id] = await extractDominantColor(car.image);
+      }
+      setDominantColors(colors);
+    };
+    
+    if (isOpen) {
+      loadColors();
+    }
+  }, [isOpen]);
+
+  const minSwipeDistance = 50;
 
   const nextCar = () => {
     if (isTransitioning) return;
@@ -38,6 +109,29 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
       setCurrentCarIndex((prev) => (prev - 1 + cars.length) % cars.length);
       setIsTransitioning(false);
     }, 150);
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe) {
+      nextCar();
+    }
+    if (isRightSwipe) {
+      prevCar();
+    }
   };
 
   const getCarIndex = (offset: number) => {
@@ -61,37 +155,51 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
 
   if (!isOpen) return null;
 
+  const currentCarColor = dominantColors[cars[currentCarIndex]?.id] || '#3B82F6';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-2xl p-8 max-w-4xl w-full max-h-[90vh] relative overflow-y-auto">
+    <div 
+      className="fixed inset-0 z-50 p-4 sm:p-6 md:p-8 transition-colors duration-500"
+      style={{ backgroundColor: currentCarColor }}
+    >
         {/* Close button */}
         <button
           onClick={handleSkip}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+          className="absolute top-6 right-6 sm:top-8 sm:right-8 text-white/80 hover:text-white transition-colors z-20"
         >
-          <XMarkIcon className="w-6 h-6" />
+          <XMarkIcon className="w-8 h-8" />
         </button>
 
         {/* Modal content */}
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Almlah!</h2>
-          <p className="text-gray-600">Choose your preferred vehicle for exploring Oman</p>
-        </div>
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2 sm:mb-4">Welcome to Almlah!</h2>
+            <p className="text-white/80 text-lg sm:text-xl">Choose your preferred vehicle for exploring Oman</p>
+          </div>
 
-        {/* Car slider */}
-        <div className="relative mb-8">
-          <div className="flex justify-center items-center space-x-4">
-            {/* Previous button */}
+          {/* Car slider */}
+          <div className="relative mb-8 sm:mb-12 w-full max-w-6xl">
+            <div className="flex justify-center items-center space-x-2 sm:space-x-4 md:space-x-6">
+            {/* Previous button - Hidden on mobile */}
             <button
               onClick={prevCar}
               disabled={isTransitioning}
-              className="p-3 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50 z-10"
+              className="hidden sm:block p-3 transition-transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 z-10"
             >
-              <ChevronLeftIcon className="w-8 h-8 text-gray-600" />
+              <img 
+                src="/arrow.png" 
+                alt="Previous" 
+                className="w-16 h-16 md:w-20 md:h-20 transform rotate-180 opacity-60 hover:opacity-100 transition-opacity"
+              />
             </button>
 
             {/* Three car display */}
-            <div className="flex items-center justify-center space-x-4 overflow-hidden">
+            <div 
+              className="flex items-center justify-center space-x-2 sm:space-x-4 md:space-x-6 overflow-hidden"
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
+            >
               {/* Left car (smaller) */}
               <div 
                 className={`transition-all duration-500 ease-in-out cursor-pointer ${isTransitioning ? 'opacity-50 scale-95' : 'opacity-70 hover:opacity-90'}`}
@@ -101,10 +209,10 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
                   <img
                     src={cars[getCarIndex(-1)].image}
                     alt={cars[getCarIndex(-1)].name}
-                    className="w-32 h-32 object-contain mx-auto"
+                    className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 object-contain mx-auto"
                   />
                   <div className="mt-2 text-center">
-                    <h4 className="text-sm font-medium text-gray-500">
+                    <h4 className="text-xs sm:text-sm font-medium text-white/70">
                       {cars[getCarIndex(-1)].name}
                     </h4>
                   </div>
@@ -114,24 +222,36 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
               {/* Center car (larger) */}
               <div className={`transition-all duration-500 ease-in-out ${isTransitioning ? 'opacity-70 scale-95' : 'opacity-100 scale-100'}`}>
                 <div 
-                  className={`relative rounded-xl p-6 border-2 transition-all duration-300 cursor-pointer ${
+                  className={`relative rounded-xl p-4 sm:p-6 border-2 transition-all duration-300 cursor-pointer ${
                     selectedCar?.id === cars[currentCarIndex].id 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-200 hover:border-blue-300'
+                      ? 'border-2' 
+                      : 'border-white/30 hover:border-2'
                   }`}
+                  style={{
+                    borderColor: selectedCar?.id === cars[currentCarIndex].id 
+                      ? 'white' 
+                      : undefined,
+                    backgroundColor: selectedCar?.id === cars[currentCarIndex].id 
+                      ? 'rgba(255, 255, 255, 0.1)' 
+                      : undefined
+                  }}
                   onClick={() => handleCarSelect(cars[currentCarIndex])}
                 >
-                  <img
-                    src={cars[currentCarIndex].image}
-                    alt={cars[currentCarIndex].name}
-                    className="w-48 h-48 object-contain mx-auto"
-                  />
-                  <div className="mt-4 text-center">
-                    <h3 className="text-xl font-semibold text-gray-900">
+                  <div className="w-48 h-48 sm:w-52 sm:h-52 md:w-56 md:h-56 lg:w-64 lg:h-64 flex items-center justify-center">
+                    <img
+                      src={cars[currentCarIndex].image}
+                      alt={cars[currentCarIndex].name}
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                  <div className="mt-3 sm:mt-4 text-center">
+                    <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-white">
                       {cars[currentCarIndex].name}
                     </h3>
                     {selectedCar?.id === cars[currentCarIndex].id && (
-                      <p className="text-sm text-blue-600 mt-1">Selected Vehicle</p>
+                      <p className="text-sm sm:text-base mt-1 font-medium text-white/90">
+                        Selected Vehicle
+                      </p>
                     )}
                   </div>
                 </div>
@@ -146,10 +266,10 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
                   <img
                     src={cars[getCarIndex(1)].image}
                     alt={cars[getCarIndex(1)].name}
-                    className="w-32 h-32 object-contain mx-auto"
+                    className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 object-contain mx-auto"
                   />
                   <div className="mt-2 text-center">
-                    <h4 className="text-sm font-medium text-gray-500">
+                    <h4 className="text-xs sm:text-sm font-medium text-white/70">
                       {cars[getCarIndex(1)].name}
                     </h4>
                   </div>
@@ -157,60 +277,71 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
               </div>
             </div>
 
-            {/* Next button */}
+            {/* Next button - Hidden on mobile */}
             <button
               onClick={nextCar}
               disabled={isTransitioning}
-              className="p-3 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50 z-10"
+              className="hidden sm:block p-3 transition-transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 z-10"
             >
-              <ChevronRightIcon className="w-8 h-8 text-gray-600" />
+              <img 
+                src="/arrow.png" 
+                alt="Next" 
+                className="w-16 h-16 md:w-20 md:h-20 opacity-60 hover:opacity-100 transition-opacity"
+              />
             </button>
           </div>
 
-          {/* Dots indicator */}
-          <div className="flex justify-center mt-6 space-x-2">
-            {cars.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  if (!isTransitioning && index !== currentCarIndex) {
-                    setIsTransitioning(true);
-                    setTimeout(() => {
-                      setCurrentCarIndex(index);
-                      setIsTransitioning(false);
-                    }, 150);
-                  }
-                }}
-                disabled={isTransitioning}
-                className={`w-3 h-3 rounded-full transition-all duration-300 disabled:cursor-not-allowed ${
-                  index === currentCarIndex 
-                    ? 'bg-blue-500 scale-125' 
-                    : 'bg-gray-300 hover:bg-gray-400'
-                }`}
-              />
-            ))}
+            {/* Dots indicator */}
+            <div className="flex justify-center mt-6 sm:mt-8 space-x-2 sm:space-x-3">
+              {cars.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    if (!isTransitioning && index !== currentCarIndex) {
+                      setIsTransitioning(true);
+                      setTimeout(() => {
+                        setCurrentCarIndex(index);
+                        setIsTransitioning(false);
+                      }, 150);
+                    }
+                  }}
+                  disabled={isTransitioning}
+                  className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full transition-all duration-300 disabled:cursor-not-allowed ${
+                    index === currentCarIndex 
+                      ? 'scale-125' 
+                      : 'bg-white/30 hover:bg-white/50'
+                  }`}
+                  style={{
+                    backgroundColor: index === currentCarIndex ? 'white' : undefined
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0 mt-8 sm:mt-12 w-full max-w-md">
+            <button
+              onClick={handleSkip}
+              className="px-6 py-3 text-white/70 hover:text-white transition-colors text-lg"
+            >
+              Skip for now
+            </button>
+            <button
+              onClick={handleConfirm}
+              disabled={!selectedCar}
+              className={`px-8 py-3 bg-white text-current rounded-lg font-semibold transition-all duration-300 disabled:bg-gray-300 disabled:cursor-not-allowed text-lg ${
+                selectedCar ? 'hover:shadow-lg transform hover:scale-105' : ''
+              }`}
+              style={{
+                color: selectedCar ? currentCarColor : '#666',
+                backgroundColor: selectedCar ? 'white' : '#ccc'
+              }}
+            >
+              Continue
+            </button>
           </div>
         </div>
-
-        {/* Action buttons */}
-        <div className="flex justify-between">
-          <button
-            onClick={handleSkip}
-            className="px-6 py-2 text-gray-500 hover:text-gray-700 transition-colors"
-          >
-            Skip for now
-          </button>
-          <button
-            onClick={handleConfirm}
-            disabled={!selectedCar}
-            className={`px-8 py-2 bg-blue-500 text-white rounded-lg font-semibold transition-all duration-300 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed ${
-              selectedCar ? 'hover:shadow-lg transform hover:scale-105' : ''
-            }`}
-          >
-            Continue
-          </button>
-        </div>
-      </div>
     </div>
   );
 };
