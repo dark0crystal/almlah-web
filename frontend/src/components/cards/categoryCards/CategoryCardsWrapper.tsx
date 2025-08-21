@@ -1,6 +1,6 @@
 // CategoryCardsWrapper.tsx
 "use client"
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import CategoryCard from './CategoryCard';
 import { categoriesData } from './staticCategoryData';
@@ -17,15 +17,50 @@ export default function CategoryCardsWrapper({
   
   const [showAll, setShowAll] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [responsiveLimit, setResponsiveLimit] = useState(initialLimit);
   const router = useRouter();
+  
+  // Calculate items per row based on screen size
+  const getItemsPerRow = () => {
+    // On large screens (lg): 5 items per row
+    // On medium screens (md): 3 items per row  
+    // On small screens: 2 items per row
+    return {
+      lg: 5,
+      md: 3,
+      sm: 2
+    };
+  };
+  
+  // For large screens, show only one row (5 items) initially
+  const getInitialLimit = () => {
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth >= 1024) return 5; // lg breakpoint
+      if (window.innerWidth >= 768) return 3;  // md breakpoint
+      return 2; // sm and below
+    }
+    return initialLimit;
+  };
+  
+  // Update responsive limit on mount and resize
+  useEffect(() => {
+    const updateLimit = () => {
+      setResponsiveLimit(getInitialLimit());
+    };
+    
+    updateLimit(); // Set initial limit
+    window.addEventListener('resize', updateLimit);
+    
+    return () => window.removeEventListener('resize', updateLimit);
+  }, []);
   
   // Determine which categories to display
   const displayedCategories = showAll 
     ? categoriesData 
-    : categoriesData.slice(0, initialLimit);
+    : categoriesData.slice(0, responsiveLimit);
   
   // Check if there are more categories to show
-  const hasMoreCategories = categoriesData.length > initialLimit;
+  const hasMoreCategories = categoriesData.length > responsiveLimit;
   
   const handleCategoryClick = (categoryTitle: string, slug?: string) => {
     console.log(`Clicked category: ${categoryTitle}`);
@@ -67,7 +102,7 @@ export default function CategoryCardsWrapper({
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 py-8" data-categories-wrapper>
+    <div className="py-8" style={{ width: '88vw' }} data-categories-wrapper>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-900">
@@ -125,14 +160,14 @@ export default function CategoryCardsWrapper({
             key={`${category.slug || category.title}-${index}`}
             className={`
               transform transition-all duration-300 ease-out
-              ${showAll && index >= initialLimit 
+              ${showAll && index >= responsiveLimit 
                 ? 'animate-fadeInUp' 
                 : ''
               }
             `}
             style={{
-              animationDelay: showAll && index >= initialLimit 
-                ? `${(index - initialLimit) * 50}ms` 
+              animationDelay: showAll && index >= responsiveLimit 
+                ? `${(index - responsiveLimit) * 50}ms` 
                 : '0ms'
             }}
           >
