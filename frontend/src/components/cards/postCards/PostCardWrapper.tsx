@@ -2,6 +2,7 @@
 "use client"
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import PostCard from './PostCard';
 import { fetchRecentPlaces, transformRecentPlacesToPlaces, formatRelativeTime } from '../../../services/placesApi';
 import { Place } from '@/types';
@@ -33,12 +34,15 @@ interface PostCardsWrapperProps {
 export default function PostCardsWrapper({
   title = "أحدث المقالات",
   initialLimit = 6,
-  language = 'ar',
+  language,
   categoryId,
   governateId,
   wilayahId,
   type = 'recent'
 }: PostCardsWrapperProps) {
+  
+  const locale = useLocale();
+  const currentLanguage = language || (locale as 'ar' | 'en');
   
   const [posts, setPosts] = useState<PostData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,22 +63,22 @@ export default function PostCardsWrapper({
    */
   const convertPlaceToPost = (place: Place & { isNew?: boolean }): PostData => {
     const isNew = place.isNew ?? false;
-    const relativeDate = place.created_at ? formatRelativeTime(place.created_at, language) : '';
+    const relativeDate = place.created_at ? formatRelativeTime(place.created_at, currentLanguage) : '';
     
     // Get the first category name
     const categoryName = place.categories && place.categories.length > 0 
-      ? (language === 'ar' ? place.categories[0].name_ar : place.categories[0].name_en)
+      ? (currentLanguage === 'ar' ? place.categories[0].name_ar : place.categories[0].name_en)
       : '';
 
     // Create author name from governate or wilayah
-    const authorName = language === 'ar' 
+    const authorName = currentLanguage === 'ar' 
       ? (place.governate?.name_ar || place.wilayah?.name_ar || 'مجهول')
       : (place.governate?.name_en || place.wilayah?.name_en || 'Unknown');
 
     return {
       id: place.id,
-      title: language === 'ar' ? place.name_ar : place.name_en,
-      description: language === 'ar' ? place.subtitle_ar : place.subtitle_en,
+      title: currentLanguage === 'ar' ? place.name_ar : place.name_en,
+      description: currentLanguage === 'ar' ? place.subtitle_ar : place.subtitle_en,
       image: place.primary_image || (place.images && place.images.length > 0 ? place.images[0].image_url : ''),
       author: authorName,
       date: relativeDate,
@@ -121,7 +125,7 @@ export default function PostCardsWrapper({
 
     } catch (err) {
       console.error('❌ Error fetching places:', err);
-      setError(err instanceof Error ? err.message : 'حدث خطأ في جلب البيانات');
+      setError(err instanceof Error ? err.message : (currentLanguage === 'ar' ? 'حدث خطأ في جلب البيانات' : 'Error loading data'));
     } finally {
       setLoading(false);
     }
@@ -225,7 +229,7 @@ export default function PostCardsWrapper({
   // Fetch data on component mount
   useEffect(() => {
     fetchPlaces();
-  }, [categoryId, governateId, language]);
+  }, [categoryId, governateId, currentLanguage]);
 
   // Set up scroll event listener and mouse events
   useEffect(() => {
@@ -307,14 +311,14 @@ export default function PostCardsWrapper({
             </svg>
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {language === 'ar' ? 'حدث خطأ في تحميل البيانات' : 'Error loading data'}
+            {currentLanguage === 'ar' ? 'حدث خطأ في تحميل البيانات' : 'Error loading data'}
           </h3>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={handleRetry}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
           >
-            {language === 'ar' ? 'إعادة المحاولة' : 'Try Again'}
+            {currentLanguage === 'ar' ? 'إعادة المحاولة' : 'Try Again'}
           </button>
         </div>
       </div>
@@ -337,10 +341,10 @@ export default function PostCardsWrapper({
             </svg>
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {language === 'ar' ? 'لا توجد أماكن متاحة' : 'No places available'}
+            {currentLanguage === 'ar' ? 'لا توجد أماكن متاحة' : 'No places available'}
           </h3>
           <p className="text-gray-600">
-            {language === 'ar' 
+            {currentLanguage === 'ar' 
               ? 'لم يتم العثور على أي أماكن تطابق المعايير المحددة' 
               : 'No places found matching the specified criteria'}
           </p>
@@ -357,7 +361,7 @@ export default function PostCardsWrapper({
           <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
           {newPlacesCount > 0 && (
             <p className="text-sm text-blue-600 mt-1">
-              {language === 'ar' 
+              {currentLanguage === 'ar' 
                 ? `${newPlacesCount} أماكن جديدة مضافة هذا الأسبوع`
                 : `${newPlacesCount} new places added this week`
               }
@@ -365,7 +369,7 @@ export default function PostCardsWrapper({
           )}
           {hasFallback && (
             <p className="text-xs text-gray-500 mt-1">
-              {language === 'ar' 
+              {currentLanguage === 'ar' 
                 ? 'تم عرض أماكن إضافية لإكمال القائمة'
                 : 'Additional places shown to complete the list'
               }
@@ -386,10 +390,10 @@ export default function PostCardsWrapper({
                   : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 }
               `}
-              aria-label={language === 'ar' ? 'التمرير يساراً' : 'Scroll left'}
+              aria-label={currentLanguage === 'ar' ? 'التمرير يساراً' : 'Scroll left'}
             >
               <svg 
-                className={`w-5 h-5 ${language === 'ar' ? 'rotate-180' : ''}`} 
+                className={`w-5 h-5 ${currentLanguage === 'ar' ? 'rotate-180' : ''}`} 
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
@@ -413,10 +417,10 @@ export default function PostCardsWrapper({
                   : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 }
               `}
-              aria-label={language === 'ar' ? 'التمرير يميناً' : 'Scroll right'}
+              aria-label={currentLanguage === 'ar' ? 'التمرير يميناً' : 'Scroll right'}
             >
               <svg 
-                className={`w-5 h-5 ${language === 'ar' ? 'rotate-180' : ''}`} 
+                className={`w-5 h-5 ${currentLanguage === 'ar' ? 'rotate-180' : ''}`} 
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
@@ -435,7 +439,7 @@ export default function PostCardsWrapper({
       
       {/* Posts Count Indicator */}
       <div className="mb-4 text-sm text-gray-600">
-        {language === 'ar' 
+        {currentLanguage === 'ar' 
           ? `${posts.length} مكان متاح`
           : `${posts.length} places available`
         }
@@ -486,7 +490,7 @@ export default function PostCardsWrapper({
                 className={`
                   absolute left-0 top-0 bottom-4 w-8 bg-gradient-to-r from-white to-transparent 
                   pointer-events-none z-10
-                  ${language === 'ar' ? 'hidden' : ''}
+                  ${currentLanguage === 'ar' ? 'hidden' : ''}
                 `} 
               />
             )}
@@ -496,7 +500,7 @@ export default function PostCardsWrapper({
                 className={`
                   absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-white to-transparent 
                   pointer-events-none z-10
-                  ${language === 'ar' ? 'hidden' : ''}
+                  ${currentLanguage === 'ar' ? 'hidden' : ''}
                 `} 
               />
             )}
@@ -512,7 +516,7 @@ export default function PostCardsWrapper({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
                 d="M7 16l-4-4m0 0l4-4m-4 4h18" />
             </svg>
-            {language === 'ar' ? 'اسحب للتصفح' : 'Swipe to browse'}
+            {currentLanguage === 'ar' ? 'اسحب للتصفح' : 'Swipe to browse'}
           </div>
         </div>
       )}

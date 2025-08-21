@@ -90,9 +90,9 @@ export default function PlaceCard({ place, locale, isSelected = false, onPlaceCl
 
   return (
     <div 
-      className={`rounded-2xl hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden ${
+      className={`bg-white rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden ${
         isSelected 
-          ? 'border-2 border-blue-500 shadow-lg transform -translate-y-1' 
+          ? 'border-2 border-blue-500 transform -translate-y-1' 
           : 'border border-gray-200'
       } ${
         isHovered && !isSelected ? 'transform -translate-y-1' : ''
