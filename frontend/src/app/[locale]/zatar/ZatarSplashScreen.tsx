@@ -42,11 +42,11 @@ const ZatarSplashScreen: React.FC<ZatarSplashScreenProps> = ({ onComplete }) => 
   const [imageProps] = useState(generateImageProps);
 
   useEffect(() => {
-    // Auto-hide splash screen after 3 seconds to allow all images to complete animation
+    // Auto-hide splash screen after 2 seconds
     const timer = setTimeout(() => {
       setIsVisible(false);
       setTimeout(onComplete, 300); // Allow fade out animation to complete
-    }, 3000);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [onComplete]);
