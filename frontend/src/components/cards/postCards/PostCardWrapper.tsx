@@ -268,7 +268,7 @@ export default function PostCardsWrapper({
   // Loading state
   if (loading) {
     return (
-      <div className="w-full max-w-7xl mx-auto px-4 py-8" data-posts-wrapper>
+      <div className="py-8" style={{ width: '88vw' }} data-posts-wrapper>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
         </div>
@@ -294,7 +294,7 @@ export default function PostCardsWrapper({
   // Error state
   if (error) {
     return (
-      <div className="w-full max-w-7xl mx-auto px-4 py-8" data-posts-wrapper>
+      <div className="py-8" style={{ width: '88vw' }} data-posts-wrapper>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
         </div>
@@ -324,7 +324,7 @@ export default function PostCardsWrapper({
   // Empty state
   if (posts.length === 0) {
     return (
-      <div className="w-full max-w-7xl mx-auto px-4 py-8" data-posts-wrapper>
+      <div className="py-8" style={{ width: '88vw' }} data-posts-wrapper>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
         </div>
@@ -350,7 +350,7 @@ export default function PostCardsWrapper({
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 py-8" data-posts-wrapper>
+    <div className="py-8" style={{ width: '88vw' }} data-posts-wrapper>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
