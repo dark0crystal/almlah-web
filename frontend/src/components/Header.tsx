@@ -46,7 +46,7 @@ export default function Header({
           <div className="relative z-10 flex items-center justify-between h-full p-8 md:p-12" >
             {/* Text Content */}
             <div className="text-white max-w-lg">
-              <h2 className="text-3xl md:text-4xl font-bold mb-2 leading-tight">
+              <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 leading-tight">
                 {headerTitle.includes(' ') ? (
                   <>
                     {headerTitle.split(' ').slice(0, -2).join(' ')} <span className="text-emerald-300">{headerTitle.split(' ').slice(-2).join(' ')}</span>
@@ -55,7 +55,7 @@ export default function Header({
                   <span className="text-emerald-300">{headerTitle}</span>
                 )}
               </h2>
-              <h3 className="text-2xl md:text-3xl font-bold mb-6">
+              <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-6">
                 {headerSubtitle}
               </h3>
               

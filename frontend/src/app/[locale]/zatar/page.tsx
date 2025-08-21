@@ -6,6 +6,7 @@ import { ArrowRight, ArrowLeft, MapPin, Utensils, Dice6, Star, Clock, Phone, Glo
 import { zatarApi, type ZatarRecommendation } from './zatarApi';
 import AnimatedEmoji from './AnimatedEmoji';
 import ImageCarousel from './ImageCarousel';
+import ZatarSplashScreen from './ZatarSplashScreen';
 
 interface ZatarState {
   step: number;
@@ -14,6 +15,7 @@ interface ZatarState {
   isLoading: boolean;
   recommendation: ZatarRecommendation | null;
   error: string | null;
+  showSplash: boolean;
 }
 
 const FOOD_TYPES = [
@@ -35,7 +37,8 @@ export default function ZatarPage() {
     foodType: '',
     isLoading: false,
     recommendation: null,
-    error: null
+    error: null,
+    showSplash: true
   });
 
   const handleNext = () => {
@@ -125,7 +128,16 @@ export default function ZatarPage() {
     window.open(url, '_blank');
   };
 
+  const handleSplashComplete = () => {
+    setState(prev => ({ ...prev, showSplash: false }));
+  };
+
   const isRTL = locale === 'ar';
+
+  // Show splash screen first
+  if (state.showSplash) {
+    return <ZatarSplashScreen onComplete={handleSplashComplete} />;
+  }
 
   return (
     <div className={`min-h-screen ${isRTL ? 'rtl' : 'ltr'}`}>
