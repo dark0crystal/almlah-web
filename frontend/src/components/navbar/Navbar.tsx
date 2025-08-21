@@ -13,11 +13,24 @@ type NavBarProps = {
 export default async function NavBar({ style }: NavBarProps) {
   const locale = (await getLocale()).substring(0, 2); // This will give you "ar" or "en"
   const direction = locale === 'ar' ? 'rtl' : 'ltr'; // Determine direction programmatically
-  const t = await getTranslations("Links");
+  const t = await getTranslations("navbar");
   
   const navLinks = [
-    { direction: "/about", name: t("about") },
-    { direction: "/places", name: t("map") },
+    { direction: "/", name: t("home") },
+    { direction: "/places", name: t("places") },
+    { direction: "/restaurants", name: t("restaurants") },
+    { direction: "/destinations", name: t("destinations") },
+    { direction: "/zatar", name: t("zatar") },
+    { direction: "/about-us", name: t("aboutUs") },
+  ];
+
+  const dashboardLinks = [
+    { direction: "/dashboard", name: t("dashboard") },
+    { direction: "/dashboard/admin/manage-places", name: t("managePlaces") },
+    { direction: "/dashboard/admin/manage-governorate", name: t("manageGovernorate") },
+    { direction: "/dashboard/admin/manage-wilayah", name: t("manageWilayah") },
+    { direction: "/dashboard/admin/manage-categories", name: t("manageCategories") },
+    { direction: "/dashboard/admin/manage-users", name: t("manageUsers") },
   ];
 
   return (
@@ -26,18 +39,16 @@ export default async function NavBar({ style }: NavBarProps) {
         <div className="flex items-center">
           <Brand />
         </div>
-        <div className="hidden lg:flex items-center space-x-6">
+        <div className="hidden md:flex items-center space-x-6">
           {navLinks.map((navLink, index) => (
             <Link key={index} href={navLink.direction}>
               <h1 className="text-lg mx-2 font-normal hover:text-blue-600 transition-colors duration-200">{navLink.name}</h1>
             </Link>
           ))}
           
-          {/* <NavMenu /> */}
-          
           <LanguageChange />
         </div>
-        <MobileMenu navLinks={navLinks} />
+        <MobileMenu navLinks={navLinks} dashboardLinks={dashboardLinks} />
       </nav>
     </div>
   );

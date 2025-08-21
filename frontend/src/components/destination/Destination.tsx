@@ -134,7 +134,7 @@ export default function Destination() {
   if (loading) {
     return (
       <div className="w-[88vw]">
-        <div className="flex flex-col md:flex-row h-[80vh]">
+        <div className="flex flex-col md:flex-row h-[78vh]">
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
@@ -152,7 +152,7 @@ export default function Destination() {
   if (error) {
     return (
       <div className="w-[88vw]">
-        <div className="flex flex-col md:flex-row h-[80vh]">
+        <div className="flex flex-col md:flex-row h-[78vh]">
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
               <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
@@ -191,7 +191,7 @@ export default function Destination() {
       </div>
 
       {/* Desktop/Tablet Layout */}
-      <div className="hidden md:flex h-[80vh] gap-4">
+      <div className="hidden md:flex h-[78vh] gap-4">
         <div className="flex-[1] w-72">
           <DestinationCardWrapper 
             destinations={destinationList} 
@@ -210,7 +210,7 @@ export default function Destination() {
 
       {/* Mobile Layout */}
       <div className="md:hidden relative">
-        <div className="h-[80vh] w-full">
+        <div className="h-[78vh] w-full">
           <DestinationsMap 
             destinations={destinationList}
             language={locale}

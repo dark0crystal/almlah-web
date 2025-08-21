@@ -1,11 +1,12 @@
 "use client"
 
-import React from 'react';
+import React, { useState } from 'react';
 import { MapPin } from 'lucide-react';
 import { useLocale } from 'next-intl';
 
 export default function MapMarker({ destination, isActive, onClick }) {
   const locale = useLocale();
+  const [imageError, setImageError] = useState(false);
 
   // Get display name based on current locale
   const getDisplayName = () => {
@@ -54,28 +55,20 @@ export default function MapMarker({ destination, isActive, onClick }) {
         <div className={`w-12 h-12 rounded-full border-4 border-white shadow-lg transition-all duration-300 overflow-hidden ${
           isActive ? 'scale-125 border-blue-500' : 'hover:scale-110'
         }`}>
-          {getImageSrc() ? (
+          {getImageSrc() && !imageError ? (
             <img 
               src={getImageSrc()}
               alt={getDisplayName()}
               className="w-full h-full rounded-full object-cover"
-              onError={(e) => {
-                // Hide image on error and show colored marker instead
-                e.target.style.display = 'none';
-                e.target.nextSibling.style.display = 'flex';
-              }}
+              onError={() => setImageError(true)}
             />
-          ) : null}
-          
-          {/* Fallback colored marker with initial */}
-          <div 
-            className={`w-full h-full ${getMarkerColor()} flex items-center justify-center text-white font-bold text-sm ${
-              getImageSrc() ? 'hidden' : 'flex'
-            }`}
-            style={{ display: getImageSrc() ? 'none' : 'flex' }}
-          >
-            {getDisplayName().charAt(0)}
-          </div>
+          ) : (
+            <div 
+              className={`w-full h-full ${getMarkerColor()} flex items-center justify-center text-white font-bold text-sm`}
+            >
+              {getDisplayName().charAt(0)}
+            </div>
+          )}
         </div>
         
         {/* Active state label */}
