@@ -103,7 +103,7 @@ export default function PlacesCardsWrapper({
   // Mobile map view - horizontal scrollable cards
   if (isMobileMapView) {
     return (
-      <div className="w-full border-t border-gray-200 shadow-lg">
+      <div className="w-full border-t border-gray-200">
         {places.length === 0 ? (
           <div className="p-6 text-center text-gray-500">
             <p className="text-base">{t('noResults')}</p>
