@@ -104,8 +104,7 @@ func (h *DishHandler) GetDishes(c *fiber.Ctx) error {
 	result, err := services.GetDishes(filters)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse(
-			"Failed to retrieve dishes",
-			err.Error(),
+			"Failed to retrieve dishes: " + err.Error(),
 		))
 	}
 
@@ -123,8 +122,7 @@ func (h *DishHandler) GetDish(c *fiber.Ctx) error {
 	dish, err := services.GetDishByID(dishID)
 	if err != nil {
 		return c.Status(http.StatusNotFound).JSON(utils.ErrorResponse(
-			"Dish not found",
-			err.Error(),
+			"Dish not found: " + err.Error(),
 		))
 	}
 
@@ -168,8 +166,7 @@ func (h *DishHandler) GetDishesByGovernate(c *fiber.Ctx) error {
 	result, err := services.GetDishes(filters)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse(
-			"Failed to retrieve dishes",
-			err.Error(),
+			"Failed to retrieve dishes: " + err.Error(),
 		))
 	}
 
@@ -184,30 +181,27 @@ func (h *DishHandler) CreateDish(c *fiber.Ctx) error {
 	var req dto.CreateDishRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(
-			"Invalid request format",
-			err.Error(),
+			"Invalid request format: " + err.Error(),
 		))
 	}
 
 	// Validate request
 	if err := utils.ValidateStruct(req); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(utils.ValidationErrorResponse(err))
+		return c.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Validation failed: " + err.Error()))
 	}
 
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(c)
 	if err != nil {
 		return c.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse(
-			"Unauthorized",
-			"User not found in context",
+			"Unauthorized: User not found in context",
 		))
 	}
 
 	dish, err := services.CreateDish(req, userID)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(
-			"Failed to create dish",
-			err.Error(),
+			"Failed to create dish: " + err.Error(),
 		))
 	}
 
@@ -224,30 +218,27 @@ func (h *DishHandler) UpdateDish(c *fiber.Ctx) error {
 	var req dto.UpdateDishRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(
-			"Invalid request format",
-			err.Error(),
+			"Invalid request format: " + err.Error(),
 		))
 	}
 
 	// Validate request
 	if err := utils.ValidateStruct(req); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(utils.ValidationErrorResponse(err))
+		return c.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Validation failed: " + err.Error()))
 	}
 
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(c)
 	if err != nil {
 		return c.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse(
-			"Unauthorized",
-			"User not found in context",
+			"Unauthorized: User not found in context",
 		))
 	}
 
 	dish, err := services.UpdateDish(dishID, req, userID)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(
-			"Failed to update dish",
-			err.Error(),
+			"Failed to update dish: " + err.Error(),
 		))
 	}
 
@@ -265,16 +256,14 @@ func (h *DishHandler) DeleteDish(c *fiber.Ctx) error {
 	userID, err := middleware.GetUserIDFromContext(c)
 	if err != nil {
 		return c.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse(
-			"Unauthorized",
-			"User not found in context",
+			"Unauthorized: User not found in context",
 		))
 	}
 
 	err = services.DeleteDish(dishID, userID)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(
-			"Failed to delete dish",
-			err.Error(),
+			"Failed to delete dish: " + err.Error(),
 		))
 	}
 
@@ -291,30 +280,27 @@ func (h *DishHandler) AddDishImage(c *fiber.Ctx) error {
 	var req dto.CreateDishImageRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(
-			"Invalid request format",
-			err.Error(),
+			"Invalid request format: " + err.Error(),
 		))
 	}
 
 	// Validate request
 	if err := utils.ValidateStruct(req); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(utils.ValidationErrorResponse(err))
+		return c.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Validation failed: " + err.Error()))
 	}
 
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(c)
 	if err != nil {
 		return c.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse(
-			"Unauthorized",
-			"User not found in context",
+			"Unauthorized: User not found in context",
 		))
 	}
 
 	image, err := services.AddDishImage(dishID, req, userID)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(
-			"Failed to add dish image",
-			err.Error(),
+			"Failed to add dish image: " + err.Error(),
 		))
 	}
 
@@ -331,8 +317,7 @@ func (h *DishHandler) UpdateDishImage(c *fiber.Ctx) error {
 	var req dto.UpdateDishImageRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(
-			"Invalid request format",
-			err.Error(),
+			"Invalid request format: " + err.Error(),
 		))
 	}
 
@@ -341,30 +326,27 @@ func (h *DishHandler) UpdateDishImage(c *fiber.Ctx) error {
 		req.ID = id
 	} else {
 		return c.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(
-			"Invalid image ID format",
-			err.Error(),
+			"Invalid image ID format: " + err.Error(),
 		))
 	}
 
 	// Validate request
 	if err := utils.ValidateStruct(req); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(utils.ValidationErrorResponse(err))
+		return c.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Validation failed: " + err.Error()))
 	}
 
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(c)
 	if err != nil {
 		return c.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse(
-			"Unauthorized",
-			"User not found in context",
+			"Unauthorized: User not found in context",
 		))
 	}
 
 	image, err := services.UpdateDishImage(imageID, req, userID)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(
-			"Failed to update dish image",
-			err.Error(),
+			"Failed to update dish image: " + err.Error(),
 		))
 	}
 
@@ -382,16 +364,14 @@ func (h *DishHandler) DeleteDishImage(c *fiber.Ctx) error {
 	userID, err := middleware.GetUserIDFromContext(c)
 	if err != nil {
 		return c.Status(http.StatusUnauthorized).JSON(utils.ErrorResponse(
-			"Unauthorized",
-			"User not found in context",
+			"Unauthorized: User not found in context",
 		))
 	}
 
 	err = services.DeleteDishImage(imageID, userID)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(
-			"Failed to delete dish image",
-			err.Error(),
+			"Failed to delete dish image: " + err.Error(),
 		))
 	}
 
