@@ -1,5 +1,7 @@
 import { Search, ChevronDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
+import chai from '../../public/chai.png';
 
 interface HeaderProps {
   title?: string;
@@ -42,11 +44,22 @@ export default function Header({
           
           
 
+          {/* Chai PNG - Top Right Corner */}
+          <div className="absolute top-4 right-4 z-20">
+            <div className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 bg-white/10 border-2 border-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm p-2">
+              <Image
+                src={chai}
+                alt="Chai"
+                className="w-full h-full object-contain"
+              />
+            </div>
+          </div>
+
           {/* Content */}
           <div className="relative z-10 flex items-center justify-between h-full p-8 md:p-12" >
             {/* Text Content */}
-            <div className="text-white max-w-lg">
-              <h2 className="text-[clamp(1.25rem,4vw,3rem)] font-bold mb-2 leading-tight">
+            <div className="text-white max-w-none w-full">
+              <h2 className="text-[clamp(1.25rem,4vw,3rem)] font-bold mb-2 whitespace-nowrap overflow-hidden text-ellipsis">
                 {headerTitle.includes(' ') ? (
                   <>
                     {headerTitle.split(' ').slice(0, -2).join(' ')} <span className="text-emerald-300">{headerTitle.split(' ').slice(-2).join(' ')}</span>
@@ -55,7 +68,7 @@ export default function Header({
                   <span className="text-emerald-300">{headerTitle}</span>
                 )}
               </h2>
-              <h3 className="text-[clamp(1rem,3vw,2.5rem)] font-bold mb-6 leading-relaxed">
+              <h3 className="text-[clamp(1rem,3vw,2.5rem)] font-bold mb-6 whitespace-nowrap overflow-hidden text-ellipsis">
                 {headerSubtitle}
               </h3>
               
