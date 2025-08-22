@@ -476,7 +476,7 @@ export default function PostCardsWrapper({
                 date={post.date}
                 category={post.category}
                 isNew={post.isNew}
-                onClick={() => !isDragging && handlePostClick(post)}
+                placeId={post.id}
               />
             </div>
           ))}

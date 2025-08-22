@@ -19,7 +19,7 @@ export default function Heading() {
   ];
 
   return (
-    <div className="relative w-[88vw] h-[60vh] m-16 mb-0 rounded-3xl overflow-hidden bg-[#fce7a1] flex items-center justify-center">
+    <div className="relative w-[88vw] h-[50vh] m-16 mb-0 rounded-3xl overflow-hidden bg-[#fce7a1] flex items-center justify-center">
       
       {/* Static Images Background - Positioned at Bottom */}
       <div className="absolute bottom-0 left-0 right-0 h-1/2 z-0">
@@ -106,7 +106,6 @@ export default function Heading() {
                    
       {/* Text */}
       <h1 className="relative z-10 text-black font-extrabold text-4xl md:text-6xl text-center leading-relaxed px-4">
-        الــــمـــلاح ، <br className="md:hidden" />
         رفيق دربك إلي يدل كل مــــكـــان
       </h1>
     </div>

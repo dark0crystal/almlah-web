@@ -2,9 +2,6 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
-// import { Inter } from "next/font/google";
-
-// const inter = Inter({ subsets: ["latin"], weight: ["400", "700"] ,display: 'swap',});
 
 export default function LanguageChange() {
     const t = useTranslations("Links");
@@ -15,14 +12,22 @@ export default function LanguageChange() {
     const pathWithoutLocale = pathName.replace(`/${locale}`, "");
 
     return (
-        <div >
+        <div>
             {locale === "ar" ? (
-                <Link className="mx-6 text-3xl font-bold" href={`/en${pathWithoutLocale}`} locale="en">
-                    🇬🇧
+                <Link 
+                    className="px-6 py-2  bg-black text-[#f6bf0c] font-bold rounded-lg hover:bg-gray-800 transition-colors duration-200" 
+                    href={`/en${pathWithoutLocale}`} 
+                    locale="en"
+                >
+                    English
                 </Link>
             ) : (
-                <Link className="mx-6 text-3xl font-bold" href={`/ar${pathWithoutLocale}`} locale="ar">
-                    🇴🇲
+                <Link 
+                    className="px-6 py-2  bg-black text-[#f6bf0c] font-bold rounded-lg hover:bg-gray-800 transition-colors duration-200" 
+                    href={`/ar${pathWithoutLocale}`} 
+                    locale="ar"
+                >
+                عــــربـي
                 </Link>
             )}
         </div>
