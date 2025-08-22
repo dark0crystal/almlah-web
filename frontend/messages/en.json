@@ -4,10 +4,28 @@
     "about": "Go to the about page"
   },
   "Links":{
-    "brand":"الملاح",
-    "map":"الخريطة",
-    "about":"من نحن",
+    "brand":"AlMlah",
+    "map":"places",
+    "about":"about us",
     "dir":"ltr"
+  },
+  "navbar": {
+    "home": "Home",
+    "places": "Places",
+    "restaurants": "Restaurants", 
+    "destinations": "Destinations",
+    "aboutUs": "About Us",
+    "zatar": "Zatar",
+    "dashboard": "Dashboard",
+    "managePlaces": "Manage Places",
+    "manageGovernorate": "Manage Governorate",
+    "manageWilayah": "Manage Wilayah",
+    "manageCategories": "Manage Categories",
+    "manageUsers": "Manage Users"
+  },
+  "header": {
+    "defaultTitle": "North Eastern",
+    "defaultSubtitle": "Where the barren desert lies"
   },
   
   
@@ -43,7 +61,249 @@
         "description": "Useful information and tips"
       }
     }
+  },
+  "governate": {
+    "title": "Governorates",
+    "loading": {
+      "governateData": "Loading governate data...",
+      "images": "Loading images...",
+      "wilayahs": "Loading wilayahs...",
+      "finalizing": "Finalizing...",
+      "general": "Loading...",
+      "technicalDetails": "Technical Error Details"
+    },
+    "error": {
+      "notFound": "Governate not found",
+      "connectionProblem": "Connection Problem",
+      "general": "An Error Occurred",
+      "notFoundDescription": "The requested governate was not found or may be currently unavailable",
+      "connectionDescription": "Could not connect to the server. Please check your internet connection and try again",
+      "generalDescription": "An unexpected error occurred while loading the governate data",
+      "persistsMessage": "If the problem persists, please try again later or contact technical support",
+      "loadFailure": "Sorry, we could not load the governate data",
+      "loadImageFailure": "Failed to load image",
+      "loadImageFailureModal": "Failed to load governate image",
+      "idNotFound": "Governate ID not found"
+    },
+    "actions": {
+      "tryAgain": "Try Again",
+      "goBack": "Go Back",
+      "homePage": "Home Page",
+      "contactUs": "Contact Us",
+      "getDirections": "Get Directions",
+      "share": "Share",
+      "directions": "Directions"
+    },
+    "status": {
+      "online": "Online",
+      "offline": "Offline",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "images": {
+      "noImages": "No images available for this governate",
+      "imageOf": "Image of",
+      "primary": "Primary",
+      "morePhotos": "More photos",
+      "closeGallery": "Close governate gallery",
+      "previousImage": "Previous image",
+      "nextImage": "Next image",
+      "viewImage": "View governate image",
+      "thumbnail": "Governate thumbnail"
+    },
+    "info": {
+      "quickInfo": "Quick Info",
+      "wilayahs": "Wilayahs",
+      "places": "Places",
+      "coordinates": "Coordinates",
+      "additionalInfo": "Additional Info",
+      "added": "Added",
+      "updated": "Updated",
+      "status": "Status",
+      "noWilayahs": "No wilayahs available"
+    },
+    "about": "About the Governate",
+    "needHelp": "Need Help?",
+    "helpMessage": "Have questions about this governate? We're here to help",
+    "counters": {
+      "wilayah": "wilayah",
+      "wilayahs": "wilayahs",
+      "place": "place",
+      "places": "places"
+    }
+  },
+  "wilayah": {
+    "wilayahsIn": "Wilayahs in {{governate}}",
+    "exploreDistricts": "Explore {{count}} districts in this governorate",
+    "noWilayahsFound": "No wilayahs available for this governorate",
+    "clickToExplore": "Click to explore",
+    "arabicName": "Arabic name",
+    "englishName": "English name",
+    "scrollLeft": "Scroll left",
+    "scrollRight": "Scroll right",
+    "swipeToSeeMore": "Swipe to see more",
+    "exploreDistrict": "Explore district",
+    "explore": "Explore",
+    "placesToVisit": "{{count}} places to visit"
+  },
+  "splash": {
+    "welcome": "Welcome",
+    "discover": "Discover Oman",
+    "explore": "Explore Destinations",
+    "appName": "الملاح",
+    "skip": "Skip"
+  },
+  "navigation": {
+    "destinations": "Destinations",
+    "goBack": "Go back"
+  },
+   "places": {
+    "title": "Places to Visit",
+    "allGovernates": "All Governates",
+    "loading": "Loading...",
+    "loadingPlaces": "Loading places...",
+    "loadingMap": "Loading map...",
+    "scriptsLoading": "Loading libraries...",
+    "error": "Error",
+    "errorLoadingPlaces": "Error loading places",
+    "errorLoadingMap": "Error loading map",
+    "tryAgain": "Try Again",
+    "retry": "Try Again",
+    "noPlaces": "No places found",
+    "noResults": "No places found",
+    "placesCount": "{count} places on map",
+    "coordinates": "Coordinates",
+    "close": "Close",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "placesList": "Places List",
+    "mapTitle": "Places",
+    "featured": "F",
+    "sultanateOfOman": "Sultanate of Oman",
+    "sultanateOman": "Sultanate of Oman",
+    "placesToVisit": "Places to Visit"
+  },
+  "categories": {
+    "tourism": "Tourism Places",
+    "foodBeverages": "Food & Beverages", 
+    "entertainment": "Entertainment",
+    "tourism_title": "Tourism Places",
+    "food_beverages_title": "Food & Beverages",
+    "entertainment_title": "Entertainment"
+  },
+  "common": {
+    "all": "All",
+    "search": "Search",
+    "filter": "Filter",
+    "location": "Location",
+    "category": "Category",
+    "featured": "Featured",
+    "viewDetails": "View Details",
+    "backToList": "Back to List",
+     "of": "of",
+    "and": "and",
+    "new": "NEW"
+  },
+  "errors": {
+    "invalidCategory": "Invalid Category",
+    "categoryNotExist": "The category does not exist",
+    "invalidCategoryMessage": "The specified places category does not exist",
+    "noValidCoordinates": "Loaded places do not have valid coordinates",
+    "addCoordinatesMessage": "Please add coordinates to places in database",
+    "googleMapsFailed": "Failed to load Google Maps",
+    "mapInitializationFailed": "Failed to initialize map"
+  },
+  "modal": {
+    "featuredPlaces": "Featured Places",
+    "places": "Places"
+  },
+  "placeDetails": {
+    "pageTitle": "Places Guide",
+    "defaultDescription": "Explore this amazing place",
+    "navigation": {
+      "places": "Places"
+    },
+    "errors": {
+      "notFound": "Place not found",
+      "loadFailed": "Sorry, we could not load the place data",
+      "loadFailedTitle": "Sorry, we could not load the place data",
+      "noPlaceId": "Place ID not found",
+      "notFoundDescription": "The requested place was not found or may be currently unavailable"
+    },
+    "actions": {
+      "tryAgain": "Try Again",
+      "goBack": "Go Back"
+    },
+    "about": {
+      "title": "About the Place",
+      "noDescription": "No detailed information is currently available for this place.",
+      "suitableFor": {
+        "title": "Suitable for",
+        "families": "Families",
+        "friends": "Friends",
+        "tourism": "Tourism"
+      },
+      "info": {
+        "title": "Information",
+        "region": "Region",
+        "wilayah": "Wilayah",
+        "rating": "Rating",
+        "age": "Age",
+        "allAges": "All ages"
+      },
+      "contact": {
+        "title": "Contact Information",
+        "website": "Website"
+      },
+      "hours": {
+        "title": "Opening Hours",
+        "open24": "Open 24 hours"
+      },
+      "location": {
+        "button": "Location",
+        "notAvailable": "Location not available"
+      },
+      "share": {
+        "button": "Share",
+        "linkCopied": "Link copied!"
+      }
+    },
+    "images": {
+      "noImages": "No images available",
+      "imageOf": "Image of {placeName}",
+      "loadFailed": "Failed to load image",
+      "closeGallery": "Close image gallery",
+      "previousImage": "Previous image",
+      "nextImage": "Next image",
+      "viewImage": "View image {index}",
+      "thumbnail": "Thumbnail {index}"
+    }
+  },
+  "firstVisitModal": {
+    "welcome": "Welcome to Almlah!",
+    "subtitle": "Choose your preferred vehicle for exploring Oman",
+    "selectedVehicle": "Selected Vehicle",
+    "skipForNow": "Skip for now",
+    "continue": "Continue"
+  },
+  "footer": {
+    "readyText": "Almlah is Ready",
+    "quickLinks": "Quick Links",
+    "categories": "Categories",
+    "home": "Home",
+    "places": "Places",
+    "restaurants": "Restaurants",
+    "destinations": "Destinations",
+    "tourism": "Tourism",
+    "hiking": "Hiking",
+    "recipes": "Recipes",
+    "generalInfo": "General Info",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfUse": "Terms of Use",
+    "contactUs": "Contact Us",
+    "rightsReserved": "All rights reserved."
+  },
+  "gallery": {
+    "title": "Photo Gallery"
   }
-
-
 }

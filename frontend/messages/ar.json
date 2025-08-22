@@ -9,6 +9,24 @@
     "about":"من نحن",
     "dir":"rtl"
   },
+  "navbar": {
+    "home": "الرئيسية",
+    "places": "الأماكن",
+    "restaurants": "المطاعم",
+    "destinations": "الوجهات",
+    "aboutUs": "من نحن",
+    "zatar": "زعتر",
+    "dashboard": "لوحة التحكم",
+    "managePlaces": "إدارة الأماكن",
+    "manageGovernorate": "إدارة المحافظات",
+    "manageWilayah": "إدارة الولايات",
+    "manageCategories": "إدارة الفئات",
+    "manageUsers": "إدارة المستخدمين"
+  },
+  "header": {
+    "defaultTitle": "شمال الشرقية",
+    "defaultSubtitle": "حيث الصحراء القاحلة"
+  },
   
   "destinations": {
     "title": "استكشف الوجهات",
@@ -53,7 +71,249 @@
         "description": "معلومات ونصائح مفيدة"
       }
     }
+  },
+  "governate": {
+    "title": "المحافظات",
+    "loading": {
+      "governateData": "جاري تحميل بيانات المحافظة...",
+      "images": "جاري تحميل الصور...",
+      "wilayahs": "جاري تحميل الولايات...",
+      "finalizing": "جاري الانتهاء...",
+      "general": "جاري التحميل...",
+      "technicalDetails": "تفاصيل الخطأ التقنية"
+    },
+    "error": {
+      "notFound": "المحافظة غير موجودة",
+      "connectionProblem": "مشكلة في الاتصال",
+      "general": "حدث خطأ",
+      "notFoundDescription": "لم يتم العثور على المحافظة المطلوبة أو قد تكون غير متاحة حالياً",
+      "connectionDescription": "تعذر الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى",
+      "generalDescription": "حدث خطأ غير متوقع أثناء تحميل بيانات المحافظة",
+      "persistsMessage": "إذا استمرت المشكلة، يرجى المحاولة لاحقاً أو الاتصال بالدعم الفني",
+      "loadFailure": "عذراً، لم نتمكن من تحميل بيانات المحافظة",
+      "loadImageFailure": "فشل تحميل الصورة",
+      "loadImageFailureModal": "فشل تحميل صورة المحافظة",
+      "idNotFound": "معرف المحافظة غير موجود"
+    },
+    "actions": {
+      "tryAgain": "إعادة المحاولة",
+      "goBack": "العودة",
+      "homePage": "الصفحة الرئيسية",
+      "contactUs": "اتصل بنا",
+      "getDirections": "احصل على الاتجاهات",
+      "share": "مشاركة",
+      "directions": "الاتجاهات"
+    },
+    "status": {
+      "online": "متصل",
+      "offline": "غير متصل",
+      "active": "نشط",
+      "inactive": "غير نشط"
+    },
+    "images": {
+      "noImages": "لا توجد صور متاحة للمحافظة",
+      "imageOf": "صورة",
+      "primary": "الرئيسية",
+      "morePhotos": "المزيد من الصور",
+      "closeGallery": "إغلاق معرض صور المحافظة",
+      "previousImage": "الصورة السابقة",
+      "nextImage": "الصورة التالية",
+      "viewImage": "عرض صورة المحافظة",
+      "thumbnail": "صورة مصغرة للمحافظة"
+    },
+    "info": {
+      "quickInfo": "معلومات سريعة",
+      "wilayahs": "الولايات",
+      "places": "الأماكن",
+      "coordinates": "الإحداثيات",
+      "additionalInfo": "معلومات إضافية",
+      "added": "تاريخ الإضافة",
+      "updated": "آخر تحديث",
+      "status": "الحالة",
+      "noWilayahs": "لا توجد ولايات متاحة"
+    },
+    "about": "نبذة عن المحافظة",
+    "needHelp": "هل تحتاج مساعدة?",
+    "helpMessage": "لديك أسئلة حول هذه المحافظة؟ نحن هنا للمساعدة",
+    "counters": {
+      "wilayah": "ولاية",
+      "wilayahs": "ولايات",
+      "place": "مكان", 
+      "places": "أماكن"
+    }
+  },
+  "wilayah": {
+    "wilayahsIn": "ولايات {{governate}}",
+    "exploreDistricts": "استكشف {{count}} من الولايات في هذه المحافظة",
+    "noWilayahsFound": "لا توجد ولايات متاحة لهذه المحافظة",
+    "clickToExplore": "انقر للاستكشاف",
+    "arabicName": "الاسم العربي",
+    "englishName": "الاسم الإنجليزي",
+    "scrollLeft": "انتقل يساراً",
+    "scrollRight": "انتقل يميناً",
+    "swipeToSeeMore": "مرر لرؤية المزيد",
+    "exploreDistrict": "استكشف الولاية",
+    "explore": "استكشف",
+    "placesToVisit": "{{count}} مكان للزيارة"
+  },
+  "splash": {
+    "welcome": "أهلاً وسهلاً",
+    "discover": "اكتشف عُمان",
+    "explore": "استكشف المحافظات",
+    "appName": "الملاح",
+    "skip": "تخطي"
+  },
+  "navigation": {
+    "destinations": "المحافظات",
+    "goBack": "العودة"
+  },
+  "places": {
+    "title": "الأماكن المراد زيارتها",
+    "allGovernates": "جميع المحافظات",
+    "loading": "جاري التحميل...",
+    "loadingPlaces": "جاري تحميل الأماكن...",
+    "loadingMap": "جاري تحميل الخريطة...",
+    "scriptsLoading": "جاري تحميل المكتبات...",
+    "error": "خطأ",
+    "errorLoadingPlaces": "خطأ في تحميل الأماكن",
+    "errorLoadingMap": "خطأ في تحميل الخريطة",
+    "tryAgain": "حاول مرة أخرى",
+    "retry": "حاول مرة أخرى",
+    "noPlaces": "لم يتم العثور على أماكن",
+    "noResults": "لم يتم العثور على أماكن",
+    "placesCount": "{count} مكان على الخريطة",
+    "coordinates": "الإحداثيات",
+    "close": "إغلاق",
+    "expand": "توسيع",
+    "collapse": "تصغير",
+    "placesList": "قائمة الأماكن",
+    "mapTitle": "الأماكن",
+    "featured": "م",
+    "sultanateOfOman": "سلطنة عمان",
+    "sultanateOman": "سلطنة عمان",
+    "placesToVisit": "الأماكن المراد زيارتها"
+  },
+  "categories": {
+    "tourism": "الأماكن السياحية",
+    "foodBeverages": "الأطعمة والمشروبات",
+    "entertainment": "الترفيه",
+    "tourism_title": "الأماكن السياحية",
+    "food_beverages_title": "الأطعمة والمشروبات",
+    "entertainment_title": "الترفيه"
+  },
+  "common": {
+    "all": "الكل",
+    "search": "بحث",
+    "filter": "تصفية",
+    "location": "الموقع",
+    "category": "الفئة",
+    "featured": "مميز",
+    "viewDetails": "عرض التفاصيل",
+    "backToList": "العودة إلى القائمة",
+    "of": "من",
+    "and": "و",
+    "new": "جديد"
+  },
+  "errors": {
+    "invalidCategory": "فئة غير صالحة",
+    "categoryNotExist": "الفئة غير موجودة",
+    "invalidCategoryMessage": "فئة الأماكن المحددة غير موجودة",
+    "noValidCoordinates": "الأماكن المحملة لا تحتوي على إحداثيات صالحة",
+    "addCoordinatesMessage": "يرجى إضافة إحداثيات للأماكن في قاعدة البيانات",
+    "googleMapsFailed": "فشل في تحميل خرائط جوجل",
+    "mapInitializationFailed": "فشل في تهيئة الخريطة"
+  },
+  "modal": {
+    "featuredPlaces": "الأماكن المميزة",
+    "places": "الأماكن"
+  },
+  "placeDetails": {
+    "pageTitle": "دليل الأماكن",
+    "defaultDescription": "استكشف هذا المكان الرائع",
+    "navigation": {
+      "places": "الأماكن"
+    },
+    "errors": {
+      "notFound": "المكان غير موجود",
+      "loadFailed": "عذراً، لم نتمكن من تحميل بيانات المكان",
+      "loadFailedTitle": "عذراً، لم نتمكن من تحميل بيانات المكان",
+      "noPlaceId": "معرف المكان غير موجود",
+      "notFoundDescription": "لم يتم العثور على المكان المطلوب أو قد يكون غير متاح حالياً"
+    },
+    "actions": {
+      "tryAgain": "إعادة المحاولة",
+      "goBack": "العودة"
+    },
+    "about": {
+      "title": "نبذة عن المكان",
+      "noDescription": "لا توجد معلومات تفصيلية متاحة حالياً عن هذا المكان.",
+      "suitableFor": {
+        "title": "مناسب لـ",
+        "families": "العائلات",
+        "friends": "الأصدقاء",
+        "tourism": "السياحة"
+      },
+      "info": {
+        "title": "المعلومات",
+        "region": "المنطقة",
+        "wilayah": "الولاية",
+        "rating": "التقييم",
+        "age": "العمر",
+        "allAges": "الجميع"
+      },
+      "contact": {
+        "title": "معلومات التواصل",
+        "website": "الموقع الإلكتروني"
+      },
+      "hours": {
+        "title": "ساعات العمل",
+        "open24": "يومياً 24 ساعة"
+      },
+      "location": {
+        "button": "الموقع",
+        "notAvailable": "الموقع غير متاح"
+      },
+      "share": {
+        "button": "مشاركة",
+        "linkCopied": "تم نسخ الرابط!"
+      }
+    },
+    "images": {
+      "noImages": "لا توجد صور متاحة",
+      "imageOf": "صورة {placeName}",
+      "loadFailed": "فشل تحميل الصورة",
+      "closeGallery": "إغلاق معرض الصور",
+      "previousImage": "الصورة السابقة",
+      "nextImage": "الصورة التالية",
+      "viewImage": "عرض الصورة {index}",
+      "thumbnail": "صورة مصغرة {index}"
+    }
+  },
+  "firstVisitModal": {
+    "welcome": "أهلاً وسهلاً بك في الملاح!",
+    "subtitle": "اختر مركبتك المفضلة لاستكشاف عُمان",
+    "selectedVehicle": "المركبة المختارة",
+    "skipForNow": "تخطي الآن",
+    "continue": "متابعة"
+  },
+  "footer": {
+    "readyText": "الملاح جاهز",
+    "quickLinks": "روابط سريعة",
+    "categories": "الفئات",
+    "home": "الرئيسية",
+    "places": "الأماكن",
+    "restaurants": "المطاعم",
+    "destinations": "الوجهات",
+    "tourism": "السياحة",
+    "hiking": "المشي لمسافات طويلة",
+    "recipes": "الوصفات",
+    "generalInfo": "معلومات عامة",
+    "privacyPolicy": "سياسة الخصوصية",
+    "termsOfUse": "شروط الاستخدام",
+    "contactUs": "اتصل بنا",
+    "rightsReserved": "جميع الحقوق محفوظة."
+  },
+  "gallery": {
+    "title": "معرض الصور"
   }
-
-
 }   
