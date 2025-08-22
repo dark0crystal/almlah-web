@@ -158,7 +158,7 @@ export default function GovernateImagesContainer({
 
       {/* Mobile & iPad Layout (below lg screens) */}
       <div className="block lg:hidden">
-        <div className="relative w-full max-w-md mx-auto bg-white overflow-hidden shadow-lg rounded-2xl border border-blue-100">
+        <div className="relative w-full bg-white overflow-hidden shadow-lg rounded-2xl border border-blue-100">
           
           {/* Main Image */}
           <div className="relative">
