@@ -1,13 +1,13 @@
 "use client"
 import React, { useState, useEffect, useRef } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Car } from '@/types';
 
 const cars: Car[] = [
   { id: '1', name: 'Al Ryam', image: '/alryam.png' },
   { id: '2', name: 'RB3', image: '/rb3.png' },
-  { id: '3', name: 'Chai', image: '/chai.png' },
+  { id: '3', name: 'Chai', image: '/G63.png' },
   { id: '4', name: 'Khayma', image: '/khayma.png' },
   { id: '5', name: 'Samhah', image: '/samhah.png' },
 ];
@@ -151,10 +151,6 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
     }
   };
 
-  const handleSkip = () => {
-    onClose();
-  };
-
   if (!isOpen) return null;
 
   const currentCarColor = dominantColors[cars[currentCarIndex]?.id] || '#3B82F6';
@@ -164,13 +160,6 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
       className="fixed inset-0 z-50 p-4 sm:p-6 md:p-8 transition-colors duration-500"
       style={{ backgroundColor: currentCarColor }}
     >
-        {/* Close button */}
-        <button
-          onClick={handleSkip}
-          className="absolute top-6 right-6 sm:top-8 sm:right-8 text-white/80 hover:text-white transition-colors z-20"
-        >
-          <XMarkIcon className="w-8 h-8" />
-        </button>
 
         {/* Modal content */}
         <div className="flex flex-col items-center justify-center min-h-screen">
@@ -188,9 +177,11 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
               disabled={isTransitioning}
               className="hidden sm:block p-3 transition-transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 z-10"
             >
-              <img 
+              <Image 
                 src="/arrow.png" 
                 alt="Previous" 
+                width={80}
+                height={80}
                 className="w-16 h-16 md:w-20 md:h-20 transform rotate-180 opacity-60 hover:opacity-100 transition-opacity"
               />
             </button>
@@ -208,9 +199,11 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
                 onClick={prevCar}
               >
                 <div className="relative">
-                  <img
+                  <Image
                     src={cars[getCarIndex(-1)].image}
                     alt={cars[getCarIndex(-1)].name}
+                    width={128}
+                    height={128}
                     className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 object-contain mx-auto"
                   />
                   <div className="mt-2 text-center">
@@ -240,9 +233,11 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
                   onClick={() => handleCarSelect(cars[currentCarIndex])}
                 >
                   <div className="w-48 h-48 sm:w-52 sm:h-52 md:w-56 md:h-56 lg:w-64 lg:h-64 flex items-center justify-center">
-                    <img
+                    <Image
                       src={cars[currentCarIndex].image}
                       alt={cars[currentCarIndex].name}
+                      width={256}
+                      height={256}
                       className="max-w-full max-h-full object-contain"
                     />
                   </div>
@@ -265,9 +260,11 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
                 onClick={nextCar}
               >
                 <div className="relative">
-                  <img
+                  <Image
                     src={cars[getCarIndex(1)].image}
                     alt={cars[getCarIndex(1)].name}
+                    width={128}
+                    height={128}
                     className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 object-contain mx-auto"
                   />
                   <div className="mt-2 text-center">
@@ -285,9 +282,11 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
               disabled={isTransitioning}
               className="hidden sm:block p-3 transition-transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 z-10"
             >
-              <img 
+              <Image 
                 src="/arrow.png" 
                 alt="Next" 
+                width={80}
+                height={80}
                 className="w-16 h-16 md:w-20 md:h-20 opacity-60 hover:opacity-100 transition-opacity"
               />
             </button>
@@ -322,13 +321,7 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
           </div>
 
           {/* Action buttons */}
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0 mt-8 sm:mt-12 w-full max-w-md">
-            <button
-              onClick={handleSkip}
-              className="px-6 py-3 text-white/70 hover:text-white transition-colors text-lg"
-            >
-              {t('skipForNow')}
-            </button>
+          <div className="flex justify-center items-center mt-8 sm:mt-12 w-full max-w-md">
             <button
               onClick={handleConfirm}
               disabled={!selectedCar}
