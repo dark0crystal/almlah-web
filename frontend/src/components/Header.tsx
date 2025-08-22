@@ -27,7 +27,7 @@ export default function Header({
       <div className="relative overflow-hidden">
         {/* Background with gradient */}
         <div 
-          className="relative min-h-[400px] rounded-3xl mx-6 mb-6 bg-gradient-to-br from-emerald-900 via-emerald-800 to-black"
+          className="relative min-h-[clamp(300px,40vh,500px)] rounded-3xl mx-6 mb-6 bg-gradient-to-br from-emerald-900 via-emerald-800 to-black"
           style={backgroundImage ? {
             backgroundImage: `url(${backgroundImage})`,
             backgroundSize: 'cover',
@@ -46,7 +46,7 @@ export default function Header({
           <div className="relative z-10 flex items-center justify-between h-full p-8 md:p-12" >
             {/* Text Content */}
             <div className="text-white max-w-lg">
-              <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 leading-tight">
+              <h2 className="text-[clamp(1.25rem,4vw,3rem)] font-bold mb-2 leading-tight">
                 {headerTitle.includes(' ') ? (
                   <>
                     {headerTitle.split(' ').slice(0, -2).join(' ')} <span className="text-emerald-300">{headerTitle.split(' ').slice(-2).join(' ')}</span>
@@ -55,7 +55,7 @@ export default function Header({
                   <span className="text-emerald-300">{headerTitle}</span>
                 )}
               </h2>
-              <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-6">
+              <h3 className="text-[clamp(1rem,3vw,2.5rem)] font-bold mb-6 leading-relaxed">
                 {headerSubtitle}
               </h3>
               
