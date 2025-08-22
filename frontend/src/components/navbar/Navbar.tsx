@@ -34,21 +34,24 @@ export default async function NavBar({ style }: NavBarProps) {
   ];
 
   return (
-    <div dir={direction} className="sticky top-0 z-50 bg-[#f3f3eb] ">
-      <nav className={`${style} flex items-center justify-between p-2 lg:p-2 border-b border-gray-200  lg:w-full h-[8vh] mx-auto`}>
-        <div className="flex items-center">
-          <Brand />
+    <div dir={direction} className="sticky top-0 z-50 bg-[#f3f3eb]">
+      <nav className="flex items-center justify-center p-2 lg:p-2 border-b border-gray-200 w-full h-[8vh]">
+        <div className="w-[88vw] mx-auto flex items-center justify-between">
+          <div className="flex items-center space-x-6">
+            <Brand />
+            <div className="hidden xl:flex items-center space-x-6">
+              {navLinks.map((navLink, index) => (
+                <Link key={index} href={navLink.direction}>
+                  <h1 className="text-lg mx-2 font-normal hover:text-blue-600 transition-colors duration-200">{navLink.name}</h1>
+                </Link>
+              ))}
+            </div>
+          </div>
+          <div className="hidden xl:flex">
+            <LanguageChange />
+          </div>
+          <MobileMenu navLinks={navLinks} dashboardLinks={dashboardLinks} />
         </div>
-        <div className="hidden md:flex items-center space-x-6">
-          {navLinks.map((navLink, index) => (
-            <Link key={index} href={navLink.direction}>
-              <h1 className="text-lg mx-2 font-normal hover:text-blue-600 transition-colors duration-200">{navLink.name}</h1>
-            </Link>
-          ))}
-          
-          <LanguageChange />
-        </div>
-        <MobileMenu navLinks={navLinks} dashboardLinks={dashboardLinks} />
       </nav>
     </div>
   );
