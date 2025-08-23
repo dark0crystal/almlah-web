@@ -7,7 +7,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST ? `${process.env.NEXT_PUBL
 export const CATEGORY_IDS = {
   TOURISM: "70f3cab9-5222-4716-b8ac-d76a399dcf3d",
   RESTAURANTS: "ef8ae8b3-9643-4204-bc93-fc239ade5b40", // NEW: Restaurant category ID
-  FOOD_BEVERAGES: "another-category-id-here",
+  FOOD_BEVERAGES: "ef8ae8b3-9643-4204-bc93-fc239ade5b40",
   ENTERTAINMENT: "yet-another-category-id-here",
   // Add more categories as needed
 } as const;

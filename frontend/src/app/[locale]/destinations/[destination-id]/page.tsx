@@ -4,11 +4,11 @@ import { useParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { MapPin, Users, Building, ArrowLeft, Share2, ExternalLink } from 'lucide-react';
 import GovernateImagesContainer from "./GovernateImagesContainer";
-import GovernateInfoSidebar from "./GovernateInfoSidebar";
 import GovernateLoadingSkeleton from "./GovernateLoadingSkeleton";
 import GovernateErrorComponent from "./GovernateErrorComponent";
 import DestinationPlacesWrapper from "./DestinationPlacesWrapper";
 import WilayahCardsWrapper from "./WilayahCardsWrapper";
+import Footer from '@/components/Footer';
 import { fetchGovernateById, fetchGovernateWilayahs, GovernateDetails, SimpleWilayah } from '@/services/governateApi';
 
 interface GovernateDetailsProps {
@@ -190,7 +190,7 @@ export default function GovernateDetailsPage({ params }: GovernateDetailsProps) 
   });
 
   return (
-    <div className="bg-white text-black">
+    <div className="text-black">
       {/* Page Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-10">
         
@@ -245,12 +245,6 @@ export default function GovernateDetailsPage({ params }: GovernateDetailsProps) 
             </p>
           )}
           
-          {governateDescription && (
-            <p className="text-lg text-gray-700">
-              {governateDescription}
-            </p>
-          )}
-          
           {/* Statistics */}
           <div className="flex flex-wrap items-center gap-6 mt-6 text-sm text-gray-600">
             {governate.wilayah_count > 0 && (
@@ -282,58 +276,43 @@ export default function GovernateDetailsPage({ params }: GovernateDetailsProps) 
           </div>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Main Content - Full Width */}
+        <div className="w-full">
+          {/* Image Gallery */}
+          <GovernateImagesContainer 
+            images={governate.images || []} 
+            governateName={governateName}
+            language={locale}
+          />
           
-          {/* Main Content - Images and Details */}
-          <div className="lg:col-span-3">
-            {/* Image Gallery */}
-            <GovernateImagesContainer 
-              images={governate.images || []} 
-              governateName={governateName}
-              language={locale}
-            />
-            
-            {/* About Section */}
-            {governateDescription && (
-              <div className="mt-12">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                  {t('about')}
-                </h2>
-                <div className="prose prose-lg max-w-none">
-                  <p className="text-gray-700 leading-relaxed">
-                    {governateDescription}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Wilayahs Section */}
-            {wilayahs && wilayahs.length > 0 && (
-              <div className="mt-12">
-                <WilayahCardsWrapper 
-                  wilayahs={wilayahs}
-                  governateName={governateName}
-                />
-              </div>
-            )}
-
-            {/* Places to Visit Section */}
+          {/* About Section */}
+          {governateDescription && (
             <div className="mt-12">
-              <DestinationPlacesWrapper 
-                governateId={governate.id}
-                locale={locale}
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                {t('about')}
+              </h2>
+              <div className="prose prose-lg max-w-none">
+                <p className="text-gray-700 leading-relaxed">
+                  {governateDescription}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Wilayahs Section - Full Width */}
+          {wilayahs && wilayahs.length > 0 && (
+            <div className="mt-12">
+              <WilayahCardsWrapper 
+                wilayahs={wilayahs}
+                governateName={governateName}
               />
             </div>
-          </div>
+          )}
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <GovernateInfoSidebar 
-              governate={governate} 
-              wilayahs={wilayahs}
-              language={locale}
-              onGetDirections={handleGetDirections}
+          {/* Places to Visit Section */}
+          <div className="mt-12">
+            <DestinationPlacesWrapper 
+              governateId={governate.id}
             />
           </div>
         </div>
@@ -341,6 +320,9 @@ export default function GovernateDetailsPage({ params }: GovernateDetailsProps) 
         {/* Extra spacing */}
         <div className="h-20" />
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
