@@ -11,9 +11,10 @@ interface PlaceCardProps {
   locale: string;
   isSelected?: boolean;
   onPlaceClick?: (placeId: string) => void;
+  isHorizontalScroll?: boolean; // New prop to handle horizontal scroll layout
 }
 
-export default function PlaceCard({ place, locale, isSelected = false, onPlaceClick }: PlaceCardProps) {
+export default function PlaceCard({ place, locale, isSelected = false, onPlaceClick, isHorizontalScroll = false }: PlaceCardProps) {
   const router = useRouter();
   const t = useTranslations('places');
   const [isHovered, setIsHovered] = useState(false);
@@ -88,14 +89,86 @@ export default function PlaceCard({ place, locale, isSelected = false, onPlaceCl
     return t('foodBeverages');
   };
 
+  // Render horizontal scroll card (for bottom sheet collapsed state)
+  if (isHorizontalScroll) {
+    return (
+      <div 
+        className={`rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden bg-white shadow-sm ${
+          isSelected 
+            ? 'border-2 border-blue-500' 
+            : 'border border-gray-200'
+        } ${locale === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}
+        onClick={handleCardClick}
+      >
+        <div className="w-full">
+          {/* Image Section */}
+          <div className="w-full h-40 p-2">
+            <div className="relative w-full h-full rounded-xl overflow-hidden">
+              {!imageError ? (
+                <Image 
+                  src={getImageSrc()}
+                  alt={placeName}
+                  fill
+                  sizes="300px"
+                  className="object-cover"
+                  onError={() => setImageError(true)}
+                  priority={false}
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center rounded-xl">
+                  <MapPin className="w-8 h-8 text-gray-400" />
+                </div>
+              )}
+
+              {/* Corner badge */}
+              {place.is_featured && (
+                <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm rounded-full p-1">
+                  <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">
+                      {locale === 'ar' ? 'م' : 'F'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Content Section */}
+          <div className={`px-3 pb-3 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
+            {/* Location */}
+            <div className="flex items-center gap-1 mb-1">
+              <MapPin className="w-3 h-3 text-gray-500 flex-shrink-0" />
+              <p className="text-gray-500 text-xs line-clamp-1 font-medium">
+                {locationString}
+              </p>
+            </div>
+
+            {/* Place Name */}
+            <h3 className="font-semibold text-gray-800 text-sm mb-1 line-clamp-2 leading-tight">
+              {placeName}
+            </h3>
+
+            {/* Subtitle */}
+            {placeSubtitle && (
+              <p className="text-gray-600 text-xs line-clamp-1">
+                {placeSubtitle}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular card layout (for full list view)
   return (
     <div 
-      className={`bg-white rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden ${
+      className={`rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden xl:bg-transparent bg-white ${
         isSelected 
           ? 'border-2 border-blue-500 transform -translate-y-1' 
-          : 'border border-gray-200'
+          : ''
       } ${
-        isHovered && !isSelected ? 'transform -translate-y-1' : ''
+        isHovered && !isSelected ? 'transform -translate-y-1 shadow-lg' : ''
       } ${locale === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

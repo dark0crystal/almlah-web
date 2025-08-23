@@ -150,7 +150,6 @@ export const fetchPlaces = async (
       url += `/${governateId}`;
     }
 
-    console.log('Fetching places from:', url);
 
     const response = await fetch(url, {
       headers: { 
@@ -167,7 +166,6 @@ export const fetchPlaces = async (
     }
 
     const responseData = await response.json();
-    console.log('API Response:', responseData);
 
     // Extract places data
     let placesData: BackendPlaceResponse[] = [];
@@ -177,7 +175,6 @@ export const fetchPlaces = async (
       placesData = responseData.data;
     } else if (responseData.success && responseData.data === null) {
       // Handle null data case - no places found for this category/governate combination
-      console.log('No places found for the specified filters');
       return [];
     } else {
       console.error('Unexpected response format:', responseData);
@@ -186,8 +183,6 @@ export const fetchPlaces = async (
 
     // Transform to frontend Place type with proper coordinate mapping
     const transformedPlaces = placesData.map(place => {
-      // Debug coordinate mapping
-      console.log(`Mapping place ${place.name_en}: backend lat=${place.latitude}, lng=${place.longitude}`);
       
       const transformedPlace: Place = {
         id: place.id,
@@ -224,11 +219,9 @@ export const fetchPlaces = async (
         }] : []
       };
       
-      console.log(`Transformed place ${place.name_en}: frontend lat=${transformedPlace.lat}, lng=${transformedPlace.lng}`);
       return transformedPlace;
     });
 
-    console.log('Final transformed places:', transformedPlaces);
     return transformedPlaces;
 
   } catch (error) {
@@ -270,7 +263,6 @@ export const getCategoryName = (categoryType: CategoryType, locale: 'ar' | 'en' 
 export const fetchPlaceById = async (placeId: string): Promise<Place | null> => {
   try {
     const url = `${API_BASE_URL}/places/${placeId}/complete`;
-    console.log('Fetching complete place from:', url);
 
     const response = await fetch(url, {
       headers: { 
@@ -291,7 +283,6 @@ export const fetchPlaceById = async (placeId: string): Promise<Place | null> => 
     }
 
     const responseData = await response.json();
-    console.log('Complete place API Response:', responseData);
 
     let placeData: BackendPlaceCompleteResponse;
     if (responseData.success && responseData.data) {
@@ -380,9 +371,6 @@ export const fetchPlaceById = async (placeId: string): Promise<Place | null> => 
       })) || []
     };
 
-    console.log('Transformed complete place:', transformedPlace);
-    console.log('Images count:', transformedPlace.images?.length || 0);
-    console.log('Content sections count:', transformedPlace.content_sections?.length || 0);
     return transformedPlace;
 
   } catch (error) {
@@ -525,7 +513,6 @@ export const fetchRecentPlaces = async (
     }
 
     const url = `${API_BASE_URL}/recent?${params.toString()}`;
-    console.log('Fetching recent places from:', url);
 
     const response = await fetch(url, {
       headers: { 
@@ -542,7 +529,6 @@ export const fetchRecentPlaces = async (
     }
 
     const responseData = await response.json();
-    console.log('Recent places API Response:', responseData);
 
     let data: RecentPlacesResponse;
     if (responseData.success && responseData.data) {
