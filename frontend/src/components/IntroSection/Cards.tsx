@@ -4,7 +4,7 @@ import samhah from "../../../public/samhah.png"
 // Card1.tsx - Wide Card (Top)
 export function WideCard() {
   return (
-    <div className="relative w-full h-40 md:h-48 lg:h-56 bg-[#FFC00A] rounded-3xl overflow-hidden">
+    <div className="relative w-full h-32 md:h-40 lg:h-48 bg-[#FFC00A] rounded-3xl overflow-hidden">
       {/* Yellow geometric shapes */}
       <div className="absolute inset-0">
         <div className="absolute top-8 right-12 z-10 transform scale-[4] rotate-12">
@@ -39,7 +39,7 @@ export function WideCard() {
 
 export function SmallCard1() {
   return (
-    <div className="relative w-full aspect-square bg-[#F5E6A8] rounded-3xl overflow-hidden">
+    <div className="relative w-full h-32 md:h-40 lg:h-48 bg-[#F5E6A8] rounded-3xl overflow-hidden">
       {/* Main text - at the top */}
       <div className="absolute top-2 md:top-4 lg:top-6 left-0 right-0 flex justify-center">
         <h3 className="text-3xl md:text-5xl lg:text-6xl font-black text-black z-40">
@@ -67,6 +67,25 @@ export function SmallCard1() {
           مراحب
         </h3>
       </div>
+      {/* Forth shadow - middle */}
+      <div className="absolute top-18 md:top-36 lg:top-46 left-0 right-0 flex justify-center">
+        <h3 className="text-3xl md:text-5xl lg:text-6xl font-black text-[#E6D085] z-20">
+          مراحب
+        </h3>
+      </div>
+      {/* Fifth shadow - middle */}
+      <div className="absolute top-22 md:top-44 lg:top-56 left-0 right-0 flex justify-center">
+        <h3 className="text-3xl md:text-5xl lg:text-6xl font-black text-[#E6D085] z-20">
+          مراحب
+        </h3>
+      </div>
+      {/* Sixsth shadow - middle */}
+      <div className="absolute top-26 md:top-52 lg:top-66 left-0 right-0 flex justify-center">
+        <h3 className="text-3xl md:text-5xl lg:text-6xl font-black text-[#E6D085] z-20">
+          مراحب
+        </h3>
+      </div>
+      
     </div>
   );
 }
@@ -74,7 +93,7 @@ export function SmallCard1() {
 // Card3.tsx - Small Card (Bottom Right)
 export function SmallCard2() {
   return (
-    <div className="relative w-full aspect-square bg-white rounded-3xl overflow-hidden">
+    <div className="relative w-full h-32 md:h-40 lg:h-48 bg-white rounded-3xl overflow-hidden">
       
 
       {/* Image at bottom */}

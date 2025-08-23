@@ -1,44 +1,33 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { useTranslations } from 'next-intl';
 import Image from "next/image";
 
 interface DestinationsHeaderProps {
-  title?: string;
-  subtitle?: string;
   imageSrc?: string;
   imageAlt?: string;
 }
 
 export default function DestinationsHeader({
-  title = "Discover Destinations",
-  subtitle = "Explore amazing places across the region",
   imageSrc = "/gallery/destination-hero.jpg",
   imageAlt = "Destination landscape"
 }: DestinationsHeaderProps) {
   const params = useParams();
   const locale = (params?.locale as string) || 'en';
+  const t = useTranslations('destinations');
   
   const isRTL = locale === 'ar';
-  
-  // Arabic translations
-  const getTitle = () => {
-    return locale === 'ar' ? 'اكتشف الوجهات' : title;
-  };
-  
-  const getSubtitle = () => {
-    return locale === 'ar' ? 'استكشف أماكن مذهلة عبر المنطقة' : subtitle;
-  };
 
   return (
-    <div className={`w-full h-[40vh] flex items-center justify-center ${isRTL ? 'rtl' : 'ltr'}`}>
+    <div className={`w-full h-[40vh] flex items-center justify-center mt-10`}>
       {/* Main card container with rounded corners and dark background */}
       <div className="w-[88vw] h-full bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 rounded-3xl overflow-hidden shadow-2xl relative">
         
-        {/* Desktop Layout - Side by side */}
-        <div className={`hidden md:flex items-center h-full ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
-          {/* Left side - Image */}
-          <div className="w-1/2 h-full relative">
+        {/* Desktop Layout - Full width with text positioned at corners */}
+        <div className="hidden md:block h-full relative">
+          {/* Background Image - Full width */}
+          <div className="w-full h-full relative">
             <Image
               src={imageSrc}
               alt={imageAlt}
@@ -48,17 +37,20 @@ export default function DestinationsHeader({
             />
           </div>
           
-          {/* Right side - Text content */}
-          <div className={`w-1/2 h-full flex flex-col justify-center px-8 lg:px-12 ${isRTL ? 'text-right' : 'text-left'}`}>
-            {/* Main title */}
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight">
-              {getTitle()}
-            </h1>
-            
-            {/* Subtitle */}
-            <p className="text-sm md:text-base text-white/80 mb-6 leading-relaxed">
-              {getSubtitle()}
-            </p>
+          {/* Text overlay positioned at bottom corners */}
+          <div className="absolute inset-0 flex items-end">
+            {/* Text content positioned at bottom corner based on locale */}
+            <div className={`p-8 lg:p-12 max-w-md ${isRTL ? 'ml-auto text-right' : 'mr-auto text-left'}`}>
+              {/* Main title */}
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight">
+                {t('header.title')}
+              </h1>
+              
+              {/* Subtitle */}
+              <p className="text-sm md:text-base text-white/80 mb-6 leading-relaxed">
+                {t('header.subtitle')}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -76,15 +68,15 @@ export default function DestinationsHeader({
           </div>
           
           {/* Bottom - Text content */}
-          <div className={`w-full h-1/2 flex flex-col justify-center px-6 ${isRTL ? 'text-right' : 'text-left'}`}>
+          <div className={`w-full h-1/2 flex flex-col justify-center px-6`}>
             {/* Main title */}
             <h1 className="text-xl sm:text-2xl font-bold text-white mb-2 leading-tight">
-              {getTitle()}
+              {t('header.title')}
             </h1>
             
             {/* Subtitle */}
             <p className="text-sm text-white/80 leading-relaxed">
-              {getSubtitle()}
+              {t('header.subtitle')}
             </p>
           </div>
         </div>
