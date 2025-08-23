@@ -21,7 +21,7 @@ export default function Heading() {
   ];
 
   return (
-    <div className="relative w-[88vw] h-[50vh] m-16 mb-0 rounded-3xl overflow-hidden bg-[#fce7a1] flex items-center justify-center">
+    <div className="relative w-[88vw] h-[50vh] mt-8 mx-16 mb-0 rounded-3xl overflow-hidden bg-[#fce7a1] flex items-center justify-center">
       
       {/* Static Images Background - Positioned at Bottom */}
       <div className="absolute bottom-0 left-0 right-0 h-1/2 z-0">

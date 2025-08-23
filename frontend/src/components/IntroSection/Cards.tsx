@@ -4,7 +4,7 @@ import samhah from "../../../public/samhah.png"
 // Card1.tsx - Wide Card (Top)
 export function WideCard() {
   return (
-    <div className="relative w-full h-48 bg-[#FFC00A] rounded-3xl overflow-hidden">
+    <div className="relative w-full h-40 md:h-48 lg:h-56 bg-[#FFC00A] rounded-3xl overflow-hidden">
       {/* Yellow geometric shapes */}
       <div className="absolute inset-0">
         <div className="absolute top-8 right-12 z-10 transform scale-[4] rotate-12">
@@ -19,15 +19,15 @@ export function WideCard() {
         <Image
           src={samhah}
           alt="Content image"
-          width={120}
-          height={80}
-          className="object-cover rounded-t-xl"
+          width={80}
+          height={60}
+          className="md:w-[100px] md:h-[70px] lg:w-[120px] lg:h-[80px] object-cover rounded-t-xl"
         />
       </div>
 
       {/* Arabic Text */}
       <div className="absolute right-8 top-1/2 transform -translate-y-1/2 z-30">
-        <h2 className="text-black font-black text-2xl md:text-3xl text-right leading-tight">
+        <h2 className="text-black font-black text-lg md:text-2xl lg:text-3xl text-right leading-tight">
           محتوى أكثر
           <br />
           في كل مكان
@@ -39,31 +39,31 @@ export function WideCard() {
 
 export function SmallCard1() {
   return (
-    <div className="relative w-full h-48 bg-[#F5E6A8] rounded-3xl overflow-hidden">
+    <div className="relative w-full aspect-square bg-[#F5E6A8] rounded-3xl overflow-hidden">
       {/* Main text - at the top */}
-      <div className="absolute top-6 left-0 right-0 flex justify-center">
-        <h3 className="text-6xl font-black text-black z-40">
+      <div className="absolute top-2 md:top-4 lg:top-6 left-0 right-0 flex justify-center">
+        <h3 className="text-3xl md:text-5xl lg:text-6xl font-black text-black z-40">
           مراحب
         </h3>
       </div>
       
       {/* First shadow - slightly below */}
-      <div className="absolute top-16 left-0 right-0 flex justify-center">
-        <h3 className="text-6xl font-black text-[#E6D085] z-30">
+      <div className="absolute top-6 md:top-12 lg:top-16 left-0 right-0 flex justify-center">
+        <h3 className="text-3xl md:text-5xl lg:text-6xl font-black text-[#E6D085] z-30">
           مراحب
         </h3>
       </div>
       
       {/* Second shadow - middle */}
-      <div className="absolute top-26 left-0 right-0 flex justify-center">
-        <h3 className="text-6xl font-black text-[#E6D085] z-20">
+      <div className="absolute top-10 md:top-20 lg:top-26 left-0 right-0 flex justify-center">
+        <h3 className="text-3xl md:text-5xl lg:text-6xl font-black text-[#E6D085] z-20">
           مراحب
         </h3>
       </div>
       
       {/* Third shadow - near bottom */}
-      <div className="absolute top-36 left-0 right-0 flex justify-center">
-        <h3 className="text-6xl font-black text-[#E6D085] z-10">
+      <div className="absolute top-14 md:top-28 lg:top-36 left-0 right-0 flex justify-center">
+        <h3 className="text-3xl md:text-5xl lg:text-6xl font-black text-[#E6D085] z-10">
           مراحب
         </h3>
       </div>
@@ -74,7 +74,7 @@ export function SmallCard1() {
 // Card3.tsx - Small Card (Bottom Right)
 export function SmallCard2() {
   return (
-    <div className="relative w-full h-48 bg-white rounded-3xl overflow-hidden">
+    <div className="relative w-full aspect-square bg-white rounded-3xl overflow-hidden">
       
 
       {/* Image at bottom */}
@@ -88,25 +88,15 @@ export function SmallCard2() {
         />
       </div>
 
-      {/* Sound wave visualization */}
-      <div className="absolute bottom-16 left-6 z-20 flex items-end gap-1">
-        <div className="w-1 h-8 bg-[#FFC00A] rounded-full"></div>
-        <div className="w-1 h-4 bg-[#FFC00A] rounded-full"></div>
-        <div className="w-1 h-6 bg-[#FFC00A] rounded-full"></div>
-        <div className="w-1 h-3 bg-[#FFC00A] rounded-full"></div>
-        <div className="w-1 h-5 bg-[#FFC00A] rounded-full"></div>
-        <div className="w-1 h-2 bg-[#FFC00A] rounded-full"></div>
-        <div className="w-1 h-4 bg-[#FFC00A] rounded-full"></div>
-      </div>
 
       {/* Speaker icon */}
-      <div className="absolute bottom-12 left-4 z-20">
+      <div className="absolute bottom-6 md:bottom-8 lg:bottom-12 left-4 z-20">
         <div className="text-black text-lg">🔊</div>
       </div>
 
       {/* Arabic Text */}
-      <div className="absolute top-16 right-4 left-4 z-30">
-        <h3 className="text-black font-black text-lg md:text-xl text-center leading-tight">
+      <div className="absolute top-6 md:top-10 lg:top-16 right-4 left-4 z-30">
+        <h3 className="text-black font-black text-sm md:text-lg lg:text-xl text-center leading-tight">
           كل يوم،مكان
           <br />
           سياحي جديد

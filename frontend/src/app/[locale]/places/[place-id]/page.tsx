@@ -7,6 +7,7 @@ import ImagesContainer from "./ImagesContainer";
 import AboutAndLocation from "./AboutAndLocation";
 import { fetchPlaceById } from '@/services/placesApi';
 import { Place } from '@/types';
+import Footer from '@/components/Footer';
 
 interface PlaceDetailsProps {
   params?: {
@@ -31,10 +32,6 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
   // Extract place ID - handle both cases
   const placeId = params?.['place-id'] || urlParams?.['place-id'] as string;
   
-  console.log('PlaceDetails - placeId:', placeId);
-  console.log('PlaceDetails - params:', params);
-  console.log('PlaceDetails - urlParams:', urlParams);
-  console.log('PlaceDetails - current locale:', locale);
 
   // Updated loadPlace function - now fetches complete data in both languages
   const loadPlace = async () => {
@@ -42,9 +39,7 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
       setLoading(true);
       setError(null);
       
-      console.log('Loading complete place data for ID:', placeId);
-      
-      // NEW: Use the complete endpoint to get both languages at once
+      // Use the complete endpoint to get both languages at once
       const placeData = await fetchPlaceById(placeId);
       
       if (!placeData) {
@@ -53,11 +48,6 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
       }
       
       setPlace(placeData);
-      console.log('Complete place loaded successfully:', placeData);
-      console.log('Place has both languages:', {
-        ar: { name: placeData.name_ar, description: placeData.description_ar },
-        en: { name: placeData.name_en, description: placeData.description_en }
-      });
       
     } catch (err) {
       console.error('Error loading place:', err);
@@ -70,14 +60,13 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
   // Updated useEffect - removed language dependency since we get both languages
   useEffect(() => {
     if (!placeId) {
-      console.error('No place ID found in params');
       setError(t('errors.noPlaceId'));
       setLoading(false);
       return;
     }
 
     loadPlace();
-  }, [placeId]); // Removed language from dependency array
+  }, [placeId]);
 
   // Update page title
   useEffect(() => {
@@ -89,7 +78,7 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
 
   if (loading) {
     return (
-      <div className="bg-white text-black min-h-screen">
+      <div className="text-black min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-10">
           {/* Loading skeleton */}
           <div className="animate-pulse">
@@ -141,7 +130,7 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
 
   if (error) {
     return (
-      <div className="bg-white text-black min-h-screen">
+      <div className="text-black min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-10">
           <div className="text-center py-20">
             <div className="text-red-600 mb-4">
@@ -176,7 +165,7 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
 
   if (!place) {
     return (
-      <div className="bg-white text-black min-h-screen">
+      <div className="text-black min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-10">
           <div className="text-center py-20">
             <div className="text-gray-400 mb-4">
@@ -208,15 +197,9 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
   const placeDescription = language === 'ar' ? place.description_ar : place.description_en;
   const placeSubtitle = language === 'ar' ? place.subtitle_ar : place.subtitle_en;
 
-  console.log('Rendering place with complete data:', {
-    id: place.id,
-    names: { ar: place.name_ar, en: place.name_en },
-    descriptions: { ar: place.description_ar, en: place.description_en },
-    imagesCount: place.images?.length || 0
-  });
 
   return (
-    <div className="bg-white text-black">
+    <div className="text-black">
       {/* Page Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-10">
         
@@ -278,59 +261,6 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
           placeName={placeName}
         />
 
-        {/* Debug information for images */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-4 bg-gray-100 rounded-lg">
-            <h3 className="text-sm font-semibold mb-2">Debug Info (Development Only)</h3>
-            <div className="text-xs space-y-1">
-              <p>Total images: {place.images?.length || 0}</p>
-              <p>Primary image: {place.primary_image || 'None'}</p>
-              <p>API Base URL: {process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:9000'}</p>
-              {place.images && place.images.length > 0 && (
-                <div>
-                  <p className="font-semibold">Image URLs:</p>
-                  {place.images.map((img, index) => (
-                    <div key={img.id} className="ml-2">
-                      <p>Image {index + 1}: {img.image_url}</p>
-                      <p>  - Is Primary: {img.is_primary ? 'Yes' : 'No'}</p>
-                      <p>  - Display Order: {img.display_order}</p>
-                    </div>
-                  ))}
-                  
-                  {/* Test image display */}
-                  <div className="mt-4">
-                    <p className="font-semibold">Test Image Display:</p>
-                    {place.images.slice(0, 2).map((img, index) => {
-                      const testUrl = img.image_url.startsWith('http') 
-                        ? img.image_url 
-                        : `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:9000'}${img.image_url.startsWith('/') ? img.image_url : `/${img.image_url}`}`;
-                      
-                      return (
-                        <div key={img.id} className="mt-2 p-2 border rounded">
-                          <p>Test Image {index + 1}:</p>
-                          <p className="text-xs text-gray-600">Original: {img.image_url}</p>
-                          <p className="text-xs text-gray-600">Processed: {testUrl}</p>
-                          <div className="mt-2 w-32 h-24 bg-gray-200 rounded overflow-hidden">
-                            <img 
-                              src={testUrl} 
-                              alt={`Test ${index + 1}`}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                console.error('Test image failed to load:', testUrl);
-                                e.currentTarget.style.display = 'none';
-                              }}
-                              onLoad={() => console.log('Test image loaded successfully:', testUrl)}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* About and Location */}
         <AboutAndLocation 
@@ -338,9 +268,10 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
           language={language} 
         />
         
-        {/* Extra spacing */}
-        <div className="h-20" />
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
