@@ -7,17 +7,23 @@ import { Place } from "@/types"; // Using Place type instead of Restaurant
 
 interface RestaurantCardProps {
   restaurant: Place; // Changed from Restaurant to Place
+  locale: string;
+  isSelected?: boolean;
+  onRestaurantClick?: (restaurantId: string) => void;
+  isHorizontalScroll?: boolean; // New prop to handle horizontal scroll layout
 }
 
-export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
+export default function RestaurantCard({ restaurant, locale, isSelected = false, onRestaurantClick, isHorizontalScroll = false }: RestaurantCardProps) {
   const router = useRouter();
-  const params = useParams();
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const locale = (params?.locale as string) || 'en';
-
   const handleCardClick = () => {
+    // Call onRestaurantClick if provided (for map interaction)
+    if (onRestaurantClick) {
+      onRestaurantClick(restaurant.id);
+    }
+    
     // Fixed navigation path to match your dynamic route structure
     const navigationPath = locale 
       ? `/${locale}/restaurants/${restaurant.id}` 
@@ -81,18 +87,102 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
     return locale === 'ar' ? 'مطاعم ومشروبات' : 'Food & Beverages';
   };
 
+  // Render horizontal scroll card (for bottom sheet collapsed state)
+  if (isHorizontalScroll) {
+    return (
+      <div 
+        className={`rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden bg-white shadow-sm ${
+          isSelected 
+            ? 'border-2 border-blue-500' 
+            : 'border border-gray-200'
+        } ${locale === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}
+        onClick={handleCardClick}
+      >
+        <div className="w-full">
+          {/* Image Section */}
+          <div className="w-full h-40 p-2">
+            <div className="relative w-full h-full rounded-xl overflow-hidden">
+              {!imageError ? (
+                <Image 
+                  src={getImageSrc()}
+                  alt={restaurantName}
+                  fill
+                  sizes="300px"
+                  className="object-cover"
+                  onError={() => setImageError(true)}
+                  priority={false}
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center rounded-xl">
+                  <MapPin className="w-8 h-8 text-gray-400" />
+                </div>
+              )}
+
+              {/* Corner badge */}
+              {restaurant.is_featured && (
+                <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm rounded-full p-1">
+                  <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">
+                      {locale === 'ar' ? 'م' : 'F'}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Rating badge */}
+              {restaurant.rating && restaurant.rating > 0 && (
+                <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
+                  <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                  <span className="text-white text-xs font-medium">
+                    {restaurant.rating.toFixed(1)}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Content Section */}
+          <div className={`px-3 pb-3 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
+            {/* Location */}
+            <div className="flex items-center gap-1 mb-1">
+              <MapPin className="w-3 h-3 text-gray-500 flex-shrink-0" />
+              <p className="text-gray-500 text-xs line-clamp-1 font-medium">
+                {locationString}
+              </p>
+            </div>
+
+            {/* Restaurant Name */}
+            <h3 className="font-semibold text-gray-800 text-sm mb-1 line-clamp-2 leading-tight">
+              {restaurantName}
+            </h3>
+
+            {/* Cuisine Type */}
+            <p className="text-orange-600 text-xs font-medium line-clamp-1">
+              {getCuisineText()}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular card layout (for full list view)
   return (
     <div 
-      className={`rounded-2xl hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden border border-gray-100 ${
-        isHovered ? 'transform -translate-y-1' : ''
+      className={`rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden xl:bg-transparent bg-white ${
+        isSelected 
+          ? 'border-2 border-blue-500 transform -translate-y-1' 
+          : ''
+      } ${
+        isHovered && !isSelected ? 'transform -translate-y-1 shadow-lg' : ''
       } ${locale === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleCardClick}
     >
-      <div className="flex h-36 md:h-44">
-        {/* Image Section - Increased width and added padding */}
-        <div className="w-2/5 p-2 flex items-center">
+      <div className="flex h-36 sm:h-40 md:h-44">
+        {/* Image Section - Responsive width: smaller on mobile, half on larger screens */}
+        <div className="w-2/5 sm:w-2/5 md:w-1/2 p-2 flex items-center">
           <div className="relative w-full h-full rounded-2xl overflow-hidden">
             {!imageError ? (
               <Image 
@@ -136,57 +226,31 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
         </div>
 
         {/* Content Section - Adjusted width and centered vertically */}
-        <div className={`flex-1 p-4 flex flex-col justify-between ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
+        <div className={`flex-1 p-4 flex flex-col justify-center ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
           {/* Header */}
           <div>
-            {/* Restaurant Name */}
-            <h3 className="font-bold text-gray-800 text-lg mb-1 line-clamp-1">
+            {/* Location - Now at top with black color and map marker */}
+            <div className="flex items-center gap-1 mb-3">
+              <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-black flex-shrink-0" />
+              <p className="text-black text-xs sm:text-sm md:text-base lg:text-sm line-clamp-1 font-medium">
+                {locationString}
+              </p>
+            </div>
+
+            {/* Restaurant Name - Bigger and responsive, now under location */}
+            <h3 className="font-bold text-gray-800 text-xl sm:text-2xl md:text-3xl lg:text-2xl mb-1 line-clamp-2 leading-tight">
               {restaurantName}
             </h3>
 
-            {/* Cuisine Type */}
-            <p className="text-orange-600 text-sm font-medium mb-1">
+            {/* Cuisine Type - Show as subtitle */}
+            <p className="text-orange-600 text-sm sm:text-base md:text-lg lg:text-base font-medium mb-2 line-clamp-1">
               {getCuisineText()}
-            </p>
-
-            {/* Location */}
-            <p className="text-gray-600 text-sm line-clamp-1 mb-2">
-              {locationString}
             </p>
           </div>
 
           {/* Footer */}
           <div className={`flex items-center justify-between ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
-            {/* Rating or additional info */}
-            <div className="text-sm text-gray-600">
-              {restaurant.rating ? (
-                <div className="flex items-center gap-1">
-                  <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                  <span>{restaurant.rating.toFixed(1)}</span>
-                </div>
-              ) : (
-                <span>{locale === 'ar' ? 'جديد' : 'New'}</span>
-              )}
-            </div>
 
-            {/* Additional Info */}
-            <div className="flex items-center gap-3 text-xs text-gray-500">
-              {restaurant.phone && (
-                <div className="flex items-center gap-1">
-                  <Phone className="w-3 h-3" />
-                  <span className="hidden sm:inline">
-                    {locale === 'ar' ? 'هاتف' : 'Phone'}
-                  </span>
-                </div>
-              )}
-              
-              <div className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                <span className="hidden sm:inline">
-                  {locale === 'ar' ? 'ساعات العمل' : 'Hours'}
-                </span>
-              </div>
-            </div>
           </div>
         </div>
       </div>
