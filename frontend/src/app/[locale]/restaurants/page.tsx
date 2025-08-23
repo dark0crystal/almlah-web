@@ -1,49 +1,88 @@
 "use client"
 import { useState } from "react";
 import { useParams } from "next/navigation";
-import { Utensils, List, X } from "lucide-react";
+import { useTranslations } from 'next-intl';
+import { MapPin } from "lucide-react";
 import RestaurantsCardsWrapper from "./RestaurantsCardsWrapper";
 import RestaurantsMap from "./RestaurantsMap";
 import RestaurantGovernateFilter from "./RestaurantsGovernatesFilter";
-import { CATEGORY_IDS, getCategoryName } from "@/services/placesApi";
+import RestaurantBottomSheet, { SheetState } from "./RestaurantBottomSheet";
+import { CATEGORY_IDS, type CategoryType, getCategoryName } from "@/services/placesApi";
+
+interface RestaurantsProps {
+  categoryType?: CategoryType; // Optional category type prop
+}
 
 /**
  * Main Restaurants component that renders the restaurants discovery page
  * Features responsive layout with full-screen map on mobile and split view on desktop
  * Now uses the scalable category system with the restaurant category ID
  */
-export default function Restaurants() {
+export default function Restaurants({ categoryType = "FOOD_BEVERAGES" }: RestaurantsProps) {
   const params = useParams();
   const locale = (params?.locale as string) || 'en';
-  
-  // State to control mobile view toggle between map and restaurants list
-  const [showRestaurantsList, setShowRestaurantsList] = useState(false);
+  const t = useTranslations('places');
   
   // State for sharing filters between components
   const [selectedGovernateId, setSelectedGovernateId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(null);
+  const [bottomSheetState, setBottomSheetState] = useState<SheetState>('collapsed');
+  const [forceBottomSheetState, setForceBottomSheetState] = useState<SheetState | undefined>(undefined);
 
-  // Get restaurant category ID from the scalable system
-  const restaurantCategoryId = CATEGORY_IDS.RESTAURANTS;
-
-  const getToggleButtonText = () => {
-    return locale === 'ar' ? 'قائمة المطاعم' : 'Restaurants List';
+  // Reset force state after it's been applied
+  const handleBottomSheetStateChange = (state: SheetState) => {
+    setBottomSheetState(state);
+    if (forceBottomSheetState) {
+      setForceBottomSheetState(undefined);
+    }
   };
 
+  // Handle marker click - show and expand bottom sheet (for screens < 1280px only)
+  const handleMarkerClick = (restaurantId: string) => {
+    setSelectedRestaurantId(restaurantId);
+    
+    // Only handle bottom sheet expansion for screens < 1280px
+    // For xl screens (desktop), just update selected restaurant
+    if (window.innerWidth < 1280) {
+      // If sheet is hidden, bring it to half state for better visibility
+      if (bottomSheetState === 'hidden') {
+        setForceBottomSheetState('half');
+      }
+      // If sheet is collapsed, expand to half
+      else if (bottomSheetState === 'collapsed') {
+        setForceBottomSheetState('half');
+      }
+      // If sheet is half or full, keep current state but update selected restaurant
+    }
+  };
+
+  // Get category ID from the category type
+  const categoryId = CATEGORY_IDS[categoryType];
+
   const getRestaurantsText = () => {
-    return getCategoryName("RESTAURANTS", locale as 'ar' | 'en');
+    switch (categoryType) {
+      case 'FOOD_BEVERAGES':
+        return t('foodBeverages');
+      case 'ENTERTAINMENT':
+        return t('entertainment');
+      case 'TOURISM':
+        return t('tourism');
+      default:
+        return t('foodBeverages');
+    }
   };
 
   // If no valid category ID, show error
-  if (!restaurantCategoryId) {
+  if (!categoryId) {
     return (
       <div className="w-full h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-2">
-            {locale === 'ar' ? 'فئة غير صالحة' : 'Invalid Category'}
+            {t('errors.invalidCategory')}
           </h1>
           <p className="text-gray-600">
-            {locale === 'ar' ? 'فئة المطاعم غير موجودة' : 'The restaurants category does not exist'}
+            {t('errors.categoryNotExist')}
           </p>
         </div>
       </div>
@@ -64,129 +103,65 @@ export default function Restaurants() {
             <RestaurantGovernateFilter 
               selectedGovernateId={selectedGovernateId}
               onGovernateChange={setSelectedGovernateId}
+              locale={locale}
             />
           </div>
         </div>
       </div>
       
-      {/* Mobile Layout - Map with overlay cards at bottom */}
-      <div className="md:hidden w-full h-screen relative">
+      {/* Mobile/Tablet Layout - Full screen map with Airbnb-style bottom sheet */}
+      <div className="xl:hidden w-full h-[84vh] relative">
         {/* Full screen map for mobile */}
         <div className="w-full h-full">
           <RestaurantsMap 
-            categoryId={restaurantCategoryId}
+            categoryId={categoryId}
             selectedGovernateId={selectedGovernateId}
             searchQuery={searchQuery}
-            locale={locale}
+            onMarkerClick={handleMarkerClick}
+            selectedRestaurantId={selectedRestaurantId}
           />
         </div>
         
-        {/* Mobile toggle button - floating */}
-        <button
-          onClick={() => setShowRestaurantsList(!showRestaurantsList)}
-          className={`absolute top-4 z-50 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 ${
-            locale === 'ar' ? 'left-4' : 'right-4'
-          }`}
-          aria-label={getToggleButtonText()}
-        >
-          <List className="w-6 h-6 text-gray-700" />
-        </button>
-        
-        {/* Mobile restaurants cards overlay at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 z-40 max-h-60">
-          <RestaurantsCardsWrapper 
-            isMobileMapView={true}
-            categoryId={restaurantCategoryId}
-            selectedGovernateId={selectedGovernateId}
-            onGovernateChange={setSelectedGovernateId}
-          />
-        </div>
-
-        {/* Mobile restaurants list full overlay */}
-        {showRestaurantsList && (
-          <div className="absolute inset-0 z-50">
-            {/* Header with close button */}
-            <div className={`flex items-center justify-between p-4 border-b border-gray-200 ${
-              locale === 'ar' ? 'flex-row-reverse' : ''
-            }`}>
-              <h2 className="text-xl font-bold text-gray-800">
-                {getRestaurantsText()}
-              </h2>
-              <button
-                onClick={() => setShowRestaurantsList(false)}
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                aria-label={locale === 'ar' ? 'إغلاق' : 'Close'}
-              >
-                <X className="w-6 h-6 text-gray-600" />
-              </button>
-            </div>
-            
-            {/* Restaurants content with padding */}
-            <div className="h-full overflow-y-auto pb-20">
-              <div className="px-5 py-4">
-                <RestaurantsCardsWrapper 
-                  isMobileMapView={false}
-                  categoryId={restaurantCategoryId}
-                  selectedGovernateId={selectedGovernateId}
-                  onGovernateChange={setSelectedGovernateId}
-                />
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Airbnb-style Bottom Sheet */}
+        <RestaurantBottomSheet
+          categoryId={categoryId}
+          selectedGovernateId={selectedGovernateId}
+          onGovernateChange={setSelectedGovernateId}
+          selectedRestaurantId={selectedRestaurantId}
+          onRestaurantClick={setSelectedRestaurantId}
+          locale={locale}
+          title={getRestaurantsText()}
+          onStateChange={handleBottomSheetStateChange}
+          forceState={forceBottomSheetState}
+        />
       </div>
 
       {/* -------------------------------------- */}
-      {/* Desktop Layout - Cards and Map both 80vh */}
-      <div className="hidden large:flex gap-4 px-5 xl:px-25">
+      {/* Desktop Layout - Cards and Map side by side (1280px+) */}
+      <div className="hidden xl:flex gap-4 px-5 xl:px-25">
         {/* Restaurants List Section - 80vh with scroll */}
-        <div className="w-3/5 rounded-lg shadow-sm">
+        <div className="w-1/2 rounded-lg shadow-sm">
           <div className="h-[80vh] p-4">
             <RestaurantsCardsWrapper 
               isMobileMapView={false}
-              categoryId={restaurantCategoryId}
+              categoryId={categoryId}
               selectedGovernateId={selectedGovernateId}
               onGovernateChange={setSelectedGovernateId}
+              selectedRestaurantId={selectedRestaurantId}
+              onRestaurantClick={setSelectedRestaurantId}
             />
           </div>
         </div>
         
         {/* Map Section - 80vh */}
-        <div className="w-2/5 rounded-lg shadow-sm">
+        <div className="w-1/2 rounded-lg shadow-sm">
           <div className="h-[80vh] p-4">
             <RestaurantsMap 
-              categoryId={restaurantCategoryId}
+              categoryId={categoryId}
               selectedGovernateId={selectedGovernateId}
               searchQuery={searchQuery}
-              locale={locale}
-            />
-          </div>
-        </div>
-      </div>
-      
-      {/* -------------------------------------- */}
-      {/* Tablet Layout - Cards and Map both 80vh */}
-      <div className="hidden md:flex large:hidden w-full flex-col gap-4 px-5 xl:px-25">
-        {/* Restaurants list - 80vh with scroll */}
-        <div className="w-full rounded-lg shadow-sm">
-          <div className="h-[80vh] p-4">
-            <RestaurantsCardsWrapper 
-              isMobileMapView={false}
-              categoryId={restaurantCategoryId}
-              selectedGovernateId={selectedGovernateId}
-              onGovernateChange={setSelectedGovernateId}
-            />
-          </div>
-        </div>
-        
-        {/* Map - 80vh */}
-        <div className="w-full rounded-lg shadow-sm">
-          <div className="h-[80vh] p-4">
-            <RestaurantsMap 
-              categoryId={restaurantCategoryId}
-              selectedGovernateId={selectedGovernateId}
-              searchQuery={searchQuery}
-              locale={locale}
+              onMarkerClick={handleMarkerClick}
+              selectedRestaurantId={selectedRestaurantId}
             />
           </div>
         </div>
