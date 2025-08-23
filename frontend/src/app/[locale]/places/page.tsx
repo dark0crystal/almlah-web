@@ -2,10 +2,11 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from 'next-intl';
-import { MapPin, List, X } from "lucide-react";
+import { MapPin } from "lucide-react";
 import PlacesCardsWrapper from "./PlacesCardsWrapper";
 import PlacesMap from "./PlacesMap";
 import GovernateFilter from "./GovernateFilterComponent";
+import BottomSheet, { SheetState } from "./BottomSheet";
 import { CATEGORY_IDS, type CategoryType, getCategoryName } from "@/services/placesApi";
 
 interface PlacesProps {
@@ -22,20 +23,44 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
   const locale = (params?.locale as string) || 'en';
   const t = useTranslations('places');
   
-  // State to control mobile view toggle between map and places list
-  const [showPlacesList, setShowPlacesList] = useState(false);
   
   // State for sharing filters between components
   const [selectedGovernateId, setSelectedGovernateId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+  const [bottomSheetState, setBottomSheetState] = useState<SheetState>('collapsed');
+  const [forceBottomSheetState, setForceBottomSheetState] = useState<SheetState | undefined>(undefined);
+
+  // Reset force state after it's been applied
+  const handleBottomSheetStateChange = (state: SheetState) => {
+    setBottomSheetState(state);
+    if (forceBottomSheetState) {
+      setForceBottomSheetState(undefined);
+    }
+  };
+
+  // Handle marker click - show and expand bottom sheet (for screens < 1280px only)
+  const handleMarkerClick = (placeId: string) => {
+    setSelectedPlaceId(placeId);
+    
+    // Only handle bottom sheet expansion for screens < 1280px
+    // For xl screens (desktop), just update selected place
+    if (window.innerWidth < 1280) {
+      // If sheet is hidden, bring it to half state for better visibility
+      if (bottomSheetState === 'hidden') {
+        setForceBottomSheetState('half');
+      }
+      // If sheet is collapsed, expand to half
+      else if (bottomSheetState === 'collapsed') {
+        setForceBottomSheetState('half');
+      }
+      // If sheet is half or full, keep current state but update selected place
+    }
+  };
 
   // Get category ID from the category type
   const categoryId = CATEGORY_IDS[categoryType];
 
-  const getToggleButtonText = () => {
-    return t('placesList');
-  };
 
   const getPlacesToVisitText = () => {
     switch (categoryType) {
@@ -86,83 +111,39 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
         </div>
       </div>
       
-      {/* Mobile Layout - Map with overlay cards at bottom */}
-      <div className="md:hidden w-full h-screen relative">
+      {/* Mobile/Tablet Layout - Full screen map with Airbnb-style bottom sheet */}
+      <div className="xl:hidden w-full h-[84vh] relative">
         {/* Full screen map for mobile */}
         <div className="w-full h-full">
           <PlacesMap 
             categoryId={categoryId}
             selectedGovernateId={selectedGovernateId}
             searchQuery={searchQuery}
-            onMarkerClick={setSelectedPlaceId}
+            onMarkerClick={handleMarkerClick}
             selectedPlaceId={selectedPlaceId}
           />
         </div>
         
-        {/* Mobile toggle button - floating */}
-        <button
-          onClick={() => setShowPlacesList(!showPlacesList)}
-          className={`absolute top-4 z-50 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 ${
-            locale === 'ar' ? 'left-4' : 'right-4'
-          }`}
-          aria-label={getToggleButtonText()}
-        >
-          <List className="w-6 h-6 text-gray-700" />
-        </button>
-        
-        {/* Mobile places cards overlay at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 z-40 max-h-60">
-          <PlacesCardsWrapper 
-            isMobileMapView={true}
-            categoryId={categoryId}
-            selectedGovernateId={selectedGovernateId}
-            onGovernateChange={setSelectedGovernateId}
-            selectedPlaceId={selectedPlaceId}
-            onPlaceClick={setSelectedPlaceId}
-          />
-        </div>
 
-        {/* Mobile places list full overlay */}
-        {showPlacesList && (
-          <div className="absolute inset-0 z-50">
-            {/* Header with close button */}
-            <div className={`flex items-center justify-between p-4 border-b border-gray-200 ${
-              locale === 'ar' ? 'flex-row-reverse' : ''
-            }`}>
-              <h2 className="text-xl font-bold text-gray-800">
-                {getPlacesToVisitText()}
-              </h2>
-              <button
-                onClick={() => setShowPlacesList(false)}
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                aria-label={t('close')}
-              >
-                <X className="w-6 h-6 text-gray-600" />
-              </button>
-            </div>
-            
-            {/* Places content with padding */}
-            <div className="h-full overflow-y-auto pb-20">
-              <div className="px-5 py-4">
-                <PlacesCardsWrapper 
-                  isMobileMapView={false}
-                  categoryId={categoryId}
-                  selectedGovernateId={selectedGovernateId}
-                  onGovernateChange={setSelectedGovernateId}
-                  selectedPlaceId={selectedPlaceId}
-                  onPlaceClick={setSelectedPlaceId}
-                />
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Airbnb-style Bottom Sheet */}
+        <BottomSheet
+          categoryId={categoryId}
+          selectedGovernateId={selectedGovernateId}
+          onGovernateChange={setSelectedGovernateId}
+          selectedPlaceId={selectedPlaceId}
+          onPlaceClick={setSelectedPlaceId}
+          locale={locale}
+          title={getPlacesToVisitText()}
+          onStateChange={handleBottomSheetStateChange}
+          forceState={forceBottomSheetState}
+        />
       </div>
 
       {/* -------------------------------------- */}
-      {/* Desktop Layout - Cards and Map both 80vh */}
-      <div className="hidden large:flex gap-4 px-5 xl:px-25">
+      {/* Desktop Layout - Cards and Map side by side (1280px+) */}
+      <div className="hidden xl:flex gap-4 px-5 xl:px-25">
         {/* Places List Section - 80vh with scroll */}
-        <div className="w-3/5 rounded-lg shadow-sm">
+        <div className="w-1/2 rounded-lg shadow-sm">
           <div className="h-[80vh] p-4">
             <PlacesCardsWrapper 
               isMobileMapView={false}
@@ -176,13 +157,13 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
         </div>
         
         {/* Map Section - 80vh */}
-        <div className="w-2/5 rounded-lg shadow-sm">
+        <div className="w-1/2 rounded-lg shadow-sm">
           <div className="h-[80vh] p-4">
             <PlacesMap 
               categoryId={categoryId}
               selectedGovernateId={selectedGovernateId}
               searchQuery={searchQuery}
-              onMarkerClick={setSelectedPlaceId}
+              onMarkerClick={handleMarkerClick}
               selectedPlaceId={selectedPlaceId}
             />
           </div>
@@ -190,8 +171,8 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
       </div>
       
       {/* -------------------------------------- */}
-      {/* Tablet Layout - Cards and Map both 80vh */}
-      <div className="hidden md:flex large:hidden w-full flex-col gap-4 px-5 xl:px-25">
+      {/* Tablet Layout - Cards and Map both 80vh - REMOVED */}
+      <div className="hidden w-full flex-col gap-4 px-5 xl:px-25">
         {/* Places list - 80vh with scroll */}
         <div className="w-full rounded-lg shadow-sm">
           <div className="h-[80vh] p-4">
@@ -213,7 +194,7 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
               categoryId={categoryId}
               selectedGovernateId={selectedGovernateId}
               searchQuery={searchQuery}
-              onMarkerClick={setSelectedPlaceId}
+              onMarkerClick={handleMarkerClick}
               selectedPlaceId={selectedPlaceId}
             />
           </div>
