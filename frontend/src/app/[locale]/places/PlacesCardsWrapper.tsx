@@ -117,7 +117,7 @@ export default function PlacesCardsWrapper({
               {places.map((place) => (
                 <div 
                   key={place.id} 
-                  className="flex-shrink-0 w-80"
+                  className="flex-shrink-0 w-64"
                   data-place-id={place.id}
                 >
                   <PlaceCard 
@@ -125,6 +125,7 @@ export default function PlacesCardsWrapper({
                     locale={locale}
                     isSelected={selectedPlaceId === place.id}
                     onPlaceClick={onPlaceClick}
+                    isHorizontalScroll={true}
                   />
                 </div>
               ))}
@@ -157,6 +158,7 @@ export default function PlacesCardsWrapper({
                   locale={locale}
                   isSelected={selectedPlaceId === place.id}
                   onPlaceClick={onPlaceClick}
+                  isHorizontalScroll={false}
                 />
               </div>
             ))}
