@@ -15,8 +15,9 @@ export default async function HomePage() {
         
         {/* <Header/> */}
         <Heading/>
-        <ScrollAnimatedPng/>
+        {/* <ScrollAnimatedPng/> */}
         {/* <CategoryCard /> */}
+        <div className='h-[7.5vh]'/>
         <ArabicCardsLayout/>
 
         <CategoryCardsWrapper />
