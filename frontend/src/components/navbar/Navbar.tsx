@@ -20,6 +20,7 @@ export default async function NavBar({ style }: NavBarProps) {
     { direction: "/places", name: t("places") },
     { direction: "/restaurants", name: t("restaurants") },
     { direction: "/destinations", name: t("destinations") },
+    { direction: "/the-gallery", name: t("gallery") },
     { direction: "/zatar", name: t("zatar") },
     { direction: "/about-us", name: t("aboutUs") },
   ];

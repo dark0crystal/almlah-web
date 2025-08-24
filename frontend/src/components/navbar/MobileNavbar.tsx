@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Link } from "@/i18n/navigation";
-import { Menu, X, Home, MapPin, Utensils, Map, Dice6, Info, Settings } from "lucide-react";
+import { Menu, X, Home, MapPin, Utensils, Map, Dice6, Info, Settings, Images } from "lucide-react";
 import LanguageChange from "./LangChange";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -32,6 +32,7 @@ export default function MobileMenu({ navLinks, dashboardLinks }: MobileMenuProps
     if (href === "/places") return <MapPin className="w-5 h-5" />;
     if (href === "/restaurants") return <Utensils className="w-5 h-5" />;
     if (href === "/destinations") return <Map className="w-5 h-5" />;
+    if (href === "/the-gallery") return <Images className="w-5 h-5" />;
     if (href === "/zatar") return <Dice6 className="w-5 h-5" />;
     if (href === "/about-us") return <Info className="w-5 h-5" />;
     if (href.includes("/dashboard")) return <Settings className="w-5 h-5" />;
