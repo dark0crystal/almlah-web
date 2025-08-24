@@ -3,6 +3,7 @@ import React from 'react'
 import GalleryMotion from './GalleryMotion'
 import TitleMotion from './TitleMotion'
 import Galleries from './Galleries'
+import Footer from './Footer'
 
 
 const page = () => {
@@ -12,6 +13,7 @@ const page = () => {
       <GalleryMotion/>
       <TitleMotion/>
       <Galleries/>
+      <Footer/>
     </div>
     
   )
