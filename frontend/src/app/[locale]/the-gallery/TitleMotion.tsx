@@ -3,9 +3,9 @@ import {motion ,useTransform , useScroll, MotionValue} from 'framer-motion'
 import { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from 'next-intl';
-import Picture1 from '../../../../public/gallery/img1.jpg'
-import Picture2 from '../../../../public/gallery/img10.jpg'
-import Picture3 from '../../../../public/gallery/img11.jpg'
+import Picture1 from '../../../../public/gallery-alkhalil/img1.jpg'
+import Picture2 from '../../../../public/gallery-alkhalil/img1.jpg'
+import Picture3 from '../../../../public/gallery-alkhalil/img1.jpg'
 
 export default function TitleMotion(){
     
