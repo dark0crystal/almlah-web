@@ -47,7 +47,7 @@ export default function GovernateFilter({
 
   if (loading) {
     return (
-      <div className="w-full h-12 rounded-full border border-gray-200 bg-white px-4 flex items-center">
+      <div className="w-full h-12 rounded-full bg-white px-4 flex items-center">
         <div className="text-gray-500">
           {t('loading')}
         </div>
@@ -59,8 +59,8 @@ export default function GovernateFilter({
     <div className="relative w-full max-w-sm">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full h-12 rounded-full border border-gray-200 bg-white px-4 flex items-center justify-between hover:border-gray-300 transition-colors ${
-          isOpen ? 'ring-2 ring-blue-500 border-blue-500' : ''
+        className={`w-full h-12 rounded-full bg-white px-4 flex items-center justify-between hover:bg-gray-50 transition-colors ${
+          isOpen ? 'ring-2 ring-blue-500' : ''
         }`}
       >
         <div className={`flex items-center ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
@@ -81,7 +81,7 @@ export default function GovernateFilter({
             onClick={() => setIsOpen(false)}
           />
           
-          <div className="absolute top-full mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-lg z-20 max-h-64 overflow-y-auto">
+          <div className="absolute top-full mt-2 w-full bg-white rounded-2xl z-20 max-h-64 overflow-y-auto">
             {/* All Governates Option */}
             <button
               onClick={() => {

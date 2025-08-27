@@ -143,7 +143,7 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
       {/* Desktop Layout - Cards and Map side by side (1280px+) */}
       <div className="hidden xl:flex gap-4 px-5 xl:px-25">
         {/* Places List Section - 80vh with scroll */}
-        <div className="w-1/2 rounded-lg shadow-sm">
+        <div className="w-1/2 rounded-lg">
           <div className="h-[80vh] p-4">
             <PlacesCardsWrapper 
               isMobileMapView={false}
@@ -157,7 +157,7 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
         </div>
         
         {/* Map Section - 80vh */}
-        <div className="w-1/2 rounded-lg shadow-sm">
+        <div className="w-1/2 rounded-lg">
           <div className="h-[80vh] p-4">
             <PlacesMap 
               categoryId={categoryId}
@@ -174,7 +174,7 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
       {/* Tablet Layout - Cards and Map both 80vh - REMOVED */}
       <div className="hidden w-full flex-col gap-4 px-5 xl:px-25">
         {/* Places list - 80vh with scroll */}
-        <div className="w-full rounded-lg shadow-sm">
+        <div className="w-full rounded-lg">
           <div className="h-[80vh] p-4">
             <PlacesCardsWrapper 
               isMobileMapView={false}
@@ -188,7 +188,7 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
         </div>
         
         {/* Map - 80vh */}
-        <div className="w-full rounded-lg shadow-sm">
+        <div className="w-full rounded-lg">
           <div className="h-[80vh] p-4">
             <PlacesMap 
               categoryId={categoryId}

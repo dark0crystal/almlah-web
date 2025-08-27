@@ -223,12 +223,9 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
           </div>
         </nav>
         
-        {/* Title & Description */}
+        {/* Title & Metadata */}
         <div className="mb-8">
           <h1 className="text-4xl md:text-5xl font-extrabold mb-4">{placeName}</h1>
-          <p className="text-lg text-gray-700">
-            {placeDescription || placeSubtitle || t('defaultDescription')}
-          </p>
           
           {/* Additional metadata */}
           <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-gray-600">
