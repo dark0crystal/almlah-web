@@ -5,6 +5,7 @@ import RestaurantImagesContainer from "./RestaurantImagesContainer";
 import RestaurantAboutAndLocation from "./RestaurantAboutAndLocation";
 import { fetchPlaceById } from '@/services/placesApi';
 import { Place } from '@/types';
+import Footer from '@/components/Footer';
 
 interface RestaurantDetailsProps {
   params?: {
@@ -242,43 +243,9 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
           </div>
         </nav>
         
-        {/* Title & Description */}
+        {/* Title Only */}
         <div className="mb-8">
           <h1 className="text-4xl md:text-5xl font-extrabold mb-4">{restaurantName}</h1>
-          <p className="text-lg text-gray-700">
-            {restaurantDescription || restaurantSubtitle || (language === 'ar' 
-              ? 'استكشف هذا المطعم الرائع' 
-              : 'Explore this amazing restaurant'
-            )}
-          </p>
-          
-          {/* Additional metadata */}
-          <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-gray-600">
-            <span className="flex items-center gap-1">
-              🍽️ {cuisineType}
-            </span>
-            
-            {restaurant.governate && (
-              <span className="flex items-center gap-1">
-                📍 {language === 'ar' ? restaurant.governate.name_ar : restaurant.governate.name_en}
-              </span>
-            )}
-            
-            {restaurant.rating && restaurant.rating > 0 && (
-              <span className="flex items-center gap-1">
-                ⭐ {restaurant.rating.toFixed(1)}
-                {restaurant.review_count && restaurant.review_count > 0 && (
-                  <span className="text-gray-400">({restaurant.review_count})</span>
-                )}
-              </span>
-            )}
-            
-            {restaurant.phone && (
-              <span className="flex items-center gap-1">
-                📞 {language === 'ar' ? 'هاتف متاح' : 'Phone available'}
-              </span>
-            )}
-          </div>
         </div>
 
         {/* Image Gallery */}

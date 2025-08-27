@@ -223,33 +223,9 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
           </div>
         </nav>
         
-        {/* Title & Metadata */}
+        {/* Title Only */}
         <div className="mb-8">
           <h1 className="text-4xl md:text-5xl font-extrabold mb-4">{placeName}</h1>
-          
-          {/* Additional metadata */}
-          <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-gray-600">
-            {place.governate && (
-              <span className="flex items-center gap-1">
-                📍 {language === 'ar' ? place.governate.name_ar : place.governate.name_en}
-              </span>
-            )}
-            
-            {place.rating && place.rating > 0 && (
-              <span className="flex items-center gap-1">
-                ⭐ {place.rating.toFixed(1)}
-                {place.review_count && place.review_count > 0 && (
-                  <span className="text-gray-400">({place.review_count})</span>
-                )}
-              </span>
-            )}
-            
-            {place.categories && place.categories.length > 0 && (
-              <span className="flex items-center gap-1">
-                🏷️ {language === 'ar' ? place.categories[0].name_ar : place.categories[0].name_en}
-              </span>
-            )}
-          </div>
         </div>
 
         {/* Image Gallery */}
