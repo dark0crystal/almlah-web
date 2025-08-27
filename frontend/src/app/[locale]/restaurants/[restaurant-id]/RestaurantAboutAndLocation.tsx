@@ -31,21 +31,11 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
     ? (language === 'ar' ? restaurant.categories[0].name_ar : restaurant.categories[0].name_en)
     : (language === 'ar' ? 'مطعم' : 'Restaurant');
 
-  // Get properties for "suitable for" tags (restaurant-specific)
+  // Get properties for "suitable for" tags from backend only
   const suitableForTags = restaurant.properties?.map(prop => ({
     name: prop.name,
     icon: prop.icon || '🍽️'
   })) || [];
-
-  // Default suitable for tags for restaurants
-  const defaultTags = [
-    { name: language === 'ar' ? 'العائلات' : 'Families', icon: '👨‍👩‍👧‍👦' },
-    { name: language === 'ar' ? 'الأصدقاء' : 'Friends', icon: '👫' },
-    { name: language === 'ar' ? 'المناسبات' : 'Special Events', icon: '🎉' },
-    { name: language === 'ar' ? 'العشاء الرومانسي' : 'Romantic Dinner', icon: '💕' }
-  ];
-
-  const tagsToShow = suitableForTags.length > 0 ? suitableForTags : defaultTags;
 
   // Format coordinates for map
   const mapUrl = restaurant.lat && restaurant.lng 
@@ -260,47 +250,26 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
               </div>
             )}
 
-            {/* Suitable For Tags */}
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h3 className="font-medium text-gray-900 mb-4">
-                {language === 'ar' ? 'مناسب لـ' : 'Suitable for'}
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {tagsToShow.slice(0, 6).map((tag, index) => (
-                  <span 
-                    key={index}
-                    className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm flex items-center gap-1"
-                  >
-                    <span>{tag.icon}</span>
-                    {tag.name}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Opening Hours */}
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-medium text-gray-900">
-                  {language === 'ar' ? 'ساعات العمل' : 'Opening Hours'}
+            {/* Suitable For Tags - Only show if backend has properties */}
+            {suitableForTags.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-sm p-6">
+                <h3 className="font-medium text-gray-900 mb-4">
+                  {language === 'ar' ? 'مناسب لـ' : 'Suitable for'}
                 </h3>
-                <button className="text-gray-400">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">{language === 'ar' ? 'السبت - الخميس' : 'Sat - Thu'}:</span>
-                  <span className="text-gray-900">11:00 AM - 11:00 PM</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">{language === 'ar' ? 'الجمعة' : 'Friday'}:</span>
-                  <span className="text-gray-900">2:00 PM - 11:00 PM</span>
+                <div className="flex flex-wrap gap-2">
+                  {suitableForTags.slice(0, 6).map((tag, index) => (
+                    <span 
+                      key={index}
+                      className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm flex items-center gap-1"
+                    >
+                      <span>{tag.icon}</span>
+                      {tag.name}
+                    </span>
+                  ))}
                 </div>
               </div>
-            </div>
+            )}
+
 
             {/* Map */}
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
