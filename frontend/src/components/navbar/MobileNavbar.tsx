@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { Menu, X, Home, MapPin, Utensils, Map, Dice6, Info, Settings, Images } from "lucide-react";
 import LanguageChange from "./LangChange";
@@ -14,6 +15,7 @@ type MobileMenuProps = {
 export default function MobileMenu({ navLinks, dashboardLinks }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
+  const pathname = usePathname();
   const locale = useLocale().substring(0, 2);
   const direction = locale === 'ar' ? 'rtl' : 'ltr';
   const t = useTranslations('navbar');
@@ -23,9 +25,20 @@ export default function MobileMenu({ navLinks, dashboardLinks }: MobileMenuProps
     setShowDashboard(false);
   };
 
+  const closeMenu = () => {
+    setIsOpen(false);
+    setShowDashboard(false);
+  };
+
   const toggleDashboard = () => {
     setShowDashboard(!showDashboard);
   };
+
+  // Close menu when pathname changes (navigation occurs)
+  useEffect(() => {
+    setIsOpen(false);
+    setShowDashboard(false);
+  }, [pathname]);
 
   const getIcon = (href: string) => {
     if (href === "/") return <Home className="w-5 h-5" />;
@@ -56,12 +69,13 @@ export default function MobileMenu({ navLinks, dashboardLinks }: MobileMenuProps
         />
       )}
 
-      {/* Sidebar */}
-      <div
-        className={`fixed top-0 ${direction === 'rtl' ? 'right-0' : 'left-0'} h-full w-80 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out xl:hidden ${
-          isOpen ? 'translate-x-0' : direction === 'rtl' ? 'translate-x-full' : '-translate-x-full'
-        }`}
-      >
+      {/* Sidebar - Only render when open */}
+      {isOpen && (
+        <div
+          className={`fixed top-0 ${direction === 'rtl' ? 'right-0' : 'left-0'} h-screen w-80 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out xl:hidden ${
+            isOpen ? 'translate-x-0' : direction === 'rtl' ? 'translate-x-full' : '-translate-x-full'
+          }`}
+        >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-[#f3f3eb]">
           <h2 className="text-xl font-bold text-gray-800">{t('home')}</h2>
@@ -79,7 +93,7 @@ export default function MobileMenu({ navLinks, dashboardLinks }: MobileMenuProps
                 Navigation
               </h3>
               {navLinks.map((navLink, index) => (
-                <Link key={index} href={navLink.direction} onClick={toggleMenu}>
+                <Link key={index} href={navLink.direction} onClick={closeMenu}>
                   <div className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
                     {getIcon(navLink.direction)}
                     <span className="text-gray-800 font-medium">{navLink.name}</span>
@@ -108,7 +122,7 @@ export default function MobileMenu({ navLinks, dashboardLinks }: MobileMenuProps
               {showDashboard && (
                 <div className="mt-2 space-y-1 pl-4">
                   {dashboardLinks.map((dashLink, index) => (
-                    <Link key={index} href={dashLink.direction} onClick={toggleMenu}>
+                    <Link key={index} href={dashLink.direction} onClick={closeMenu}>
                       <div className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
                         {getIcon(dashLink.direction)}
                         <span className="text-gray-700 text-sm">{dashLink.name}</span>
@@ -125,7 +139,8 @@ export default function MobileMenu({ navLinks, dashboardLinks }: MobileMenuProps
         <div className="border-t border-gray-200 p-4">
           <LanguageChange />
         </div>
-      </div>
+        </div>
+      )}
     </>
   );
 }
