@@ -5,7 +5,7 @@ import { routing } from '@/i18n/routing';
 import { getMessages } from 'next-intl/server';
 import "./globals.css";
 import ClientLayoutWrapper from "@/components/layout/ClientLayoutWrapper";
-import NavBar from "@/components/navbar/Navbar";
+import NavigationWrapper from "@/components/navigation/NavigationWrapper";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -36,9 +36,11 @@ export default async function RootLayout({
     <html lang={locale} dir={dir}>
       <body className="antialiased font-handicrafts bg-[#f3f3eb]">
         <NextIntlClientProvider messages={messages}>
-          <ClientLayoutWrapper navbar={<NavBar style="" />}>
-            {children}
-          </ClientLayoutWrapper>
+          <NavigationWrapper>
+            <ClientLayoutWrapper navbar={null}>
+              {children}
+            </ClientLayoutWrapper>
+          </NavigationWrapper>
         </NextIntlClientProvider>
       </body>
     </html>

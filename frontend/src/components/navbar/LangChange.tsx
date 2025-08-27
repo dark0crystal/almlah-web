@@ -15,7 +15,7 @@ export default function LanguageChange() {
         <div>
             {locale === "ar" ? (
                 <Link 
-                    className="px-6 py-2  bg-black text-[#f6bf0c] font-bold rounded-lg hover:bg-gray-800 transition-colors duration-200" 
+                    className="px-6 py-2  bg-black text-white font-bold rounded-lg hover:bg-gray-800 transition-colors duration-200" 
                     href={`/en${pathWithoutLocale}`} 
                     locale="en"
                 >
@@ -23,7 +23,7 @@ export default function LanguageChange() {
                 </Link>
             ) : (
                 <Link 
-                    className="px-6 py-2  bg-black text-[#f6bf0c] font-bold rounded-lg hover:bg-gray-800 transition-colors duration-200" 
+                    className="px-6 py-2  bg-black text-white font-bold rounded-lg hover:bg-gray-800 transition-colors duration-200" 
                     href={`/ar${pathWithoutLocale}`} 
                     locale="ar"
                 >

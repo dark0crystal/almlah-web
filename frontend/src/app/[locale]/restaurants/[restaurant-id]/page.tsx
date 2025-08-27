@@ -260,9 +260,10 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
           language={language} 
         />
         
-        {/* Extra spacing */}
-        <div className="h-20" />
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
