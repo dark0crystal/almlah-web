@@ -80,19 +80,6 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
     }
   };
 
-  // Restaurant-specific functions
-  const handleCallRestaurant = () => {
-    if (restaurant.phone) {
-      window.open(`tel:${restaurant.phone}`, '_self');
-    }
-  };
-
-  const handleDirections = () => {
-    if (restaurant.lat && restaurant.lng) {
-      const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${restaurant.lat},${restaurant.lng}`;
-      window.open(directionsUrl, '_blank');
-    }
-  };
 
   return (
     <div className="min-h-screen">
@@ -166,33 +153,6 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
           {/* Left Column - Sidebar */}
           <div className="space-y-6">
             
-            {/* Quick Actions Card */}
-            {(restaurant.phone || (restaurant.lat && restaurant.lng)) && (
-              <div className="bg-white rounded-2xl shadow-sm p-6 border border-orange-100">
-                <h3 className="font-medium text-gray-900 mb-4">
-                  {language === 'ar' ? 'إجراءات سريعة' : 'Quick Actions'}
-                </h3>
-                <div className="space-y-3">
-                  {restaurant.phone && (
-                    <button
-                      onClick={handleCallRestaurant}
-                      className="w-full flex items-center justify-center gap-2 bg-orange-600 text-white py-3 px-4 rounded-lg hover:bg-orange-700 transition-colors"
-                    >
-                      📞 {language === 'ar' ? 'اتصل بالمطعم' : 'Call Restaurant'}
-                    </button>
-                  )}
-                  
-                  {restaurant.lat && restaurant.lng && (
-                    <button
-                      onClick={handleDirections}
-                      className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      🗺️ {language === 'ar' ? 'احصل على الاتجاهات' : 'Get Directions'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
             
             {/* Restaurant Info Card */}
             <div className="bg-white rounded-2xl shadow-sm p-6">

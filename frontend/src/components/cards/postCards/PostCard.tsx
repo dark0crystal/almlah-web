@@ -33,7 +33,7 @@ export default function PostCard({
 
   const cardContent = (
     <div className="relative w-full rounded-3xl hover:shadow-lg transition-all duration-300 cursor-pointer group bg-white p-2"
-         onClick={placeId ? undefined : onClick}>
+         onClick={onClick}>
       
       {/* NEW Badge - Outside the card container with spin animation */}
       {isNew && (
@@ -86,7 +86,7 @@ export default function PostCard({
   );
 
   return placeId ? (
-    <Link href={`/${locale}/places/${placeId}`}>
+    <Link href={`/${locale}/places/${placeId}`} className="block">
       {cardContent}
     </Link>
   ) : (

@@ -140,7 +140,7 @@ export default function Restaurants({ categoryType = "FOOD_BEVERAGES" }: Restaur
       {/* Desktop Layout - Cards and Map side by side (1280px+) */}
       <div className="hidden xl:flex gap-4 px-5 xl:px-25">
         {/* Restaurants List Section - 80vh with scroll */}
-        <div className="w-1/2 rounded-lg shadow-sm">
+        <div className="w-1/2 rounded-lg">
           <div className="h-[80vh] p-4">
             <RestaurantsCardsWrapper 
               isMobileMapView={false}
@@ -154,7 +154,7 @@ export default function Restaurants({ categoryType = "FOOD_BEVERAGES" }: Restaur
         </div>
         
         {/* Map Section - 80vh */}
-        <div className="w-1/2 rounded-lg shadow-sm">
+        <div className="w-1/2 rounded-lg">
           <div className="h-[80vh] p-4">
             <RestaurantsMap 
               categoryId={categoryId}

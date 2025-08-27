@@ -83,7 +83,7 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
 
   if (loading) {
     return (
-      <div className="bg-white text-black min-h-screen">
+      <div style={{backgroundColor: '#f3f3eb'}} className="text-black min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-10">
           {/* Loading skeleton */}
           <div className="animate-pulse">
@@ -135,7 +135,7 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
 
   if (error) {
     return (
-      <div className="bg-white text-black min-h-screen">
+      <div style={{backgroundColor: '#f3f3eb'}} className="text-black min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-10">
           <div className="text-center py-20">
             <div className="text-red-600 mb-4">
@@ -170,7 +170,7 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
 
   if (!restaurant) {
     return (
-      <div className="bg-white text-black min-h-screen">
+      <div style={{backgroundColor: '#f3f3eb'}} className="text-black min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-10">
           <div className="text-center py-20">
             <div className="text-gray-400 mb-4">
@@ -218,7 +218,7 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
   });
 
   return (
-    <div className="bg-white text-black">
+    <div style={{backgroundColor: '#f3f3eb'}} className="text-black">
       {/* Page Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-10">
         
