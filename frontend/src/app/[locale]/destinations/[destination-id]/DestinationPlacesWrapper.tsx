@@ -175,7 +175,8 @@ export default function DestinationPlacesWrapper({
           {places.map((place) => (
             <DestinationPlaceCard 
               key={place.id} 
-              place={place} 
+              place={place}
+              locale={locale}
             />
           ))}
         </div>

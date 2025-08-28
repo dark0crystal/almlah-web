@@ -96,7 +96,7 @@ export default function WilayahCard({ wilayah, locale, onClick }: WilayahCardPro
         {/* Hover indicator */}
         <div className="mt-4 sm:mt-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div className="inline-flex items-center gap-2 sm:gap-3 text-white/90 text-sm sm:text-base">
-            <span>{locale === 'ar' ? 'استكشف المنطقة' : 'Explore Area'}</span>
+            <span>{t('exploreDistrict')}</span>
             <div className="w-5 sm:w-6 h-0.5 bg-white/70 rounded-full group-hover:w-8 sm:group-hover:w-10 transition-all duration-300" />
           </div>
         </div>
