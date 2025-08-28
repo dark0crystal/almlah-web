@@ -19,17 +19,18 @@ interface ZatarState {
 }
 
 const FOOD_TYPES = [
-  { id: 'arabic', name_en: 'Arabic Cuisine', name_ar: 'المأكولات العربية', emoji: '🥙' },
-  { id: 'seafood', name_en: 'Seafood', name_ar: 'المأكولات البحرية', emoji: '🐟' },
-  { id: 'grilled', name_en: 'Grilled Food', name_ar: 'المشاوي', emoji: '🔥' },
-  { id: 'desserts', name_en: 'Desserts & Sweets', name_ar: 'الحلويات', emoji: '🍰' },
-  { id: 'coffee', name_en: 'Coffee & Beverages', name_ar: 'القهوة والمشروبات', emoji: '☕' },
-  { id: 'fastfood', name_en: 'Fast Food', name_ar: 'الوجبات السريعة', emoji: '🍔' },
+  { id: 'arabic', emoji: '🥙' },
+  { id: 'seafood', emoji: '🐟' },
+  { id: 'grilled', emoji: '🔥' },
+  { id: 'desserts', emoji: '🍰' },
+  { id: 'coffee', emoji: '☕' },
+  { id: 'fastfood', emoji: '🍔' },
 ];
 
 export default function ZatarPage() {
   const params = useParams();
   const locale = (params?.locale as string) || 'en';
+  const t = useTranslations('zatar');
   
   const [state, setState] = useState<ZatarState>({
     step: 1,
@@ -141,22 +142,21 @@ export default function ZatarPage() {
 
   return (
     <div className={`min-h-screen ${isRTL ? 'rtl' : 'ltr'}`}>
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
         
-        {/* Header */}
-        <div className="text-center mb-4">
+      {/* Header */}
+      <div className="text-center mb-4 px-4 py-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
             <AnimatedEmoji emoji="🎲" className="mr-2" />
-            {locale === 'ar' ? 'زعتر - مكتشف المطاعم' : 'Zatar - Restaurant Finder'}
+            {t('title')}
           </h1>
           
-        </div>
+      </div>
 
-        {/* Progress Bar */}
-        <div className="mb-8">
+      {/* Progress Bar */}
+      <div className="mb-8 px-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-500">
-              {locale === 'ar' ? `الخطوة ${state.step} من 3` : `Step ${state.step} of 3`}
+              {t('step', { step: state.step })}
             </span>
             <span className="text-sm text-gray-500">{Math.round((state.step / 3) * 100)}%</span>
           </div>
@@ -166,19 +166,19 @@ export default function ZatarPage() {
               style={{ width: `${(state.step / 3) * 100}%` }}
             ></div>
           </div>
-        </div>
+      </div>
 
-        {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 mb-6">
+      {/* Form Card */}
+      <div className="bg-white rounded-2xl shadow-xl p-8 mb-6 max-h-[92vh] overflow-y-auto mx-4">
           {state.step === 1 && (
             <div className="text-center">
               <div className="mb-6">
                 <MapPin className="w-16 h-16 text-green-500 mx-auto mb-4" />
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                  {locale === 'ar' ? 'أين تريد أن تأكل؟' : 'Where do you want to eat?'}
+                  {t('stepOne.title')}
                 </h2>
                 <p className="text-gray-600">
-                  {locale === 'ar' ? 'أدخل اسم المنطقة أو المدينة' : 'Enter the area or city name'}
+                  {t('stepOne.subtitle')}
                 </p>
               </div>
               
@@ -187,7 +187,7 @@ export default function ZatarPage() {
                   type="text"
                   value={state.placeName}
                   onChange={(e) => setState(prev => ({ ...prev, placeName: e.target.value }))}
-                  placeholder={locale === 'ar' ? 'مثال: صلالة' : 'Example: Salalah'}
+                  placeholder={t('stepOne.placeholder')}
                   className={`w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-xl focus:border-green-500 focus:outline-none transition-colors ${isRTL ? 'text-right' : 'text-left'}`}
                 />
               </div>
@@ -199,10 +199,10 @@ export default function ZatarPage() {
               <div className="mb-6">
                 <Utensils className="w-16 h-16 text-green-500 mx-auto mb-4" />
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                  {locale === 'ar' ? 'ما نوع الطعام المفضل؟' : 'What type of food do you prefer?'}
+                  {t('stepTwo.title')}
                 </h2>
                 <p className="text-gray-600">
-                  {locale === 'ar' ? 'اختر نوع المأكولات التي تشتهيها' : 'Choose the cuisine type you\'re craving'}
+                  {t('stepTwo.subtitle')}
                 </p>
               </div>
               
@@ -219,7 +219,7 @@ export default function ZatarPage() {
                   >
                     <div className="text-2xl mb-2">{food.emoji}</div>
                     <div className="font-medium text-gray-800">
-                      {locale === 'ar' ? food.name_ar : food.name_en}
+                      {t(`foodTypes.${food.id}`)}
                     </div>
                   </button>
                 ))}
@@ -233,17 +233,17 @@ export default function ZatarPage() {
                 <div className="py-12">
                   <div className="animate-spin w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full mx-auto mb-4"></div>
                   <h2 className="text-xl font-bold text-gray-800 mb-2">
-                    {locale === 'ar' ? '🎲 جاري البحث...' : '🎲 Finding your match...'}
+                    {t('loading.title')}
                   </h2>
                   <p className="text-gray-600">
-                    {locale === 'ar' ? 'نبحث عن أفضل الخيارات لك' : 'Searching for the best options for you'}
+                    {t('loading.subtitle')}
                   </p>
                 </div>
               ) : state.error ? (
                 <div className="py-12">
                   <div className="text-red-500 text-6xl mb-4">😵</div>
                   <h2 className="text-xl font-bold text-gray-800 mb-2">
-                    {locale === 'ar' ? 'عذراً! حدث خطأ' : 'Oops! Something went wrong'}
+                    {t('error.title')}
                   </h2>
                   <p className="text-gray-600 mb-6">
                     {state.error}
@@ -252,150 +252,155 @@ export default function ZatarPage() {
                     onClick={generateRecommendation}
                     className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 shadow-lg"
                   >
-                    {locale === 'ar' ? 'المحاولة مرة أخرى' : 'Try Again'}
+                    {t('error.tryAgain')}
                   </button>
                 </div>
               ) : state.recommendation ? (
                 <div>
                   <h2 className="text-2xl font-bold text-gray-800 mb-6">
-                    {locale === 'ar' ? '🎉 وجدنا لك!' : '🎉 We found you something!'}
+                    {t('result.title')}
                   </h2>
                   
-                  <div className="bg-white rounded-2xl mb-6 border border-green-200 overflow-hidden relative">
-                    {/* Status Bar */}
-                    {(() => {
-                      const isOpen = isRestaurantOpen(state.recommendation.opening_time, state.recommendation.closing_time);
-                      return (
-                        <div className={`h-4 w-full ${
-                          isOpen === true ? 'bg-green-500' : 
-                          isOpen === false ? 'bg-red-500' : 
-                          'bg-gray-400'
-                        }`}></div>
-                      );
-                    })()}
-                    
-                    {/* Dice in bottom corner */}
-                    <div className={`absolute bottom-4 ${isRTL ? 'left-4' : 'right-4'} z-10`}>
+                  <div className="max-w-sm mx-auto bg-white rounded-3xl shadow-lg overflow-hidden relative">
+                    {/* Heart icon in top right */}
+                    <div className="absolute top-4 right-4 z-20">
+                      <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md">
+                        <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* Roll again dice button in top left */}
+                    <div className="absolute top-4 left-4 z-20">
                       <button
                         onClick={rollAgain}
                         disabled={state.isLoading}
-                        className=" disabled:opacity-50 disabled:cursor-not-allowed text-white p-3 rounded-full  transition-all duration-200 transform hover:scale-105"
-                        title={locale === 'ar' ? 'رمي النرد مرة أخرى' : 'Roll Again'}
+                        className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
+                        title={t('result.rollAgain')}
                       >
-                        <span className="text-2xl">🎲</span>
+                        <span className="text-lg">🎲</span>
                       </button>
                     </div>
                     
-                    {/* Restaurant Images */}
-                    <div className="flex justify-center mb-6 pt-6">
+                    {/* Product Image */}
+                    <div className="bg-gray-100 h-80 flex items-center justify-center relative">
                       {(state.recommendation.image_urls && state.recommendation.image_urls.length > 0) || state.recommendation.image_url ? (
-                        <div className="w-80 h-80">
-                          <ImageCarousel 
-                            images={state.recommendation.image_urls || (state.recommendation.image_url ? [state.recommendation.image_url] : [])}
-                            alt={state.recommendation.name}
-                            className="w-full h-full object-cover rounded-lg"
-                          />
-                        </div>
+                        <ImageCarousel 
+                          images={state.recommendation.image_urls || (state.recommendation.image_url ? [state.recommendation.image_url] : [])}
+                          alt={state.recommendation.name}
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
-                        <div className="w-80 h-80 bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center rounded-lg">
-                          <div className="text-center text-gray-500">
-                            <div className="text-6xl mb-2">🍽️</div>
-                            <p className="text-sm">No Image Available</p>
-                          </div>
+                        <div className="text-center text-gray-400">
+                          <div className="text-6xl mb-2">🍽️</div>
+                          <p className="text-sm">No Image Available</p>
                         </div>
                       )}
                     </div>
 
+                    {/* Card Content */}
                     <div className="p-6">
-                      {/* Header */}
-                      <div className={`flex items-start justify-between mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                        <div className="flex-1">
-                          <h3 className="text-xl font-bold text-gray-800 mb-1">{state.recommendation.name}</h3>
-                          <p className="text-green-600 font-medium">{state.recommendation.cuisine}</p>
-                          
-                          {/* Open/Closed Status */}
-                          {(() => {
-                            const isOpen = isRestaurantOpen(state.recommendation.opening_time, state.recommendation.closing_time);
-                            if (isOpen === null) return null;
-                            
-                            return (
-                              <div className={`inline-flex items-center mt-2 px-2 py-1 rounded-full text-xs font-medium ${
-                                isOpen 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-red-100 text-red-800'
-                              }`}>
-                                <div className={`w-2 h-2 rounded-full mr-1 ${
-                                  isOpen ? 'bg-green-500' : 'bg-red-500'
-                                }`}></div>
-                                {isOpen 
-                                  ? (locale === 'ar' ? 'مفتوح الآن' : 'Open Now')
-                                  : (locale === 'ar' ? 'مغلق الآن' : 'Closed Now')
-                                }
-                              </div>
-                            );
-                          })()}
-                        </div>
-                        <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                      {/* Restaurant Name */}
+                      <h3 className="text-xl font-bold text-gray-800 mb-2">{state.recommendation.name}</h3>
+                      
+                      {/* Options/Variants (using cuisine types) */}
+                      <div className="flex gap-2 mb-4">
+                        <span className="px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-sm font-medium">
+                          {state.recommendation.cuisine}
+                        </span>
+                        <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">
                           {state.recommendation.type}
                         </span>
-                      </div>
-                    
-                    {/* Details Grid */}
-                    <div className="grid grid-cols-1 gap-3 mb-4">
-                      <div className={`flex items-center text-gray-600 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                        <MapPin className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'} text-green-500`} />
-                        <span>{state.recommendation.address}</span>
+                        {(() => {
+                          const isOpen = isRestaurantOpen(state.recommendation.opening_time, state.recommendation.closing_time);
+                          if (isOpen === null) return null;
+                          return (
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              isOpen 
+                                ? 'bg-green-100 text-green-600' 
+                                : 'bg-red-100 text-red-600'
+                            }`}>
+                              {isOpen 
+                                ? t('result.open')
+                                : t('result.closed')
+                              }
+                            </span>
+                          );
+                        })()}
                       </div>
                       
-                      {state.recommendation.rating && (
-                        <div className={`flex items-center text-gray-600 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                          <Star className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'} text-yellow-500`} />
-                          <span>{state.recommendation.rating}/5 ⭐</span>
-                        </div>
-                      )}
-                      
-                      {(state.recommendation.opening_time && state.recommendation.closing_time) && (
-                        <div className={`flex items-center text-gray-600 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                          <Clock className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'} text-green-500`} />
-                          <span>{state.recommendation.opening_time} - {state.recommendation.closing_time}</span>
-                        </div>
-                      )}
-                    </div>
+                      {/* Description */}
+                      <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+                        {locale === 'ar' 
+                          ? `استمتع بتجربة رائعة في ${state.recommendation.name} مع أجواء مميزة وخدمة متميزة.`
+                          : `Enjoy a wonderful experience at ${state.recommendation.name} with great atmosphere and excellent service.`
+                        }
+                      </p>
 
-                    {/* Contact Info */}
-                    <div className="border-t border-green-200 pt-3 mt-3">
-                      <div className="flex gap-3 justify-center flex-wrap">
-                        {/* Google Maps Button - Always shown */}
+                      {/* Details */}
+                      <div className="space-y-2 mb-6 text-sm text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-gray-400" />
+                          <span>{state.recommendation.address}</span>
+                        </div>
+                        
+                        {state.recommendation.rating && (
+                          <div className="flex items-center gap-2">
+                            <Star className="w-4 h-4 text-yellow-500" />
+                            <span>{state.recommendation.rating}/5 Rating</span>
+                          </div>
+                        )}
+                        
+                        {(state.recommendation.opening_time && state.recommendation.closing_time) && (
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-gray-400" />
+                            <span>{state.recommendation.opening_time} - {state.recommendation.closing_time}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Price and Action Button */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1">
+                          {state.recommendation.rating && (
+                            <span className="text-2xl font-bold text-gray-800">★{state.recommendation.rating}</span>
+                          )}
+                        </div>
                         <button
                           onClick={() => openGoogleMaps(state.recommendation.name, state.recommendation.address)}
-                          className="flex items-center gap-1 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-lg text-sm transition-colors"
+                          className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-2xl font-medium transition-all duration-200 transform hover:scale-105 flex items-center gap-2"
                         >
                           <Navigation className="w-4 h-4" />
-                          {locale === 'ar' ? 'الاتجاهات' : 'Directions'}
+                          {t('result.getDirections')}
                         </button>
-                        
-                        {state.recommendation.phone && (
-                          <a 
-                            href={`tel:${state.recommendation.phone}`}
-                            className="flex items-center gap-1 bg-green-100 hover:bg-green-200 text-green-700 px-3 py-2 rounded-lg text-sm transition-colors"
-                          >
-                            <Phone className="w-4 h-4" />
-                            {locale === 'ar' ? 'اتصال' : 'Call'}
-                          </a>
-                        )}
-                        {state.recommendation.website && (
-                          <a 
-                            href={state.recommendation.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-2 rounded-lg text-sm transition-colors"
-                          >
-                            <Globe className="w-4 h-4" />
-                            {locale === 'ar' ? 'موقع الويب' : 'Website'}
-                          </a>
-                        )}
                       </div>
-                    </div>
+
+                      {/* Additional Action Buttons */}
+                      {(state.recommendation.phone || state.recommendation.website) && (
+                        <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
+                          {state.recommendation.phone && (
+                            <a 
+                              href={`tel:${state.recommendation.phone}`}
+                              className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                            >
+                              <Phone className="w-4 h-4" />
+                              {t('result.call')}
+                            </a>
+                          )}
+                          {state.recommendation.website && (
+                            <a 
+                              href={state.recommendation.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                            >
+                              <Globe className="w-4 h-4" />
+                              {t('result.website')}
+                            </a>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -415,7 +420,7 @@ export default function ZatarPage() {
               } flex items-center gap-2`}
             >
               {isRTL ? <ArrowRight className="w-5 h-5" /> : <ArrowLeft className="w-5 h-5" />}
-              {locale === 'ar' ? 'السابق' : 'Back'}
+              {t('navigation.back')}
             </button>
 
             {state.step < 3 && (
@@ -432,33 +437,14 @@ export default function ZatarPage() {
                     : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg transform hover:scale-105'
                 }`}
               >
-                {locale === 'ar' ? 'التالي' : 'Next'}
+                {t('navigation.next')}
                 {isRTL ? <ArrowLeft className="w-5 h-5" /> : <ArrowRight className="w-5 h-5" />}
               </button>
             )}
           </div>
-        </div>
-
-        {/* Summary */}
-        {state.step > 1 && (
-          <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 mb-4">
-            <h3 className="font-medium text-gray-700 mb-2">
-              {locale === 'ar' ? 'ملخص اختياراتك:' : 'Your choices:'}
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
-                📍 {state.placeName}
-              </span>
-              {state.foodType && (
-                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
-                  🍽️ {FOOD_TYPES.find(f => f.id === state.foodType)?.[locale === 'ar' ? 'name_ar' : 'name_en']}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-
       </div>
+
+
     </div>
   );
 }

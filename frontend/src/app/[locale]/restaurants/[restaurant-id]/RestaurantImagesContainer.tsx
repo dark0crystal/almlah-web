@@ -174,7 +174,7 @@ export default function RestaurantImagesContainer({
 
       {/* Mobile & iPad Layout (below lg screens) */}
       <div className="block lg:hidden">
-        <div className="relative w-full max-w-md mx-auto bg-white overflow-hidden shadow-lg rounded-2xl border border-orange-100">
+        <div className="relative w-full max-w-lg mx-auto bg-white overflow-hidden shadow-lg rounded-2xl border border-orange-100">
           
           {/* Main Image */}
           <div className="relative">

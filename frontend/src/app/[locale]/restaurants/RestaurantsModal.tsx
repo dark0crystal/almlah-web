@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Utensils, ChevronDown, ChevronUp, X } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -33,6 +33,12 @@ export default function RestaurantsModal({
   const [restaurants, setRestaurants] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Drag functionality state
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState(0);
+  const [currentHeight, setCurrentHeight] = useState(0);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // Get restaurant category ID from the scalable system
   const restaurantCategoryId = CATEGORY_IDS.RESTAURANTS;
@@ -71,6 +77,126 @@ export default function RestaurantsModal({
     loadRestaurants();
   }, [restaurantCategoryId, selectedGovernateId, t]);
 
+  // Initialize height based on expansion state
+  useEffect(() => {
+    if (modalRef.current) {
+      const windowHeight = window.innerHeight;
+      const targetHeight = isExpanded ? windowHeight * 5/6 : windowHeight * 2/3;
+      setCurrentHeight(targetHeight);
+    }
+  }, [isExpanded]);
+
+  // Drag handlers
+  const handleDragStart = useCallback((clientY: number) => {
+    setIsDragging(true);
+    setDragStart(clientY);
+  }, []);
+
+  const handleDragMove = useCallback((clientY: number) => {
+    if (!isDragging || !modalRef.current) return;
+
+    const windowHeight = window.innerHeight;
+    const dragDelta = dragStart - clientY; // Positive when dragging up
+    const minHeight = windowHeight * 0.3; // 30% minimum
+    const maxHeight = windowHeight * 0.9; // 90% maximum
+    
+    let newHeight = currentHeight + dragDelta;
+    newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
+    
+    modalRef.current.style.height = `${newHeight}px`;
+    modalRef.current.style.transition = 'none'; // Disable transition during drag
+  }, [isDragging, dragStart, currentHeight]);
+
+  const handleDragEnd = useCallback(() => {
+    if (!isDragging || !modalRef.current) return;
+
+    setIsDragging(false);
+    const windowHeight = window.innerHeight;
+    const currentModalHeight = modalRef.current.getBoundingClientRect().height;
+    
+    // Snap points
+    const snapPoints = [
+      windowHeight * 0.3,  // Collapsed
+      windowHeight * 2/3,  // Medium (original collapsed)
+      windowHeight * 5/6   // Expanded
+    ];
+    
+    // Find closest snap point
+    let closestSnap = snapPoints[0];
+    let minDistance = Math.abs(currentModalHeight - snapPoints[0]);
+    
+    snapPoints.forEach(snap => {
+      const distance = Math.abs(currentModalHeight - snap);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestSnap = snap;
+      }
+    });
+    
+    // Update states based on snap point
+    const newIsExpanded = closestSnap >= windowHeight * 5/6;
+    if (newIsExpanded !== isExpanded) {
+      onToggleExpand();
+    }
+    
+    // Re-enable transition and snap to final position
+    modalRef.current.style.transition = 'height 0.3s ease-out';
+    modalRef.current.style.height = `${closestSnap}px`;
+    setCurrentHeight(closestSnap);
+    
+    // Reset transition after animation
+    setTimeout(() => {
+      if (modalRef.current) {
+        modalRef.current.style.transition = '';
+      }
+    }, 300);
+  }, [isDragging, isExpanded, onToggleExpand]);
+
+  // Mouse events
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    handleDragStart(e.clientY);
+  }, [handleDragStart]);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    handleDragMove(e.clientY);
+  }, [handleDragMove]);
+
+  const handleMouseUp = useCallback(() => {
+    handleDragEnd();
+  }, [handleDragEnd]);
+
+  // Touch events
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    handleDragStart(e.touches[0].clientY);
+  }, [handleDragStart]);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    e.preventDefault();
+    handleDragMove(e.touches[0].clientY);
+  }, [handleDragMove]);
+
+  const handleTouchEnd = useCallback(() => {
+    handleDragEnd();
+  }, [handleDragEnd]);
+
+  // Add/remove event listeners
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-4">
       {/* Semi-transparent backdrop with blur effect */}
@@ -80,12 +206,24 @@ export default function RestaurantsModal({
       />
       
       {/* Main modal container with dynamic height based on expansion state */}
-      <div className={`relative bg-white rounded-t-3xl shadow-2xl w-full max-w-4xl transition-all duration-500 ease-out transform ${
-        isExpanded ? 'h-5/6' : 'h-2/3'
-      }`}>
+      <div 
+        ref={modalRef}
+        className={`relative bg-white rounded-t-3xl shadow-2xl w-full max-w-4xl transition-all duration-500 ease-out transform ${
+          isExpanded ? 'h-5/6' : 'h-2/3'
+        } ${isDragging ? 'select-none' : ''}`}
+      >
+
+        {/* Drag handle */}
+        <div 
+          className="flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing"
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
+        >
+          <div className="w-10 h-1 bg-gray-300 rounded-full"></div>
+        </div>
 
         {/* Modal header with title and control buttons */}
-        <div className={`flex items-center justify-between p-6 border-b border-gray-100 ${
+        <div className={`flex items-center justify-between px-6 pb-6 pt-2 border-b border-gray-100 ${
           locale === 'ar' ? 'flex-row-reverse' : ''
         }`}>
           <div className={`flex items-center space-x-3 ${locale === 'ar' ? 'space-x-reverse' : ''}`}>

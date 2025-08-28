@@ -190,7 +190,7 @@ export default function PlaceImagesContainer({
 
       {/* Mobile & iPad Layout (below lg screens) */}
       <div className="block lg:hidden">
-        <div className="relative w-full max-w-md mx-auto bg-white overflow-hidden shadow-lg rounded-2xl">
+        <div className="relative w-full max-w-lg mx-auto bg-white overflow-hidden shadow-lg rounded-2xl">
           
           {/* Main Image */}
           <div className="relative">
