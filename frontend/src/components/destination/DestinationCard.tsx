@@ -76,16 +76,9 @@ export default function DestinationCard({ destination, isHighlighted = false }) 
         </div>
       </div>
                      
-      {/* Text content - matching the image layout */}
-      <div className="py-2 px-6 text-center">
-        {/* Subtitle - smaller text in the middle */}
-        <p className={`text-gray-600 text-sm mb-0.5 line-clamp-1 ${
-          locale === 'ar' ? 'text-right font-arabic' : 'text-left'
-        }`}>
-          {getSubtitle()}
-        </p>
-                
-        {/* Main title - larger text at the bottom */}
+      {/* Text content - only title */}
+      <div className="py-4 px-6 text-center">
+        {/* Main title only */}
         <h3 className={`text-gray-900 text-xl font-medium leading-tight line-clamp-1 ${
           locale === 'ar' ? 'text-right font-arabic' : 'text-left'
         }`}>

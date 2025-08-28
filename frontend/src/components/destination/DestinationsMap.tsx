@@ -1,5 +1,5 @@
 "use client"
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { GoogleMap, useLoadScript, Marker, InfoWindow } from '@react-google-maps/api';
 
 const libraries: ("places" | "geometry")[] = ['places'];
@@ -17,11 +17,32 @@ const OMAN_CENTER = { lat: 23.5859, lng: 58.4059 }; // Muscat coordinates
 export default function DestinationsMap({ destinations = [], language = 'ar', onMarkerClick }) {
     const [activeDestination, setActiveDestination] = useState(null);
     const [selectedMarker, setSelectedMarker] = useState(null);
+    const [markerIcons, setMarkerIcons] = useState({});
 
     const { isLoaded, loadError } = useLoadScript({
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
         libraries,
     });
+
+    // Load marker icons when destinations change
+    useEffect(() => {
+        if (!destinations.length) return;
+
+        const loadIcons = async () => {
+            const icons = {};
+            for (const destination of destinations) {
+                try {
+                    const icon = await createCustomMarkerIcon(destination);
+                    icons[destination.id] = icon;
+                } catch (error) {
+                    console.error('Failed to create marker icon for', destination.name, error);
+                }
+            }
+            setMarkerIcons(icons);
+        };
+
+        loadIcons();
+    }, [destinations]);
 
     const mapOptions = {
         center: OMAN_CENTER,
@@ -70,33 +91,68 @@ export default function DestinationsMap({ destinations = [], language = 'ar', on
     }, [onMarkerClick]);
 
     const createCustomMarkerIcon = (destination) => {
-        const canvas = document.createElement('canvas');
-        const size = 40;
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext('2d');
+        return new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            const size = 40;
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
 
-        // Draw circle background
-        ctx.beginPath();
-        ctx.arc(size / 2, size / 2, size / 2 - 3, 0, 2 * Math.PI);
-        ctx.fillStyle = destination.image ? '#3B82F6' : `hsl(${destination.id * 137.5 % 360}, 70%, 50%)`;
-        ctx.fill();
-        
-        // Draw white border
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 3;
-        ctx.stroke();
+            if (destination.image) {
+                // Load and draw the image
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    // Create circular clipping path
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(size / 2, size / 2, size / 2 - 3, 0, 2 * Math.PI);
+                    ctx.clip();
+                    
+                    // Draw image to fill the circle
+                    ctx.drawImage(img, 3, 3, size - 6, size - 6);
+                    ctx.restore();
+                    
+                    // Draw white border
+                    ctx.beginPath();
+                    ctx.arc(size / 2, size / 2, size / 2 - 3, 0, 2 * Math.PI);
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    
+                    resolve(canvas.toDataURL());
+                };
+                img.onerror = () => {
+                    // Fallback to color marker if image fails
+                    drawFallbackMarker();
+                };
+                img.src = destination.image;
+            } else {
+                drawFallbackMarker();
+            }
 
-        // Add text if no image
-        if (!destination.image) {
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(destination.name.charAt(0), size / 2, size / 2);
-        }
+            function drawFallbackMarker() {
+                // Draw circle background
+                ctx.beginPath();
+                ctx.arc(size / 2, size / 2, size / 2 - 3, 0, 2 * Math.PI);
+                ctx.fillStyle = `hsl(${destination.id * 137.5 % 360}, 70%, 50%)`;
+                ctx.fill();
+                
+                // Draw white border
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 3;
+                ctx.stroke();
 
-        return canvas.toDataURL();
+                // Add text
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(destination.name.charAt(0), size / 2, size / 2);
+                
+                resolve(canvas.toDataURL());
+            }
+        });
     };
 
     if (loadError) {
@@ -134,7 +190,7 @@ export default function DestinationsMap({ destinations = [], language = 'ar', on
                 onLoad={onMapLoad}
             >
                 {destinations.map((destination) => {
-                    if (destination.governorateData?.latitude && destination.governorateData?.longitude) {
+                    if (destination.governorateData?.latitude && destination.governorateData?.longitude && markerIcons[destination.id]) {
                         return (
                             <Marker
                                 key={destination.id}
@@ -143,7 +199,7 @@ export default function DestinationsMap({ destinations = [], language = 'ar', on
                                     lng: destination.governorateData.longitude
                                 }}
                                 icon={{
-                                    url: createCustomMarkerIcon(destination),
+                                    url: markerIcons[destination.id],
                                     scaledSize: new google.maps.Size(40, 40),
                                 }}
                                 onClick={() => handleMarkerClick(destination)}
