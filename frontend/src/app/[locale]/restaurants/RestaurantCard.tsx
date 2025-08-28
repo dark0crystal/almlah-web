@@ -3,20 +3,24 @@ import { useState } from "react";
 import { MapPin, Star, Clock, Phone } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
+import { useTranslations, useLocale } from 'next-intl';
 import { Place } from "@/types"; // Using Place type instead of Restaurant
 
 interface RestaurantCardProps {
   restaurant: Place; // Changed from Restaurant to Place
-  locale: string;
+  locale?: string; // Make optional since we'll use useLocale hook
   isSelected?: boolean;
   onRestaurantClick?: (restaurantId: string) => void;
   isHorizontalScroll?: boolean; // New prop to handle horizontal scroll layout
 }
 
-export default function RestaurantCard({ restaurant, locale, isSelected = false, onRestaurantClick, isHorizontalScroll = false }: RestaurantCardProps) {
+export default function RestaurantCard({ restaurant, locale: propLocale, isSelected = false, onRestaurantClick, isHorizontalScroll = false }: RestaurantCardProps) {
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const t = useTranslations('restaurants');
+  const currentLocale = useLocale();
+  const locale = propLocale || currentLocale;
 
   const handleCardClick = () => {
     // Call onRestaurantClick if provided (for map interaction)
@@ -77,14 +81,14 @@ export default function RestaurantCard({ restaurant, locale, isSelected = false,
 
   const locationString = [governateName, wilayahName]
     .filter(Boolean)
-    .join(' | ') || (locale === 'ar' ? 'سلطنة عمان' : 'Sultanate of Oman');
+    .join(' | ') || t('card.defaultLocation');
 
   const getCuisineText = () => {
     // Get the first category as cuisine type
     if (restaurant.categories && restaurant.categories.length > 0) {
       return locale === 'ar' ? restaurant.categories[0].name_ar : restaurant.categories[0].name_en;
     }
-    return locale === 'ar' ? 'مطاعم ومشروبات' : 'Food & Beverages';
+    return t('card.defaultCuisine');
   };
 
   // Render horizontal scroll card (for bottom sheet collapsed state)
@@ -123,7 +127,7 @@ export default function RestaurantCard({ restaurant, locale, isSelected = false,
                 <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm rounded-full p-1">
                   <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
                     <span className="text-white text-xs font-bold">
-                      {locale === 'ar' ? 'م' : 'F'}
+                      {t('card.featured')}
                     </span>
                   </div>
                 </div>
@@ -207,7 +211,7 @@ export default function RestaurantCard({ restaurant, locale, isSelected = false,
               <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm rounded-full p-1">
                 <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
                   <span className="text-white text-xs font-bold">
-                    {locale === 'ar' ? 'م' : 'F'}
+                    {t('card.featured')}
                   </span>
                 </div>
               </div>

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 import RestaurantImagesContainer from "./RestaurantImagesContainer";
 import RestaurantAboutAndLocation from "./RestaurantAboutAndLocation";
 import { fetchPlaceById } from '@/services/placesApi';
@@ -17,7 +18,9 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
   const [restaurant, setRestaurant] = useState<Place | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [language] = useState<'ar' | 'en'>('ar'); // You can make this dynamic
+  const t = useTranslations('restaurants.details');
+  const locale = useLocale();
+  const language = locale as 'ar' | 'en';
   
   // Get restaurant ID from params or URL
   const urlParams = useParams();
@@ -42,7 +45,7 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
       const restaurantData = await fetchPlaceById(restaurantId);
       
       if (!restaurantData) {
-        setError(language === 'ar' ? 'المطعم غير موجود' : 'Restaurant not found');
+        setError(t('error.notFound'));
         return;
       }
       
@@ -55,8 +58,7 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
       
     } catch (err) {
       console.error('Error loading restaurant:', err);
-      setError(err instanceof Error ? err.message : 
-        (language === 'ar' ? 'حدث خطأ في تحميل بيانات المطعم' : 'Error loading restaurant data'));
+      setError(err instanceof Error ? err.message : t('error.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -66,7 +68,7 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
   useEffect(() => {
     if (!restaurantId) {
       console.error('No restaurant ID found in params');
-      setError(language === 'ar' ? 'معرف المطعم غير موجود' : 'Restaurant ID not found');
+      setError(t('error.notFound'));
       setLoading(false);
       return;
     }
@@ -78,7 +80,7 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
   useEffect(() => {
     if (restaurant) {
       const restaurantName = language === 'ar' ? restaurant.name_ar : restaurant.name_en;
-      document.title = `${restaurantName} - ${language === 'ar' ? 'دليل المطاعم' : 'Restaurant Guide'}`;
+      document.title = `${restaurantName} - ${t('title')}`;
     }
   }, [restaurant, language]);
 
@@ -146,7 +148,7 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              {language === 'ar' ? 'عذراً، لم نتمكن من تحميل بيانات المطعم' : 'Sorry, we could not load the restaurant data'}
+              {t('error.title')}
             </h2>
             <p className="text-gray-600 mb-6">{error}</p>
             <div className="space-x-4">
@@ -154,13 +156,13 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
                 onClick={() => window.location.reload()}
                 className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg transition-colors"
               >
-                {language === 'ar' ? 'إعادة المحاولة' : 'Try Again'}
+                {t('error.tryAgain')}
               </button>
               <button
                 onClick={() => router.back()}
                 className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg transition-colors"
               >
-                {language === 'ar' ? 'العودة' : 'Go Back'}
+                {t('error.goBack')}
               </button>
             </div>
           </div>
@@ -181,19 +183,16 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              {language === 'ar' ? 'المطعم غير موجود' : 'Restaurant not found'}
+              {t('error.notFound')}
             </h2>
             <p className="text-gray-600 mb-6">
-              {language === 'ar' 
-                ? 'لم يتم العثور على المطعم المطلوب أو قد يكون غير متاح حالياً'
-                : 'The requested restaurant was not found or may be currently unavailable'
-              }
+              {t('error.notFoundMessage')}
             </p>
             <button
               onClick={() => router.back()}
               className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg transition-colors"
             >
-              {language === 'ar' ? 'العودة' : 'Go Back'}
+              {t('error.goBack')}
             </button>
           </div>
         </div>
@@ -230,7 +229,7 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
               onClick={() => router.back()}
               className="hover:text-gray-900 transition-colors"
             >
-              {language === 'ar' ? 'المطاعم' : 'Restaurants'}
+              {t('breadcrumbs.restaurants')}
             </button>
             <span className="mx-2">/</span>
             {restaurant.governate && (

@@ -143,11 +143,11 @@ export default function DishesMap() {
   // Show loading state
   if (loading) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center" style={{ backgroundColor: '#f3f3eb' }}>
+      <div className="h-[92vh] max-h-[92vh] w-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#1e2539' }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Loading Omani Dishes</h2>
-          <p className="text-gray-600">Please wait while we fetch traditional dishes from all governorates...</p>
+          <h2 className="text-xl font-semibold text-white mb-2">Loading Omani Dishes</h2>
+          <p className="text-gray-300">Please wait while we fetch traditional dishes from all governorates...</p>
         </div>
       </div>
     );
@@ -156,11 +156,11 @@ export default function DishesMap() {
   // Show error state
   if (error) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center" style={{ backgroundColor: '#f3f3eb' }}>
+      <div className="h-[92vh] max-h-[92vh] w-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#1e2539' }}>
         <div className="text-center max-w-md mx-auto p-6">
           <div className="text-6xl mb-4">⚠️</div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Unable to Load Dishes</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <h2 className="text-xl font-semibold text-white mb-2">Unable to Load Dishes</h2>
+          <p className="text-gray-300 mb-4">{error}</p>
           <button 
             onClick={() => window.location.reload()} 
             className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2 rounded-lg transition-colors"
@@ -173,11 +173,11 @@ export default function DishesMap() {
   }
 
   return (
-    <div className="min-h-screen w-full relative" style={{ backgroundColor: '#f3f3eb' }}>
+    <div className="h-[92vh] max-h-[92vh] w-full relative overflow-hidden" style={{ backgroundColor: '#1e2539' }}>
       {/* Header */}
       <div className="absolute top-4 left-4 z-10">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Omani Traditional Dishes</h1>
-        <p className="text-gray-600 text-sm md:text-base">Click on any governorate to explore local dishes</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Omani Traditional Dishes</h1>
+        <p className="text-gray-300 text-sm md:text-base">Click on any governorate to explore local dishes</p>
         {governorates.length > 0 && (
           <p className="text-amber-600 text-xs mt-1">
             {Object.values(dishesData).reduce((total, dishes) => total + dishes.length, 0)} dishes from {governorates.length} governorates
@@ -188,7 +188,7 @@ export default function DishesMap() {
       {/* Hover tooltip */}
       {hoveredGovernorate && hoveredGovernorateData && (
         <div className="absolute top-20 left-4 z-10 bg-white bg-opacity-90 px-3 py-1 rounded-lg shadow-md">
-          <p className="text-gray-800 font-medium">{getGovernorateName(hoveredGovernorateData)}</p>
+          <p className="text-gray-900 font-medium">{getGovernorateName(hoveredGovernorateData)}</p>
           <p className="text-xs text-gray-500">
             {dishesData[hoveredGovernorate]?.length || 0} dishes
           </p>
@@ -196,11 +196,11 @@ export default function DishesMap() {
       )}
 
       {/* SVG Map Container */}
-      <div className="w-full h-screen flex items-center justify-center p-4">
+      <div className="w-full h-full flex items-center justify-center p-4 pt-16">
         <div className="w-full max-w-6xl h-full flex items-center justify-center">
           <svg 
             id="oman-map" 
-            className="w-full h-full max-h-[80vh] drop-shadow-lg"
+            className="w-full h-full max-h-[75vh] drop-shadow-lg"
             baseProfile="tiny" 
             height="100%" 
             stroke="#ffffff" 
