@@ -27,7 +27,9 @@ export default function WilayahCardsWrapper({
     if (!scrollContainerRef.current) return;
     
     const container = scrollContainerRef.current;
-    const scrollAmount = 350; // Amount to scroll in pixels
+    // Get the width of the first card plus gap for more accurate scrolling
+    const firstCard = container.children[0] as HTMLElement;
+    const scrollAmount = firstCard ? firstCard.offsetWidth + 16 : 500; // card width + gap
     const currentScrollLeft = container.scrollLeft;
     
     if (direction === 'left') {
@@ -152,17 +154,17 @@ export default function WilayahCardsWrapper({
           <>
             <button
               onClick={() => handleScroll('left')}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white/90 backdrop-blur-sm border border-white/20 hover:bg-white hover:shadow-lg transition-all duration-200 group"
+              className="absolute left-2 sm:left-4 lg:left-6 top-1/2 -translate-y-1/2 z-30 p-2 sm:p-3 lg:p-4 rounded-full bg-white/90 backdrop-blur-sm border border-white/20 hover:bg-white hover:shadow-xl transition-all duration-200 group"
               aria-label={t('scrollLeft')}
             >
-              <ChevronLeft className="w-6 h-6 text-gray-700 group-hover:text-gray-900" />
+              <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-gray-700 group-hover:text-gray-900" />
             </button>
             <button
               onClick={() => handleScroll('right')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white/90 backdrop-blur-sm border border-white/20 hover:bg-white hover:shadow-lg transition-all duration-200 group"
+              className="absolute right-2 sm:right-4 lg:right-6 top-1/2 -translate-y-1/2 z-30 p-2 sm:p-3 lg:p-4 rounded-full bg-white/90 backdrop-blur-sm border border-white/20 hover:bg-white hover:shadow-xl transition-all duration-200 group"
               aria-label={t('scrollRight')}
             >
-              <ChevronRight className="w-6 h-6 text-gray-700 group-hover:text-gray-900" />
+              <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-gray-700 group-hover:text-gray-900" />
             </button>
           </>
         )}
@@ -170,14 +172,14 @@ export default function WilayahCardsWrapper({
         {/* Horizontal scrolling container */}
         <div
           ref={scrollContainerRef}
-          className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory"
+          className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2"
           style={{
             scrollbarWidth: 'none', /* Firefox */
             msOverflowStyle: 'none', /* Internet Explorer 10+ */
           }}
         >
           {wilayahsWithImages.map((wilayah) => (
-            <div key={wilayah.id} className="snap-start">
+            <div key={wilayah.id} className="snap-start snap-always">
               <WilayahCard
                 wilayah={wilayah}
                 locale={locale}
@@ -188,22 +190,23 @@ export default function WilayahCardsWrapper({
         </div>
         
         {/* Subtle gradient fade effects */}
-        <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#f3f3eb] to-transparent pointer-events-none z-20" />
-        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#f3f3eb] to-transparent pointer-events-none z-20" />
+        <div className="absolute left-0 top-0 bottom-0 w-6 sm:w-8 lg:w-12 bg-gradient-to-r from-[#f3f3eb] to-transparent pointer-events-none z-20" />
+        <div className="absolute right-0 top-0 bottom-0 w-6 sm:w-8 lg:w-12 bg-gradient-to-l from-[#f3f3eb] to-transparent pointer-events-none z-20" />
       </div>
 
       {/* Carousel indicators */}
       {wilayahsWithImages.length > 1 && (
-        <div className="flex justify-center mt-6 gap-2">
+        <div className="flex justify-center mt-6 sm:mt-8 gap-2 sm:gap-3">
           {wilayahsWithImages.map((_, index) => (
             <button
               key={index}
-              className="w-2 h-2 rounded-full bg-gray-300 hover:bg-gray-400 transition-colors"
+              className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-gray-300 hover:bg-gray-500 transition-colors duration-200"
               onClick={() => {
                 if (scrollContainerRef.current) {
                   const container = scrollContainerRef.current;
-                  const cardWidth = container.children[0]?.clientWidth || 400;
-                  const gap = 16; // 4 * 4px (gap-4)
+                  const firstCard = container.children[0] as HTMLElement;
+                  const cardWidth = firstCard?.offsetWidth || 500;
+                  const gap = window.innerWidth >= 640 ? 24 : 16; // sm:gap-6 vs gap-4
                   const scrollPosition = index * (cardWidth + gap);
                   container.scrollTo({
                     left: scrollPosition,
