@@ -11,14 +11,16 @@ export default async function HomePage() {
   const t = await getTranslations('HomePage');
   return (
     <div>
-      <div className='flex items-center flex-col'>
+      <div className='flex items-center flex-col space-y-8 sm:space-y-12 md:space-y-16 lg:space-y-20'>
         
         {/* <Header/> */}
         <Heading/>
         {/* <ScrollAnimatedPng/> */}
         {/* <CategoryCard /> */}
-        <div className='h-[7.5vh]'/>
-        <ArabicCardsLayout/>
+        
+        <div className="mt-8 sm:mt-12 md:mt-16 lg:mt-20">
+          <ArabicCardsLayout/>
+        </div>
 
         <CategoryCardsWrapper />
         
