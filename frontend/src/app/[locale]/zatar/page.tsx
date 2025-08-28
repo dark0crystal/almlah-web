@@ -144,14 +144,12 @@ export default function ZatarPage() {
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-4">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
             <AnimatedEmoji emoji="🎲" className="mr-2" />
             {locale === 'ar' ? 'زعتر - مكتشف المطاعم' : 'Zatar - Restaurant Finder'}
           </h1>
-          <p className="text-gray-600">
-            {locale === 'ar' ? 'دعنا نجد لك المكان المثالي للطعام' : 'Let us find the perfect place for you to eat'}
-          </p>
+          
         </div>
 
         {/* Progress Bar */}
@@ -356,24 +354,10 @@ export default function ZatarPage() {
                         </div>
                       )}
                       
-                      {state.recommendation.distance && (
-                        <div className={`flex items-center text-gray-600 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                          <MapPin className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'} text-blue-500`} />
-                          <span>{state.recommendation.distance}</span>
-                        </div>
-                      )}
-                      
                       {(state.recommendation.opening_time && state.recommendation.closing_time) && (
                         <div className={`flex items-center text-gray-600 ${isRTL ? 'flex-row-reverse' : ''}`}>
                           <Clock className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'} text-green-500`} />
                           <span>{state.recommendation.opening_time} - {state.recommendation.closing_time}</span>
-                        </div>
-                      )}
-                      
-                      {state.recommendation.price_range && (
-                        <div className={`flex items-center text-gray-600 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                          <span className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'} text-green-600 font-bold`}>$</span>
-                          <span>{state.recommendation.price_range}</span>
                         </div>
                       )}
                     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from 'next-intl';
-import { MapPin, Users, ArrowRight } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 
@@ -44,71 +44,66 @@ export default function WilayahCard({ wilayah, locale, onClick }: WilayahCardPro
 
   return (
     <div 
-      className="group bg-white rounded-xl shadow-md border border-gray-200 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer min-w-[320px] flex-shrink-0 overflow-hidden"
+      className="group relative w-full h-80 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-2xl min-w-[400px] flex-shrink-0"
       onClick={handleClick}
     >
-      {/* Image Section */}
-      <div className="relative h-48 overflow-hidden">
-        <Image
-          src={getImageSrc()}
-          alt={wilayahName}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
-          onError={handleImageError}
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        
-        {/* Place count badge */}
-        {wilayah.place_count && wilayah.place_count > 0 && (
-          <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1">
-            <div className="flex items-center gap-1 text-sm font-medium text-gray-700">
-              <MapPin className="w-4 h-4" />
-              <span>{wilayah.place_count}</span>
-            </div>
+      {/* Background Image */}
+      <Image
+        src={getImageSrc()}
+        alt={wilayahName}
+        fill
+        className="object-cover group-hover:scale-105 transition-transform duration-500"
+        onError={handleImageError}
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+      />
+      
+      {/* Overlay Gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+      
+      {/* Place count badge - Top Right */}
+      {wilayah.place_count && wilayah.place_count > 0 && (
+        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5">
+          <div className="flex items-center gap-1 text-sm font-semibold text-gray-800">
+            <MapPin className="w-4 h-4" />
+            <span>{wilayah.place_count}</span>
           </div>
-        )}
-        
-        {/* Title overlay */}
-        <div className="absolute bottom-4 left-4 right-4">
-          <h3 className="font-bold text-white text-xl leading-tight mb-1 drop-shadow-lg">
-            {wilayahName}
-          </h3>
+        </div>
+      )}
+      
+      {/* Content - Bottom Overlay */}
+      <div className="absolute bottom-0 left-0 right-0 p-6">
+        <div className="space-y-2">
+          {/* Alternative name - small text */}
           {alternativeName && alternativeName !== wilayahName && (
-            <p className="text-white/80 text-sm drop-shadow">
+            <p className="text-white/80 text-sm font-medium tracking-wide">
               {alternativeName}
             </p>
           )}
-        </div>
-      </div>
-
-      {/* Content Section */}
-      <div className="p-5">
-        {/* Main info */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-gray-600">
-            <Users className="w-4 h-4" />
-            <span className="text-sm font-medium">
-              {t('exploreDistrict')}
-            </span>
-          </div>
           
-          {/* Action indicator */}
-          <div className="flex items-center gap-1 text-blue-600 group-hover:translate-x-1 transition-transform duration-200">
-            <span className="text-sm font-medium">{t('explore')}</span>
-            <ArrowRight className="w-4 h-4" />
-          </div>
+          {/* Main title - large text */}
+          <h3 className={`font-bold text-white text-2xl md:text-3xl leading-tight drop-shadow-lg ${
+            locale === 'ar' ? 'text-right' : 'text-left'
+          }`}>
+            {wilayahName}
+          </h3>
+          
+          {/* Subtitle */}
+          <p className="text-white/90 text-sm font-medium">
+            {locale === 'ar' ? 'ولاية في عُمان' : 'Wilayah in Oman'}
+          </p>
         </div>
         
-        {/* Additional info */}
-        {wilayah.place_count && wilayah.place_count > 0 && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            <p className="text-xs text-gray-500">
-              {t('placesToVisit', { count: wilayah.place_count })}
-            </p>
+        {/* Hover indicator */}
+        <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="inline-flex items-center gap-2 text-white/90 text-sm">
+            <span>{locale === 'ar' ? 'استكشف المنطقة' : 'Explore Area'}</span>
+            <div className="w-5 h-0.5 bg-white/70 rounded-full group-hover:w-8 transition-all duration-300" />
           </div>
-        )}
+        </div>
       </div>
+      
+      {/* Subtle border on hover */}
+      <div className="absolute inset-0 border-2 border-transparent group-hover:border-white/20 rounded-2xl transition-colors duration-300 pointer-events-none" />
     </div>
   );
 }

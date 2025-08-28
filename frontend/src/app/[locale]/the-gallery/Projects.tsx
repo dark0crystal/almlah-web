@@ -8,11 +8,11 @@ interface ProjectsProps {
 const Projects: React.FC<ProjectsProps> = ({ setActiveMenu }) => {
   return (
     <div className='relative  z-10 mix-blend-difference h-screen w-full'>
-      <ul onMouseLeave={() => {setActiveMenu(null)}} className='border-b'>
+      <ul onMouseLeave={() => {setActiveMenu(null)}}>
         {
           projects.map((project, i) => {
             return (
-              <li onMouseOver={() => {setActiveMenu(i)}} key={project.title} className=' p-5 border-t'>
+              <li onMouseOver={() => {setActiveMenu(i)}} key={project.title} className='p-5'>
                 <p className='text-[3vw] font-normal  text-white'>{project.title}</p>
               </li>
             )
