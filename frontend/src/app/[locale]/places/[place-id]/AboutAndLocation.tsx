@@ -264,22 +264,6 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
               </div>
             </div>
 
-            {/* Hours - You might want to add opening hours to your backend */}
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-medium text-gray-900">
-                  {t('hours.title')}
-                </h3>
-                <button className="text-gray-400">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </div>
-              <p className="text-gray-600 text-sm">
-                {t('hours.open24')}
-              </p>
-            </div>
 
             {/* Map */}
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">

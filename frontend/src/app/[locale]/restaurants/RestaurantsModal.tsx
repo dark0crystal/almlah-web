@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Utensils, ChevronDown, ChevronUp, X } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -33,12 +33,6 @@ export default function RestaurantsModal({
   const [restaurants, setRestaurants] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Drag state management
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStartY, setDragStartY] = useState(0);
-  const [currentTranslateY, setCurrentTranslateY] = useState(0);
-  const modalRef = useRef<HTMLDivElement>(null);
 
   // Get restaurant category ID from the scalable system
   const restaurantCategoryId = CATEGORY_IDS.RESTAURANTS;
@@ -77,84 +71,6 @@ export default function RestaurantsModal({
     loadRestaurants();
   }, [restaurantCategoryId, selectedGovernateId, t]);
 
-  // Drag handlers for touch and mouse events
-  const handleDragStart = useCallback((clientY: number) => {
-    setIsDragging(true);
-    setDragStartY(clientY);
-    setCurrentTranslateY(0);
-  }, []);
-
-  const handleDragMove = useCallback((clientY: number) => {
-    if (!isDragging) return;
-    
-    const deltaY = clientY - dragStartY;
-    const clampedDeltaY = Math.max(0, deltaY); // Only allow dragging down
-    setCurrentTranslateY(clampedDeltaY);
-  }, [isDragging, dragStartY]);
-
-  const handleDragEnd = useCallback(() => {
-    if (!isDragging) return;
-    
-    setIsDragging(false);
-    const threshold = 100; // Pixels to trigger state change
-    
-    if (currentTranslateY > threshold) {
-      if (isExpanded) {
-        onToggleExpand(); // Collapse if expanded
-      } else {
-        onClose?.(); // Close if collapsed
-      }
-    }
-    
-    setCurrentTranslateY(0);
-    setDragStartY(0);
-  }, [isDragging, currentTranslateY, isExpanded, onToggleExpand, onClose]);
-
-  // Mouse event handlers
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    handleDragMove(e.clientY);
-  }, [handleDragMove]);
-
-  const handleMouseUp = useCallback(() => {
-    handleDragEnd();
-  }, [handleDragEnd]);
-
-  // Touch event handlers  
-  const handleTouchMove = useCallback((e: TouchEvent) => {
-    e.preventDefault();
-    handleDragMove(e.touches[0].clientY);
-  }, [handleDragMove]);
-
-  const handleTouchEnd = useCallback(() => {
-    handleDragEnd();
-  }, [handleDragEnd]);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    handleDragStart(e.clientY);
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    handleDragStart(e.touches[0].clientY);
-  };
-
-  // Add global event listeners for drag
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.addEventListener('touchmove', handleTouchMove, { passive: false });
-      document.addEventListener('touchend', handleTouchEnd);
-      
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-        document.removeEventListener('touchmove', handleTouchMove);
-        document.removeEventListener('touchend', handleTouchEnd);
-      };
-    }
-  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
-
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-4">
       {/* Semi-transparent backdrop with blur effect */}
@@ -164,26 +80,12 @@ export default function RestaurantsModal({
       />
       
       {/* Main modal container with dynamic height based on expansion state */}
-      <div 
-        ref={modalRef}
-        className={`relative bg-white rounded-t-3xl shadow-2xl w-full max-w-4xl transition-all duration-300 ease-out transform select-none ${
-          isExpanded ? 'h-5/6 xl:h-5/6' : 'h-2/3 xl:h-2/3'
-        } ${isDragging ? 'transition-none' : ''}`}
-        style={{
-          transform: `translateY(${currentTranslateY}px)`,
-        }}
-      >
-        {/* Drag handle */}
-        <div 
-          className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
-          onMouseDown={handleMouseDown}
-          onTouchStart={handleTouchStart}
-        >
-          <div className="w-12 h-1.5 bg-gray-300 rounded-full hover:bg-gray-400 transition-colors"></div>
-        </div>
+      <div className={`relative bg-white rounded-t-3xl shadow-2xl w-full max-w-4xl transition-all duration-500 ease-out transform ${
+        isExpanded ? 'h-5/6' : 'h-2/3'
+      }`}>
 
         {/* Modal header with title and control buttons */}
-        <div className={`flex items-center justify-between px-6 pb-6 border-b border-gray-100 ${
+        <div className={`flex items-center justify-between p-6 border-b border-gray-100 ${
           locale === 'ar' ? 'flex-row-reverse' : ''
         }`}>
           <div className={`flex items-center space-x-3 ${locale === 'ar' ? 'space-x-reverse' : ''}`}>
