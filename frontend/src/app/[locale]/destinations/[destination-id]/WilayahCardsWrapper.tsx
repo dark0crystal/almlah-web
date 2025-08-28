@@ -136,74 +136,92 @@ export default function WilayahCardsWrapper({
   return (
     <div className="mb-12">
       {/* Section Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">
-            {t('wilayahsIn', { governate: governateName })}
-          </h2>
-          <p className="text-gray-600 text-lg">
-            {t('exploreDistricts', { count: wilayahsWithImages.length })}
-          </p>
-        </div>
-        
-        {/* Navigation buttons */}
-        {wilayahsWithImages.length > 3 && (
-          <div className="flex gap-3">
+      <div className="mb-8">
+        <h2 className="text-3xl font-bold text-gray-900 mb-3">
+          {t('wilayahsIn', { governate: governateName })}
+        </h2>
+        <p className="text-gray-600 text-lg">
+          {t('exploreDistricts', { count: wilayahsWithImages.length })}
+        </p>
+      </div>
+
+      {/* Carousel Container */}
+      <div className="relative">
+        {/* Navigation buttons - Overlaid on carousel */}
+        {wilayahsWithImages.length > 1 && (
+          <>
             <button
               onClick={() => handleScroll('left')}
-              className="p-3 rounded-full bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md transition-all duration-200 shadow-sm"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white/90 backdrop-blur-sm border border-white/20 hover:bg-white hover:shadow-lg transition-all duration-200 group"
               aria-label={t('scrollLeft')}
             >
-              <ChevronLeft className="w-5 h-5 text-gray-600" />
+              <ChevronLeft className="w-6 h-6 text-gray-700 group-hover:text-gray-900" />
             </button>
             <button
               onClick={() => handleScroll('right')}
-              className="p-3 rounded-full bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md transition-all duration-200 shadow-sm"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white/90 backdrop-blur-sm border border-white/20 hover:bg-white hover:shadow-lg transition-all duration-200 group"
               aria-label={t('scrollRight')}
             >
-              <ChevronRight className="w-5 h-5 text-gray-600" />
+              <ChevronRight className="w-6 h-6 text-gray-700 group-hover:text-gray-900" />
             </button>
-          </div>
+          </>
         )}
-      </div>
 
-      {/* Horizontal scrolling container */}
-      <div className="relative">
+        {/* Horizontal scrolling container */}
         <div
           ref={scrollContainerRef}
-          className="flex gap-6 overflow-x-auto scrollbar-hide pb-4"
+          className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory"
           style={{
             scrollbarWidth: 'none', /* Firefox */
             msOverflowStyle: 'none', /* Internet Explorer 10+ */
           }}
         >
           {wilayahsWithImages.map((wilayah) => (
-            <WilayahCard
-              key={wilayah.id}
-              wilayah={wilayah}
-              locale={locale}
-              onClick={handleWilayahClick}
-            />
+            <div key={wilayah.id} className="snap-start">
+              <WilayahCard
+                wilayah={wilayah}
+                locale={locale}
+                onClick={handleWilayahClick}
+              />
+            </div>
           ))}
         </div>
         
-        {/* Enhanced gradient fade effects */}
-        {wilayahsWithImages.length > 3 && (
-          <>
-            <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-white via-white/90 to-transparent pointer-events-none z-10" />
-            <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white via-white/90 to-transparent pointer-events-none z-10" />
-          </>
-        )}
+        {/* Subtle gradient fade effects */}
+        <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#f3f3eb] to-transparent pointer-events-none z-20" />
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#f3f3eb] to-transparent pointer-events-none z-20" />
       </div>
 
-      {/* Mobile scroll hint */}
+      {/* Carousel indicators */}
       {wilayahsWithImages.length > 1 && (
-        <div className="mt-6 flex justify-center md:hidden">
-          <p className="text-sm text-gray-500 flex items-center gap-2 bg-gray-50 rounded-full px-4 py-2">
-            <span>←</span> {t('swipeToSeeMore')} <span>→</span>
-          </p>
+        <div className="flex justify-center mt-6 gap-2">
+          {wilayahsWithImages.map((_, index) => (
+            <button
+              key={index}
+              className="w-2 h-2 rounded-full bg-gray-300 hover:bg-gray-400 transition-colors"
+              onClick={() => {
+                if (scrollContainerRef.current) {
+                  const container = scrollContainerRef.current;
+                  const cardWidth = container.children[0]?.clientWidth || 400;
+                  const gap = 16; // 4 * 4px (gap-4)
+                  const scrollPosition = index * (cardWidth + gap);
+                  container.scrollTo({
+                    left: scrollPosition,
+                    behavior: 'smooth'
+                  });
+                }
+              }}
+            />
+          ))}
         </div>
       )}
+
+      {/* Mobile scroll hint */}
+      <div className="mt-4 flex justify-center md:hidden">
+        <p className="text-xs text-gray-500 flex items-center gap-2 bg-gray-50 rounded-full px-3 py-1">
+          <span>←</span> {t('swipeToSeeMore')} <span>→</span>
+        </p>
+      </div>
     </div>
   );
 }

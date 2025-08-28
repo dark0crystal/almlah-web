@@ -84,7 +84,6 @@ class PlacesApiService {
 
       return result.data;
     } catch (error) {
-      console.error(`API Error for ${endpoint}:`, error);
       throw error;
     }
   }

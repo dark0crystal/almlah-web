@@ -2,7 +2,7 @@
 "use client"
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import PostCard from './PostCard';
 import { fetchRecentPlaces, transformRecentPlacesToPlaces, formatRelativeTime } from '../../../services/placesApi';
 import { Place } from '@/types';
@@ -32,7 +32,7 @@ interface PostCardsWrapperProps {
 }
 
 export default function PostCardsWrapper({
-  title = "أحدث المقالات",
+  title,
   initialLimit = 6,
   language,
   categoryId,
@@ -42,7 +42,9 @@ export default function PostCardsWrapper({
 }: PostCardsWrapperProps) {
   
   const locale = useLocale();
+  const t = useTranslations('postCards');
   const currentLanguage = language || (locale as 'ar' | 'en');
+  const displayTitle = title || t('title');
   
   const [posts, setPosts] = useState<PostData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,8 +99,6 @@ export default function PostCardsWrapper({
       setLoading(true);
       setError(null);
       
-      console.log('Fetching recent places...');
-      
       // Use the optimized recent places endpoint
       const response = await fetchRecentPlaces(
         20, // limit
@@ -106,8 +106,6 @@ export default function PostCardsWrapper({
         true, // fallback
         true  // includeStats
       );
-
-      console.log('Recent places response:', response);
 
       // Transform to our format
       const transformedPlaces = transformRecentPlacesToPlaces(response.places);
@@ -117,15 +115,9 @@ export default function PostCardsWrapper({
       setNewPlacesCount(response.new_count);
       setHasFallback(response.has_fallback);
 
-      console.log(`✅ Successfully fetched ${convertedPosts.length} places`);
-      console.log(`📍 ${response.new_count} places are marked as "new"`);
-      if (response.has_fallback) {
-        console.log('🔄 Fallback was used to reach minimum count');
-      }
 
     } catch (err) {
-      console.error('❌ Error fetching places:', err);
-      setError(err instanceof Error ? err.message : (currentLanguage === 'ar' ? 'حدث خطأ في جلب البيانات' : 'Error loading data'));
+      setError(err instanceof Error ? err.message : t('error.message'));
     } finally {
       setLoading(false);
     }
@@ -255,13 +247,9 @@ export default function PostCardsWrapper({
   }, [posts, isDragging]);
 
   const handlePostClick = (post: PostData) => {
-    console.log(`🔗 Navigating to place: ${post.title} (ID: ${post.id})`);
-    
     if (post.place?.id) {
       // Navigate to place details page
       router.push(`/places/${post.place.id}`);
-    } else {
-      console.warn('⚠️ No place ID found for navigation');
     }
   };
 
@@ -274,7 +262,7 @@ export default function PostCardsWrapper({
     return (
       <div className="py-8" style={{ width: '88vw' }} data-posts-wrapper>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{displayTitle}</h2>
         </div>
         
         {/* Loading skeleton */}
@@ -300,7 +288,7 @@ export default function PostCardsWrapper({
     return (
       <div className="py-8" style={{ width: '88vw' }} data-posts-wrapper>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{displayTitle}</h2>
         </div>
         
         <div className="text-center py-12">
@@ -311,14 +299,14 @@ export default function PostCardsWrapper({
             </svg>
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {currentLanguage === 'ar' ? 'حدث خطأ في تحميل البيانات' : 'Error loading data'}
+            {t('error.title')}
           </h3>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={handleRetry}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
           >
-            {currentLanguage === 'ar' ? 'إعادة المحاولة' : 'Try Again'}
+            {t('error.tryAgain')}
           </button>
         </div>
       </div>
@@ -330,7 +318,7 @@ export default function PostCardsWrapper({
     return (
       <div className="py-8" style={{ width: '88vw' }} data-posts-wrapper>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{displayTitle}</h2>
         </div>
         
         <div className="text-center py-12">
@@ -341,12 +329,10 @@ export default function PostCardsWrapper({
             </svg>
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {currentLanguage === 'ar' ? 'لا توجد أماكن متاحة' : 'No places available'}
+            {t('empty.title')}
           </h3>
           <p className="text-gray-600">
-            {currentLanguage === 'ar' 
-              ? 'لم يتم العثور على أي أماكن تطابق المعايير المحددة' 
-              : 'No places found matching the specified criteria'}
+            {t('empty.message')}
           </p>
         </div>
       </div>
@@ -358,23 +344,7 @@ export default function PostCardsWrapper({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
-          {newPlacesCount > 0 && (
-            <p className="text-sm text-blue-600 mt-1">
-              {currentLanguage === 'ar' 
-                ? `${newPlacesCount} أماكن جديدة مضافة هذا الأسبوع`
-                : `${newPlacesCount} new places added this week`
-              }
-            </p>
-          )}
-          {hasFallback && (
-            <p className="text-xs text-gray-500 mt-1">
-              {currentLanguage === 'ar' 
-                ? 'تم عرض أماكن إضافية لإكمال القائمة'
-                : 'Additional places shown to complete the list'
-              }
-            </p>
-          )}
+          <h2 className="text-2xl font-bold text-gray-900">{displayTitle}</h2>
         </div>
         
         {/* Navigation Buttons */}
@@ -390,7 +360,7 @@ export default function PostCardsWrapper({
                   : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 }
               `}
-              aria-label={currentLanguage === 'ar' ? 'التمرير يساراً' : 'Scroll left'}
+              aria-label={t('navigation.scrollLeft')}
             >
               <svg 
                 className={`w-5 h-5 ${currentLanguage === 'ar' ? 'rotate-180' : ''}`} 
@@ -417,7 +387,7 @@ export default function PostCardsWrapper({
                   : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 }
               `}
-              aria-label={currentLanguage === 'ar' ? 'التمرير يميناً' : 'Scroll right'}
+              aria-label={t('navigation.scrollRight')}
             >
               <svg 
                 className={`w-5 h-5 ${currentLanguage === 'ar' ? 'rotate-180' : ''}`} 
@@ -437,13 +407,6 @@ export default function PostCardsWrapper({
         )}
       </div>
       
-      {/* Posts Count Indicator */}
-      <div className="mb-4 text-sm text-gray-600">
-        {currentLanguage === 'ar' 
-          ? `${posts.length} مكان متاح`
-          : `${posts.length} places available`
-        }
-      </div>
       
       {/* Scrollable Posts Container */}
       <div className="relative">
@@ -516,27 +479,11 @@ export default function PostCardsWrapper({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
                 d="M7 16l-4-4m0 0l4-4m-4 4h18" />
             </svg>
-            {currentLanguage === 'ar' ? 'اسحب للتصفح' : 'Swipe to browse'}
+            {t('navigation.swipeToBrowse')}
           </div>
         </div>
       )}
 
-      {/* Debug info (remove in production) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="mt-8 p-4 bg-gray-100 rounded-lg text-xs text-gray-600">
-          <strong>Debug Info:</strong><br />
-          Total places: {posts.length} | 
-          New places: {newPlacesCount} | 
-          Language: {language} |
-          Type: {type} |
-          Has Fallback: {hasFallback ? 'Yes' : 'No'} |
-          Can Scroll Left: {canScrollLeft ? 'Yes' : 'No'} |
-          Can Scroll Right: {canScrollRight ? 'Yes' : 'No'}
-          {categoryId && ` | Category: ${categoryId}`}
-          {governateId && ` | Governate: ${governateId}`}
-          {wilayahId && ` | Wilayah: ${wilayahId}`}
-        </div>
-      )}
 
       <style jsx>{`
         .scrollbar-hide {
