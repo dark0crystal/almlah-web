@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Place } from '@/types';
 
 interface RestaurantAboutAndLocationProps {
@@ -7,6 +8,7 @@ interface RestaurantAboutAndLocationProps {
 }
 
 export default function RestaurantAboutAndLocation({ restaurant, language = 'ar' }: RestaurantAboutAndLocationProps) {
+  const t = useTranslations('restaurants.details');
   const restaurantName = language === 'ar' ? restaurant.name_ar : restaurant.name_en;
   const description = language === 'ar' ? restaurant.description_ar : restaurant.description_en;
   const subtitle = language === 'ar' ? restaurant.subtitle_ar : restaurant.subtitle_en;
@@ -20,7 +22,7 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
 
   const aboutTitle = aboutSection 
     ? (language === 'ar' ? aboutSection.title_ar : aboutSection.title_en)
-    : (language === 'ar' ? 'نبذة عن المطعم' : 'About the Restaurant');
+    : t('about.defaultTitle');
 
   const aboutContent = aboutSection 
     ? (language === 'ar' ? aboutSection.content_ar : aboutSection.content_en)
@@ -29,7 +31,7 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
   // Get cuisine type from categories
   const cuisineType = restaurant.categories && restaurant.categories.length > 0
     ? (language === 'ar' ? restaurant.categories[0].name_ar : restaurant.categories[0].name_en)
-    : (language === 'ar' ? 'مطعم' : 'Restaurant');
+    : t('info.defaultCuisine');
 
   // Get properties for "suitable for" tags from backend only
   const suitableForTags = restaurant.properties?.map(prop => ({
@@ -63,7 +65,7 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
       // Fallback: copy URL to clipboard
       try {
         await navigator.clipboard.writeText(window.location.href);
-        alert(language === 'ar' ? 'تم نسخ الرابط!' : 'Link copied!');
+        alert(t('share.linkCopied'));
       } catch (error) {
         console.error('Failed to copy link:', error);
       }
@@ -85,7 +87,7 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
             <button 
               onClick={handleShare}
               className="p-2 hover:bg-gray-200 rounded-full transition-colors"
-              aria-label={language === 'ar' ? 'مشاركة' : 'Share'}
+              aria-label={t('share.text')}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
@@ -105,10 +107,7 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
                 {restaurantName}
               </h2>
               <p className="text-gray-700 leading-relaxed text-sm md:text-base">
-                {aboutContent || (language === 'ar' 
-                  ? 'لا توجد معلومات تفصيلية متاحة حالياً عن هذا المطعم.'
-                  : 'No detailed information is currently available for this restaurant.'
-                )}
+                {aboutContent || t('about.noInfo')}
               </p>
               
               {/* Additional content sections */}
@@ -149,14 +148,14 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 text-sm">
-                    {language === 'ar' ? 'معلومات المطعم' : 'Restaurant Information'}
+                    {t('info.title')}
                   </span>
                 </div>
                 
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-900 font-medium">
-                      {language === 'ar' ? 'نوع المطبخ:' : 'Cuisine Type:'}
+                      {t('info.cuisineType')}
                     </span>
                     <span className="text-gray-600 text-sm">{cuisineType}</span>
                   </div>
@@ -164,7 +163,7 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
                   {governateName && (
                     <div className="flex justify-between">
                       <span className="text-gray-900 font-medium">
-                        {language === 'ar' ? 'المنطقة:' : 'Region:'}
+                        {t('info.region')}
                       </span>
                       <span className="text-gray-600 text-sm">{governateName}</span>
                     </div>
@@ -173,7 +172,7 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
                   {wilayahName && (
                     <div className="flex justify-between">
                       <span className="text-gray-900 font-medium">
-                        {language === 'ar' ? 'الولاية:' : 'Wilayah:'}
+                        {t('info.wilayah')}
                       </span>
                       <span className="text-gray-600 text-sm">{wilayahName}</span>
                     </div>
@@ -182,7 +181,7 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
                   {restaurant.rating && restaurant.rating > 0 && (
                     <div className="flex justify-between">
                       <span className="text-gray-900 font-medium">
-                        {language === 'ar' ? 'التقييم:' : 'Rating:'}
+                        {t('info.rating')}
                       </span>
                       <div className="flex items-center gap-1">
                         <span className="text-gray-600 text-sm">{restaurant.rating.toFixed(1)}</span>
@@ -198,10 +197,10 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
                   
                   <div className="flex justify-between">
                     <span className="text-gray-900 font-medium">
-                      {language === 'ar' ? 'نوع الخدمة:' : 'Service Type:'}
+                      {t('info.serviceType')}
                     </span>
                     <span className="text-gray-600 text-sm">
-                      {language === 'ar' ? 'تناول طعام، توصيل' : 'Dine-in, Delivery'}
+                      {t('info.serviceTypeValue')}
                     </span>
                   </div>
                 </div>
@@ -212,7 +211,7 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
             {(restaurant.phone || restaurant.email || restaurant.website) && (
               <div className="bg-white rounded-2xl shadow-sm p-6">
                 <h3 className="font-medium text-gray-900 mb-4">
-                  {language === 'ar' ? 'معلومات التواصل' : 'Contact Information'}
+                  {t('contact.title')}
                 </h3>
                 <div className="space-y-3">
                   {restaurant.phone && (
@@ -242,7 +241,7 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
                         rel="noopener noreferrer"
                         className="text-orange-600 hover:underline text-sm"
                       >
-                        {language === 'ar' ? 'الموقع الإلكتروني' : 'Website'}
+                        {t('contact.website')}
                       </a>
                     </div>
                   )}
@@ -254,7 +253,7 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
             {suitableForTags.length > 0 && (
               <div className="bg-white rounded-2xl shadow-sm p-6">
                 <h3 className="font-medium text-gray-900 mb-4">
-                  {language === 'ar' ? 'مناسب لـ' : 'Suitable for'}
+                  {t('suitableFor.title')}
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {suitableForTags.slice(0, 6).map((tag, index) => (
@@ -295,7 +294,7 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
                         </svg>
                       </div>
                       <p className="text-sm text-gray-600">
-                        {language === 'ar' ? 'الموقع غير متاح' : 'Location not available'}
+                        {t('location.notAvailable')}
                       </p>
                     </div>
                   </div>
@@ -318,7 +317,7 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  📍 {language === 'ar' ? 'عرض على الخريطة' : 'View on Map'}
+                  📍 {t('location.viewOnMap')}
                 </button>
               </div>
             </div>

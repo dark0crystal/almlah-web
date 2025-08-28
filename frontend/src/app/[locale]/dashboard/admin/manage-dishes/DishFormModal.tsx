@@ -53,13 +53,12 @@ interface DishFormData {
   difficulty: 'easy' | 'medium' | 'hard';
   is_traditional: boolean;
   is_featured: boolean;
+  is_active: boolean;
   sort_order: number;
   images: {
     image_url: string;
     alt_text_ar: string;
     alt_text_en: string;
-    caption_ar: string;
-    caption_en: string;
     is_primary: boolean;
     display_order: number;
   }[];
@@ -86,6 +85,7 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
     difficulty: 'medium',
     is_traditional: true,
     is_featured: false,
+    is_active: true,
     sort_order: 1,
     images: []
   });
@@ -97,8 +97,6 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
     image_url: '',
     alt_text_ar: '',
     alt_text_en: '',
-    caption_ar: '',
-    caption_en: '',
     is_primary: false,
     display_order: 1
   });
@@ -122,13 +120,12 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
           difficulty: dish.difficulty,
           is_traditional: dish.is_traditional,
           is_featured: dish.is_featured,
+          is_active: dish.is_active,
           sort_order: dish.sort_order,
           images: dish.images.map(img => ({
             image_url: img.image_url,
             alt_text_ar: img.alt_text_ar,
             alt_text_en: img.alt_text_en,
-            caption_ar: '',
-            caption_en: '',
             is_primary: img.is_primary,
             display_order: img.display_order
           }))
@@ -147,6 +144,7 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
           difficulty: 'medium',
           is_traditional: true,
           is_featured: false,
+          is_active: true,
           sort_order: 1,
           images: []
         });
@@ -191,6 +189,8 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
     
     if (!validateForm()) return;
 
+    console.log('Submitting dish data:', formData);
+
     try {
       setSaving(true);
       await onSave(formData);
@@ -206,7 +206,7 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
   const uploadImageToStorage = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('folder', 'dishes');
+    formData.append('folder', 'dishes'); // This will create media-bucket/dishes/
 
     const token = localStorage.getItem('authToken');
     const response = await fetch('http://127.0.0.1:9000/api/v1/upload', {
@@ -219,10 +219,12 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
+      console.error('Image upload error:', errorData);
       throw new Error(errorData?.message || 'Failed to upload image');
     }
 
     const result = await response.json();
+    console.log('Image uploaded successfully to dishes folder:', result.data.url);
     return result.data.url;
   };
 
@@ -291,8 +293,6 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
         image_url: '',
         alt_text_ar: '',
         alt_text_en: '',
-        caption_ar: '',
-        caption_en: '',
         is_primary: false,
         display_order: 1
       });
@@ -545,7 +545,7 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
           </div>
 
           {/* Options */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Sort Order
@@ -557,6 +557,18 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
                 onChange={(e) => setFormData(prev => ({ ...prev, sort_order: parseInt(e.target.value) || 1 }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+            </div>
+
+            <div className="flex items-center space-x-4 pt-6">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="ml-2 text-sm text-gray-700">Active</span>
+              </label>
             </div>
 
             <div className="flex items-center space-x-4 pt-6">
