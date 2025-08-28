@@ -1,7 +1,6 @@
 // PostCardsWrapper.tsx - Updated with horizontal scrolling
 "use client"
 import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import PostCard from './PostCard';
 import { fetchRecentPlaces, transformRecentPlacesToPlaces, formatRelativeTime } from '../../../services/placesApi';
@@ -58,7 +57,6 @@ export default function PostCardsWrapper({
   const [lastScrollLeft, setLastScrollLeft] = useState(0);
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   /**
    * Convert Place data to PostData format
@@ -246,12 +244,6 @@ export default function PostCardsWrapper({
     };
   }, [posts, isDragging]);
 
-  const handlePostClick = (post: PostData) => {
-    if (post.place?.id) {
-      // Navigate to place details page
-      router.push(`/places/${post.place.id}`);
-    }
-  };
 
   const handleRetry = () => {
     fetchPlaces();

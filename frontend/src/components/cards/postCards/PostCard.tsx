@@ -2,8 +2,8 @@
 "use client"
 
 import Image from 'next/image';
-import Link from 'next/link';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 
 interface PostCardProps {
   title: string;
@@ -13,7 +13,6 @@ interface PostCardProps {
   date?: string;
   category?: string;
   isNew?: boolean;
-  onClick?: () => void;
   placeId?: string;
 }
 
@@ -25,15 +24,12 @@ export default function PostCard({
   date,
   category,
   isNew = false,
-  onClick,
   placeId
 }: PostCardProps) {
   const t = useTranslations('common');
-  const locale = useLocale();
 
   const cardContent = (
-    <div className="relative w-full rounded-3xl hover:shadow-lg transition-all duration-300 cursor-pointer group bg-white p-2"
-         onClick={onClick}>
+    <div className="relative w-full rounded-3xl hover:shadow-lg transition-all duration-300 cursor-pointer group bg-white p-2">
       
       {/* NEW Badge - Outside the card container with spin animation */}
       {isNew && (
@@ -85,11 +81,9 @@ export default function PostCard({
     </div>
   );
 
-  return placeId ? (
-    <Link href={`/${locale}/places/${placeId}`} className="block">
+  return(
+    <Link href={`/places/${placeId}`} className="block">
       {cardContent}
     </Link>
-  ) : (
-    cardContent
-  );
+  ) 
 }
