@@ -1121,7 +1121,7 @@ export default function PlaceEdit() {
 
             {/* Images */}
             <div className="bg-white rounded-lg border p-6">
-              <SimpleImageManager 
+              <PlaceImageManager 
                 placeId={placeId}
                 onImageCountChange={setImageCount}
               />

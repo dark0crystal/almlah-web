@@ -107,6 +107,7 @@ export interface Category {
   id: string;
   name_ar: string;
   name_en: string;
+  name?: string; // For backward compatibility with API responses that only have 'name'
   slug: string;
   icon: string;
   type: 'primary' | 'secondary';
@@ -196,7 +197,6 @@ interface PlaceStore {
   // Form submission with proper image uploading
   submitForm: () => Promise<boolean>;
   uploadPlaceImages: (placeId: string, images: PlaceImage[]) => Promise<boolean>;
-  uploadContentSectionImages: (placeId: string, sectionId: string, images: ContentSectionImage[]) => Promise<boolean>;
   resetForm: () => void;
 }
 
@@ -543,6 +543,18 @@ export const usePlaceStore = create<PlaceStore>()(
 
           console.log('Final category IDs to submit:', allCategoryIds);
 
+          // Process content sections without uploading images first
+          // We'll upload images after place creation with proper place ID
+          const processedContentSections = formData.content_sections.map(section => ({
+            section_type: section.section_type,
+            title_ar: section.title_ar,
+            title_en: section.title_en,
+            content_ar: section.content_ar,
+            content_en: section.content_en,
+            sort_order: section.sort_order,
+            images: [] // Images will be uploaded after place and sections are created
+          }));
+
           // Prepare the data for place creation
           const requestData = {
             name_ar: formData.name_ar,
@@ -563,22 +575,15 @@ export const usePlaceStore = create<PlaceStore>()(
             category_ids: allCategoryIds,
             property_ids: formData.property_ids,
             
-            // Send empty arrays - images will be uploaded separately
+            // Send empty arrays for place images - they'll be uploaded separately
             images: [],
-            content_sections: formData.content_sections.map(section => ({
-              section_type: section.section_type,
-              title_ar: section.title_ar,
-              title_en: section.title_en,
-              content_ar: section.content_ar,
-              content_en: section.content_en,
-              sort_order: section.sort_order,
-              images: [] // Content section images handled separately
-            }))
+            // Include content sections with their uploaded image URLs
+            content_sections: processedContentSections
           };
 
           console.log('Request data to be sent:', requestData);
 
-          // Create the place first
+          // Create the place with content sections and their images
           const response = await fetch(`${API_BASE_URL}/api/v1/places`, {
             method: 'POST',
             headers: getAuthHeaders(),
@@ -611,18 +616,64 @@ export const usePlaceStore = create<PlaceStore>()(
           }
 
           // Upload content section images if any
-          for (const section of formData.content_sections) {
-            if (section.images && section.images.length > 0) {
-              console.log(`Uploading images for content section: ${section.title_en}`);
-              const sectionId = section.id;
-              if (sectionId) {
-                const sectionImageUploadSuccess = await get().uploadContentSectionImages(
-                  placeId, 
-                  sectionId, 
-                  section.images
-                );
-                if (!sectionImageUploadSuccess) {
-                  console.warn(`Failed to upload images for section: ${section.title_en}`);
+          // Now we have the real place ID and can get section IDs from the response
+          if (result.data.content_sections && result.data.content_sections.length > 0) {
+            for (let i = 0; i < formData.content_sections.length; i++) {
+              const formSection = formData.content_sections[i];
+              const createdSection = result.data.content_sections[i];
+              
+              if (formSection.images && formSection.images.length > 0 && createdSection?.id) {
+                console.log(`Uploading images for content section: ${formSection.title_en}`);
+                
+                try {
+                  // Prepare images for Supabase upload
+                  const imagesToUpload = formSection.images
+                    .filter(img => img.file) // Only upload images with files
+                    .map(img => ({
+                      file: img.file!,
+                      altTextAr: img.alt_text_ar || '',
+                      altTextEn: img.alt_text_en || '',
+                      captionAr: img.caption_ar || '',
+                      captionEn: img.caption_en || '',
+                      sortOrder: img.sort_order
+                    }));
+
+                  if (imagesToUpload.length > 0) {
+                    // Upload images to Supabase with proper place and section IDs
+                    const uploadedImages = await SupabaseStorageService.uploadContentSectionImages(
+                      placeId,
+                      createdSection.id,
+                      imagesToUpload
+                    );
+
+                    console.log(`Successfully uploaded ${uploadedImages.length} images for section: ${formSection.title_en}`);
+
+                    // Send image URLs to backend
+                    const imageData = uploadedImages.map(img => ({
+                      image_url: img.url,
+                      alt_text_ar: img.altTextAr,
+                      alt_text_en: img.altTextEn,
+                      caption_ar: img.captionAr,
+                      caption_en: img.captionEn,
+                      sort_order: img.sortOrder
+                    }));
+
+                    const imageResponse = await fetch(`${API_BASE_URL}/api/v1/images/content-sections/${createdSection.id}/images`, {
+                      method: 'POST',
+                      headers: getAuthHeaders(),
+                      body: JSON.stringify({ images: imageData })
+                    });
+
+                    const imageResult = await imageResponse.json();
+
+                    if (!imageResponse.ok || !imageResult.success) {
+                      console.warn(`Failed to save image data for section ${formSection.title_en}:`, imageResult.message);
+                    } else {
+                      console.log(`Content section images saved successfully for: ${formSection.title_en}`);
+                    }
+                  }
+                } catch (imageUploadError) {
+                  console.error(`Failed to upload images for section ${formSection.title_en}:`, imageUploadError);
                 }
               }
             }
@@ -700,66 +751,6 @@ export const usePlaceStore = create<PlaceStore>()(
         }
       },
 
-      // Upload content section images using proper file structure
-      uploadContentSectionImages: async (placeId: string, sectionId: string, images: ContentSectionImage[]) => {
-        try {
-          // Prepare images for upload to Supabase
-          const imagesToUpload = images
-            .filter(img => img.file) // Only upload images with files
-            .map(img => ({
-              file: img.file!,
-              altTextAr: img.alt_text_ar,
-              altTextEn: img.alt_text_en,
-              captionAr: img.caption_ar,
-              captionEn: img.caption_en,
-              sortOrder: img.sort_order
-            }));
-
-          if (imagesToUpload.length === 0) {
-            console.log('No content section images to upload');
-            return true;
-          }
-
-          // Upload images to Supabase with proper file structure
-          const uploadedImages = await SupabaseStorageService.uploadContentSectionImages(
-            placeId,
-            sectionId,
-            imagesToUpload
-          );
-
-          console.log('Content section images uploaded to Supabase:', uploadedImages);
-
-          // Send image URLs to backend
-          const imageData = uploadedImages.map(img => ({
-            image_url: img.url,
-            alt_text_ar: img.altTextAr,
-            alt_text_en: img.altTextEn,
-            caption_ar: img.captionAr,
-            caption_en: img.captionEn,
-            sort_order: img.sortOrder
-          }));
-
-          const response = await fetch(`${API_BASE_URL}/api/v1/content-sections/${sectionId}/images`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ images: imageData })
-          });
-
-          const result = await response.json();
-
-          if (!response.ok || !result.success) {
-            console.error('Failed to save content section image data to backend:', result.message);
-            return false;
-          }
-
-          console.log('Content section images saved successfully:', result.data);
-          return true;
-
-        } catch (error) {
-          console.error('Content section image upload error:', error);
-          return false;
-        }
-      },
 
       
       // Reset form
