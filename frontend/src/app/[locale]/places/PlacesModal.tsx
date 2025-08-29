@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react";
-import { MapPin, Star, Clock, ChevronDown, ChevronUp, X } from "lucide-react";
+import { MapPin, Star, Clock, ChevronDown, ChevronUp, X, Search, SlidersHorizontal } from "lucide-react";
 import { useParams } from "next/navigation";
 import PlaceCard from "./PlaceCard";
 import { fetchPlaces, CATEGORY_IDS, type CategoryType } from "@/services/placesApi";
@@ -82,48 +82,84 @@ export default function PlacesModal({
 
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-4">
+    <div className="md:hidden fixed inset-0 z-50 flex items-end justify-center">
       {/* Semi-transparent backdrop with blur effect */}
       <div 
-        className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-all duration-300"
         onClick={onClose}
       />
       
       {/* Main modal container with dynamic height based on expansion state */}
-      <div className={`relative bg-white rounded-t-3xl shadow-2xl w-full max-w-4xl transition-all duration-500 ease-out transform flex flex-col ${
-        isExpanded ? 'h-5/6' : 'h-2/3'
+      <div className={`relative bg-white w-full transition-all duration-500 ease-out transform flex flex-col ${
+        isExpanded 
+          ? 'h-[90vh] rounded-t-2xl' 
+          : 'h-[70vh] rounded-t-3xl'
       }`}>
-        {/* Modal header with control buttons only */}
-        <div className={`flex items-center justify-end p-6 border-b border-gray-100`}>
-          <div className={`flex items-center space-x-2 ${locale === 'ar' ? 'space-x-reverse' : ''}`}>
-            {/* Expand/collapse toggle button */}
-            <button
-              onClick={onToggleExpand}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              aria-label={isExpanded ? (locale === 'ar' ? 'تصغير' : 'Collapse') : (locale === 'ar' ? 'توسيع' : 'Expand')}
-            >
-              {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
-            </button>
+        {/* Drag handle */}
+        <div className="w-full flex justify-center pt-3 pb-2">
+          <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+        </div>
+        
+        {/* Modal header with search and filters */}
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                {categoryType === 'TOURISM' 
+                  ? (locale === 'ar' ? 'الأماكن السياحية' : 'Places to visit') 
+                  : (locale === 'ar' ? 'المطاعم والمقاهي' : 'Restaurants & Cafes')
+                }
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                {places.length} {locale === 'ar' ? 'مكان' : 'places'}
+              </p>
+            </div>
             
-            {/* Close button */}
-            {onClose && (
+            <div className={`flex items-center space-x-2 ${locale === 'ar' ? 'space-x-reverse' : ''}`}>
+              {/* Expand/collapse toggle button */}
               <button
-                onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                aria-label={text.close}
+                onClick={onToggleExpand}
+                className="p-2.5 hover:bg-gray-100 rounded-full transition-all duration-200 hover:scale-105"
+                aria-label={isExpanded ? (locale === 'ar' ? 'تصغير' : 'Collapse') : (locale === 'ar' ? 'توسيع' : 'Expand')}
               >
-                <X className="w-5 h-5" />
+                {isExpanded ? <ChevronDown className="w-5 h-5 text-gray-700" /> : <ChevronUp className="w-5 h-5 text-gray-700" />}
               </button>
-            )}
+              
+              {/* Close button */}
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="p-2.5 hover:bg-gray-100 rounded-full transition-all duration-200 hover:scale-105"
+                  aria-label={text.close}
+                >
+                  <X className="w-5 h-5 text-gray-700" />
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {/* Search and filter bar */}
+          <div className={`flex items-center gap-3 ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder={locale === 'ar' ? 'البحث عن الأماكن...' : 'Search places...'}
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all duration-200"
+              />
+            </div>
+            <button className="p-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+              <SlidersHorizontal className="w-4 h-4 text-gray-700" />
+            </button>
           </div>
         </div>
 
         {/* Scrollable content area containing place cards */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto px-6 pb-6 scrollbar-thin">
           {loading ? (
             <div className="flex justify-center items-center min-h-[300px]">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
                 <div className="text-lg text-gray-600">{text.loading}</div>
               </div>
             </div>
@@ -134,7 +170,7 @@ export default function PlacesModal({
                 <div className="text-gray-600 mb-4">{error}</div>
                 <button 
                   onClick={() => window.location.reload()}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  className="px-6 py-3 bg-rose-500 text-white rounded-xl hover:bg-rose-600 transition-all duration-200 hover:scale-105"
                 >
                   {text.tryAgain}
                 </button>
@@ -148,9 +184,20 @@ export default function PlacesModal({
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {places.map((place) => (
-                <PlaceCard key={place.id} place={place} />
+            <div className="space-y-4">
+              {places.map((place, index) => (
+                <div 
+                  key={place.id} 
+                  className="animate-fade-in-up"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <PlaceCard 
+                    key={place.id} 
+                    place={place} 
+                    locale={locale}
+                    isHorizontalScroll={false}
+                  />
+                </div>
               ))}
             </div>
           )}

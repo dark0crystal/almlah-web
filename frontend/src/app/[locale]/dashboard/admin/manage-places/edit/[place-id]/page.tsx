@@ -661,12 +661,25 @@ export default function PlaceEdit() {
       setLoading(true);
       const response = await placeService.getPlaceById(placeId);
       
+      console.log('🔍 Place API Response:', response);
+      
       if (response.success) {
         const placeData = response.data;
+        console.log('📄 Place Data:', placeData);
         setPlace(placeData);
         
+        // Debug: Check what fields exist in the response
+        console.log('🏷️ Available fields:', {
+          name_ar: placeData.name_ar,
+          name_en: placeData.name_en,
+          description_ar: placeData.description_ar,
+          description_en: placeData.description_en,
+          subtitle_ar: placeData.subtitle_ar,
+          subtitle_en: placeData.subtitle_en
+        });
+        
         // Set form data - handle both snake_case and camelCase
-        setFormData({
+        const formDataToSet = {
           nameAr: placeData.name_ar || '',
           nameEn: placeData.name_en || '',
           descriptionAr: placeData.description_ar || '',
@@ -681,10 +694,15 @@ export default function PlaceEdit() {
           email: placeData.email || '',
           website: placeData.website || '',
           categoryIds: placeData.categories?.map(cat => cat.id) || []
-        });
+        };
+        
+        console.log('📝 Setting form data:', formDataToSet);
+        setFormData(formDataToSet);
 
         setContentSections(placeData.content_sections || []);
         setImageCount(placeData.images?.length || 0);
+      } else {
+        console.error('❌ API response not successful:', response);
       }
     } catch (err) {
       console.error('Error loading place:', err);
@@ -906,6 +924,16 @@ export default function PlaceEdit() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Debug Information */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <h3 className="text-sm font-medium text-yellow-800 mb-2">Debug Information</h3>
+              <div className="text-xs text-yellow-700 space-y-1">
+                <div>Form Data: {JSON.stringify(formData, null, 2)}</div>
+                <div>Place ID: {placeId}</div>
+                <div>Loading: {loading.toString()}</div>
+              </div>
+            </div>
+
             {/* Basic Information */}
             <div className="bg-white rounded-lg border p-6">
               <h2 className="text-lg font-medium mb-4">Basic Information</h2>
@@ -918,7 +946,10 @@ export default function PlaceEdit() {
                   <input
                     type="text"
                     value={formData.nameAr}
-                    onChange={(e) => handleInputChange('nameAr', e.target.value)}
+                    onChange={(e) => {
+                      console.log('🔤 Name AR changed:', e.target.value);
+                      handleInputChange('nameAr', e.target.value);
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="اسم المكان بالعربية"
                     required

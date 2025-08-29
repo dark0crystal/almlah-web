@@ -27,7 +27,7 @@ const Galleries: React.FC = () => {
       <div className="fixed top-0 left-0 w-full h-screen -z-10 ">
         <Scene activeMenu={activeMenu} />
       </div>
-      <div className="h-[10vh]"></div>
+      <div className="h-[10vh] md:h-[20vh] lg:h-[40vh]"></div>
     </div>
   );
 }
