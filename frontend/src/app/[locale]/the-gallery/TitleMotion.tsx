@@ -27,7 +27,7 @@ const container = useRef<HTMLDivElement | null >(null);
         <Slide src={Picture2} direction={isArabic ? 'left' : 'right'} left={isArabic ? "25%" : "-25%"} progress={scrollYProgress} title={t('title')}/>
         <Slide src={Picture3} direction={isArabic ? 'right' : 'left'}  left={isArabic ? "75%" : "-75%"} progress={scrollYProgress} title={t('title')}/>
       </div>
-      <div className='h-[50vh]' />
+      <div className='h-[10vh] md:h-[30vh]' />
       </div>
     )
 }
@@ -35,7 +35,7 @@ const Phrase = ({src, title} :{src:string, title:string}) => {
 
     return (
       <div className={'px-5 flex gap-5 items-center pt-2 '}>
-        <p className='text-[7.5vw] lg:text-[5vw]'>{title}</p>
+        <p className='text-[9vw] font-bold lg:text-[5vw] lg:font-normal'>{title}</p>
         <span className="relative h-[7.5vw] aspect-[4/2] rounded-full overflow-hidden">
           <Image style={{objectFit: "cover"}} src={src} alt="image" fill/>
         </span>

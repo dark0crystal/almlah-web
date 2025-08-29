@@ -202,30 +202,105 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
     }
   };
 
+  // Check if user is authenticated
+  const checkAuthToken = () => {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      console.error('❌ No auth token found in localStorage');
+      throw new Error('Authentication required. Please log in again.');
+    }
+    
+    try {
+      // Basic JWT validation (check if it has 3 parts)
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        console.error('❌ Invalid token format');
+        throw new Error('Invalid authentication token. Please log in again.');
+      }
+      
+      // Decode the payload to check expiration
+      const payload = JSON.parse(atob(parts[1]));
+      const now = Math.floor(Date.now() / 1000);
+      
+      if (payload.exp && payload.exp < now) {
+        console.error('❌ Token expired');
+        throw new Error('Authentication token expired. Please log in again.');
+      }
+      
+      console.log('✅ Auth token validated:', { 
+        userId: payload.user_id || payload.sub,
+        expiresAt: new Date(payload.exp * 1000).toLocaleString()
+      });
+      
+      return token;
+    } catch (error) {
+      if (error.message.includes('Authentication')) {
+        throw error;
+      }
+      console.error('❌ Error validating token:', error);
+      throw new Error('Invalid authentication token. Please log in again.');
+    }
+  };
+
   // Upload image to storage
   const uploadImageToStorage = async (file: File): Promise<string> => {
+    console.log('🚀 Starting image upload:', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type
+    });
+
     const formData = new FormData();
     formData.append('file', file);
     formData.append('folder', 'dishes'); // This will create media-bucket/dishes/
 
-    const token = localStorage.getItem('authToken');
-    const response = await fetch('http://127.0.0.1:9000/api/v1/upload', {
-      method: 'POST',
-      headers: {
-        'Authorization': token ? `Bearer ${token}` : '',
-      },
-      body: formData,
+    // Validate auth token before making request
+    const token = checkAuthToken();
+    console.log('📋 Upload request details:', {
+      url: 'http://127.0.0.1:9000/api/v1/upload',
+      hasToken: !!token,
+      folder: 'dishes'
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      console.error('Image upload error:', errorData);
-      throw new Error(errorData?.message || 'Failed to upload image');
-    }
+    try {
+      const response = await fetch('http://127.0.0.1:9000/api/v1/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+        body: formData,
+      });
 
-    const result = await response.json();
-    console.log('Image uploaded successfully to dishes folder:', result.data.url);
-    return result.data.url;
+      console.log('📤 Upload response status:', response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Upload failed - Raw response:', errorText);
+        
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText || `HTTP ${response.status}: ${response.statusText}` };
+        }
+        
+        console.error('❌ Upload error details:', errorData);
+        throw new Error(errorData?.message || 'Failed to upload image');
+      }
+
+      const result = await response.json();
+      console.log('✅ Image uploaded successfully:', result);
+      
+      if (!result.data?.url) {
+        console.error('❌ Upload response missing URL:', result);
+        throw new Error('Upload response missing URL');
+      }
+
+      return result.data.url;
+    } catch (error) {
+      console.error('❌ Upload error:', error);
+      throw error;
+    }
   };
 
   // Handle file selection
@@ -257,7 +332,17 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
 
   // Upload and add image
   const uploadAndAddImage = async () => {
-    if (!selectedFile && !newImage.image_url.trim()) return;
+    console.log('🖼️ uploadAndAddImage called:', {
+      hasSelectedFile: !!selectedFile,
+      hasImageUrl: !!newImage.image_url.trim(),
+      selectedFileName: selectedFile?.name,
+      imageUrl: newImage.image_url
+    });
+
+    if (!selectedFile && !newImage.image_url.trim()) {
+      console.log('❌ No file selected and no URL provided');
+      return;
+    }
 
     try {
       setUploadingImage(true);
@@ -266,10 +351,17 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
       
       // Upload file if selected
       if (selectedFile) {
+        console.log('📤 Uploading selected file:', selectedFile.name);
         imageUrl = await uploadImageToStorage(selectedFile);
+        console.log('✅ File upload completed, URL:', imageUrl);
+      } else {
+        console.log('🔗 Using provided URL:', imageUrl);
       }
 
-      if (!imageUrl.trim()) return;
+      if (!imageUrl.trim()) {
+        console.log('❌ No image URL after processing');
+        return;
+      }
 
       const imageToAdd = {
         ...newImage,
@@ -277,16 +369,21 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
         display_order: formData.images.length + 1
       };
 
+      console.log('➕ Adding image to form data:', imageToAdd);
+
       // If this is set as primary, remove primary from others
       let updatedImages = formData.images;
       if (imageToAdd.is_primary) {
         updatedImages = updatedImages.map(img => ({ ...img, is_primary: false }));
+        console.log('🌟 Set as primary image, cleared others');
       }
 
       setFormData(prev => ({
         ...prev,
         images: [...updatedImages, imageToAdd]
       }));
+
+      console.log('✅ Image added to form data successfully');
 
       // Reset form
       setNewImage({
@@ -300,8 +397,8 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
       setPreviewUrl('');
       
     } catch (error) {
-      console.error('Error uploading image:', error);
-      alert('Failed to upload image. Please try again.');
+      console.error('❌ Error in uploadAndAddImage:', error);
+      alert(`Failed to upload image: ${error.message}`);
     } finally {
       setUploadingImage(false);
     }
@@ -792,6 +889,31 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Debug Section - Remove in production */}
+          <div className="border-t pt-4 bg-gray-50 p-4 rounded">
+            <h4 className="text-sm font-medium text-gray-700 mb-2">Debug Information</h4>
+            <div className="text-xs text-gray-600 space-y-1">
+              <div>Auth Token: {localStorage.getItem('authToken') ? '✅ Present' : '❌ Missing'}</div>
+              <div>Images in Form: {formData.images.length}</div>
+              <div>Selected File: {selectedFile ? selectedFile.name : 'None'}</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                console.log('🐛 Debug Info:', {
+                  hasAuthToken: !!localStorage.getItem('authToken'),
+                  authToken: localStorage.getItem('authToken'),
+                  formDataImages: formData.images,
+                  selectedFile: selectedFile,
+                  newImageState: newImage
+                });
+              }}
+              className="mt-2 px-3 py-1 bg-gray-200 text-gray-700 rounded text-xs"
+            >
+              Log Debug Info
+            </button>
           </div>
 
           {/* Form Actions */}
