@@ -33,6 +33,7 @@ export default function RestaurantsModal({
   const [restaurants, setRestaurants] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const scrollableRef = useRef<HTMLDivElement>(null);
   
   // Drag functionality state
   const [isDragging, setIsDragging] = useState(false);
@@ -180,6 +181,50 @@ export default function RestaurantsModal({
     handleDragEnd();
   }, [handleDragEnd]);
 
+  // Prevent scroll event bubbling
+  const handleScrollableWheel = useCallback((e: React.WheelEvent) => {
+    const scrollable = scrollableRef.current;
+    if (!scrollable) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = scrollable;
+    const isScrollingUp = e.deltaY < 0;
+    const isScrollingDown = e.deltaY > 0;
+
+    // If scrolling up and already at top, prevent default to stop propagation
+    if (isScrollingUp && scrollTop <= 0) {
+      e.preventDefault();
+      return;
+    }
+
+    // If scrolling down and already at bottom, prevent default to stop propagation
+    if (isScrollingDown && scrollTop + clientHeight >= scrollHeight) {
+      e.preventDefault();
+      return;
+    }
+
+    // Allow normal scrolling within the modal
+    e.stopPropagation();
+  }, []);
+
+  // Prevent touch scroll propagation
+  const handleScrollableTouch = useCallback((e: React.TouchEvent) => {
+    e.stopPropagation();
+  }, []);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    // Store original body overflow
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    
+    // Lock body scroll
+    document.body.style.overflow = 'hidden';
+    
+    // Cleanup: restore original overflow when component unmounts
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
+
   // Add/remove event listeners
   useEffect(() => {
     if (isDragging) {
@@ -203,6 +248,8 @@ export default function RestaurantsModal({
       <div 
         className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
         onClick={onClose}
+        onWheel={(e) => e.preventDefault()}
+        onTouchMove={(e) => e.preventDefault()}
       />
       
       {/* Main modal container with dynamic height based on expansion state */}
@@ -254,7 +301,13 @@ export default function RestaurantsModal({
         </div>
 
         {/* Scrollable content area containing restaurant cards */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div 
+          ref={scrollableRef}
+          className="flex-1 overflow-y-auto p-6"
+          onWheel={handleScrollableWheel}
+          onTouchMove={handleScrollableTouch}
+          onTouchStart={handleScrollableTouch}
+        >
           {loading ? (
             <div className="flex justify-center items-center min-h-[300px]">
               <div className="text-center">

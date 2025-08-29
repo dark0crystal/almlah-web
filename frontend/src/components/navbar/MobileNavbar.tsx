@@ -70,11 +70,7 @@ export default function MobileMenu({ navLinks, dashboardLinks }: MobileMenuProps
           className="relative z-50 text-gray-700 rounded-full p-3 transition-all duration-200 transform hover:scale-105 active:scale-95"
         >
           <div className="relative">
-            {isOpen ? (
-              <X className="h-6 w-6 transition-transform duration-200" />
-            ) : (
-              <Menu className="h-6 w-6 transition-transform duration-200" />
-            )}
+            <Menu className="h-6 w-6 transition-transform duration-200" />
           </div>
         </button>
       </div>
@@ -95,7 +91,7 @@ export default function MobileMenu({ navLinks, dashboardLinks }: MobileMenuProps
           }`}
         >
         {/* Header - Fixed at top */}
-        <div className="flex items-center justify-between p-6 bg-gradient-to-r from-[#f3f3eb] to-[#fbda5f] flex-shrink-0">
+        <div className="flex items-center justify-between p-6 bg-white border-b border-gray-200 flex-shrink-0">
           <div className="text-2xl">
             <Link 
               href="/" 
@@ -121,54 +117,20 @@ export default function MobileMenu({ navLinks, dashboardLinks }: MobileMenuProps
               <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 px-2">
                 Navigation
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {navLinks.map((navLink, index) => (
                   <Link key={index} href={navLink.direction} onClick={closeMenu}>
-                    <div className="flex items-center space-x-4 px-4 py-3 rounded-xl bg-white hover:bg-blue-50 hover:border-blue-200 border border-transparent transition-all duration-200 shadow-sm hover:shadow-md group">
-                      <div className="w-6 h-6 flex-shrink-0 text-gray-600 group-hover:text-blue-600 transition-colors">
+                    <div className="flex items-center space-x-4 px-4 py-4 hover:bg-gray-50 transition-all duration-200 group">
+                      <div className="w-7 h-7 flex-shrink-0 text-gray-600 group-hover:text-blue-600 transition-colors">
                         {getIcon(navLink.direction)}
                       </div>
-                      <span className="text-gray-800 font-medium group-hover:text-blue-700 transition-colors">{navLink.name}</span>
+                      <span className="text-lg text-gray-800 font-medium group-hover:text-blue-700 transition-colors">{navLink.name}</span>
                     </div>
                   </Link>
                 ))}
               </div>
             </div>
 
-            {/* Dashboard Section */}
-            <div className="mb-6">
-              <button
-                onClick={toggleDashboard}
-                className="flex items-center justify-between w-full px-2 py-3 text-sm font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors"
-              >
-                <span>Dashboard</span>
-                <div className={`p-1 rounded-full transition-all duration-200 ${showDashboard ? 'rotate-180 bg-gray-200' : 'hover:bg-gray-200'}`}>
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </button>
-              
-              {showDashboard && (
-                <div className="mt-3 space-y-2 pl-4">
-                  {dashboardLinks.map((dashLink, index) => (
-                    <Link key={index} href={dashLink.direction} onClick={closeMenu}>
-                      <div className="flex items-center space-x-3 px-3 py-2 rounded-lg bg-white hover:bg-orange-50 hover:border-orange-200 border border-transparent transition-all duration-200 shadow-sm group">
-                        <div className="w-4 h-4 flex-shrink-0 text-gray-500 group-hover:text-orange-600 transition-colors">
-                          {getIcon(dashLink.direction)}
-                        </div>
-                        <span className="text-gray-700 text-sm group-hover:text-orange-700 transition-colors">{dashLink.name}</span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
         </div>
 

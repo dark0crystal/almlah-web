@@ -43,8 +43,6 @@ export default function PlacesModal({
     error: locale === 'ar' ? 'خطأ في تحميل الأماكن' : 'Error loading places',
     tryAgain: locale === 'ar' ? 'حاول مرة أخرى' : 'Try Again',
     noPlaces: locale === 'ar' ? 'لم يتم العثور على أماكن' : 'No places found',
-    featuredPlaces: locale === 'ar' ? 'الأماكن المميزة' : 'Featured Places',
-    places: locale === 'ar' ? 'الأماكن' : 'Places',
     close: locale === 'ar' ? 'إغلاق' : 'Close'
   };
 
@@ -82,19 +80,6 @@ export default function PlacesModal({
     loadPlaces();
   }, [categoryId, selectedGovernateId, text.error]);
 
-  // Get modal title based on category
-  const getModalTitle = () => {
-    switch (categoryType) {
-      case 'TOURISM':
-        return locale === 'ar' ? 'الأماكن السياحية' : 'Tourism Places';
-      case 'FOOD_BEVERAGES':
-        return locale === 'ar' ? 'الأطعمة والمشروبات' : 'Food & Beverages';
-      case 'ENTERTAINMENT':
-        return locale === 'ar' ? 'الترفيه' : 'Entertainment';
-      default:
-        return text.places;
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-4">
@@ -108,14 +93,8 @@ export default function PlacesModal({
       <div className={`relative bg-white rounded-t-3xl shadow-2xl w-full max-w-4xl transition-all duration-500 ease-out transform ${
         isExpanded ? 'h-5/6' : 'h-2/3'
       }`}>
-        {/* Modal header with title and control buttons */}
-        <div className={`flex items-center justify-between p-6 border-b border-gray-100 ${
-          locale === 'ar' ? 'flex-row-reverse' : ''
-        }`}>
-          <div className={`flex items-center space-x-3 ${locale === 'ar' ? 'space-x-reverse' : ''}`}>
-            <MapPin className="w-6 h-6 text-indigo-600" />
-            <h2 className="text-2xl font-bold text-gray-800">{getModalTitle()}</h2>
-          </div>
+        {/* Modal header with control buttons only */}
+        <div className={`flex items-center justify-end p-6 border-b border-gray-100`}>
           <div className={`flex items-center space-x-2 ${locale === 'ar' ? 'space-x-reverse' : ''}`}>
             {/* Expand/collapse toggle button */}
             <button

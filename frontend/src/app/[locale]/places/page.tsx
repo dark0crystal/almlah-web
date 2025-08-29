@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { MapPin } from "lucide-react";
 import PlacesCardsWrapper from "./PlacesCardsWrapper";
 import PlacesMap from "./PlacesMap";
+import PlacesModal from "./PlacesModal";
 import GovernateFilter from "./GovernateFilterComponent";
 import BottomSheet, { SheetState } from "./BottomSheet";
 import { CATEGORY_IDS, type CategoryType, getCategoryName } from "@/services/placesApi";
@@ -30,6 +31,10 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [bottomSheetState, setBottomSheetState] = useState<SheetState>('collapsed');
   const [forceBottomSheetState, setForceBottomSheetState] = useState<SheetState | undefined>(undefined);
+  
+  // Modal state for small screens
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalExpanded, setIsModalExpanded] = useState(false);
 
   // Reset force state after it's been applied
   const handleBottomSheetStateChange = (state: SheetState) => {
@@ -39,13 +44,37 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
     }
   };
 
-  // Handle marker click - show and expand bottom sheet (for screens < 1280px only)
+  // Handle modal toggle for small screens
+  const handleModalToggle = () => {
+    setIsModalOpen(!isModalOpen);
+    if (!isModalOpen) {
+      setIsModalExpanded(false); // Start collapsed when opening
+    }
+  };
+
+  // Handle modal expand/collapse
+  const handleModalToggleExpand = () => {
+    setIsModalExpanded(!isModalExpanded);
+  };
+
+  // Handle modal close
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setIsModalExpanded(false);
+  };
+
+  // Handle marker click - show modal for screens < md, bottom sheet for md < screens < xl, and just highlight for xl+
   const handleMarkerClick = (placeId: string) => {
     setSelectedPlaceId(placeId);
     
-    // Only handle bottom sheet expansion for screens < 1280px
-    // For xl screens (desktop), just update selected place
-    if (window.innerWidth < 1280) {
+    const screenWidth = window.innerWidth;
+    
+    // Small screens (< 768px) - show modal
+    if (screenWidth < 768) {
+      setIsModalOpen(true);
+    }
+    // Medium screens (768px - 1279px) - use bottom sheet
+    else if (screenWidth >= 768 && screenWidth < 1280) {
       // If sheet is hidden, bring it to half state for better visibility
       if (bottomSheetState === 'hidden') {
         setForceBottomSheetState('half');
@@ -56,6 +85,7 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
       }
       // If sheet is half or full, keep current state but update selected place
     }
+    // Large screens (xl+) - just update selected place, no sheet/modal needed
   };
 
   // Get category ID from the category type
@@ -111,9 +141,9 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
         </div>
       </div>
       
-      {/* Mobile/Tablet Layout - Full screen map with Airbnb-style bottom sheet */}
+      {/* Mobile/Tablet Layout - Full screen map with modal for small screens and bottom sheet for medium screens */}
       <div className="xl:hidden w-full h-[84vh] relative">
-        {/* Full screen map for mobile */}
+        {/* Full screen map for mobile and tablet */}
         <div className="w-full h-full">
           <PlacesMap 
             categoryId={categoryId}
@@ -124,19 +154,31 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
           />
         </div>
         
+        {/* Floating Places Button - Only show on small screens (< md) */}
+        <div className="md:hidden absolute bottom-6 left-1/2 transform -translate-x-1/2 z-40">
+          <button
+            onClick={handleModalToggle}
+            className="bg-white hover:bg-gray-50 text-gray-800 px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2 border border-gray-200"
+          >
+            <MapPin className="w-5 h-5" />
+            <span className="font-medium">{t('viewPlaces')}</span>
+          </button>
+        </div>
 
-        {/* Airbnb-style Bottom Sheet */}
-        <BottomSheet
-          categoryId={categoryId}
-          selectedGovernateId={selectedGovernateId}
-          onGovernateChange={setSelectedGovernateId}
-          selectedPlaceId={selectedPlaceId}
-          onPlaceClick={setSelectedPlaceId}
-          locale={locale}
-          title={getPlacesToVisitText()}
-          onStateChange={handleBottomSheetStateChange}
-          forceState={forceBottomSheetState}
-        />
+        {/* Airbnb-style Bottom Sheet - Only show on medium screens (md and up but below xl) */}
+        <div className="hidden md:block xl:hidden">
+          <BottomSheet
+            categoryId={categoryId}
+            selectedGovernateId={selectedGovernateId}
+            onGovernateChange={setSelectedGovernateId}
+            selectedPlaceId={selectedPlaceId}
+            onPlaceClick={setSelectedPlaceId}
+            locale={locale}
+            title={getPlacesToVisitText()}
+            onStateChange={handleBottomSheetStateChange}
+            forceState={forceBottomSheetState}
+          />
+        </div>
       </div>
 
       {/* -------------------------------------- */}
@@ -201,6 +243,18 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
         </div>
       </div>
 
+      {/* Places Modal - Only show on small screens (< md) */}
+      {isModalOpen && (
+        <div className="md:hidden">
+          <PlacesModal
+            isExpanded={isModalExpanded}
+            onToggleExpand={handleModalToggleExpand}
+            categoryType={categoryType}
+            selectedGovernateId={selectedGovernateId}
+            onClose={handleModalClose}
+          />
+        </div>
+      )}
       
     </div>
   );
