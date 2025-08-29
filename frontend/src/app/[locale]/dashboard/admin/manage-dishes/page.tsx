@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Edit, Trash2, Eye, Image, MapPin, Clock, Users } from 'lucide-react';
+import { Plus, Search, Filter, Edit, Trash2, Image, MapPin, Clock, Users } from 'lucide-react';
 import DishFormModal from './DishFormModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
 

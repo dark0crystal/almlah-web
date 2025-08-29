@@ -40,7 +40,12 @@ export const DescriptionContentStep: React.FC = () => {
   const watchedValues = watch();
 
   const onSubmit = (data: DescriptionContentFormData) => {
-    updateFormData(data);
+    // Include the current content sections from the store in the form data
+    const formDataWithSections = {
+      ...data,
+      content_sections: formData.content_sections
+    };
+    updateFormData(formDataWithSections);
     clearErrors();
     nextStep();
   };
@@ -92,6 +97,39 @@ export const DescriptionContentStep: React.FC = () => {
 
     const updateLocalSection = (updates: Partial<ContentSection>) => {
       setLocalSection(prev => ({ ...prev, ...updates }));
+    };
+
+    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files;
+      if (!files) return;
+
+      Array.from(files).forEach((file, fileIndex) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const newImage = {
+            image_url: e.target?.result as string,
+            alt_text_ar: '',
+            alt_text_en: '',
+            caption_ar: '',
+            caption_en: '',
+            sort_order: localSection.images.length + fileIndex,
+            file: file
+          };
+
+          setLocalSection(prev => ({
+            ...prev,
+            images: [...prev.images, newImage]
+          }));
+        };
+        reader.readAsDataURL(file);
+      });
+    };
+
+    const removeImage = (imageIndex: number) => {
+      setLocalSection(prev => ({
+        ...prev,
+        images: prev.images.filter((_, i) => i !== imageIndex)
+      }));
     };
 
     return (
@@ -172,6 +210,48 @@ export const DescriptionContentStep: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
               />
             </div>
+          </div>
+
+          {/* Image Upload Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-semibold text-gray-900">
+                Section Images (Optional)
+              </label>
+              <label className="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 cursor-pointer flex items-center space-x-2">
+                <PhotoIcon className="w-4 h-4" />
+                <span>Add Images</span>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
+            {/* Image Preview Grid */}
+            {localSection.images.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {localSection.images.map((image, imageIndex) => (
+                  <div key={imageIndex} className="relative group">
+                    <img
+                      src={image.image_url}
+                      alt={image.alt_text_en || 'Section image'}
+                      className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(imageIndex)}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <XMarkIcon className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}
@@ -317,6 +397,9 @@ export const DescriptionContentStep: React.FC = () => {
                         </h4>
                         <p className="text-sm text-gray-600 capitalize">
                           {section.section_type.replace('_', ' ')}
+                          {section.images && section.images.length > 0 && (
+                            <span className="ml-2 text-blue-600">• {section.images.length} image{section.images.length !== 1 ? 's' : ''}</span>
+                          )}
                         </p>
                       </div>
                     </div>

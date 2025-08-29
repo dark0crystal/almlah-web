@@ -118,8 +118,8 @@ export const CategorySelectionStep: React.FC = () => {
                 <div className="flex items-center space-x-3">
                   <span className="text-2xl">{category.icon}</span>
                   <div>
-                    <h4 className="font-semibold text-gray-900">{category.name_en}</h4>
-                    <p className="text-sm text-gray-600">{category.name_ar}</p>
+                    <h4 className="font-semibold text-gray-900">{category.name_en || category.name}</h4>
+                    <p className="text-sm text-gray-600">{category.name_ar || category.name}</p>
                   </div>
                 </div>
               </div>

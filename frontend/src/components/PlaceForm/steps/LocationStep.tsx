@@ -61,24 +61,6 @@ export const LocationStep: React.FC = () => {
     }
   }, [watchedGovernate, selectedGovernate, fetchWilayahs, setValue]);
 
-  const getCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setValue('latitude', latitude);
-          setValue('longitude', longitude);
-          setMapCoordinates({ lat: latitude, lng: longitude });
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          alert('Unable to get your current location. Please enter coordinates manually or select on map.');
-        }
-      );
-    } else {
-      alert('Geolocation is not supported by this browser.');
-    }
-  };
 
   const onSubmit = (data: LocationFormData) => {
     updateFormData(data);
@@ -194,23 +176,9 @@ export const LocationStep: React.FC = () => {
 
         {/* Coordinates Section */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <label className="block text-sm font-semibold text-gray-900">
-              Precise Location (Optional)
-            </label>
-            <button
-              type="button"
-              onClick={getCurrentLocation}
-              className="
-                px-3 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg 
-                hover:bg-blue-100 transition-colors duration-200 
-                flex items-center space-x-2
-              "
-            >
-              <MapPinIcon className="w-4 h-4" />
-              <span>Use Current Location</span>
-            </button>
-          </div>
+          <label className="block text-sm font-semibold text-gray-900">
+            Precise Location (Optional)
+          </label>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
