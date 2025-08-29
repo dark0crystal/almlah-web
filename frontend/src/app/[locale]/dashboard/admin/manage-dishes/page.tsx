@@ -71,6 +71,13 @@ const apiCall = async (endpoint: string, options: RequestInit = {}): Promise<any
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => null);
+    console.error('API Error Details:', {
+      status: response.status,
+      statusText: response.statusText,
+      errorData,
+      endpoint,
+      options
+    });
     throw new Error(errorData?.message || `HTTP ${response.status}: ${response.statusText}`);
   }
 
@@ -129,7 +136,7 @@ const dishService = {
 
 const governateService = {
   getAll: async (): Promise<Governate[]> => {
-    const response = await apiCall('/api/v1/governate');
+    const response = await apiCall('/api/v1/governates');
     return response.data;
   }
 };
