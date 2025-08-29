@@ -1,6 +1,7 @@
 "use client"
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Upload, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { SupabaseStorageService } from '@/services/supabaseStorage';
 
 interface Dish {
   id: string;
@@ -244,61 +245,30 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
 
   // Upload image to storage
   const uploadImageToStorage = async (file: File): Promise<string> => {
-    console.log('🚀 Starting image upload:', {
+    console.log('🚀 Starting image upload (Supabase client):', {
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type
     });
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('folder', 'dishes'); // This will create media-bucket/dishes/
-
-    // Validate auth token before making request
-    const token = checkAuthToken();
-    console.log('📋 Upload request details:', {
-      url: 'http://127.0.0.1:9000/api/v1/upload',
-      hasToken: !!token,
-      folder: 'dishes'
-    });
-
     try {
-      const response = await fetch('http://127.0.0.1:9000/api/v1/upload', {
-        method: 'POST',
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : '',
-        },
-        body: formData,
+      // Optional: you can resize/compress before upload, or upload original
+      const fileName = SupabaseStorageService.generateFileName(file.name);
+      const result = await SupabaseStorageService.uploadFile({
+        bucket: 'media-bucket',
+        folder: 'dishes',
+        fileName,
+        file,
       });
 
-      console.log('📤 Upload response status:', response.status, response.statusText);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Upload failed - Raw response:', errorText);
-        
-        let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-        } catch {
-          errorData = { message: errorText || `HTTP ${response.status}: ${response.statusText}` };
-        }
-        
-        console.error('❌ Upload error details:', errorData);
-        throw new Error(errorData?.message || 'Failed to upload image');
+      if (!result.success || !result.url) {
+        throw new Error(result.error || 'Failed to upload image');
       }
 
-      const result = await response.json();
-      console.log('✅ Image uploaded successfully:', result);
-      
-      if (!result.data?.url) {
-        console.error('❌ Upload response missing URL:', result);
-        throw new Error('Upload response missing URL');
-      }
-
-      return result.data.url;
+      console.log('✅ Supabase upload completed:', result);
+      return result.url;
     } catch (error) {
-      console.error('❌ Upload error:', error);
+      console.error('❌ Supabase upload error:', error);
       throw error;
     }
   };

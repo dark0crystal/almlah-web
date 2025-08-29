@@ -90,7 +90,7 @@ export default function PlacesModal({
       />
       
       {/* Main modal container with dynamic height based on expansion state */}
-      <div className={`relative bg-white rounded-t-3xl shadow-2xl w-full max-w-4xl transition-all duration-500 ease-out transform ${
+      <div className={`relative bg-white rounded-t-3xl shadow-2xl w-full max-w-4xl transition-all duration-500 ease-out transform flex flex-col ${
         isExpanded ? 'h-5/6' : 'h-2/3'
       }`}>
         {/* Modal header with control buttons only */}

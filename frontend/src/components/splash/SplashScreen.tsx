@@ -26,13 +26,16 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       const screenHeight = window.innerHeight || 800;
       const screenWidth = window.innerWidth || 1200;
       
-      // Calculate vertical texts needed
-      const textsNeeded = Math.ceil(screenHeight / 80);
+      // Calculate vertical texts needed (responsive line height)
+      const lineHeight = screenWidth < 640 ? 60 : screenWidth < 768 ? 85 : 120; // includes font + margin
+      const textsNeeded = Math.ceil(screenHeight / lineHeight);
       setRepeatedTexts(Array.from({ length: textsNeeded }, () => text));
       
       // Calculate horizontal columns that can fit
-      // Each column: 400px width + 144px margin (mx-18 = 72px on each side)
-      const columnWidth = 400 + 144; // 544px per column
+      // Responsive column width and margins
+      const baseWidth = screenWidth < 640 ? 200 : screenWidth < 768 ? 300 : 400;
+      const marginWidth = screenWidth < 640 ? 32 : screenWidth < 768 ? 64 : 144; // mx-4=32, mx-8=64, mx-18=144
+      const columnWidth = baseWidth + marginWidth;
       const maxColumns = Math.floor(screenWidth / columnWidth);
       setColumnsCount(Math.max(1, maxColumns)); // At least 1 column
     };
@@ -84,7 +87,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         
         {/* Dynamic Columns */}
         {Array.from({ length: columnsCount }, (_, columnIndex) => (
-          <div key={columnIndex} className="flex flex-col justify-start items-center mx-18" style={{ width: '400px' }}>
+          <div key={columnIndex} className="flex flex-col justify-start items-center mx-4 sm:mx-8 md:mx-18" style={{ width: window.innerWidth < 640 ? '200px' : window.innerWidth < 768 ? '300px' : '400px' }}>
             {repeatedTexts.map((textItem, index) => (
               <div
                 key={`column-${columnIndex}-${index}`}
@@ -94,9 +97,9 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                     : 'opacity-0 translate-y-4'
                 }`}
                 style={{
-                  fontSize: '80px',
-                  lineHeight: '90px',
-                  marginBottom: '30px',
+                  fontSize: window.innerWidth < 640 ? '40px' : window.innerWidth < 768 ? '60px' : '80px',
+                  lineHeight: window.innerWidth < 640 ? '45px' : window.innerWidth < 768 ? '65px' : '90px',
+                  marginBottom: window.innerWidth < 640 ? '15px' : window.innerWidth < 768 ? '20px' : '30px',
                   color: '#f6bf0c',
                   transitionDelay: `${index * 50 + columnIndex * 16}ms`
                 }}

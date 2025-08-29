@@ -334,10 +334,11 @@ export class SupabaseStorageService {
     for (let i = 0; i < images.length; i++) {
       const image = images[i];
       const extension = image.file.name.split('.').pop() || 'jpg';
-      const paddedIndex = (i + 1).toString().padStart(3, '0');
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(2, 8);
       
       const folder = `places/${placeId}/content-sections/${sectionId}`;
-      const fileName = `${paddedIndex}.${extension}`;
+      const fileName = `image-${timestamp}-${random}.${extension}`;
 
       const result = await this.uploadFile({
         bucket: process.env.NEXT_PUBLIC_STORAGE_BUCKET || 'media-bucket',

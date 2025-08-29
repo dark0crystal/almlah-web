@@ -39,10 +39,10 @@ export default function PlaceImagesContainer({
     setFlag(mql.matches);
     const handler = (e: MediaQueryListEvent) => setFlag(e.matches);
     // Support older Safari
-    // @ts-ignore
+
     mql.addEventListener ? mql.addEventListener('change', handler) : mql.addListener(handler);
     return () => {
-      // @ts-ignore
+ 
       mql.removeEventListener ? mql.removeEventListener('change', handler) : mql.removeListener(handler);
     };
   }, []);
