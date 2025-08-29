@@ -97,8 +97,6 @@ export default function Heading() {
           ))}
         </div>
 
-        {/* Subtle gradient overlay to blend images with background */}
-        <div className="absolute inset-0 bg-gradient-to-t from-transparent via-[#fce7a1]/20 to-[#fce7a1]/60 z-40 pointer-events-none"></div>
       </div>
 
       {/* Background shape (like the football curve) */}
@@ -108,7 +106,7 @@ export default function Heading() {
                    
       {/* Text */}
       <h1 className="relative z-10 text-black font-extrabold text-4xl md:text-6xl text-center leading-relaxed px-4">
-        رفيق دربك إلي يدل كل مــــكـــان
+        رفـــيـقــك إلــي يـعـرف كـل مــــكـــان
       </h1>
     </div>
   );

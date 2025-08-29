@@ -6,6 +6,13 @@ import { Link } from "@/i18n/navigation";
 import { Menu, X, Home, MapPin, Utensils, Map, Dice6, Info, Settings, Images } from "lucide-react";
 import LanguageChange from "./LangChange";
 import { useLocale, useTranslations } from "next-intl";
+import { Lalezar } from "next/font/google";
+
+const lalezarFont = Lalezar({
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+});
 
 type MobileMenuProps = {
   navLinks: { direction: string; name: string }[];
@@ -19,6 +26,7 @@ export default function MobileMenu({ navLinks, dashboardLinks }: MobileMenuProps
   const locale = useLocale().substring(0, 2);
   const direction = locale === 'ar' ? 'rtl' : 'ltr';
   const t = useTranslations('navbar');
+  const tLinks = useTranslations('Links');
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -59,7 +67,7 @@ export default function MobileMenu({ navLinks, dashboardLinks }: MobileMenuProps
       <div className="xl:hidden relative">
         <button 
           onClick={toggleMenu} 
-          className="relative z-50 text-gray-700 bg-[#fbda5f] hover:bg-[#f6bf0c] rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
+          className="relative z-50 text-gray-700 rounded-full p-3 transition-all duration-200 transform hover:scale-105 active:scale-95"
         >
           <div className="relative">
             {isOpen ? (
@@ -82,13 +90,21 @@ export default function MobileMenu({ navLinks, dashboardLinks }: MobileMenuProps
       {/* Sidebar - Only render when open */}
       {isOpen && (
         <div
-          className={`fixed top-0 ${direction === 'rtl' ? 'right-0' : 'left-0'} h-screen w-80 bg-white shadow-2xl z-50 transform transition-all duration-300 ease-in-out xl:hidden ${
+          className={`fixed top-0 ${direction === 'rtl' ? 'right-0' : 'left-0'} h-screen w-80 bg-white shadow-2xl z-50 transform transition-all duration-300 ease-in-out xl:hidden flex flex-col ${
             isOpen ? 'translate-x-0' : direction === 'rtl' ? 'translate-x-full' : '-translate-x-full'
           }`}
         >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 bg-gradient-to-r from-[#f3f3eb] to-[#fbda5f]">
-          <h2 className="text-2xl font-bold text-gray-800">Menu</h2>
+        {/* Header - Fixed at top */}
+        <div className="flex items-center justify-between p-6 bg-gradient-to-r from-[#f3f3eb] to-[#fbda5f] flex-shrink-0">
+          <div className="text-2xl">
+            <Link 
+              href="/" 
+              className={`${lalezarFont.className} text-gray-800 hover:text-gray-600 transition-colors`}
+              onClick={closeMenu}
+            >
+              {tLinks("brand")}
+            </Link>
+          </div>
           <button 
             onClick={toggleMenu} 
             className="p-2 rounded-full hover:bg-white/20 transition-colors"
@@ -97,9 +113,9 @@ export default function MobileMenu({ navLinks, dashboardLinks }: MobileMenuProps
           </button>
         </div>
 
-        {/* Navigation Links */}
-        <div className="flex-1 overflow-y-auto bg-gray-50">
-          <div className="p-6">
+        {/* Navigation Links - Scrollable content area */}
+        <div className="flex-1 overflow-y-auto bg-gray-50 min-h-0">
+          <div className="p-6 pb-24">
             {/* Main Navigation */}
             <div className="mb-8">
               <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 px-2">
@@ -156,8 +172,8 @@ export default function MobileMenu({ navLinks, dashboardLinks }: MobileMenuProps
           </div>
         </div>
 
-        {/* Footer with Language Change */}
-        <div className="border-t border-gray-200 bg-white p-6">
+        {/* Footer with Language Change - Fixed at bottom */}
+        <div className="border-t border-gray-200 bg-white p-6 flex-shrink-0">
           <div className="flex items-center justify-center">
             <LanguageChange />
           </div>
