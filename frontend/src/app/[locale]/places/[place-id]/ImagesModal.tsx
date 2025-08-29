@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 
 interface ImagesModalProps {
@@ -19,6 +19,9 @@ export default function ImagesModal({
   const t = useTranslations('placeDetails.images');
   const [selectedIndex, setSelectedIndex] = useState(initialIndex);
   const [imageErrors, setImageErrors] = useState<{[key: number]: boolean}>({});
+  const [isMobile, setIsMobile] = useState(false);
+  const startXRef = useRef<number | null>(null);
+  const deltaXRef = useRef<number>(0);
 
   console.log('ImagesModal - received images:', images);
 
@@ -28,7 +31,7 @@ export default function ImagesModal({
     setImageErrors(prev => ({ ...prev, [index]: true }));
   };
 
-  // Handle keyboard navigation
+  // Handle keyboard navigation (desktop)
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -47,6 +50,10 @@ export default function ImagesModal({
   // Prevent scrolling when modal is open
   useEffect(() => {
     document.body.style.overflow = 'hidden';
+    if (typeof window !== 'undefined') {
+      const mql = window.matchMedia('(max-width: 767px)');
+      setIsMobile(mql.matches);
+    }
     return () => {
       document.body.style.overflow = 'unset';
     };
@@ -95,29 +102,65 @@ export default function ImagesModal({
   };
 
   const currentImageUrl = getImageUrl(images[selectedIndex]);
+
+  // Swipe handlers (mobile)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    startXRef.current = e.touches[0].clientX;
+    deltaXRef.current = 0;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (startXRef.current == null) return;
+    deltaXRef.current = e.touches[0].clientX - startXRef.current;
+  };
+
+  const handleTouchEnd = () => {
+    const SWIPE_THRESHOLD = 40; // px
+    if (Math.abs(deltaXRef.current) > SWIPE_THRESHOLD) {
+      if (deltaXRef.current > 0) {
+        // swipe right -> previous
+        setSelectedIndex(prev => (prev > 0 ? prev - 1 : images.length - 1));
+      } else {
+        // swipe left -> next
+        setSelectedIndex(prev => (prev < images.length - 1 ? prev + 1 : 0));
+      }
+    }
+    startXRef.current = null;
+    deltaXRef.current = 0;
+  };
   const hasCurrentImageError = imageErrors[selectedIndex];
 
   return (
-    <div className="fixed inset-0 bg-black/95 backdrop-blur-sm z-[9999] flex flex-col items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/95 backdrop-blur-sm z-[9999] flex flex-col items-center justify-center p-0 md:p-4">
       {/* Close button */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 md:top-6 md:right-6 text-black text-xl md:text-2xl bg-white hover:bg-gray-100 rounded-full w-8 h-8 md:w-10 md:h-10 flex items-center justify-center shadow-lg transition-colors duration-200 z-10"
+        className="absolute top-3 right-3 md:top-6 md:right-6 text-black text-xl md:text-2xl bg-white/95 hover:bg-white rounded-full w-8 h-8 md:w-10 md:h-10 flex items-center justify-center shadow-lg transition-colors duration-200 z-10"
         aria-label={t('closeGallery')}
       >
         ✕
       </button>
 
       {/* Header with place name */}
-      <div className="absolute top-4 left-4 md:top-6 md:left-6 text-white z-10">
-        <h2 className="text-lg md:text-xl font-semibold">{placeName}</h2>
+      <div className="absolute top-0 left-0 right-0 md:left-auto md:right-auto md:top-6 md:left-6 text-white z-10">
+        <div className="mx-auto w-full md:w-auto flex items-center justify-center pt-3 md:pt-0">
+          <div className="h-1 w-12 rounded-full bg-white/40 md:hidden" />
+        </div>
+        <h2 className="text-center md:text-left text-base md:text-xl font-semibold px-12 md:px-0 pt-2 md:pt-0">
+          {placeName}
+        </h2>
       </div>
 
       {/* Main Image Container */}
       <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center flex-1">
         {/* Main Image */}
-        <div className="relative w-full max-w-4xl h-[50vh] sm:h-[60vh] md:h-[70vh] mb-4 md:mb-6">
-          <div className="relative w-full h-full rounded-xl md:rounded-2xl overflow-hidden shadow-2xl">
+        <div className="relative w-full max-w-4xl h-[75vh] sm:h-[80vh] md:h-[70vh] mb-2 md:mb-6">
+          <div 
+            className="relative w-full h-full rounded-none md:rounded-2xl overflow-hidden shadow-none md:shadow-2xl"
+            onTouchStart={isMobile ? handleTouchStart : undefined}
+            onTouchMove={isMobile ? handleTouchMove : undefined}
+            onTouchEnd={isMobile ? handleTouchEnd : undefined}
+          >
             {hasCurrentImageError ? (
               <div className="w-full h-full bg-gray-800 flex items-center justify-center">
                 <div className="text-center text-white">
@@ -147,12 +190,12 @@ export default function ImagesModal({
         </div>
 
         {/* Image Counter */}
-        <div className="text-white text-sm md:text-base mb-4 opacity-80">
+        <div className="text-white text-sm md:text-base mb-3 md:mb-4 opacity-80">
           {selectedIndex + 1} / {images.length}
         </div>
 
         {/* Thumbnails Container */}
-        <div className="w-full max-w-4xl">
+        <div className="w-full max-w-4xl hidden md:block">
           <div className="flex gap-2 md:gap-4 justify-center overflow-x-auto pb-2 px-2">
             {images.map((img, i) => {
               const thumbnailUrl = getImageUrl(img);

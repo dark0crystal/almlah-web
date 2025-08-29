@@ -55,6 +55,7 @@ export default function PostCardsWrapper({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, scrollLeft: 0 });
   const [lastScrollLeft, setLastScrollLeft] = useState(0);
+  const [isMouseDown, setIsMouseDown] = useState(false);
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -175,7 +176,7 @@ export default function PostCardsWrapper({
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    setIsDragging(true);
+    setIsMouseDown(true);
     setDragStart({
       x: e.pageX - container.offsetLeft,
       scrollLeft: container.scrollLeft
@@ -185,8 +186,9 @@ export default function PostCardsWrapper({
   };
 
   const handleMouseLeave = () => {
-    if (isDragging) {
+    if (isDragging || isMouseDown) {
       setIsDragging(false);
+      setIsMouseDown(false);
       const container = scrollContainerRef.current;
       if (container) {
         container.style.cursor = 'grab';
@@ -197,6 +199,7 @@ export default function PostCardsWrapper({
 
   const handleMouseUp = () => {
     setIsDragging(false);
+    setIsMouseDown(false);
     const container = scrollContainerRef.current;
     if (container) {
       container.style.cursor = 'grab';
@@ -205,14 +208,23 @@ export default function PostCardsWrapper({
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    
     const container = scrollContainerRef.current;
     if (!container) return;
 
+    if (!isMouseDown) return;
+
     const x = e.pageX - container.offsetLeft;
-    const walk = (x - dragStart.x) * 2; // Scroll speed multiplier
+    const delta = x - dragStart.x;
+
+    // Activate dragging only after a small threshold to allow clicks
+    const DRAG_THRESHOLD_PX = 6;
+    if (!isDragging && Math.abs(delta) > DRAG_THRESHOLD_PX) {
+      setIsDragging(true);
+    }
+
+    if (!isDragging) return;
+    e.preventDefault();
+    const walk = delta * 2; // Scroll speed multiplier
     container.scrollLeft = dragStart.scrollLeft - walk;
   };
 

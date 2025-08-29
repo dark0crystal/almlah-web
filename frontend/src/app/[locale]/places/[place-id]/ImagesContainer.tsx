@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import ImagesModal from "./ImagesModal";
 
@@ -26,9 +26,26 @@ export default function PlaceImagesContainer({
 }: PlaceImagesContainerProps) {
   const t = useTranslations('placeDetails.images');
   const [showModal, setShowModal] = useState(false);
+  const [isBelowMd, setIsBelowMd] = useState(false);
   const [imageErrors, setImageErrors] = useState<{[key: string]: boolean}>({});
 
   console.log('PlaceImagesContainer - received images:', images);
+
+  // Only enable modal on screens smaller than md
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mql = window.matchMedia('(max-width: 767px)');
+    const setFlag = (matches: boolean) => setIsBelowMd(matches);
+    setFlag(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setFlag(e.matches);
+    // Support older Safari
+    // @ts-ignore
+    mql.addEventListener ? mql.addEventListener('change', handler) : mql.addListener(handler);
+    return () => {
+      // @ts-ignore
+      mql.removeEventListener ? mql.removeEventListener('change', handler) : mql.removeListener(handler);
+    };
+  }, []);
 
   // Handle individual image errors
   const handleImageError = (imageId: string) => {
@@ -140,7 +157,7 @@ export default function PlaceImagesContainer({
 
   return (
     <div className="mt-6">
-      {showModal && (
+      {showModal && isBelowMd && (
         <ImagesModal 
           images={sortedImages.map(img => getImageUrl(img.image_url))}
           placeName={placeName}
@@ -157,7 +174,7 @@ export default function PlaceImagesContainer({
               {renderImage(
                 sortedImages[2] || sortedImages[0],
                 "w-full h-[33rem]",
-                () => setShowModal(true)
+                () => isBelowMd && setShowModal(true)
               )}
             </div>
           )}
@@ -169,13 +186,13 @@ export default function PlaceImagesContainer({
                 {renderImage(
                   img,
                   "w-full h-64",
-                  () => setShowModal(true)
+                  () => isBelowMd && setShowModal(true)
                 )}
                 {/* Show overlay only on the second image if there are more than 3 */}
                 {index === 1 && remainingImageCount > 0 && (
                   <div 
                     className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer hover:bg-black/40 transition-colors rounded-2xl"
-                    onClick={() => setShowModal(true)}
+                    onClick={() => isBelowMd && setShowModal(true)}
                   >
                     <span className="text-white text-4xl font-bold">
                       +{remainingImageCount}
@@ -197,7 +214,7 @@ export default function PlaceImagesContainer({
             {renderImage(
               sortedImages[0],
               "w-full h-64 sm:h-80",
-              () => setShowModal(true)
+              () => isBelowMd && setShowModal(true)
             )}
           </div>
 
@@ -210,14 +227,14 @@ export default function PlaceImagesContainer({
                 {renderImage(
                   sortedImages[1],
                   "h-32 sm:h-40",
-                  () => setShowModal(true)
+                  () => isBelowMd && setShowModal(true)
                 )}
                 
                 {/* Semi-transparent overlay with counter */}
                 {remainingImageCount > 0 && (
                   <div 
                     className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/30 transition-all duration-200 rounded-2xl cursor-pointer"
-                    onClick={() => setShowModal(true)}
+                    onClick={() => isBelowMd && setShowModal(true)}
                   >
                     <div className="text-white text-center">
                       {/* Gallery Icon */}
@@ -248,7 +265,7 @@ export default function PlaceImagesContainer({
                   {renderImage(
                     sortedImages[2],
                     "h-32 sm:h-40",
-                    () => setShowModal(true)
+                    () => isBelowMd && setShowModal(true)
                   )}
                   
                   {/* Hover overlay */}
