@@ -3,7 +3,7 @@
 
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
-import { Link } from '@/i18n/navigation';
+import { useRouter } from '@/i18n/navigation';
 
 interface PostCardProps {
   title: string;
@@ -27,9 +27,22 @@ export default function PostCard({
   placeId
 }: PostCardProps) {
   const t = useTranslations('common');
+  const router = useRouter();
+
+  // Handle card click navigation
+  const handleCardClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (placeId) {
+      router.push(`/places/${placeId}`);
+    }
+  };
 
   const cardContent = (
-    <div className="relative w-full rounded-3xl hover:shadow-lg transition-all duration-300 cursor-pointer group bg-white p-2">
+    <div 
+      className={`relative w-full rounded-3xl hover:shadow-lg transition-all duration-300 group bg-white p-2 ${
+        placeId ? 'cursor-pointer' : 'cursor-default'
+      }`}
+    >
       
       {/* NEW Badge - Outside the card container with spin animation */}
       {isNew && (
@@ -81,9 +94,10 @@ export default function PostCard({
     </div>
   );
 
+  // Return card with click handler if placeId exists
   return(
-    <Link href={`/places/${placeId}`} className="block">
+    <div onClick={placeId ? handleCardClick : undefined} className="block">
       {cardContent}
-    </Link>
-  ) 
+    </div>
+  )
 }
