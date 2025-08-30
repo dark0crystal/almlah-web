@@ -26,6 +26,8 @@ export default function PlacesCardsWrapper({
   selectedGovernateId,
   onGovernateChange,
   categoryId,
+  selectedCategoryIds = [],
+  onCategoryIdsChange,
   selectedPlaceId,
   onPlaceClick
 }: PlacesCardsWrapperProps) {
@@ -162,25 +164,10 @@ export default function PlacesCardsWrapper({
   // Desktop/tablet view - vertical stack with sticky filter and scrollable container
   return (
     <div className={`${locale === 'ar' ? 'rtl' : 'ltr'} h-full flex flex-col`}>
-      {/* Sticky Filter and Search Bar */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-gray-900">
-            {t('filterAndSearch')}
-          </h2>
-        </div>
-        
-        {/* Filter and Search Container */}
+      {/* Sticky Search Bar */}
+      <div className="sticky top-0 z-10 p-4">
+        {/* Search and Filter Container */}
         <div className={`flex gap-3 ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
-          {/* Governate Filter */}
-          <div className="flex-shrink-0 w-64">
-            <GovernateFilter
-              selectedGovernateId={selectedGovernateId}
-              onGovernateChange={onGovernateChange}
-              locale={locale}
-            />
-          </div>
-          
           {/* Search Bar */}
           <div className="flex-1">
             <PlaceSearchBar

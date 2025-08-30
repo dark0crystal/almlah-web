@@ -125,15 +125,9 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
   return (
     <div className={`w-full relative ${locale === 'ar' ? 'rtl' : 'ltr'}`}>
       
-      {/* Header Section - Title Only */}
-      <div className="border-b border-gray-200 px-5 xl:px-25 py-4">
-        <div className={`flex items-center ${locale === 'ar' ? 'justify-right' : 'justify-left'}`}>
-          <h1 className="text-3xl font-bold text-gray-800">{getPlacesToVisitText()}</h1>
-        </div>
-      </div>
       
       {/* Mobile/Tablet Layout - Full screen map with modal for small screens and bottom sheet for medium screens */}
-      <div className="xl:hidden w-full h-[84vh] relative">
+      <div className="md:hidden w-full h-[92vh] relative">
         {/* Full screen map for mobile and tablet */}
         <div className="w-full h-full">
           <PlacesMap 
@@ -145,8 +139,8 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
           />
         </div>
         
-        {/* Floating Places Button - Only show on small screens (< md) */}
-        <div className="md:hidden absolute bottom-6 left-1/2 transform -translate-x-1/2 z-40">
+        {/* Floating Places Button - Only show on small screens (< sm) */}
+        <div className="sm:hidden absolute bottom-6 left-1/2 transform -translate-x-1/2 z-40">
           <button
             onClick={handleModalToggle}
             className="bg-white hover:bg-gray-50 text-gray-800 px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2 border border-gray-200"
@@ -177,7 +171,7 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
       <div className="hidden xl:flex gap-4 px-5 xl:px-25">
         {/* Places List Section - 80vh with scroll */}
         <div className="w-1/2 rounded-lg">
-          <div className="h-[80vh] p-4">
+          <div className="h-[92vh] p-4">
             <PlacesCardsWrapper 
               isMobileMapView={false}
               categoryId={categoryId}
@@ -193,7 +187,7 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
         
         {/* Map Section - 80vh */}
         <div className="w-1/2 rounded-lg">
-          <div className="h-[80vh] p-4">
+          <div className="h-[92vh] p-4">
             <PlacesMap 
               categoryId={categoryId}
               selectedGovernateId={selectedGovernateId}
@@ -210,7 +204,7 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
       <div className="hidden w-full flex-col gap-4 px-5 xl:px-25">
         {/* Places list - 80vh with scroll */}
         <div className="w-full rounded-lg">
-          <div className="h-[80vh] p-4">
+          <div className="h-[92vh] p-4">
             <PlacesCardsWrapper 
               isMobileMapView={false}
               categoryId={categoryId}
@@ -226,7 +220,7 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
         
         {/* Map - 80vh */}
         <div className="w-full rounded-lg">
-          <div className="h-[80vh] p-4">
+          <div className="h-[92vh] p-4">
             <PlacesMap 
               categoryId={categoryId}
               selectedGovernateId={selectedGovernateId}

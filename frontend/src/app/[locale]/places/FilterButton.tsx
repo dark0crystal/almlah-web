@@ -21,8 +21,8 @@ export default function FilterButton({
       onClick={onClick}
       className={`relative p-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-200 hover:scale-105 ${
         hasActiveFilters 
-          ? 'border-blue-500 bg-blue-50 shadow-md' 
-          : 'bg-white'
+          ? 'border-blue-500 shadow-md' 
+          : ''
       } ${className}`}
     >
       <div className="flex items-center gap-2">
