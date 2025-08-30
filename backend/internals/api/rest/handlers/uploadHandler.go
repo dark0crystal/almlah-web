@@ -91,7 +91,7 @@ func (h *UploadHandler) UploadFile(ctx *fiber.Ctx) error {
 	// Create file path within folder
 	filePath := fmt.Sprintf("%s/%s", folder, filename)
 
-	fmt.Printf("🗂️ Upload path: %s\n", filePath)
+	fmt.Printf("🗂️ Upload path: %s (will create bucket structure: %s/%s)\n", filePath, folder, filename)
 
 	// Open the uploaded file
 	src, err := file.Open()

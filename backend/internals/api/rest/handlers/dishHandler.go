@@ -6,6 +6,7 @@ import (
 	"almlah/internals/middleware"
 	"almlah/internals/services"
 	"almlah/internals/utils"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -185,8 +186,20 @@ func (h *DishHandler) CreateDish(c *fiber.Ctx) error {
 		))
 	}
 
+	fmt.Printf("🍽️ CreateDish request received:\n")
+	fmt.Printf("   - Name (AR): %s\n", req.NameAr)
+	fmt.Printf("   - Name (EN): %s\n", req.NameEn)
+	fmt.Printf("   - Slug: %s\n", req.Slug)
+	fmt.Printf("   - Governate ID: %v\n", req.GovernateID)
+	fmt.Printf("   - Is Active: %t\n", req.IsActive)
+	fmt.Printf("   - Images count: %d\n", len(req.Images))
+	for i, img := range req.Images {
+		fmt.Printf("     - Image %d: URL=%s, Primary=%t, Order=%d\n", i+1, img.ImageURL, img.IsPrimary, img.DisplayOrder)
+	}
+
 	// Validate request
 	if err := utils.ValidateStruct(req); err != nil {
+		fmt.Printf("❌ Validation failed: %v\n", err)
 		return c.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Validation failed: " + err.Error()))
 	}
 

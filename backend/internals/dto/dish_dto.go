@@ -20,6 +20,7 @@ type CreateDishRequest struct {
 	Difficulty             string                      `json:"difficulty" validate:"oneof=easy medium hard"`
 	IsTraditional          bool                        `json:"is_traditional"`
 	IsFeatured             bool                        `json:"is_featured"`
+	IsActive               bool                        `json:"is_active"`
 	SortOrder              int                        `json:"sort_order"`
 	Images                 []CreateDishImageRequest    `json:"images,omitempty"`
 }
@@ -45,8 +46,6 @@ type CreateDishImageRequest struct {
 	ImageURL     string `json:"image_url" validate:"required,url"`
 	AltTextAr    string `json:"alt_text_ar"`
 	AltTextEn    string `json:"alt_text_en"`
-	CaptionAr    string `json:"caption_ar"`
-	CaptionEn    string `json:"caption_en"`
 	IsPrimary    bool   `json:"is_primary"`
 	DisplayOrder int    `json:"display_order"`
 }
