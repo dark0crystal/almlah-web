@@ -80,14 +80,14 @@ export default function PostCard({
         {/* Categories */}
         {category && (
           <div className="mb-2">
-            <span className="text-gray-500 text-xs font-medium uppercase tracking-wider">
+            <span className="text-gray-500 text-xs font-medium uppercase tracking-wider truncate block">
               {category.toUpperCase()}
             </span>
           </div>
         )}
 
         {/* Title */}
-        <h3 className="text-2xl font-bold text-gray-900 leading-tight">
+        <h3 className="text-2xl font-bold text-gray-900 leading-tight truncate">
           {title}
         </h3>
       </div>
