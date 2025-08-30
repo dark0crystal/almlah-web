@@ -83,6 +83,9 @@ export default function PlaceCard({ place, locale, isSelected = false, onPlaceCl
     .join(' | ') || t('sultanateOman');
 
   const getCategoryText = () => {
+    if (place.categories && place.categories.length > 0) {
+      return locale === 'ar' ? place.categories[0].name_ar : place.categories[0].name_en;
+    }
     if (place.category) {
       return locale === 'ar' ? place.category.name_ar : place.category.name_en;
     }
@@ -160,94 +163,82 @@ export default function PlaceCard({ place, locale, isSelected = false, onPlaceCl
     );
   }
 
-  // Regular card layout (for full list view) - Airbnb style
+  // Regular card layout (for full list view) - horizontal layout like restaurant cards
   return (
     <div 
-      className={`group bg-white rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 ${
+      className={`rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden xl:bg-transparent bg-white ${
         isSelected 
-          ? 'ring-2 ring-rose-500 shadow-lg transform -translate-y-1' 
+          ? 'border-2 border-blue-500 transform -translate-y-1' 
           : ''
       } ${
-        isHovered && !isSelected ? 'transform -translate-y-1 shadow-xl' : ''
-      }`}
+        isHovered && !isSelected ? 'transform -translate-y-1 shadow-lg' : ''
+      } ${locale === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleCardClick}
     >
-      <div className="p-3">
-        {/* Image Section */}
-        <div className="relative mb-3">
-          <div className="relative w-full h-64 rounded-xl overflow-hidden">
+      <div className="flex h-36 sm:h-40 md:h-44">
+        {/* Image Section - Responsive width: smaller on mobile, half on larger screens */}
+        <div className="w-2/5 sm:w-2/5 md:w-1/2 p-2 flex items-center">
+          <div className="relative w-full h-full rounded-2xl overflow-hidden">
             {!imageError ? (
               <Image 
                 src={getImageSrc()}
                 alt={placeName}
                 fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className={`object-cover transition-all duration-500 group-hover:scale-105`}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 40vw, 30vw"
+                className={`object-cover transition-transform duration-300 ${
+                  isHovered ? 'scale-110' : 'scale-100'
+                }`}
                 onError={() => setImageError(true)}
                 priority={false}
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                <MapPin className="w-12 h-12 text-gray-400" />
+              <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center rounded-2xl">
+                <MapPin className="w-8 h-8 text-gray-400" />
               </div>
             )}
-            
-            {/* Gradient overlay for better text readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-            
-            {/* Featured badge */}
+
+            {/* Corner badge for featured places */}
             {place.is_featured && (
-              <div className="absolute top-3 left-3 bg-rose-500 text-white px-2 py-1 rounded-lg text-xs font-medium">
-                {locale === 'ar' ? 'مميز' : 'Featured'}
+              <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm rounded-full p-1">
+                <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">
+                    {locale === 'ar' ? 'م' : 'F'}
+                  </span>
+                </div>
               </div>
             )}
-            
-            {/* Heart icon (like Airbnb) */}
-            <div className="absolute top-3 right-3 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white hover:scale-110">
-              <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
-            </div>
+
           </div>
         </div>
-        
-        {/* Content Section */}
-        <div className={`${locale === 'ar' ? 'text-right' : 'text-left'}`}>
-          {/* Location */}
-          <div className="flex items-center gap-1 mb-2">
-            <MapPin className="w-3 h-3 text-gray-500 flex-shrink-0" />
-            <p className="text-gray-500 text-sm line-clamp-1">
-              {locationString}
-            </p>
-          </div>
-          
-          {/* Place Name */}
-          <h3 className="font-semibold text-gray-900 text-lg mb-1 line-clamp-2 leading-snug group-hover:text-rose-600 transition-colors duration-200">
-            {placeName}
-          </h3>
-          
-          {/* Subtitle */}
-          {placeSubtitle && (
-            <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-              {placeSubtitle}
-            </p>
-          )}
-          
-          {/* Bottom section with rating/category */}
-          <div className={`flex items-center justify-between ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
-            <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 text-yellow-400 fill-current" />
-              <span className="text-sm font-medium text-gray-900">4.5</span>
-              <span className="text-sm text-gray-500">(12)</span>
-            </div>
-            
-            <div className="text-right">
-              <p className="text-sm text-gray-500">
-                {getCategoryText()}
+
+        {/* Content Section - Adjusted width and centered vertically */}
+        <div className={`flex-1 p-4 flex flex-col justify-center ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
+          {/* Header */}
+          <div>
+            {/* Location - Now at top with black color and map marker */}
+            <div className="flex items-center gap-1 mb-3">
+              <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-black flex-shrink-0" />
+              <p className="text-black text-xs sm:text-sm md:text-base lg:text-sm line-clamp-1 font-medium">
+                {locationString}
               </p>
             </div>
+
+            {/* Place Name - Bigger and responsive, now under location */}
+            <h3 className="font-bold text-gray-800 text-xl sm:text-2xl md:text-3xl lg:text-2xl mb-1 line-clamp-2 leading-tight">
+              {placeName}
+            </h3>
+
+            {/* Category/Subtitle - Show as subtitle with orange color like restaurants */}
+            <p className="text-orange-600 text-sm sm:text-base md:text-lg lg:text-base font-medium mb-2 line-clamp-1">
+              {placeSubtitle || getCategoryText()}
+            </p>
+          </div>
+
+          {/* Footer */}
+          <div className={`flex items-center justify-between ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
+
           </div>
         </div>
       </div>

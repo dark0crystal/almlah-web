@@ -7,6 +7,8 @@ interface BottomSheetProps {
   categoryId: string;
   selectedGovernateId?: string | null;
   onGovernateChange?: (governateId: string | null) => void;
+  selectedCategoryIds?: string[];
+  onCategoryIdsChange?: (categoryIds: string[]) => void;
   selectedPlaceId?: string | null;
   onPlaceClick?: (placeId: string) => void;
   locale?: string;
@@ -21,6 +23,8 @@ export default function BottomSheet({
   categoryId,
   selectedGovernateId,
   onGovernateChange,
+  selectedCategoryIds = [],
+  onCategoryIdsChange,
   selectedPlaceId,
   onPlaceClick,
   locale = 'en',
