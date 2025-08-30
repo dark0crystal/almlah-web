@@ -6,7 +6,6 @@ import { MapPin } from "lucide-react";
 import PlacesCardsWrapper from "./PlacesCardsWrapper";
 import PlacesMap from "./PlacesMap";
 import PlacesModal from "./PlacesModal";
-import GovernateFilter from "./GovernateFilterComponent";
 import BottomSheet, { SheetState } from "./BottomSheet";
 import { CATEGORY_IDS, type CategoryType, getCategoryName } from "@/services/placesApi";
 
@@ -27,6 +26,7 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
   
   // State for sharing filters between components
   const [selectedGovernateId, setSelectedGovernateId] = useState<string | null>(null);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [bottomSheetState, setBottomSheetState] = useState<SheetState>('collapsed');
@@ -124,20 +124,10 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
   return (
     <div className={`w-full relative ${locale === 'ar' ? 'rtl' : 'ltr'}`}>
       
-      {/* Header Section - Title and Filter */}
+      {/* Header Section - Title Only */}
       <div className="border-b border-gray-200 px-5 xl:px-25 py-4">
-        <div className={`flex items-center justify-between ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
-          {/* Title on the right (or left in RTL) */}
+        <div className={`flex items-center ${locale === 'ar' ? 'justify-right' : 'justify-left'}`}>
           <h1 className="text-3xl font-bold text-gray-800">{getPlacesToVisitText()}</h1>
-          
-          {/* Filter on the left (or right in RTL) */}
-          <div className="w-64">
-            <GovernateFilter 
-              selectedGovernateId={selectedGovernateId}
-              onGovernateChange={setSelectedGovernateId}
-              locale={locale}
-            />
-          </div>
         </div>
       </div>
       
@@ -192,6 +182,8 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
               categoryId={categoryId}
               selectedGovernateId={selectedGovernateId}
               onGovernateChange={setSelectedGovernateId}
+              selectedCategoryIds={selectedCategoryIds}
+              onCategoryIdsChange={setSelectedCategoryIds}
               selectedPlaceId={selectedPlaceId}
               onPlaceClick={setSelectedPlaceId}
             />
@@ -223,6 +215,8 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
               categoryId={categoryId}
               selectedGovernateId={selectedGovernateId}
               onGovernateChange={setSelectedGovernateId}
+              selectedCategoryIds={selectedCategoryIds}
+              onCategoryIdsChange={setSelectedCategoryIds}
               selectedPlaceId={selectedPlaceId}
               onPlaceClick={setSelectedPlaceId}
             />
