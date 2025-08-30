@@ -22,6 +22,7 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
   const params = useParams();
   const locale = (params?.locale as string) || 'en';
   const t = useTranslations('places');
+  const categoryTranslations = useTranslations('categories');
   
   
   // State for sharing filters between components
@@ -95,13 +96,13 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
   const getPlacesToVisitText = () => {
     switch (categoryType) {
       case 'TOURISM':
-        return t('tourism');
+        return categoryTranslations('tourism'); // "Tourism Places"
       case 'FOOD_BEVERAGES':
-        return t('foodBeverages');
+        return categoryTranslations('foodBeverages'); // "Food & Beverages" 
       case 'ENTERTAINMENT':
-        return t('entertainment');
+        return categoryTranslations('entertainment'); // "Entertainment"
       default:
-        return t('placesToVisit');
+        return t('title'); // "Places to Visit"
     }
   };
 

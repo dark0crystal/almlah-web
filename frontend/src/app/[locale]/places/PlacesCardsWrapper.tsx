@@ -36,6 +36,7 @@ export default function PlacesCardsWrapper({
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Fetch places when governate or category changes
@@ -52,9 +53,9 @@ export default function PlacesCardsWrapper({
         
         console.log('Places loaded:', data);
         setPlaces(data);
-      } catch (err: any) {
+      } catch (err) {
         console.error('Error loading places:', err);
-        setError(err.message || t('error'));
+        setError(err instanceof Error ? err.message : t('error'));
         setPlaces([]);
       } finally {
         setLoading(false);
@@ -185,7 +186,7 @@ export default function PlacesCardsWrapper({
             <PlaceSearchBar
               selectedGovernateId={selectedGovernateId}
               categoryId={categoryId}
-              onPlaceSelect={onPlaceClick}
+              onPlaceSelect={(place) => onPlaceClick?.(place.id)}
               locale={locale}
               placeholder={locale === 'ar' ? 'البحث عن الأماكن...' : 'Search places...'}
             />
