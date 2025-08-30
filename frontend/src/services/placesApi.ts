@@ -141,13 +141,28 @@ interface PlacesStats {
 // UPDATED: Main function to fetch places by category and optional governate filter
 export const fetchPlaces = async (
   categoryId: string, 
-  governateId?: string | null
+  governateId?: string | null,
+  categoryIds?: string[]
 ): Promise<Place[]> => {
   try {
-    // Build URL: /places/filter/{categoryId}/{governateId?}
-    let url = `${API_BASE_URL}/places/filter/${categoryId}`;
-    if (governateId) {
-      url += `/${governateId}`;
+    // Use original path structure, but add multi-category support when needed
+    let url: string;
+    
+    // If multiple category IDs are provided, use a different approach
+    if (categoryIds && categoryIds.length > 0) {
+      // For multi-category filtering, use query parameters
+      const params = new URLSearchParams();
+      categoryIds.forEach(id => params.append('category_ids', id));
+      if (governateId) {
+        params.append('governate_id', governateId);
+      }
+      url = `${API_BASE_URL}/places/filter?${params.toString()}`;
+    } else {
+      // Original path structure for single category
+      url = `${API_BASE_URL}/places/filter/${categoryId}`;
+      if (governateId) {
+        url += `/${governateId}`;
+      }
     }
 
 
@@ -688,6 +703,142 @@ export const formatRelativeTime = (dateString: string, language: 'ar' | 'en' = '
     if (diffInWeeks < 4) return `${diffInWeeks} weeks ago`;
     if (diffInMonths === 1) return '1 month ago';
     return `${diffInMonths} months ago`;
+  }
+};
+
+// NEW: Search places function
+export const searchPlaces = async (
+  query: string, 
+  categoryId: string,
+  governateId?: string | null
+): Promise<Place[]> => {
+  try {
+    // Build URL with query parameters
+    const params = new URLSearchParams({
+      q: query.trim(),
+      category_id: categoryId
+    });
+    
+    if (governateId) {
+      params.append('governate_id', governateId);
+    }
+
+    const url = `${API_BASE_URL}/places/search?${params.toString()}`;
+
+    const response = await fetch(url, {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      next: { revalidate: 300 } // 5 minutes cache for search results
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Search API Error:', errorText);
+      throw new Error(`Failed to search places: ${response.status}`);
+    }
+
+    const responseData = await response.json();
+
+    // Extract places data
+    let placesData: BackendPlaceResponse[] = [];
+    if (responseData.success && Array.isArray(responseData.data)) {
+      placesData = responseData.data;
+    } else if (Array.isArray(responseData.data)) {
+      placesData = responseData.data;
+    } else if (responseData.success && responseData.data === null) {
+      // Handle null data case - no search results found
+      return [];
+    } else {
+      console.error('Unexpected search response format:', responseData);
+      return [];
+    }
+
+    // Transform to frontend Place type
+    const transformedPlaces = placesData.map(place => {
+      const transformedPlace: Place = {
+        id: place.id,
+        name_ar: place.name_ar || '',
+        name_en: place.name_en || '',
+        description_ar: '',
+        description_en: '',
+        slug: '',
+        lat: place.latitude || 0,
+        lng: place.longitude || 0,
+        governate_id: place.governate?.id || '',
+        wilayah_id: place.wilayah?.id || '',
+        category_id: categoryId,
+        primary_image: place.primary_image?.url || '',
+        is_featured: false,
+        is_active: true,
+        created_at: '',
+        updated_at: '',
+        governate: place.governate,
+        wilayah: place.wilayah,
+        images: place.primary_image ? [{
+          id: place.primary_image.id,
+          place_id: place.id,
+          image_url: place.primary_image.url,
+          alt_text_ar: '',
+          alt_text_en: '',
+          caption_ar: '',
+          caption_en: '',
+          is_primary: place.primary_image.is_primary,
+          display_order: 0,
+          created_at: '',
+          updated_at: ''
+        }] : []
+      };
+      
+      return transformedPlace;
+    });
+
+    return transformedPlaces;
+
+  } catch (error) {
+    console.error('Error searching places:', error);
+    throw error;
+  }
+};
+
+// NEW: Fetch categories function
+export const fetchCategories = async (): Promise<any[]> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/categories`, {
+      headers: { 'Content-Type': 'application/json' },
+      next: { revalidate: 86400 } // 24 hours cache
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch categories');
+    }
+
+    const responseData = await response.json();
+    
+    let data = [];
+    if (responseData.success && Array.isArray(responseData.data)) {
+      data = responseData.data;
+    } else if (Array.isArray(responseData.data)) {
+      data = responseData.data;
+    } else {
+      return [];
+    }
+
+    return data.map((cat: any) => ({
+      id: cat.id,
+      name_ar: cat.name_ar || '',
+      name_en: cat.name_en || '',
+      slug: cat.slug || '',
+      icon: cat.icon || '',
+      type: cat.type || '',
+      created_at: cat.created_at || '',
+      updated_at: cat.updated_at || ''
+    }));
+
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    return [];
   }
 };
 

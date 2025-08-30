@@ -19,8 +19,16 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   // Calculate how many times to repeat text to fill screen
   const [repeatedTexts, setRepeatedTexts] = useState<string[]>([]);
   const [columnsCount, setColumnsCount] = useState(3);
+  const [columnWidth, setColumnWidth] = useState('200px');
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+    
     // Calculate texts needed based on viewport height and columns needed based on width
     const calculateLayout = () => {
       const screenHeight = window.innerHeight || 800;
@@ -35,15 +43,20 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       // Responsive column width and margins
       const baseWidth = screenWidth < 640 ? 200 : screenWidth < 768 ? 300 : 400;
       const marginWidth = screenWidth < 640 ? 32 : screenWidth < 768 ? 64 : 144; // mx-4=32, mx-8=64, mx-18=144
-      const columnWidth = baseWidth + marginWidth;
-      const maxColumns = Math.floor(screenWidth / columnWidth);
+      const totalColumnWidth = baseWidth + marginWidth;
+      const maxColumns = Math.floor(screenWidth / totalColumnWidth);
+      
+      // Set responsive column width for styling
+      const width = screenWidth < 640 ? '200px' : screenWidth < 768 ? '300px' : '400px';
+      
       setColumnsCount(Math.max(1, maxColumns)); // At least 1 column
+      setColumnWidth(width);
     };
 
     calculateLayout();
     window.addEventListener('resize', calculateLayout);
     return () => window.removeEventListener('resize', calculateLayout);
-  }, [text]);
+  }, [text, isMounted]);
 
   useEffect(() => {
     const timers: NodeJS.Timeout[] = [];
@@ -87,7 +100,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         
         {/* Dynamic Columns */}
         {Array.from({ length: columnsCount }, (_, columnIndex) => (
-          <div key={columnIndex} className="flex flex-col justify-start items-center mx-4 sm:mx-8 md:mx-18" style={{ width: window.innerWidth < 640 ? '200px' : window.innerWidth < 768 ? '300px' : '400px' }}>
+          <div key={columnIndex} className="flex flex-col justify-start items-center mx-4 sm:mx-8 md:mx-18" style={{ width: columnWidth }}>
             {repeatedTexts.map((textItem, index) => (
               <div
                 key={`column-${columnIndex}-${index}`}
