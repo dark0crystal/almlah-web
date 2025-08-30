@@ -43,10 +43,12 @@ export default function ZatarPage() {
   });
 
   const handleNext = () => {
-    if (state.step === 1 && state.placeName.trim()) {
+    if (state.step === 1) {
       setState(prev => ({ ...prev, step: 2 }));
-    } else if (state.step === 2 && state.foodType) {
+    } else if (state.step === 2 && state.placeName.trim()) {
       setState(prev => ({ ...prev, step: 3 }));
+    } else if (state.step === 3 && state.foodType) {
+      setState(prev => ({ ...prev, step: 4 }));
       generateRecommendation();
     }
   };
@@ -56,7 +58,7 @@ export default function ZatarPage() {
       setState(prev => ({ 
         ...prev, 
         step: prev.step - 1,
-        recommendation: prev.step === 3 ? null : prev.recommendation
+        recommendation: prev.step === 4 ? null : prev.recommendation
       }));
     }
   };
@@ -141,98 +143,121 @@ export default function ZatarPage() {
   }
 
   return (
-    <div className={`min-h-screen ${isRTL ? 'rtl' : 'ltr'}`}>
-        
-      {/* Header */}
-      <div className="text-center mb-4 px-4 py-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            <AnimatedEmoji emoji="🎲" className="mr-2" />
-            {t('title')}
-          </h1>
-          
+    <div className={`min-h-screen flex flex-col ${isRTL ? 'rtl' : 'ltr'}`}>
+      
+      {/* Progress Bar - Compact */}
+      <div className="px-4 mb-4 w-full max-w-md mx-auto mt-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm text-gray-500">
+            {t('step', { step: state.step })}
+          </span>
+          <span className="text-sm text-gray-500">{Math.round((state.step / 4) * 100)}%</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div 
+            className="bg-gradient-to-r from-green-400 to-green-500 h-2 rounded-full transition-all duration-500 ease-out"
+            style={{ width: `${(state.step / 4) * 100}%` }}
+          ></div>
+        </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="mb-8 px-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-500">
-              {t('step', { step: state.step })}
-            </span>
-            <span className="text-sm text-gray-500">{Math.round((state.step / 3) * 100)}%</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className="bg-gradient-to-r from-green-400 to-green-500 h-2 rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${(state.step / 3) * 100}%` }}
-            ></div>
-          </div>
-      </div>
-
-      {/* Form Card */}
-      <div className="bg-white rounded-2xl shadow-xl p-8 mb-6 max-h-[92vh] overflow-y-auto mx-4">
+      {/* Main Content Container - Centered with max width */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 pb-4 w-full">
+        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
           {state.step === 1 && (
-            <div className="text-center">
-              <div className="mb-6">
-                <MapPin className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                  {t('stepOne.title')}
-                </h2>
-                <p className="text-gray-600">
-                  {t('stepOne.subtitle')}
-                </p>
-              </div>
-              
-              <div className="mb-6">
-                <input
-                  type="text"
-                  value={state.placeName}
-                  onChange={(e) => setState(prev => ({ ...prev, placeName: e.target.value }))}
-                  placeholder={t('stepOne.placeholder')}
-                  className={`w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-xl focus:border-green-500 focus:outline-none transition-colors ${isRTL ? 'text-right' : 'text-left'}`}
-                />
+            <div className="flex flex-col">
+              <div className="flex flex-col justify-center text-center p-6">
+                <div className="mb-6">
+                  <div className="text-6xl mb-4 mx-auto">🎲</div>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                    {locale === 'ar' ? 'مرحباً بك في زعتر!' : 'Welcome to Zatar!'}
+                  </h2>
+                  <div className="text-gray-600 space-y-3">
+                    <p className="leading-relaxed">
+                      {locale === 'ar' 
+                        ? 'زعتر هو مساعدك الذكي لاكتشاف أفضل المطاعم والمقاهي في عمان. ببساطة أخبرنا عن المنطقة ونوع الطعام الذي تريده، وسنقترح عليك خياراً رائعاً!'
+                        : 'Zatar is your smart assistant for discovering the best restaurants and cafes in Oman. Simply tell us your location and food preference, and we\'ll suggest something amazing!'
+                      }
+                    </p>
+                    <p className="text-sm text-green-600 font-medium">
+                      {locale === 'ar' 
+                        ? '🎯 اكتشافات عشوائية مخصصة لك'
+                        : '🎯 Personalized random discoveries'
+                      }
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
           {state.step === 2 && (
-            <div className="text-center">
-              <div className="mb-6">
-                <Utensils className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                  {t('stepTwo.title')}
-                </h2>
-                <p className="text-gray-600">
-                  {t('stepTwo.subtitle')}
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-                {FOOD_TYPES.map((food) => (
-                  <button
-                    key={food.id}
-                    onClick={() => setState(prev => ({ ...prev, foodType: food.id }))}
-                    className={`p-4 border-2 rounded-xl transition-all duration-200 ${
-                      state.foodType === food.id 
-                        ? 'border-green-500 bg-green-50 shadow-md transform scale-105' 
-                        : 'border-gray-200 hover:border-green-300 hover:bg-green-25'
-                    }`}
-                  >
-                    <div className="text-2xl mb-2">{food.emoji}</div>
-                    <div className="font-medium text-gray-800">
-                      {t(`foodTypes.${food.id}`)}
-                    </div>
-                  </button>
-                ))}
+            <div className="flex flex-col">
+              <div className="flex flex-col justify-center text-center p-6">
+                <div className="mb-4">
+                  <MapPin className="w-12 h-12 text-green-500 mx-auto mb-3" />
+                  <h2 className="text-xl font-bold text-gray-800 mb-2">
+                    {t('stepOne.title')}
+                  </h2>
+                  <p className="text-gray-600">
+                    {t('stepOne.subtitle')}
+                  </p>
+                </div>
+                
+                <div className="mb-6">
+                  <input
+                    type="text"
+                    value={state.placeName}
+                    onChange={(e) => setState(prev => ({ ...prev, placeName: e.target.value }))}
+                    placeholder={t('stepOne.placeholder')}
+                    className={`w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-xl focus:border-green-500 focus:outline-none transition-colors ${isRTL ? 'text-right' : 'text-left'}`}
+                  />
+                </div>
               </div>
             </div>
           )}
 
           {state.step === 3 && (
-            <div className="text-center">
-              {state.isLoading ? (
-                <div className="py-12">
-                  <div className="animate-spin w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <div className="flex flex-col">
+              <div className="flex flex-col justify-center text-center p-4">
+                <div className="mb-4">
+                  <Utensils className="w-12 h-12 text-green-500 mx-auto mb-3" />
                   <h2 className="text-xl font-bold text-gray-800 mb-2">
+                    {t('stepTwo.title')}
+                  </h2>
+                  <p className="text-gray-600">
+                    {t('stepTwo.subtitle')}
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  {FOOD_TYPES.map((food) => (
+                    <button
+                      key={food.id}
+                      onClick={() => setState(prev => ({ ...prev, foodType: food.id }))}
+                      className={`p-3 border-2 rounded-xl transition-all duration-200 ${
+                        state.foodType === food.id 
+                          ? 'border-green-500 bg-green-50 shadow-md transform scale-105' 
+                          : 'border-gray-200 hover:border-green-300 hover:bg-green-25'
+                      }`}
+                    >
+                      <div className="text-xl mb-1">{food.emoji}</div>
+                      <div className="font-medium text-gray-800 text-sm">
+                        {t(`foodTypes.${food.id}`)}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {state.step === 4 && (
+            <div className="flex flex-col">
+              {state.isLoading ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="animate-spin w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full mb-4"></div>
+                  <h2 className="text-lg font-bold text-gray-800 mb-2">
                     {t('loading.title')}
                   </h2>
                   <p className="text-gray-600">
@@ -240,12 +265,12 @@ export default function ZatarPage() {
                   </p>
                 </div>
               ) : state.error ? (
-                <div className="py-12">
-                  <div className="text-red-500 text-6xl mb-4">😵</div>
-                  <h2 className="text-xl font-bold text-gray-800 mb-2">
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="text-red-500 text-4xl mb-4">😵</div>
+                  <h2 className="text-lg font-bold text-gray-800 mb-2">
                     {t('error.title')}
                   </h2>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-gray-600 mb-4">
                     {state.error}
                   </p>
                   <button
@@ -256,21 +281,12 @@ export default function ZatarPage() {
                   </button>
                 </div>
               ) : state.recommendation ? (
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                <div className="flex flex-col p-4">
+                  <h2 className="text-lg font-bold text-gray-800 mb-3 text-center">
                     {t('result.title')}
                   </h2>
                   
-                  <div className="max-w-sm mx-auto bg-white rounded-3xl shadow-lg overflow-hidden relative">
-                    {/* Heart icon in top right */}
-                    <div className="absolute top-4 right-4 z-20">
-                      <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md">
-                        <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-
+                  <div className="w-full bg-white rounded-3xl shadow-lg overflow-hidden relative mx-auto">
                     {/* Roll again dice button in top left */}
                     <div className="absolute top-4 left-4 z-20">
                       <button
@@ -283,29 +299,31 @@ export default function ZatarPage() {
                       </button>
                     </div>
                     
-                    {/* Product Image */}
-                    <div className="bg-gray-100 h-80 flex items-center justify-center relative">
-                      {(state.recommendation.image_urls && state.recommendation.image_urls.length > 0) || state.recommendation.image_url ? (
-                        <ImageCarousel 
-                          images={state.recommendation.image_urls || (state.recommendation.image_url ? [state.recommendation.image_url] : [])}
-                          alt={state.recommendation.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="text-center text-gray-400">
-                          <div className="text-6xl mb-2">🍽️</div>
-                          <p className="text-sm">No Image Available</p>
-                        </div>
-                      )}
+                    {/* Product Image with rounded style and margin */}
+                    <div className="p-2">
+                      <div className="bg-gray-100 h-48 flex items-center justify-center relative rounded-2xl overflow-hidden">
+                        {(state.recommendation.image_urls && state.recommendation.image_urls.length > 0) || state.recommendation.image_url ? (
+                          <ImageCarousel 
+                            images={state.recommendation.image_urls || (state.recommendation.image_url ? [state.recommendation.image_url] : [])}
+                            alt={state.recommendation.name}
+                            className="w-full h-full object-cover rounded-2xl"
+                          />
+                        ) : (
+                          <div className="text-center text-gray-400">
+                            <div className="text-6xl mb-2">🍽️</div>
+                            <p className="text-sm">No Image Available</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Card Content */}
-                    <div className="p-6">
+                    <div className="px-4 pb-4">
                       {/* Restaurant Name */}
                       <h3 className="text-xl font-bold text-gray-800 mb-2">{state.recommendation.name}</h3>
                       
                       {/* Options/Variants (using cuisine types) */}
-                      <div className="flex gap-2 mb-4">
+                      <div className="flex flex-wrap gap-2 mb-4">
                         <span className="px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-sm font-medium">
                           {state.recommendation.cuisine}
                         </span>
@@ -382,7 +400,7 @@ export default function ZatarPage() {
                           {state.recommendation.phone && (
                             <a 
                               href={`tel:${state.recommendation.phone}`}
-                              className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                              className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
                             >
                               <Phone className="w-4 h-4" />
                               {t('result.call')}
@@ -393,7 +411,7 @@ export default function ZatarPage() {
                               href={state.recommendation.website}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                              className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
                             >
                               <Globe className="w-4 h-4" />
                               {t('result.website')}
@@ -409,42 +427,41 @@ export default function ZatarPage() {
           )}
 
           {/* Navigation Buttons */}
-          <div className={`flex justify-between mt-8 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex justify-between p-4 border-t bg-white ${isRTL ? 'flex-row-reverse' : ''}`}>
             <button
               onClick={handleBack}
               disabled={state.step === 1}
-              className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
+              className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
                 state.step === 1 
                   ? 'text-gray-400 cursor-not-allowed' 
                   : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
               } flex items-center gap-2`}
             >
-              {isRTL ? <ArrowRight className="w-5 h-5" /> : <ArrowLeft className="w-5 h-5" />}
+              {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
               {t('navigation.back')}
             </button>
 
-            {state.step < 3 && (
+            {state.step < 4 && (
               <button
                 onClick={handleNext}
                 disabled={
-                  (state.step === 1 && !state.placeName.trim()) ||
-                  (state.step === 2 && !state.foodType)
+                  (state.step === 2 && !state.placeName.trim()) ||
+                  (state.step === 3 && !state.foodType)
                 }
-                className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${
-                  ((state.step === 1 && !state.placeName.trim()) ||
-                   (state.step === 2 && !state.foodType))
+                className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${
+                  ((state.step === 2 && !state.placeName.trim()) ||
+                   (state.step === 3 && !state.foodType))
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
                     : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg transform hover:scale-105'
                 }`}
               >
                 {t('navigation.next')}
-                {isRTL ? <ArrowLeft className="w-5 h-5" /> : <ArrowRight className="w-5 h-5" />}
+                {isRTL ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
               </button>
             )}
           </div>
+        </div>
       </div>
-
-
     </div>
   );
 }
