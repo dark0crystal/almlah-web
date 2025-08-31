@@ -7,12 +7,14 @@ interface RestaurantBottomSheetProps {
   categoryId: string;
   selectedGovernateId?: string | null;
   onGovernateChange?: (governateId: string | null) => void;
-  selectedRestaurantId?: string | null;
-  onRestaurantClick?: (restaurantId: string) => void;
+  selectedCategoryIds?: string[];
+  onCategoryIdsChange?: (categoryIds: string[]) => void;
+  selectedPlaceId?: string | null;
+  onPlaceClick?: (placeId: string) => void;
   locale?: string;
   title?: string;
   onStateChange?: (state: SheetState) => void;
-  forceState?: SheetState; // Allow parent to control state
+  forceState?: SheetState;
 }
 
 export type SheetState = 'hidden' | 'collapsed' | 'half' | 'full';
@@ -21,8 +23,10 @@ export default function RestaurantBottomSheet({
   categoryId,
   selectedGovernateId,
   onGovernateChange,
-  selectedRestaurantId,
-  onRestaurantClick,
+  selectedCategoryIds = [],
+  onCategoryIdsChange,
+  selectedPlaceId,
+  onPlaceClick,
   locale = 'en',
   title = 'Restaurants',
   onStateChange,
@@ -49,247 +53,288 @@ export default function RestaurantBottomSheet({
   const [isMouseDragging, setIsMouseDragging] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
 
-  // Sheet height configurations
-  const getSheetHeight = () => {
-    switch (sheetState) {
+  // Height configurations for different states
+  const getSheetHeight = (state: SheetState) => {
+    switch (state) {
       case 'hidden':
-        return 'translate-y-full';
+        return '80px'; // Just shows header bar to allow reopening
       case 'collapsed':
-        return 'translate-y-[calc(100%-180px)]'; // Show ~180px
+        return '45vh'; // Shows horizontal scroll cards - increased height for better scrolling
       case 'half':
-        return 'translate-y-[50%]'; // Show 50% of screen
+        return '75vh'; // Increased from 60vh for better visibility
       case 'full':
-        return 'translate-y-[120px]'; // Show full with top margin
+        return '95vh'; // Increased from 90vh for maximum visibility
       default:
-        return 'translate-y-[calc(100%-180px)]';
+        return '45vh';
     }
   };
 
-  const getSheetOpacity = () => {
-    return sheetState === 'hidden' ? 'opacity-0' : 'opacity-100';
+  // Get transform based on state and drag
+  const getTransform = () => {
+    if (isDragging || isMouseDragging) {
+      const deltaY = currentY - startY;
+      return `translateY(${Math.max(0, deltaY)}px)`;
+    }
+    return 'translateY(0)';
   };
 
-  // Handle touch/mouse events for dragging
-  const handleStart = (clientY: number) => {
+  // Handle touch start
+  const handleTouchStart = (e: React.TouchEvent) => {
     setIsDragging(true);
-    setStartY(clientY);
-    setCurrentY(clientY);
+    setStartY(e.touches[0].clientY);
+    setCurrentY(e.touches[0].clientY);
   };
 
-  const handleMove = (clientY: number) => {
+  // Handle touch move
+  const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
-    
-    setCurrentY(clientY);
-    const deltaY = clientY - startY;
-    
-    // Optional: Add visual feedback during drag
-    if (sheetRef.current) {
-      const currentTransform = getSheetHeight();
-      // You could add smooth dragging animation here if needed
-    }
+    setCurrentY(e.touches[0].clientY);
   };
 
-  const handleEnd = () => {
+  // Handle touch end
+  const handleTouchEnd = () => {
     if (!isDragging) return;
     
     const deltaY = currentY - startY;
-    const threshold = 50; // Minimum drag distance to trigger state change
-    
-    // Determine new state based on drag direction and current state
-    if (Math.abs(deltaY) > threshold) {
-      if (deltaY > 0) {
-        // Dragging down
-        switch (sheetState) {
-          case 'full':
-            setSheetState('half');
-            break;
-          case 'half':
-            setSheetState('collapsed');
-            break;
-          case 'collapsed':
-            setSheetState('hidden');
-            break;
-        }
-      } else {
-        // Dragging up
-        switch (sheetState) {
-          case 'hidden':
-            setSheetState('collapsed');
-            break;
-          case 'collapsed':
-            setSheetState('half');
-            break;
-          case 'half':
-            setSheetState('full');
-            break;
-        }
-      }
-    }
-    
-    setIsDragging(false);
-    setIsMouseDragging(false);
-  };
+    const threshold = 50;
 
-  // Touch events
-  const handleTouchStart = (e: React.TouchEvent) => {
-    e.preventDefault();
-    handleStart(e.touches[0].clientY);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    e.preventDefault();
-    handleMove(e.touches[0].clientY);
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    e.preventDefault();
-    handleEnd();
-  };
-
-  // Mouse events
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsMouseDragging(true);
-    handleStart(e.clientY);
-    
-    // Add global mouse event listeners
-    const handleMouseMove = (e: MouseEvent) => {
-      if (isMouseDragging) {
-        handleMove(e.clientY);
-      }
-    };
-    
-    const handleMouseUp = () => {
-      handleEnd();
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
-  // Handle backdrop click
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget && (sheetState === 'half' || sheetState === 'full')) {
-      setSheetState('collapsed');
-    }
-  };
-
-  // Handle header drag area click for quick state toggle
-  const handleHeaderClick = () => {
-    switch (sheetState) {
-      case 'collapsed':
+    if (deltaY > threshold) {
+      // Swipe down
+      if (sheetState === 'full') {
         setSheetState('half');
-        break;
-      case 'half':
+      } else if (sheetState === 'half') {
+        setSheetState('collapsed');
+      } else if (sheetState === 'collapsed') {
+        setSheetState('hidden');
+      }
+    } else if (deltaY < -threshold) {
+      // Swipe up
+      if (sheetState === 'hidden') {
+        setSheetState('collapsed');
+      } else if (sheetState === 'collapsed') {
+        setSheetState('half');
+      } else if (sheetState === 'half') {
         setSheetState('full');
-        break;
-      case 'full':
+      }
+    }
+
+    setIsDragging(false);
+    setStartY(0);
+    setCurrentY(0);
+  };
+
+  // Mouse event handlers for desktop dragging
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsMouseDragging(true);
+    setStartY(e.clientY);
+    setCurrentY(e.clientY);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isMouseDragging) return;
+    setCurrentY(e.clientY);
+  };
+
+  const handleMouseUp = () => {
+    if (!isMouseDragging) return;
+    
+    const deltaY = currentY - startY;
+    const threshold = 50;
+
+    if (deltaY > threshold) {
+      // Drag down
+      if (sheetState === 'full') {
+        setSheetState('half');
+      } else if (sheetState === 'half') {
         setSheetState('collapsed');
-        break;
-      default:
+      } else if (sheetState === 'collapsed') {
+        setSheetState('hidden');
+      }
+    } else if (deltaY < -threshold) {
+      // Drag up
+      if (sheetState === 'hidden') {
         setSheetState('collapsed');
+      } else if (sheetState === 'collapsed') {
+        setSheetState('half');
+      } else if (sheetState === 'half') {
+        setSheetState('full');
+      }
+    }
+
+    setIsMouseDragging(false);
+    setStartY(0);
+    setCurrentY(0);
+  };
+
+  // Add global mouse up listener to handle mouse release outside component
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (isMouseDragging) {
+        handleMouseUp();
+      }
+    };
+
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (isMouseDragging) {
+        setCurrentY(e.clientY);
+      }
+    };
+
+    document.addEventListener('mouseup', handleGlobalMouseUp);
+    document.addEventListener('mousemove', handleGlobalMouseMove);
+
+    return () => {
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+    };
+  }, [isMouseDragging, currentY, startY, sheetState]);
+
+  // Handle header click to toggle states
+  const handleHeaderClick = () => {
+    if (sheetState === 'hidden') {
+      setSheetState('collapsed');
+    } else if (sheetState === 'collapsed') {
+      setSheetState('half');
+    } else if (sheetState === 'half') {
+      setSheetState('full');
+    } else {
+      setSheetState('half');
     }
   };
 
-  const handleClose = () => {
-    setSheetState('hidden');
-  };
-
-  const handleMapToggle = () => {
-    setSheetState(sheetState === 'hidden' ? 'collapsed' : 'hidden');
+  // Handle mouse wheel for desktop users - only on header area
+  const handleHeaderWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const threshold = 100;
+    
+    if (e.deltaY > threshold) {
+      // Scroll down
+      if (sheetState === 'full') {
+        setSheetState('half');
+      } else if (sheetState === 'half') {
+        setSheetState('collapsed');
+      } else if (sheetState === 'collapsed') {
+        setSheetState('hidden');
+      }
+    } else if (e.deltaY < -threshold) {
+      // Scroll up
+      if (sheetState === 'hidden') {
+        setSheetState('collapsed');
+      } else if (sheetState === 'collapsed') {
+        setSheetState('half');
+      } else if (sheetState === 'half') {
+        setSheetState('full');
+      }
+    }
   };
 
   return (
-    <>
-      {/* Backdrop */}
-      {(sheetState === 'half' || sheetState === 'full') && (
-        <div 
-          className="fixed inset-0 bg-black/20 z-40"
-          onClick={handleBackdropClick}
-        />
-      )}
-
-      {/* Map toggle button when sheet is hidden */}
-      {sheetState === 'hidden' && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
-          <button
-            onClick={handleMapToggle}
-            className="bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 flex items-center gap-2"
-          >
-            <Map className="w-5 h-5 text-gray-700" />
-            <span className="text-sm font-medium text-gray-700 pr-1">
-              {title}
-            </span>
-          </button>
-        </div>
-      )}
-
-      {/* Bottom Sheet */}
+    <div 
+      ref={sheetRef}
+      className="fixed bottom-0 left-0 right-0 z-40 bg-white rounded-t-3xl shadow-2xl transition-all duration-300 ease-out"
+      style={{ 
+        height: getSheetHeight(sheetState),
+        transform: getTransform()
+      }}
+    >
+      {/* Drag Handle */}
       <div 
-        ref={sheetRef}
-        className={`fixed inset-x-0 bottom-0 z-50 transition-all duration-300 ease-out ${getSheetHeight()} ${getSheetOpacity()}`}
-        style={{ height: 'calc(100vh - 60px)' }}
+        className="w-full flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onWheel={handleHeaderWheel}
       >
-        {/* Sheet Container */}
-        <div className="bg-white rounded-t-3xl shadow-2xl h-full flex flex-col overflow-hidden">
-          {/* Drag Handle and Header */}
-          <div 
-            className="flex-shrink-0 bg-white rounded-t-3xl"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onMouseDown={handleMouseDown}
-          >
-            {/* Drag Handle */}
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 bg-gray-300 rounded-full"></div>
-            </div>
+        <div className="w-10 h-1 bg-gray-300 rounded-full"></div>
+      </div>
 
-            {/* Header */}
-            <div 
-              className={`flex items-center justify-between px-6 py-3 cursor-pointer ${
-                locale === 'ar' ? 'flex-row-reverse' : ''
-              }`}
-              onClick={handleHeaderClick}
-            >
-              <div className={`flex items-center gap-3 ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
-                <h2 className="text-xl font-bold text-gray-900">{title}</h2>
-                <ChevronUp className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${
-                  sheetState === 'full' ? 'rotate-180' : ''
-                }`} />
-              </div>
-              
-              {sheetState === 'full' && (
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleClose();
-                  }}
-                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-600" />
-                </button>
-              )}
-            </div>
+      {/* Header */}
+      <div 
+        className="flex items-center justify-between px-6 py-4 cursor-pointer bg-white"
+        onClick={handleHeaderClick}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onWheel={handleHeaderWheel}
+      >
+        {/* Title - Right for Arabic, Left for English */}
+        <div className={`flex flex-col ${locale === 'ar' ? 'items-end order-2' : 'items-start order-1'}`}>
+          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+          <div className="text-sm text-gray-500 mt-1">
+            {sheetState === 'hidden' && (locale === 'ar' ? 'اضغط لعرض المطاعم' : 'Tap to show restaurants')}
+            {sheetState === 'collapsed' && (locale === 'ar' ? 'اضغط أو اسحب للأعلى للمزيد' : 'Tap or swipe up for more')}
+            {sheetState === 'half' && (locale === 'ar' ? 'اسحب للأعلى للعرض الكامل' : 'Swipe up for full view')}
+            {sheetState === 'full' && (locale === 'ar' ? 'اسحب للأسفل لتصغير' : 'Swipe down to minimize')}
           </div>
+        </div>
+        
+        {/* Buttons - Left for Arabic, Right for English */}
+        <div className={`flex items-center space-x-2 ${locale === 'ar' ? 'space-x-reverse order-1' : 'order-2'}`}>
+          {/* Go to Map button - only show when not hidden */}
+          {sheetState !== 'hidden' && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSheetState('hidden');
+              }}
+              className={`flex items-center space-x-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors text-sm font-medium ${locale === 'ar' ? 'space-x-reverse' : ''}`}
+              aria-label={locale === 'ar' ? 'عرض الخريطة الكاملة' : 'Show full map'}
+            >
+              <Map className="w-4 h-4" />
+              <span className="hidden sm:inline">
+                {locale === 'ar' ? 'خريطة' : 'Map'}
+              </span>
+            </button>
+          )}
+          
+          <ChevronUp 
+            className={`w-6 h-6 text-gray-500 transition-transform duration-200 ${
+              sheetState === 'full' ? 'rotate-180' : ''
+            }`} 
+          />
+        </div>
+      </div>
 
-          {/* Content Area */}
-          <div className="flex-1 overflow-hidden bg-gray-50">
-            <div className="h-full px-4 py-2">
-              <RestaurantsCardsWrapper 
-                isMobileMapView={sheetState === 'collapsed'}
+      {/* Content */}
+      {sheetState !== 'hidden' && (
+        <div className="bottom-sheet-content">
+          {sheetState === 'collapsed' ? (
+            // Horizontal scroll view for collapsed state (like Airbnb)
+            <div className="bottom-sheet-scrollable">
+              <RestaurantsCardsWrapper
+                isMobileMapView={true}
                 categoryId={categoryId}
                 selectedGovernateId={selectedGovernateId}
                 onGovernateChange={onGovernateChange}
-                selectedRestaurantId={selectedRestaurantId}
-                onRestaurantClick={onRestaurantClick}
+                selectedCategoryIds={selectedCategoryIds}
+                onCategoryIdsChange={onCategoryIdsChange}
+                selectedPlaceId={selectedPlaceId}
+                onPlaceClick={onPlaceClick}
               />
             </div>
-          </div>
+          ) : (
+            // Vertical grid view for half and full states
+            <div className="h-full px-6 pb-6 overflow-hidden">
+              <RestaurantsCardsWrapper
+                isMobileMapView={false}
+                categoryId={categoryId}
+                selectedGovernateId={selectedGovernateId}
+                onGovernateChange={onGovernateChange}
+                selectedCategoryIds={selectedCategoryIds}
+                onCategoryIdsChange={onCategoryIdsChange}
+                selectedPlaceId={selectedPlaceId}
+                onPlaceClick={onPlaceClick}
+              />
+            </div>
+          )}
         </div>
-      </div>
-    </>
+      )}
+    </div>
   );
 }

@@ -7,14 +7,14 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Place } from "@/types"; // Using Place type instead of Restaurant
 
 interface RestaurantCardProps {
-  restaurant: Place; // Changed from Restaurant to Place
-  locale?: string; // Make optional since we'll use useLocale hook
+  restaurant: Place;
+  locale?: string;
   isSelected?: boolean;
-  onRestaurantClick?: (restaurantId: string) => void;
-  isHorizontalScroll?: boolean; // New prop to handle horizontal scroll layout
+  onPlaceClick?: (placeId: string) => void;
+  isHorizontalScroll?: boolean;
 }
 
-export default function RestaurantCard({ restaurant, locale: propLocale, isSelected = false, onRestaurantClick, isHorizontalScroll = false }: RestaurantCardProps) {
+export default function RestaurantCard({ restaurant, locale: propLocale, isSelected = false, onPlaceClick, isHorizontalScroll = false }: RestaurantCardProps) {
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -23,9 +23,9 @@ export default function RestaurantCard({ restaurant, locale: propLocale, isSelec
   const locale = propLocale || currentLocale;
 
   const handleCardClick = () => {
-    // Call onRestaurantClick if provided (for map interaction)
-    if (onRestaurantClick) {
-      onRestaurantClick(restaurant.id);
+    // Call onPlaceClick if provided (for map interaction)
+    if (onPlaceClick) {
+      onPlaceClick(restaurant.id);
     }
     
     // Fixed navigation path to match your dynamic route structure
@@ -236,18 +236,18 @@ export default function RestaurantCard({ restaurant, locale: propLocale, isSelec
             {/* Location - Now at top with black color and map marker */}
             <div className="flex items-center gap-1 mb-3">
               <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-black flex-shrink-0" />
-              <p className="text-black text-xs sm:text-sm md:text-base lg:text-sm line-clamp-1 font-medium">
+              <p className="text-black text-xs sm:text-xs line-clamp-1 font-medium">
                 {locationString}
               </p>
             </div>
 
-            {/* Restaurant Name - Bigger and responsive, now under location */}
-            <h3 className="font-bold text-gray-800 text-xl sm:text-2xl md:text-3xl lg:text-2xl mb-1 line-clamp-2 leading-tight">
+            {/* Restaurant Name - Responsive sizing, smaller on mobile */}
+            <h3 className="font-bold text-gray-800 text-base sm:text-lg md:text-xl lg:text-xl mb-1 line-clamp-2 leading-tight">
               {restaurantName}
             </h3>
 
             {/* Cuisine Type - Show as subtitle */}
-            <p className="text-orange-600 text-sm sm:text-base md:text-lg lg:text-base font-medium mb-2 line-clamp-1">
+            <p className="text-orange-600 text-xs sm:text-sm md:text-base lg:text-base font-medium mb-2 line-clamp-1">
               {getCuisineText()}
             </p>
           </div>

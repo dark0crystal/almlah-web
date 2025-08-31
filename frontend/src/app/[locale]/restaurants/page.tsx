@@ -5,30 +5,33 @@ import { useTranslations } from 'next-intl';
 import { MapPin } from "lucide-react";
 import RestaurantsCardsWrapper from "./RestaurantsCardsWrapper";
 import RestaurantsMap from "./RestaurantsMap";
-import RestaurantGovernateFilter from "./RestaurantsGovernatesFilter";
 import RestaurantBottomSheet, { SheetState } from "./RestaurantBottomSheet";
-import { CATEGORY_IDS, type CategoryType, getCategoryName } from "@/services/placesApi";
+import { CATEGORY_IDS, type CategoryType } from "@/services/placesApi";
 
 interface RestaurantsProps {
-  categoryType?: CategoryType; // Optional category type prop
+  categoryType?: CategoryType;
 }
 
 /**
  * Main Restaurants component that renders the restaurants discovery page
  * Features responsive layout with full-screen map on mobile and split view on desktop
- * Now uses the scalable category system with the restaurant category ID
+ * Includes filtering and matches the places page structure
  */
 export default function Restaurants({ categoryType = "FOOD_BEVERAGES" }: RestaurantsProps) {
   const params = useParams();
   const locale = (params?.locale as string) || 'en';
   const t = useTranslations('places');
+  const categoryTranslations = useTranslations('categories');
+  
   
   // State for sharing filters between components
   const [selectedGovernateId, setSelectedGovernateId] = useState<string | null>(null);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(null);
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [bottomSheetState, setBottomSheetState] = useState<SheetState>('collapsed');
   const [forceBottomSheetState, setForceBottomSheetState] = useState<SheetState | undefined>(undefined);
+  
 
   // Reset force state after it's been applied
   const handleBottomSheetStateChange = (state: SheetState) => {
@@ -38,13 +41,15 @@ export default function Restaurants({ categoryType = "FOOD_BEVERAGES" }: Restaur
     }
   };
 
-  // Handle marker click - show and expand bottom sheet (for screens < 1280px only)
-  const handleMarkerClick = (restaurantId: string) => {
-    setSelectedRestaurantId(restaurantId);
+
+  // Handle marker click - use bottom sheet for screens < md, and just highlight for md+
+  const handleMarkerClick = (placeId: string) => {
+    setSelectedPlaceId(placeId);
     
-    // Only handle bottom sheet expansion for screens < 1280px
-    // For xl screens (desktop), just update selected restaurant
-    if (window.innerWidth < 1280) {
+    const screenWidth = window.innerWidth;
+    
+    // Small and medium screens (< 768px) - use bottom sheet
+    if (screenWidth < 768) {
       // If sheet is hidden, bring it to half state for better visibility
       if (bottomSheetState === 'hidden') {
         setForceBottomSheetState('half');
@@ -53,23 +58,25 @@ export default function Restaurants({ categoryType = "FOOD_BEVERAGES" }: Restaur
       else if (bottomSheetState === 'collapsed') {
         setForceBottomSheetState('half');
       }
-      // If sheet is half or full, keep current state but update selected restaurant
+      // If sheet is half or full, keep current state but update selected place
     }
+    // Large screens (md+) - just update selected place, no sheet/modal needed
   };
 
   // Get category ID from the category type
   const categoryId = CATEGORY_IDS[categoryType];
 
+
   const getRestaurantsText = () => {
     switch (categoryType) {
-      case 'FOOD_BEVERAGES':
-        return t('foodBeverages');
-      case 'ENTERTAINMENT':
-        return t('entertainment');
       case 'TOURISM':
-        return t('tourism');
+        return categoryTranslations('tourism');
+      case 'FOOD_BEVERAGES':
+        return categoryTranslations('foodBeverages');
+      case 'ENTERTAINMENT':
+        return categoryTranslations('entertainment');
       default:
-        return t('foodBeverages');
+        return t('title');
     }
   };
 
@@ -92,43 +99,29 @@ export default function Restaurants({ categoryType = "FOOD_BEVERAGES" }: Restaur
   return (
     <div className={`w-full relative ${locale === 'ar' ? 'rtl' : 'ltr'}`}>
       
-      {/* Header Section - Title and Filter */}
-      <div className="border-b border-gray-200 px-5 xl:px-25 py-4">
-        <div className={`flex items-center justify-between ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
-          {/* Title on the right (or left in RTL) */}
-          <h1 className="text-3xl font-bold text-gray-800">{getRestaurantsText()}</h1>
-          
-          {/* Filter on the left (or right in RTL) */}
-          <div className="w-64">
-            <RestaurantGovernateFilter 
-              selectedGovernateId={selectedGovernateId}
-              onGovernateChange={setSelectedGovernateId}
-              locale={locale}
-            />
-          </div>
-        </div>
-      </div>
       
-      {/* Mobile/Tablet Layout - Full screen map with Airbnb-style bottom sheet */}
-      <div className="xl:hidden w-full h-[84vh] relative">
-        {/* Full screen map for mobile */}
+      {/* Mobile/SM Layout - Full screen map with bottom sheet */}
+      <div className="md:hidden w-full h-[92vh] relative">
+        {/* Full screen map for mobile and sm screens */}
         <div className="w-full h-full">
           <RestaurantsMap 
             categoryId={categoryId}
             selectedGovernateId={selectedGovernateId}
             searchQuery={searchQuery}
             onMarkerClick={handleMarkerClick}
-            selectedRestaurantId={selectedRestaurantId}
+            selectedPlaceId={selectedPlaceId}
           />
         </div>
         
-        {/* Airbnb-style Bottom Sheet */}
+        {/* Airbnb-style Bottom Sheet for all mobile and sm screens */}
         <RestaurantBottomSheet
           categoryId={categoryId}
           selectedGovernateId={selectedGovernateId}
           onGovernateChange={setSelectedGovernateId}
-          selectedRestaurantId={selectedRestaurantId}
-          onRestaurantClick={setSelectedRestaurantId}
+          selectedCategoryIds={selectedCategoryIds}
+          onCategoryIdsChange={setSelectedCategoryIds}
+          selectedPlaceId={selectedPlaceId}
+          onPlaceClick={setSelectedPlaceId}
           locale={locale}
           title={getRestaurantsText()}
           onStateChange={handleBottomSheetStateChange}
@@ -137,35 +130,72 @@ export default function Restaurants({ categoryType = "FOOD_BEVERAGES" }: Restaur
       </div>
 
       {/* -------------------------------------- */}
-      {/* Desktop Layout - Cards and Map side by side (1280px+) */}
-      <div className="hidden xl:flex gap-4 px-5 xl:px-25">
+      {/* Desktop Layout - Cards and Map side by side (md+) */}
+      <div className="hidden md:flex gap-4 px-5 xl:px-25">
         {/* Restaurants List Section - 80vh with scroll */}
         <div className="w-1/2 rounded-lg">
-          <div className="h-[80vh] p-4">
+          <div className="h-[92vh] p-4">
             <RestaurantsCardsWrapper 
               isMobileMapView={false}
               categoryId={categoryId}
               selectedGovernateId={selectedGovernateId}
               onGovernateChange={setSelectedGovernateId}
-              selectedRestaurantId={selectedRestaurantId}
-              onRestaurantClick={setSelectedRestaurantId}
+              selectedCategoryIds={selectedCategoryIds}
+              onCategoryIdsChange={setSelectedCategoryIds}
+              selectedPlaceId={selectedPlaceId}
+              onPlaceClick={setSelectedPlaceId}
             />
           </div>
         </div>
         
         {/* Map Section - 80vh */}
         <div className="w-1/2 rounded-lg">
-          <div className="h-[80vh] p-4">
+          <div className="h-[92vh] p-4">
             <RestaurantsMap 
               categoryId={categoryId}
               selectedGovernateId={selectedGovernateId}
               searchQuery={searchQuery}
               onMarkerClick={handleMarkerClick}
-              selectedRestaurantId={selectedRestaurantId}
+              selectedPlaceId={selectedPlaceId}
             />
           </div>
         </div>
       </div>
+      
+      {/* -------------------------------------- */}
+      {/* Tablet Layout - Cards and Map both 80vh - REMOVED */}
+      <div className="hidden w-full flex-col gap-4 px-5 xl:px-25">
+        {/* Restaurants list - 80vh with scroll */}
+        <div className="w-full rounded-lg">
+          <div className="h-[92vh] p-4">
+            <RestaurantsCardsWrapper 
+              isMobileMapView={false}
+              categoryId={categoryId}
+              selectedGovernateId={selectedGovernateId}
+              onGovernateChange={setSelectedGovernateId}
+              selectedCategoryIds={selectedCategoryIds}
+              onCategoryIdsChange={setSelectedCategoryIds}
+              selectedPlaceId={selectedPlaceId}
+              onPlaceClick={setSelectedPlaceId}
+            />
+          </div>
+        </div>
+        
+        {/* Map - 80vh */}
+        <div className="w-full rounded-lg">
+          <div className="h-[92vh] p-4">
+            <RestaurantsMap 
+              categoryId={categoryId}
+              selectedGovernateId={selectedGovernateId}
+              searchQuery={searchQuery}
+              onMarkerClick={handleMarkerClick}
+              selectedPlaceId={selectedPlaceId}
+            />
+          </div>
+        </div>
+      </div>
+
+      
     </div>
   );
 }
