@@ -1,7 +1,8 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import { Place } from '@/types';
-
+import sepcamel from "../../../../../public/seperators/sepcamel.png"
 interface AboutAndLocationProps {
   place: Place;
   language?: 'ar' | 'en';
@@ -115,6 +116,28 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
                 {aboutContent || t('noDescription')}
               </p>
               
+              {/* Separator */}
+              <div className="h-[55px] rounded-lg mt-6 relative overflow-hidden flex items-center justify-between" style={{ backgroundColor: '#fce7a1b3' }}>
+                <div 
+                  className="absolute inset-0 opacity-20"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                    backgroundSize: '4px 4px'
+                  }}
+                />
+                 <span className="text-amber-800 font-medium text-sm md:text-base mx-4 relative z-10">
+                  {t('separatorText')}
+                </span>
+                <Image 
+                  src={sepcamel} 
+                  alt="Camel decoration" 
+                  width={48}
+                  height={48}
+                  className="h-8 md:h-12 w-auto ml-2 relative z-10"
+                />
+               
+              </div>
+              
               {/* Additional content sections */}
               {place.content_sections?.filter(section => section.section_type !== 'about' && section.section_type !== 'description').map(section => (
                 <div key={section.id} className="mt-8">
@@ -148,7 +171,7 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
           <div className="space-y-6">
             
             {/* Info Card */}
-            <div className="bg-white rounded-2xl shadow-sm p-6">
+            <div className="border border-gray-200 rounded-2xl p-6">
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 text-sm">
@@ -204,50 +227,9 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
               </div>
             </div>
 
-            {/* Contact Information */}
-            {(place.phone || place.email || place.website) && (
-              <div className="bg-white rounded-2xl shadow-sm p-6">
-                <h3 className="font-medium text-gray-900 mb-4">
-                  {t('contact.title')}
-                </h3>
-                <div className="space-y-3">
-                  {place.phone && (
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-400">📞</span>
-                      <a href={`tel:${place.phone}`} className="text-blue-600 hover:underline text-sm">
-                        {place.phone}
-                      </a>
-                    </div>
-                  )}
-                  
-                  {place.email && (
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-400">✉️</span>
-                      <a href={`mailto:${place.email}`} className="text-blue-600 hover:underline text-sm">
-                        {place.email}
-                      </a>
-                    </div>
-                  )}
-                  
-                  {place.website && (
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-400">🌐</span>
-                      <a 
-                        href={place.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline text-sm"
-                      >
-                        {t('contact.website')}
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* Suitable For Tags */}
-            <div className="bg-white rounded-2xl shadow-sm p-6">
+            <div className="border border-gray-200 rounded-2xl p-6">
               <h3 className="font-medium text-gray-900 mb-4">
                 {t('suitableFor.title')}
               </h3>
@@ -266,7 +248,7 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
 
 
             {/* Map */}
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div className="border border-gray-200 rounded-2xl overflow-hidden">
               <div className="h-48 md:h-64 bg-gray-200 relative">
                 {place.lat && place.lng ? (
                   <div className="absolute inset-0">

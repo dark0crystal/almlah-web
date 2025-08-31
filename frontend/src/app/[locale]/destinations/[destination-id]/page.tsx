@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { MapPin, Users, Building, ArrowLeft, Share2, ExternalLink } from 'lucide-react';
+import Image from 'next/image';
 import GovernateImagesContainer from "./GovernateImagesContainer";
 import GovernateLoadingSkeleton from "./GovernateLoadingSkeleton";
 import GovernateErrorComponent from "./GovernateErrorComponent";
@@ -10,7 +11,7 @@ import PostCardsWrapper from "@/components/cards/postCards/PostCardWrapper";
 import WilayahCardsWrapper from "./WilayahCardsWrapper";
 import Footer from '@/components/Footer';
 import { fetchGovernateById, fetchGovernateWilayahs, GovernateDetails, SimpleWilayah } from '@/services/governateApi';
-
+import sepnakhlah from "../../../../../public/seperators/sepnakhlah.png"
 interface GovernateDetailsProps {
   params?: {
     'destination-id': string;
@@ -282,6 +283,27 @@ export default function GovernateDetailsPage({ params }: GovernateDetailsProps) 
                 <p className="text-gray-700 leading-relaxed">
                   {governateDescription}
                 </p>
+                
+                {/* Separator */}
+                <div className="h-[55px] rounded-lg mt-6 relative overflow-hidden flex items-center justify-between not-prose" style={{ backgroundColor: '#fce7a1b3' }}>
+                  <div 
+                    className="absolute inset-0 opacity-20"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                      backgroundSize: '4px 4px'
+                    }}
+                  />
+                  <span className="text-amber-800 font-medium text-sm md:text-base mx-4 relative z-10">
+                    {t('separatorText')}
+                  </span>
+                  <Image 
+                    src={sepnakhlah} 
+                    alt="Camel decoration" 
+                    width={48}
+                    height={48}
+                    className="h-8 md:h-12 w-auto ml-2 relative z-10"
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -297,7 +319,7 @@ export default function GovernateDetailsPage({ params }: GovernateDetailsProps) 
           )}
 
           {/* Places to Visit Section */}
-          <div className="mt-12">
+          <div className="mt-12 overflow-hidden">
             <PostCardsWrapper 
               governateId={governate.id}
               title={locale === 'ar' ? 'الأماكن المراد زيارتها' : 'Places to Visit'}
