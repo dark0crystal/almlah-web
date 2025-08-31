@@ -112,14 +112,9 @@ export default function PlacesCardsWrapper({
   // Mobile map view - horizontal scrollable cards with filter
   if (isMobileMapView) {
     return (
-      <div className="w-full border-t border-gray-200">
-        {/* Mobile Filter and Search */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 p-3 space-y-3">
-          <GovernateFilter
-            selectedGovernateId={selectedGovernateId}
-            onGovernateChange={onGovernateChange}
-            locale={locale}
-          />
+      <div className="w-full border-t border-gray-200 h-full flex flex-col mobile-card-container mobile-card-wrapper">
+        {/* Mobile Search */}
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 p-3 flex-shrink-0">
           <PlaceSearchBar
             selectedGovernateId={selectedGovernateId}
             categoryId={categoryId}
@@ -130,19 +125,19 @@ export default function PlacesCardsWrapper({
         </div>
         
         {places.length === 0 ? (
-          <div className="p-6 text-center text-gray-500">
+          <div className="p-6 text-center text-gray-500 flex-1 flex items-center justify-center">
             <p className="text-base">{t('noResults')}</p>
           </div>
         ) : (
-          <div className="px-4 py-3">
+          <div className="px-4 py-3 flex-1 min-h-0">
             <div 
               ref={scrollContainerRef}
-              className="flex gap-3 overflow-x-auto scrollbar-hide pb-2"
+              className="mobile-horizontal-scroll horizontal-scroll-fix scrollbar-hide pb-2 mobile-card-scroll pr-4"
             >
               {places.map((place) => (
                 <div 
                   key={place.id} 
-                  className="flex-shrink-0 w-64"
+                  className="mobile-card-item w-64"
                   data-place-id={place.id}
                 >
                   <PlaceCard 
@@ -203,7 +198,7 @@ export default function PlacesCardsWrapper({
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto p-4"
         >
-          <div className="space-y-4">
+          <div className="space-y-4 pb-32">
             {places.map((place) => (
               <div key={place.id} data-place-id={place.id}>
                 <PlaceCard 

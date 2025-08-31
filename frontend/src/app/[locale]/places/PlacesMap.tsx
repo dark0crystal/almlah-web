@@ -461,9 +461,6 @@ function PlaceInfoContent({ place, locale }: { place: Place; locale: string }) {
           📍 {locationText}
         </p>
       )}
-      <div style={{ fontSize: '12px', color: '#888', marginTop: '8px' }}>
-        {t('coordinates')}: {place.lat?.toFixed(4) || 0}, {place.lng?.toFixed(4) || 0}
-      </div>
     </div>
   );
 }
