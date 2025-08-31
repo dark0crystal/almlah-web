@@ -22,20 +22,22 @@ interface RestaurantsMapProps {
   searchQuery?: string;
   categoryId: string;
   locale?: string;
-  onMarkerClick?: (restaurantId: string) => void;
+  onMarkerClick?: (placeId: string) => void;
+  selectedPlaceId?: string | null;
 }
 
 export default function RestaurantsMap({ 
   selectedGovernateId, 
   categoryId, 
   locale = 'en',
-  onMarkerClick 
+  onMarkerClick,
+  selectedPlaceId
 }: RestaurantsMapProps) {
   const t = useTranslations('places');
-  const [restaurants, setRestaurants] = useState<Place[]>([]);
+  const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeRestaurant, setActiveRestaurant] = useState<string | null>(null);
+  const [activePlace, setActivePlace] = useState<string | null>(null);
   const [selectedMarker, setSelectedMarker] = useState<Place | null>(null);
 
   const { isLoaded, loadError } = useLoadScript({
@@ -59,80 +61,80 @@ export default function RestaurantsMap({
     fullscreenControl: false,
   };
 
-  // Fetch restaurants with category ID
+  // Fetch places with category ID
   useEffect(() => {
-    const loadRestaurants = async () => {
+    const loadPlaces = async () => {
       try {
         setLoading(true);
         setError(null);
-        console.log('Loading restaurants for categoryId:', categoryId, 'governateId:', selectedGovernateId);
+        console.log('Loading places for categoryId:', categoryId, 'governateId:', selectedGovernateId);
         
         if (!categoryId) {
           throw new Error('Category ID is required');
         }
         
         const data = await fetchPlaces(categoryId, selectedGovernateId);
-        console.log('Restaurants loaded:', data.length, 'items');
+        console.log('Places loaded:', data.length, 'items');
         
-        // Filter restaurants with valid coordinates
-        const validRestaurants = data.filter(restaurant => {
-          const hasValidLat = restaurant.lat && !isNaN(restaurant.lat) && restaurant.lat !== 0 && Math.abs(restaurant.lat) <= 90;
-          const hasValidLng = restaurant.lng && !isNaN(restaurant.lng) && restaurant.lng !== 0 && Math.abs(restaurant.lng) <= 180;
+        // Filter places with valid coordinates
+        const validPlaces = data.filter(place => {
+          const hasValidLat = place.lat && !isNaN(place.lat) && place.lat !== 0 && Math.abs(place.lat) <= 90;
+          const hasValidLng = place.lng && !isNaN(place.lng) && place.lng !== 0 && Math.abs(place.lng) <= 180;
           
-          console.log(`Restaurant ${restaurant.name_en}: lat=${restaurant.lat}, lng=${restaurant.lng}, valid=${hasValidLat && hasValidLng}`);
+          console.log(`Place ${place.name_en}: lat=${place.lat}, lng=${place.lng}, valid=${hasValidLat && hasValidLng}`);
           
           return hasValidLat && hasValidLng;
         });
         
-        console.log('Valid restaurants with coordinates:', validRestaurants);
+        console.log('Valid places with coordinates:', validPlaces);
         
-        if (validRestaurants.length === 0 && data.length > 0) {
-          console.warn('No restaurants have valid coordinates. All restaurants have lat/lng = 0');
+        if (validPlaces.length === 0 && data.length > 0) {
+          console.warn('No places have valid coordinates. All places have lat/lng = 0');
           setError(t('errors.noValidCoordinates'));
         }
         
-        setRestaurants(validRestaurants);
+        setPlaces(validPlaces);
       } catch (err) {
-        console.error('Failed to load restaurants:', err);
+        console.error('Failed to load places:', err);
         setError(err instanceof Error ? err.message : 'Unknown error');
-        setRestaurants([]);
+        setPlaces([]);
       } finally {
         setLoading(false);
       }
     };
 
     if (categoryId) {
-      loadRestaurants();
+      loadPlaces();
     }
   }, [selectedGovernateId, categoryId, t]);
 
   const onMapLoad = useCallback((map: google.maps.Map) => {
-    // Fit map to show all restaurants if we have multiple
-    if (restaurants.length > 1) {
-      const validRestaurants = restaurants.filter(r => 
+    // Fit map to show all places if we have multiple
+    if (places.length > 1) {
+      const validPlaces = places.filter(r => 
         r.lat && r.lng
       );
 
-      if (validRestaurants.length > 1) {
+      if (validPlaces.length > 1) {
         const bounds = new google.maps.LatLngBounds();
-        validRestaurants.forEach(restaurant => {
+        validPlaces.forEach(place => {
           bounds.extend({
-            lat: restaurant.lat,
-            lng: restaurant.lng
+            lat: place.lat,
+            lng: place.lng
           });
         });
         map.fitBounds(bounds, { top: 50, bottom: 50, left: 50, right: 50 });
       }
     }
-  }, [restaurants]);
+  }, [places]);
 
-  const handleMarkerClick = useCallback((restaurant: Place) => {
-    setActiveRestaurant(restaurant.id);
-    setSelectedMarker(restaurant);
+  const handleMarkerClick = useCallback((place: Place) => {
+    setActivePlace(place.id);
+    setSelectedMarker(place);
     
     // Notify parent component about marker click
     if (onMarkerClick) {
-      onMarkerClick(restaurant.id);
+      onMarkerClick(place.id);
     }
   }, [onMarkerClick]);
 
@@ -287,7 +289,7 @@ export default function RestaurantsMap({
     );
   }
 
-  if (restaurants.length === 0 && !loading) {
+  if (places.length === 0 && !loading) {
     const message = error === t('errors.noValidCoordinates')
       ? t('errors.noValidCoordinates')
       : t('noResults');
@@ -315,14 +317,15 @@ export default function RestaurantsMap({
         options={mapOptions}
         onLoad={onMapLoad}
       >
-        {restaurants.map((restaurant) => {
-          if (restaurant.lat && restaurant.lng) {
+        {places.map((place) => {
+          if (place.lat && place.lng) {
             return (
               <RestaurantMarker
-                key={restaurant.id}
-                restaurant={restaurant}
+                key={place.id}
+                restaurant={place}
                 locale={locale}
-                onClick={() => handleMarkerClick(restaurant)}
+                isSelected={selectedPlaceId === place.id}
+                onClick={() => handleMarkerClick(place)}
               />
             );
           }
@@ -343,7 +346,7 @@ export default function RestaurantsMap({
       </GoogleMap>
 
       {/* Map info overlay */}
-      {isLoaded && restaurants.length > 0 && (
+      {isLoaded && places.length > 0 && (
         <div className="absolute top-4 left-4 bg-white bg-opacity-90 backdrop-blur-sm rounded-lg p-3 shadow-lg z-20">
           <div className={`text-sm ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
             <p className="font-semibold text-gray-800">
@@ -351,8 +354,8 @@ export default function RestaurantsMap({
             </p>
             <p className="text-gray-600">
               {locale === 'ar' 
-                ? `${restaurants.length} مطعم` 
-                : `${restaurants.length} restaurants`
+                ? `${places.length} مطعم` 
+                : `${places.length} restaurants`
               }
             </p>
           </div>
@@ -366,10 +369,12 @@ export default function RestaurantsMap({
 function RestaurantMarker({ 
   restaurant, 
   locale, 
+  isSelected = false,
   onClick 
 }: { 
   restaurant: Place; 
   locale: string; 
+  isSelected?: boolean;
   onClick: () => void; 
 }) {
   const [iconUrl, setIconUrl] = useState<string>('');
@@ -484,7 +489,7 @@ function RestaurantMarker({
       }}
       icon={{
         url: iconUrl,
-        scaledSize: new google.maps.Size(48, 48),
+        scaledSize: new google.maps.Size(isSelected ? 56 : 48, isSelected ? 56 : 48),
       }}
       onClick={onClick}
       onMouseOver={(e) => {
