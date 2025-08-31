@@ -6,7 +6,7 @@ import { MapPin, Users, Building, ArrowLeft, Share2, ExternalLink } from 'lucide
 import GovernateImagesContainer from "./GovernateImagesContainer";
 import GovernateLoadingSkeleton from "./GovernateLoadingSkeleton";
 import GovernateErrorComponent from "./GovernateErrorComponent";
-import DestinationPlacesWrapper from "./DestinationPlacesWrapper";
+import PostCardsWrapper from "@/components/cards/postCards/PostCardWrapper";
 import WilayahCardsWrapper from "./WilayahCardsWrapper";
 import Footer from '@/components/Footer';
 import { fetchGovernateById, fetchGovernateWilayahs, GovernateDetails, SimpleWilayah } from '@/services/governateApi';
@@ -96,31 +96,28 @@ export default function GovernateDetailsPage({ params }: GovernateDetailsProps) 
     }
   }, [governate, locale, t]);
 
-  // Handle share functionality
+  // Handle share functionality - Copy URL to clipboard
   const handleShare = async () => {
-    if (!governate) return;
+    const currentUrl = window.location.href;
     
-    const governateName = locale === 'ar' ? governate.name_ar : governate.name_en;
-    const subtitle = locale === 'ar' ? governate.subtitle_ar : governate.subtitle_en;
-    
-    if (navigator.share) {
+    try {
+      await navigator.clipboard.writeText(currentUrl);
+      alert(locale === 'ar' ? 'تم نسخ الرابط!' : 'URL copied!');
+    } catch (error) {
+      console.error('Failed to copy URL:', error);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = currentUrl;
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
       try {
-        await navigator.share({
-          title: governateName,
-          text: subtitle || `${locale === 'ar' ? 'استكشف محافظة' : 'Explore'} ${governateName}`,
-          url: window.location.href,
-        });
-      } catch (error) {
-        console.log('Share cancelled or failed:', error);
+        document.execCommand('copy');
+        alert(locale === 'ar' ? 'تم نسخ الرابط!' : 'URL copied!');
+      } catch (fallbackError) {
+        console.error('Fallback copy failed:', fallbackError);
       }
-    } else {
-      // Fallback: copy URL to clipboard
-      try {
-        await navigator.clipboard.writeText(window.location.href);
-        alert(locale === 'ar' ? 'تم نسخ الرابط!' : 'Link copied!');
-      } catch (error) {
-        console.error('Failed to copy link:', error);
-      }
+      document.body.removeChild(textArea);
     }
   };
 
@@ -222,16 +219,6 @@ export default function GovernateDetailsPage({ params }: GovernateDetailsProps) 
             >
               <Share2 className="w-5 h-5 text-gray-600" />
             </button>
-            
-            {governate.latitude && governate.longitude && (
-              <button 
-                onClick={handleGetDirections}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                aria-label={t('actions.directions')}
-              >
-                <ExternalLink className="w-5 h-5 text-gray-600" />
-              </button>
-            )}
           </div>
         </div>
         
@@ -311,8 +298,10 @@ export default function GovernateDetailsPage({ params }: GovernateDetailsProps) 
 
           {/* Places to Visit Section */}
           <div className="mt-12">
-            <DestinationPlacesWrapper 
+            <PostCardsWrapper 
               governateId={governate.id}
+              title={locale === 'ar' ? 'الأماكن المراد زيارتها' : 'Places to Visit'}
+              language={locale}
             />
           </div>
         </div>

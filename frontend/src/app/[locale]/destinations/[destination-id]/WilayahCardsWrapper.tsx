@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations, useLocale } from 'next-intl';
+import { useRouter, useParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Mountain } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
 import WilayahCard from './WilayahCard';
@@ -19,6 +20,8 @@ export default function WilayahCardsWrapper({
 }: WilayahCardsWrapperProps) {
   const t = useTranslations('wilayah');
   const locale = useLocale() as 'ar' | 'en';
+  const router = useRouter();
+  const params = useParams();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [wilayahsWithImages, setWilayahsWithImages] = useState<WilayahWithImages[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,9 +86,11 @@ export default function WilayahCardsWrapper({
     if (onWilayahClick) {
       onWilayahClick(wilayah);
     } else {
-      // Default behavior: navigate to wilayah page
-      // You can implement navigation logic here
-      console.log('Navigate to wilayah:', wilayah.slug);
+      // Navigate to wilayah detail page
+      const destinationId = params?.['destination-id'];
+      if (destinationId) {
+        router.push(`/destinations/${destinationId}/wilayah/${wilayah.id}`);
+      }
     }
   };
 
@@ -189,9 +194,6 @@ export default function WilayahCardsWrapper({
           ))}
         </div>
         
-        {/* Subtle gradient fade effects */}
-        <div className="absolute left-0 top-0 bottom-0 w-6 sm:w-8 lg:w-12 bg-gradient-to-r from-[#f3f3eb] to-transparent pointer-events-none z-20" />
-        <div className="absolute right-0 top-0 bottom-0 w-6 sm:w-8 lg:w-12 bg-gradient-to-l from-[#f3f3eb] to-transparent pointer-events-none z-20" />
       </div>
 
       {/* Carousel indicators */}

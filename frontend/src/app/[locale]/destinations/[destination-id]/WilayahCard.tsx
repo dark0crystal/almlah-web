@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from 'next-intl';
+import { useRouter, useParams } from 'next/navigation';
 import { MapPin } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -20,6 +21,8 @@ export interface WilayahCardProps {
 
 export default function WilayahCard({ wilayah, locale, onClick }: WilayahCardProps) {
   const t = useTranslations('wilayah');
+  const router = useRouter();
+  const params = useParams();
   const [imageError, setImageError] = useState(false);
   
   const wilayahName = locale === 'ar' ? wilayah.name_ar : wilayah.name_en;
@@ -28,6 +31,12 @@ export default function WilayahCard({ wilayah, locale, onClick }: WilayahCardPro
   const handleClick = () => {
     if (onClick) {
       onClick(wilayah);
+    } else {
+      // Navigate to wilayah detail page
+      const destinationId = params?.['destination-id'];
+      if (destinationId) {
+        router.push(`/destinations/${destinationId}/wilayah/${wilayah.id}`);
+      }
     }
   };
 
@@ -44,7 +53,7 @@ export default function WilayahCard({ wilayah, locale, onClick }: WilayahCardPro
 
   return (
     <div 
-      className="group relative w-full h-96 sm:h-80 md:h-96 lg:h-[28rem] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-2xl min-w-[320px] sm:min-w-[400px] md:min-w-[500px] lg:min-w-[600px] flex-shrink-0"
+      className="group relative w-full h-80 sm:h-72 md:h-80 lg:h-96 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-2xl min-w-[320px] sm:min-w-[400px] md:min-w-[500px] lg:min-w-[600px] flex-shrink-0"
       onClick={handleClick}
     >
       {/* Background Image */}
