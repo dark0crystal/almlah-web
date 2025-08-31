@@ -5,18 +5,20 @@ import alryam from "../../../public/alryam.png"
 import khayma from "../../../public/khayma.png"
 import rb3 from "../../../public/rb3.png"
 import alsahwah from "../../../public/alsahwah.png"
+import gazal from "../../../public/pngs/gazal.png"
+import orxy from "../../../public/pngs/orxy.png"
 
 
 export default function Heading() {
   // Image data for easier management
   const images = [
     { src: samhah, alt: "Samhah", width: 120, height: 160 },
-    { src: alsahwah, alt: "Chai", width: 130, height: 170 },
-    { src: samhah, alt: "Al Ryam", width: 140, height: 180 },
+    { src: orxy, alt: "Chai", width: 130, height: 170 },
+    { src: orxy, alt: "Al Ryam", width: 140, height: 180 },
     { src: samhah, alt: "Khayma", width: 150, height: 190 },
     { src: alsahwah, alt: "Rb3", width: 135, height: 175 },
-    { src: samhah, alt: "Samhah 2", width: 125, height: 165 },
-    { src: samhah, alt: "Chai 2", width: 115, height: 155 },
+    { src: gazal, alt: "Samhah 2", width: 125, height: 165 },
+    { src: gazal, alt: "Chai 2", width: 115, height: 155 },
     { src: alsahwah, alt: "Al Ryam 2", width: 110, height: 145 },
   ];
 

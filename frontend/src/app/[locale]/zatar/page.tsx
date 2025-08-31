@@ -170,20 +170,14 @@ export default function ZatarPage() {
                 <div className="mb-6">
                   <div className="text-6xl mb-4 mx-auto">🎲</div>
                   <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                    {locale === 'ar' ? 'مرحباً بك في زعتر!' : 'Welcome to Zatar!'}
+                    {t('welcome.title')}
                   </h2>
                   <div className="text-gray-600 space-y-3">
                     <p className="leading-relaxed">
-                      {locale === 'ar' 
-                        ? 'زعتر هو مساعدك الذكي لاكتشاف أفضل المطاعم والمقاهي في عمان. ببساطة أخبرنا عن المنطقة ونوع الطعام الذي تريده، وسنقترح عليك خياراً رائعاً!'
-                        : 'Zatar is your smart assistant for discovering the best restaurants and cafes in Oman. Simply tell us your location and food preference, and we\'ll suggest something amazing!'
-                      }
+                      {t('welcome.description')}
                     </p>
                     <p className="text-sm text-green-600 font-medium">
-                      {locale === 'ar' 
-                        ? '🎯 اكتشافات عشوائية مخصصة لك'
-                        : '🎯 Personalized random discoveries'
-                      }
+                      {t('welcome.tagline')}
                     </p>
                   </div>
                 </div>
@@ -311,7 +305,7 @@ export default function ZatarPage() {
                         ) : (
                           <div className="text-center text-gray-400">
                             <div className="text-6xl mb-2">🍽️</div>
-                            <p className="text-sm">No Image Available</p>
+                            <p className="text-sm">{t('result.noImage')}</p>
                           </div>
                         )}
                       </div>
@@ -350,10 +344,7 @@ export default function ZatarPage() {
                       
                       {/* Description */}
                       <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-                        {locale === 'ar' 
-                          ? `استمتع بتجربة رائعة في ${state.recommendation.name} مع أجواء مميزة وخدمة متميزة.`
-                          : `Enjoy a wonderful experience at ${state.recommendation.name} with great atmosphere and excellent service.`
-                        }
+                        {t('result.description', { name: state.recommendation.name })}
                       </p>
 
                       {/* Details */}
@@ -366,7 +357,7 @@ export default function ZatarPage() {
                         {state.recommendation.rating && (
                           <div className="flex items-center gap-2">
                             <Star className="w-4 h-4 text-yellow-500" />
-                            <span>{state.recommendation.rating}/5 Rating</span>
+                            <span>{t('result.rating', { rating: state.recommendation.rating })}</span>
                           </div>
                         )}
                         

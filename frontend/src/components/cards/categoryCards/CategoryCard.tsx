@@ -11,6 +11,7 @@ interface CategoryCardProps {
   bgImage?: string | any; // Can be string URL or imported image
   textColor?: string;
   slug?: string; // For navigation
+  href?: string; // Custom href
   onClick?: () => void;
 }
 
@@ -22,12 +23,17 @@ export default function CategoryCard({
   bgImage,
   textColor = "text-gray-900",
   slug,
+  href: customHref,
   onClick
 }: CategoryCardProps) {
   const locale = useLocale();
   
-  // Create the href for the places page with category filter
-  const href = slug ? `/${locale}/places?category=${slug}` : `/${locale}/places`;
+  // Use custom href if provided, otherwise create href based on slug
+  const href = customHref 
+    ? `/${locale}${customHref}` 
+    : slug 
+    ? `/${locale}/places?category=${slug}` 
+    : `/${locale}/places`;
 
   const cardContent = (
     <>

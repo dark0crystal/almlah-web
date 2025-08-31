@@ -178,7 +178,9 @@ export default function CategoryCardsWrapper({
               bgColor={category.bgColor}
               bgImage={category.bgImage}
               textColor={category.textColor}
-              onClick={() => handleCategoryClick(category.title)}
+              slug={category.slug}
+              href={category.href}
+              onClick={() => handleCategoryClick(category.title, category.slug)}
             />
           </div>
         ))}

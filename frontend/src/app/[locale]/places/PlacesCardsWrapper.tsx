@@ -84,6 +84,37 @@ export default function PlacesCardsWrapper({
     }
   }, [selectedPlaceId]);
 
+  // Force scroll container to recalculate on mount and window resize
+  useEffect(() => {
+    const forceScrollRecalculation = () => {
+      if (scrollContainerRef.current) {
+        // Force reflow to ensure proper height calculation
+        const container = scrollContainerRef.current;
+        container.style.overflow = 'hidden';
+        requestAnimationFrame(() => {
+          container.style.overflow = 'auto';
+          // Trigger a scroll event to initialize scrolling
+          container.scrollTop = container.scrollTop;
+        });
+      }
+    };
+
+    // Multiple attempts to ensure scroll works
+    const timer1 = setTimeout(forceScrollRecalculation, 100);
+    const timer2 = setTimeout(forceScrollRecalculation, 500);
+    const timer3 = setTimeout(forceScrollRecalculation, 1000);
+    
+    // Recalculate on window resize
+    window.addEventListener('resize', forceScrollRecalculation);
+    
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+      window.removeEventListener('resize', forceScrollRecalculation);
+    };
+  }, [places.length]);
+
   if (loading) {
     return (
       <div className="p-4 flex justify-center items-center min-h-[200px]">
@@ -197,6 +228,7 @@ export default function PlacesCardsWrapper({
         <div 
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto p-4"
+          style={{ minHeight: '200px', maxHeight: 'calc(92vh - 120px)' }}
         >
           <div className="space-y-4 pb-32">
             {places.map((place) => (

@@ -18,57 +18,82 @@ export interface CategoryData {
   bgColor: string;
   bgImage?: string | any; // Can be string URL or imported image
   textColor?: string;
+  slug?: string; // Navigation route
+  href?: string; // Custom href if different from slug-based routing
 }
 
 export const categoriesData: CategoryData[] = [
   {
-    title: "أماكن سياحية",
-    subtitle: "سياحة",
-    icon: "🎙️",
+    title: "الأماكن السياحية",
+    subtitle: "استكشف الوجهات",
+    icon: "🏛️",
     bgColor: "bg-gradient-to-br from-orange-400 to-pink-400",
-    bgImage: rb3, // Use imported image or "/finjan.png" for direct path
+    bgImage: rb3,
+    slug: "tourism",
+    href: "/places?category=tourism"
   },
   {
-    title: "مطاعم",
-    subtitle: "جديد",
-    icon: "🌟",
+    title: "المطاعم",
+    subtitle: "أفضل المطاعم",
+    icon: "🍽️",
     bgColor: "bg-gradient-to-br from-green-500 to-emerald-600",
-    bgImage: chai, // Direct path to public folder
-  },
-  {
-    title: "كبيسات",
-    icon: "📚",
-    bgColor: "bg-gradient-to-br from-orange-500 to-red-500",
     bgImage: chai,
+    href: "/restaurants"
   },
   {
-    title: "شكرة",
-    icon: "💎",
-    bgColor: "bg-gradient-to-br from-gray-600 to-gray-800",
+    title: "زعتر",
+    subtitle: "مكتشف المطاعم",
+    icon: "🎲",
+    bgColor: "bg-gradient-to-br from-purple-500 to-indigo-600",
     bgImage: chai,
+    href: "/zatar"
   },
   {
-    title: "كتاب مسموع",
-    icon: "🎧",
-    bgColor: "bg-gradient-to-br from-indigo-600 to-purple-700",
+    title: "المحافظات",
+    subtitle: "استكشف عُمان",
+    icon: "🗺️",
+    bgColor: "bg-gradient-to-br from-blue-500 to-cyan-600",
     bgImage: chai,
+    href: "/destinations"
   },
   {
-    title: "النشرة السينمائية",
-    icon: "🎬",
-    bgColor: "bg-gradient-to-br from-teal-500 to-cyan-600",
+    title: "ذا جاليري",
+    subtitle: "معرض الصور",
+    icon: "📸",
+    bgColor: "bg-gradient-to-br from-pink-500 to-rose-600",
     bgImage: chai,
+    href: "/the-gallery"
   },
   {
-    title: "تكنولوجيا",
-    icon: "💻",
-    bgColor: "bg-gradient-to-br from-blue-500 to-blue-700",
+    title: "جميع الأماكن",
+    subtitle: "تصفح الكل",
+    icon: "📍",
+    bgColor: "bg-gradient-to-br from-teal-500 to-green-600",
     bgImage: chai,
+    href: "/places"
   },
   {
-    title: "رياضة",
-    icon: "⚽",
+    title: "خريطة الأطباق",
+    subtitle: "خريطة تفاعلية",
+    icon: "🗺️",
+    bgColor: "bg-gradient-to-br from-amber-500 to-orange-600",
+    bgImage: chai,
+    href: "/dishes-map"
+  },
+  {
+    title: "من نحن",
+    subtitle: "تعرف علينا",
+    icon: "ℹ️",
+    bgColor: "bg-gradient-to-br from-gray-500 to-slate-600",
+    bgImage: chai,
+    href: "/about-us"
+  },
+  {
+    title: "لوحة التحكم",
+    subtitle: "الإدارة",
+    icon: "⚙️",
     bgColor: "bg-gradient-to-br from-red-500 to-pink-600",
     bgImage: chai,
+    href: "/dashboard"
   },
 ];
