@@ -267,7 +267,7 @@ const ProtectedDashboard = () => {
                 <div className="text-sm font-medium text-gray-900">{user?.fullName || user?.username}</div>
                 <div className="text-xs text-gray-500">{user?.email}</div>
                 <div className="text-xs text-blue-600">
-                  {user?.roles?.map(role => role.displayName).join(', ')}
+                  {user?.roles?.map(userRole => userRole.role?.display_name).join(', ')}
                 </div>
               </div>
             )}
