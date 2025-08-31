@@ -84,12 +84,15 @@ export default function PlaceCard({ place, locale, isSelected = false, onPlaceCl
 
   const getCategoryText = () => {
     if (place.categories && place.categories.length > 0) {
-      return locale === 'ar' ? place.categories[0].name_ar : place.categories[0].name_en;
+      const categoryNames = place.categories.map(cat => 
+        locale === 'ar' ? cat.name_ar : cat.name_en
+      );
+      return categoryNames.join(', ');
     }
     if (place.category) {
       return locale === 'ar' ? place.category.name_ar : place.category.name_en;
     }
-    return t('foodBeverages');
+    return t('tourism');
   };
 
   // Render horizontal scroll card (for bottom sheet collapsed state)
@@ -220,18 +223,18 @@ export default function PlaceCard({ place, locale, isSelected = false, onPlaceCl
             {/* Location - Now at top with black color and map marker */}
             <div className="flex items-center gap-1 mb-3">
               <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-black flex-shrink-0" />
-              <p className="text-black text-xs sm:text-sm md:text-base lg:text-sm line-clamp-1 font-medium">
+              <p className="text-black text-xs sm:text-xs line-clamp-1 font-medium">
                 {locationString}
               </p>
             </div>
 
-            {/* Place Name - Bigger and responsive, now under location */}
-            <h3 className="font-bold text-gray-800 text-xl sm:text-2xl md:text-3xl lg:text-2xl mb-1 line-clamp-2 leading-tight">
+            {/* Place Name - Responsive sizing, smaller on mobile */}
+            <h3 className="font-bold text-gray-800 text-base sm:text-lg md:text-xl lg:text-xl mb-1 line-clamp-2 leading-tight">
               {placeName}
             </h3>
 
             {/* Category/Subtitle - Show as subtitle with orange color like restaurants */}
-            <p className="text-orange-600 text-sm sm:text-base md:text-lg lg:text-base font-medium mb-2 line-clamp-1">
+            <p className="text-orange-600 text-xs sm:text-sm md:text-base lg:text-base font-medium mb-2 line-clamp-1">
               {placeSubtitle || getCategoryText()}
             </p>
           </div>

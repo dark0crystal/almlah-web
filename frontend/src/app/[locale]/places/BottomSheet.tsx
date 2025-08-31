@@ -59,13 +59,13 @@ export default function BottomSheet({
       case 'hidden':
         return '80px'; // Just shows header bar to allow reopening
       case 'collapsed':
-        return '40vh'; // Shows horizontal scroll cards - increased height
+        return '45vh'; // Shows horizontal scroll cards - increased height for better scrolling
       case 'half':
         return '75vh'; // Increased from 60vh for better visibility
       case 'full':
         return '95vh'; // Increased from 90vh for maximum visibility
       default:
-        return '40vh';
+        return '45vh';
     }
   };
 
@@ -253,9 +253,7 @@ export default function BottomSheet({
 
       {/* Header */}
       <div 
-        className={`flex items-center justify-between px-6 py-4 cursor-pointer bg-white ${
-          locale === 'ar' ? 'flex-row-reverse' : ''
-        }`}
+        className={`flex items-center justify-between px-6 py-4 cursor-pointer bg-white`}
         onClick={handleHeaderClick}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -265,7 +263,8 @@ export default function BottomSheet({
         onMouseUp={handleMouseUp}
         onWheel={handleHeaderWheel}
       >
-        <div className={`flex flex-col ${locale === 'ar' ? 'items-end' : 'items-start'}`}>
+        {/* Title - Right for Arabic, Left for English */}
+        <div className={`flex flex-col ${locale === 'ar' ? 'items-end order-2' : 'items-start order-1'}`}>
           <h2 className="text-xl font-bold text-gray-900">{title}</h2>
           <div className="text-sm text-gray-500 mt-1">
             {sheetState === 'hidden' && (locale === 'ar' ? 'اضغط لعرض الأماكن' : 'Tap to show places')}
@@ -274,7 +273,9 @@ export default function BottomSheet({
             {sheetState === 'full' && (locale === 'ar' ? 'اسحب للأسفل لتصغير' : 'Swipe down to minimize')}
           </div>
         </div>
-        <div className={`flex items-center space-x-2 ${locale === 'ar' ? 'space-x-reverse' : ''}`}>
+        
+        {/* Buttons - Left for Arabic, Right for English */}
+        <div className={`flex items-center space-x-2 ${locale === 'ar' ? 'space-x-reverse order-1' : 'order-2'}`}>
           {/* Go to Map button - only show when not hidden */}
           {sheetState !== 'hidden' && (
             <button
@@ -291,20 +292,6 @@ export default function BottomSheet({
               </span>
             </button>
           )}
-
-          {/* Close button - only show when not hidden */}
-          {sheetState !== 'hidden' && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setSheetState('hidden');
-              }}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              aria-label={locale === 'ar' ? 'إغلاق' : 'Close'}
-            >
-              <X className="w-5 h-5 text-gray-600" />
-            </button>
-          )}
           
           <ChevronUp 
             className={`w-6 h-6 text-gray-500 transition-transform duration-200 ${
@@ -316,37 +303,31 @@ export default function BottomSheet({
 
       {/* Content */}
       {sheetState !== 'hidden' && (
-        <div 
-          className="flex-1 overflow-hidden"
-          onTouchStart={(e) => e.stopPropagation()}
-          onTouchMove={(e) => e.stopPropagation()}
-          onTouchEnd={(e) => e.stopPropagation()}
-          onWheel={(e) => e.stopPropagation()}
-        >
+        <div className="bottom-sheet-content">
           {sheetState === 'collapsed' ? (
             // Horizontal scroll view for collapsed state (like Airbnb)
-            <PlacesCardsWrapper
-              isMobileMapView={true}
-              categoryId={categoryId}
-              selectedGovernateId={selectedGovernateId}
-              onGovernateChange={onGovernateChange}
-              selectedPlaceId={selectedPlaceId}
-              onPlaceClick={onPlaceClick}
-            />
+            <div className="bottom-sheet-scrollable">
+              <PlacesCardsWrapper
+                isMobileMapView={true}
+                categoryId={categoryId}
+                selectedGovernateId={selectedGovernateId}
+                onGovernateChange={onGovernateChange}
+                selectedCategoryIds={selectedCategoryIds}
+                onCategoryIdsChange={onCategoryIdsChange}
+                selectedPlaceId={selectedPlaceId}
+                onPlaceClick={onPlaceClick}
+              />
+            </div>
           ) : (
             // Vertical grid view for half and full states
-            <div 
-              className="h-full px-6 pb-6"
-              onTouchStart={(e) => e.stopPropagation()}
-              onTouchMove={(e) => e.stopPropagation()}
-              onTouchEnd={(e) => e.stopPropagation()}
-              onWheel={(e) => e.stopPropagation()}
-            >
+            <div className="h-full px-6 pb-6 overflow-hidden">
               <PlacesCardsWrapper
                 isMobileMapView={false}
                 categoryId={categoryId}
                 selectedGovernateId={selectedGovernateId}
                 onGovernateChange={onGovernateChange}
+                selectedCategoryIds={selectedCategoryIds}
+                onCategoryIdsChange={onCategoryIdsChange}
                 selectedPlaceId={selectedPlaceId}
                 onPlaceClick={onPlaceClick}
               />
