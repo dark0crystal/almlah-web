@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import SplashScreen from '@/components/splash/SplashScreen';
 import { FirstVisitModal } from '@/components/modals/FirstVisitModal';
 import { useFirstVisit } from '@/hooks/useFirstVisit';
@@ -12,7 +13,9 @@ interface ClientLayoutWrapperProps {
 }
 
 export default function ClientLayoutWrapper({ children, navbar }: ClientLayoutWrapperProps) {
-  const [showSplash, setShowSplash] = useState(true);
+  const pathname = usePathname();
+  const isMainPage = pathname === '/ar' || pathname === '/en' || pathname === '/';
+  const [showSplash, setShowSplash] = useState(isMainPage);
   const { isFirstVisit, isLoading, markAsVisited } = useFirstVisit();
 
   const handleSplashComplete = () => {
@@ -36,8 +39,8 @@ export default function ClientLayoutWrapper({ children, navbar }: ClientLayoutWr
     console.log('ClientLayoutWrapper - isFirstVisit changed:', isFirstVisit, 'isLoading:', isLoading);
   }, [isFirstVisit, isLoading]);
 
-  // Show splash screen on every page load
-  if (showSplash) {
+  // Show splash screen only on main page
+  if (showSplash && isMainPage) {
     return <SplashScreen onComplete={handleSplashComplete} />;
   }
 

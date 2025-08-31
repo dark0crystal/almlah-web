@@ -286,10 +286,10 @@ export default function ZatarPage() {
                       <button
                         onClick={rollAgain}
                         disabled={state.isLoading}
-                        className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
+                        className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-110 animate-dice-roll"
                         title={t('result.rollAgain')}
                       >
-                        <span className="text-lg">🎲</span>
+                        <span className="text-2xl">🎲</span>
                       </button>
                     </div>
                     
@@ -308,6 +308,28 @@ export default function ZatarPage() {
                             <p className="text-sm">{t('result.noImage')}</p>
                           </div>
                         )}
+                        
+                        {/* Open/Closed Overlay */}
+                        {(() => {
+                          const isOpen = isRestaurantOpen(state.recommendation.opening_time, state.recommendation.closing_time);
+                          if (isOpen === null) return null;
+                          return (
+                            <div className={`absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-2xl ${
+                              isOpen ? '' : 'bg-opacity-70'
+                            }`}>
+                              <div className={`px-6 py-3 rounded-full text-white font-bold text-lg shadow-lg ${
+                                isOpen 
+                                  ? 'bg-green-500' 
+                                  : 'bg-red-500'
+                              }`}>
+                                {isOpen 
+                                  ? t('result.open')
+                                  : t('result.closed')
+                                }
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
 
@@ -324,22 +346,6 @@ export default function ZatarPage() {
                         <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">
                           {state.recommendation.type}
                         </span>
-                        {(() => {
-                          const isOpen = isRestaurantOpen(state.recommendation.opening_time, state.recommendation.closing_time);
-                          if (isOpen === null) return null;
-                          return (
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                              isOpen 
-                                ? 'bg-green-100 text-green-600' 
-                                : 'bg-red-100 text-red-600'
-                            }`}>
-                              {isOpen 
-                                ? t('result.open')
-                                : t('result.closed')
-                              }
-                            </span>
-                          );
-                        })()}
                       </div>
                       
                       {/* Description */}
@@ -377,7 +383,7 @@ export default function ZatarPage() {
                           )}
                         </div>
                         <button
-                          onClick={() => openGoogleMaps(state.recommendation.name, state.recommendation.address)}
+                          onClick={() => state.recommendation && openGoogleMaps(state.recommendation.name, state.recommendation.address)}
                           className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-2xl font-medium transition-all duration-200 transform hover:scale-105 flex items-center gap-2"
                         >
                           <Navigation className="w-4 h-4" />
