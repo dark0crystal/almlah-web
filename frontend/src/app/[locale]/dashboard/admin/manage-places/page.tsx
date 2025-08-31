@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 
 // API Configuration
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:9000/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST ? `${process.env.NEXT_PUBLIC_API_HOST}/api/v1` : 'http://localhost:9000/api/v1';
 
 // Enhanced API Service for place management with image support
 const placeService = {
@@ -641,6 +641,8 @@ export default function ManagePlaces() {
   const [governates, setGovernates] = useState([]);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdateTime, setLastUpdateTime] = useState(new Date());
+  const [newPlacesCount, setNewPlacesCount] = useState(0);
 
   // Load initial data
   useEffect(() => {
@@ -648,6 +650,17 @@ export default function ManagePlaces() {
     loadCategories();
     loadGovernates();
   }, []);
+
+  // Auto-refresh places every 30 seconds for live updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!loading && !error) {
+        refreshData();
+      }
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [loading, error, searchQuery, selectedCategory, selectedGovernate]);
 
   // Load places (images will be fetched separately by each PlaceCard)
   const loadPlaces = async (params = {}) => {
@@ -669,7 +682,17 @@ export default function ManagePlaces() {
       }
       
       if (response.success) {
-        setPlaces(response.data || []);
+        const newPlaces = response.data || [];
+        const previousCount = places.length;
+        setPlaces(newPlaces);
+        setLastUpdateTime(new Date());
+        
+        // Check for new places added
+        if (previousCount > 0 && newPlaces.length > previousCount) {
+          setNewPlacesCount(newPlaces.length - previousCount);
+          // Clear notification after 5 seconds
+          setTimeout(() => setNewPlacesCount(0), 5000);
+        }
       } else {
         throw new Error(response.message || 'Failed to load places');
       }
@@ -793,7 +816,7 @@ export default function ManagePlaces() {
 
   const handleCreate = () => {
     // Navigate to place creation page
-    window.location.href = '/dashboard/places/create';
+    window.location.href = '/places/new';
   };
 
   const hasActiveFilters = searchQuery || selectedCategory || selectedGovernate;
@@ -847,6 +870,18 @@ export default function ManagePlaces() {
           onToggleFilters={() => setShowFilters(!showFilters)}
         />
 
+        {/* Live Update Notification */}
+        {newPlacesCount > 0 && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 animate-pulse">
+            <div className="flex items-center gap-2">
+              <Activity className="w-5 h-5 text-green-600 animate-bounce" />
+              <span className="text-green-800 font-medium">
+                {newPlacesCount} new place{newPlacesCount !== 1 ? 's' : ''} added!
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Results Summary */}
         <div className="flex items-center justify-between mb-6">
           <div className="text-gray-600">
@@ -863,8 +898,14 @@ export default function ManagePlaces() {
           </div>
           
           {!loading && !error && places.length > 0 && (
-            <div className="text-sm text-gray-500">
-              Last updated: {new Date().toLocaleTimeString()}
+            <div className="flex items-center gap-4 text-sm text-gray-500">
+              <div className="flex items-center gap-1">
+                <Activity className="w-4 h-4" />
+                <span>Live updates enabled</span>
+              </div>
+              <div>
+                Last updated: {lastUpdateTime.toLocaleTimeString()}
+              </div>
             </div>
           )}
         </div>

@@ -4,7 +4,18 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { usePermissions } from '@/hooks/usePermissions';
-import { ComponentGuard } from '@/components/guards/AuthGuards';
+import { ComponentGuard, PageGuard } from '@/components/guards/AuthGuards';
+
+interface MenuItem {
+  id: string;
+  label: string;
+  labelEn: string;
+  icon: string;
+  route: string;
+  requiredPermissions?: string[];
+  requiredRoles?: string[];
+  requireAny?: boolean;
+}
 
 const ProtectedDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -13,20 +24,21 @@ const ProtectedDashboard = () => {
   const router = useRouter();
   
   // Zustand store hooks
-  const { user, logout } = useAuthStore();
+  const { user, logout, isInitialized, initialize } = useAuthStore();
   const { 
-    canManage, 
     hasRole, 
-    hasPermission, 
-    isAdmin, 
-    isSuperAdmin,
-    canCreate,
-    canEdit,
-    canDelete 
+    hasPermission 
   } = usePermissions();
 
+  // Initialize auth on component mount
+  useEffect(() => {
+    if (!isInitialized) {
+      initialize();
+    }
+  }, [isInitialized, initialize]);
+
   // Dashboard menu items with role/permission-based filtering
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     {
       id: 'dashboard',
       label: 'لوحة التحكم',
@@ -51,6 +63,15 @@ const ProtectedDashboard = () => {
       icon: '🏷️',
       route: '/dashboard/admin/manage-categories',
       requiredPermissions: ['can_view_category', 'can_create_category', 'can_manage_category'],
+      requireAny: true
+    },
+    {
+      id: 'dishes',
+      label: 'إدارة الأطباق',
+      labelEn: 'Manage Dishes',
+      icon: '🍽️',
+      route: '/dashboard/admin/manage-dishes',
+      requiredPermissions: ['can_view_dish', 'can_create_dish', 'can_manage_dish'],
       requireAny: true
     },
     {
@@ -99,8 +120,8 @@ const ProtectedDashboard = () => {
     }
   ];
 
-  // Filter menu items based on user permissions
-  const filteredMenuItems = menuItems.filter(item => {
+  // Filter menu items based on user permissions (only when auth is initialized)
+  const filteredMenuItems = isInitialized ? menuItems.filter(item => {
     // If no requirements, show to everyone
     if (!item.requiredRoles && !item.requiredPermissions) {
       return true;
@@ -125,10 +146,10 @@ const ProtectedDashboard = () => {
     }
 
     return false;
-  });
+  }) : [];
 
   // Handle navigation
-  const handleNavigation = (item) => {
+  const handleNavigation = (item: MenuItem) => {
     setActiveItem(item.id);
     router.push(item.route);
   };
@@ -160,18 +181,19 @@ const ProtectedDashboard = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 rtl" dir="rtl">
+    <PageGuard>
+      <div className="min-h-screen bg-gray-50 rtl" dir="rtl">
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <div className={`
-        fixed top-0 right-0 h-full bg-white shadow-lg z-30 transition-all duration-300 ease-in-out
+        fixed top-[8vh] right-0 h-[calc(100vh-8vh)] bg-white shadow-lg z-50 transition-all duration-300 ease-in-out
         ${sidebarOpen ? 'w-72' : 'w-20'}
         ${sidebarOpen ? 'translate-x-0' : 'translate-x-0'}
       `}>
@@ -291,7 +313,7 @@ const ProtectedDashboard = () => {
       </div>
 
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${sidebarOpen ? 'mr-72' : 'mr-20'}`}>
+      <div className={`transition-all duration-300 pt-[8vh] ${sidebarOpen ? 'mr-72' : 'mr-20'}`}>
         
         {/* Top Bar */}
         <header className="bg-white shadow-sm border-b border-gray-200">
@@ -326,7 +348,7 @@ const ProtectedDashboard = () => {
               </ComponentGuard>
 
               {/* Settings */}
-              <ComponentGuard requiredRoles={['admin', 'super_admin']} requireAny={true}>
+              <ComponentGuard requiredRoles={['admin', 'super_admin']} requireAll={false}>
                 <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -346,7 +368,7 @@ const ProtectedDashboard = () => {
             {/* Total Places - Visible to users who can view places */}
             <ComponentGuard 
               requiredPermissions={['can_view_place', 'can_manage_place']} 
-              requireAny={true}
+              requireAll={false}
               showFallback={false}
             >
               <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
@@ -369,7 +391,7 @@ const ProtectedDashboard = () => {
             {/* Active Users - Admin only */}
             <ComponentGuard 
               requiredPermissions={['can_manage_user', 'can_view_user']} 
-              requireAny={true}
+              requireAll={false}
               showFallback={false}
             >
               <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
@@ -392,7 +414,7 @@ const ProtectedDashboard = () => {
             {/* Categories */}
             <ComponentGuard 
               requiredPermissions={['can_view_category', 'can_manage_category']} 
-              requireAny={true}
+              requireAll={false}
               showFallback={false}
             >
               <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
@@ -415,7 +437,7 @@ const ProtectedDashboard = () => {
             {/* Governates - Admin only */}
             <ComponentGuard 
               requiredRoles={['admin', 'super_admin']} 
-              requireAny={true}
+              requireAll={false}
               showFallback={false}
             >
               <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
@@ -449,7 +471,7 @@ const ProtectedDashboard = () => {
                   showFallback={false}
                 >
                   <button 
-                    onClick={() => router.push('/dashboard/places/create')}
+                    onClick={() => router.push('/places/new')}
                     className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-center"
                   >
                     <div className="text-2xl mb-2">➕</div>
@@ -485,7 +507,7 @@ const ProtectedDashboard = () => {
                 
                 <ComponentGuard 
                   requiredRoles={['admin', 'super_admin']}
-                  requireAny={true}
+                  requireAll={false}
                   showFallback={false}
                 >
                   <button 
@@ -572,7 +594,8 @@ const ProtectedDashboard = () => {
           </ComponentGuard>
         </main>
       </div>
-    </div>
+      </div>
+    </PageGuard>
   );
 };
 

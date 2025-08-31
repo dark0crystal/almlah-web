@@ -284,7 +284,7 @@ const SignupForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="mx-auto h-12 w-12 bg-blue-600 rounded-full flex items-center justify-center mb-4">
@@ -507,7 +507,7 @@ const SignupPage = () => {
   // Show loading while checking auth status
   if (!isInitialized || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Loader className="animate-spin text-blue-600 mx-auto mb-4" size={32} />
           <p className="text-gray-600">Checking authentication...</p>
@@ -519,7 +519,7 @@ const SignupPage = () => {
   // Don't render signup form if user is already authenticated
   if (isAuthenticated()) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <CheckCircle className="text-green-500 mx-auto mb-4" size={32} />
           <p className="text-gray-600">Already logged in! Redirecting...</p>
