@@ -88,12 +88,4 @@ export const categoriesData: CategoryData[] = [
     bgImage: chai,
     href: "/about-us"
   },
-  {
-    title: "لوحة التحكم",
-    subtitle: "الإدارة",
-    icon: "⚙️",
-    bgColor: "bg-gradient-to-br from-red-500 to-pink-600",
-    bgImage: chai,
-    href: "/dashboard"
-  },
 ];

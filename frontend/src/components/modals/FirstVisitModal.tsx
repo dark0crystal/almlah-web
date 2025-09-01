@@ -9,7 +9,7 @@ const cars: Car[] = [
   { id: '2', name: 'RB3', image: '/rb3.png' },
   { id: '3', name: 'Chai', image: '/G63.png' },
   { id: '4', name: 'Khayma', image: '/khayma.png' },
-  { id: '5', name: 'Samhah', image: '/samhah.png' },
+  { id: '5', name: 'G63', image: '/G63.png' },
 ];
 
 interface FirstVisitModalProps {
@@ -146,6 +146,8 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
 
   const handleConfirm = () => {
     if (selectedCar) {
+      // Save selected car to localStorage for Brand component
+      localStorage.setItem('selectedCar', JSON.stringify(selectedCar));
       onCarSelect(selectedCar);
       onClose();
     }
@@ -165,7 +167,7 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
         <div className="flex flex-col items-center justify-center min-h-screen">
           <div className="text-center mb-8 sm:mb-12">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2 sm:mb-4">{t('welcome')}</h2>
-            <p className="text-white/80 text-lg sm:text-xl">{t('subtitle')}</p>
+            <p className="text-white/80 text-lg sm:text-xl">اختر موترك ، ونعطيك على جوك</p>
           </div>
 
           {/* Car slider */}

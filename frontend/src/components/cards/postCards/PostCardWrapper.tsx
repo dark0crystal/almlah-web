@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import PostCard from './PostCard';
-import { fetchRecentPlaces, transformRecentPlacesToPlaces, formatRelativeTime } from '../../../services/placesApi';
+import { fetchRecentPlaces, transformRecentPlacesToPlaces, formatRelativeTime, fetchTourismPlaces, fetchPlacesByWilayah } from '../../../services/placesApi';
 import { Place } from '@/types';
 
 // Enhanced interface for our post data with API integration
@@ -91,29 +91,62 @@ export default function PostCardsWrapper({
   };
 
   /**
-   * Fetch places from API using the new recent places endpoint
+   * Fetch places from API - either recent places or governate-specific places
    */
   const fetchPlaces = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Use the optimized recent places endpoint
-      const response = await fetchRecentPlaces(
-        20, // limit
-        6,  // minCount
-        true, // fallback
-        true  // includeStats
-      );
-
-      // Transform to our format
-      const transformedPlaces = transformRecentPlacesToPlaces(response.places);
-      const convertedPosts = transformedPlaces.map(convertPlaceToPost);
+      let places: Place[] = [];
       
-      setPosts(convertedPosts);
-      setNewPlacesCount(response.new_count);
-      setHasFallback(response.has_fallback);
+      if (wilayahId) {
+        // Fetch places for specific wilayah
+        places = await fetchPlacesByWilayah(wilayahId);
+        
+        // Mark all places as new if they're from the last week (for visual consistency)
+        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        places = places.map(place => ({
+          ...place,
+          isNew: place.created_at && new Date(place.created_at) > oneWeekAgo
+        }));
+        
+        const convertedPosts = places.map(convertPlaceToPost);
+        setPosts(convertedPosts);
+        setNewPlacesCount(places.filter(p => p.isNew).length);
+        setHasFallback(false);
+      } else if (governateId) {
+        // Fetch places for specific governate using tourism places API
+        places = await fetchTourismPlaces(governateId);
+        
+        // Mark all places as new if they're from the last week (for visual consistency)
+        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        places = places.map(place => ({
+          ...place,
+          isNew: place.created_at && new Date(place.created_at) > oneWeekAgo
+        }));
+        
+        const convertedPosts = places.map(convertPlaceToPost);
+        setPosts(convertedPosts);
+        setNewPlacesCount(places.filter(p => p.isNew).length);
+        setHasFallback(false);
+      } else {
+        // Use the optimized recent places endpoint for general display
+        const response = await fetchRecentPlaces(
+          20, // limit
+          6,  // minCount
+          true, // fallback
+          true  // includeStats
+        );
 
+        // Transform to our format
+        const transformedPlaces = transformRecentPlacesToPlaces(response.places);
+        const convertedPosts = transformedPlaces.map(convertPlaceToPost);
+        
+        setPosts(convertedPosts);
+        setNewPlacesCount(response.new_count);
+        setHasFallback(response.has_fallback);
+      }
 
     } catch (err) {
       setError(err instanceof Error ? err.message : t('error.message'));
@@ -231,7 +264,7 @@ export default function PostCardsWrapper({
   // Fetch data on component mount
   useEffect(() => {
     fetchPlaces();
-  }, [categoryId, governateId, currentLanguage]);
+  }, [categoryId, governateId, wilayahId, currentLanguage]);
 
   // Set up scroll event listener and mouse events
   useEffect(() => {
@@ -449,30 +482,6 @@ export default function PostCardsWrapper({
           ))}
         </div>
 
-        {/* Scroll Indicators (optional - subtle gradient overlays) */}
-        {posts.length > 3 && (
-          <>
-            {canScrollLeft && (
-              <div 
-                className={`
-                  absolute left-0 top-0 bottom-4 w-8 bg-gradient-to-r from-white to-transparent 
-                  pointer-events-none z-10
-                  ${currentLanguage === 'ar' ? 'hidden' : ''}
-                `} 
-              />
-            )}
-            
-            {canScrollRight && (
-              <div 
-                className={`
-                  absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-white to-transparent 
-                  pointer-events-none z-10
-                  ${currentLanguage === 'ar' ? 'hidden' : ''}
-                `} 
-              />
-            )}
-          </>
-        )}
       </div>
 
       {/* Scroll Hint for Mobile */}
