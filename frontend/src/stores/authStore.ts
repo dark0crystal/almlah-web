@@ -13,7 +13,7 @@ interface User {
   userType: string;
   provider: string;
   isVerified: boolean;
-  roles: Role[];
+  roles: UserRole[];
   permissions: string[];
 }
 
@@ -22,6 +22,34 @@ interface Role {
   name: string;
   displayName: string;
   isActive: boolean;
+}
+
+interface UserRole {
+  id: string;
+  assigned_at: string;
+  assigned_by: {
+    id: string;
+    username: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+  };
+  expires_at: string | null;
+  is_active: boolean;
+  role: {
+    id: string;
+    name: string;
+    display_name: string;
+    is_active: boolean;
+  };
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    full_name: string;
+  };
 }
 
 interface AuthState {
@@ -84,6 +112,8 @@ const getTokenFromStorage = (): string | null => {
 const setTokenInStorage = (token: string): void => {
   if (typeof window === 'undefined') return;
   localStorage.setItem('authToken', token);
+  // Also set as httpOnly cookie for server-side access
+  document.cookie = `authToken=${token}; path=/; max-age=${7 * 24 * 60 * 60}; secure; samesite=strict`;
 };
 
 const removeTokenFromStorage = (): void => {
@@ -91,6 +121,8 @@ const removeTokenFromStorage = (): void => {
   localStorage.removeItem('authToken');
   // Also remove old format if it exists
   localStorage.removeItem('auth-storage');
+  // Clear the cookie
+  document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 };
 
 // Create Zustand store (without persist middleware)
@@ -211,7 +243,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   hasRole: (roleName: string) => {
     const { user } = get();
     if (!user?.roles) return false;
-    return user.roles.some(role => role.name === roleName && role.isActive);
+    return user.roles.some(userRole => 
+      userRole.role?.name === roleName && userRole.role?.is_active && userRole.is_active
+    );
   },
 
   hasAnyRole: (roleNames: string[]) => {

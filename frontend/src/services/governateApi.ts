@@ -251,6 +251,44 @@ export const fetchWilayahImages = async (wilayahId: string): Promise<WilayahImag
   }
 };
 
+// Fetch wilayah by ID
+export const fetchWilayahById = async (wilayahId: string): Promise<SimpleWilayah | null> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/wilayahs/${wilayahId}`, {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      next: { revalidate: 3600 }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error:', errorText);
+      throw new Error(`Failed to fetch wilayah: ${response.status}`);
+    }
+
+    const responseData = await response.json();
+    console.log('Wilayah details API Response:', responseData);
+
+    // Handle different response structures
+    let wilayahData: SimpleWilayah;
+    if (responseData.success && responseData.data) {
+      wilayahData = responseData.data;
+    } else if (responseData.data) {
+      wilayahData = responseData.data;
+    } else {
+      console.error('Unexpected response format:', responseData);
+      return null;
+    }
+
+    return wilayahData;
+  } catch (error) {
+    console.error('Error fetching wilayah details:', error);
+    throw error;
+  }
+};
+
 // Utility functions
 export const getGovernateImageUrl = (imageUrl: string): string => {
   console.log('getGovernateImageUrl called with:', imageUrl);

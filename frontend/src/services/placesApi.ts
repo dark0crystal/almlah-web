@@ -262,6 +262,97 @@ export const fetchEntertainmentPlaces = async (governateId?: string | null): Pro
   return fetchPlaces(CATEGORY_IDS.ENTERTAINMENT, governateId);
 };
 
+// Fetch places by wilayah ID
+export const fetchPlacesByWilayah = async (wilayahId: string): Promise<Place[]> => {
+  try {
+    const url = `${API_BASE_URL}/places?wilayah_id=${wilayahId}`;
+    
+    const response = await fetch(url, {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      next: { revalidate: 1800 }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch places for wilayah: ${response.status}`);
+    }
+
+    const responseData = await response.json();
+    console.log('Wilayah places API Response:', responseData);
+
+    let placesData: BackendPlaceResponse[] = [];
+    if (responseData.success && Array.isArray(responseData.data)) {
+      placesData = responseData.data;
+    } else if (Array.isArray(responseData.data)) {
+      placesData = responseData.data;
+    } else if (Array.isArray(responseData)) {
+      placesData = responseData;
+    } else {
+      console.error('Unexpected response format:', responseData);
+      return [];
+    }
+
+    // Transform to frontend Place type (similar to fetchPlaces function)
+    const transformedPlaces = placesData.map(place => {
+      const transformedPlace: Place = {
+        id: place.id,
+        name_ar: place.name_ar || '',
+        name_en: place.name_en || '',
+        description_ar: '',
+        description_en: '',
+        slug: '',
+        lat: place.latitude || 0,
+        lng: place.longitude || 0,
+        governate_id: place.governate?.id || '',
+        wilayah_id: place.wilayah?.id || '',
+        category_id: place.category?.id || '',
+        primary_image: place.primary_image?.url || '',
+        is_featured: false,
+        is_active: true,
+        created_at: '',
+        updated_at: '',
+        governate: place.governate,
+        wilayah: place.wilayah,
+        images: place.primary_image ? [{
+          id: place.primary_image.id,
+          place_id: place.id,
+          image_url: place.primary_image.url,
+          alt_text_ar: '',
+          alt_text_en: '',
+          caption_ar: '',
+          caption_en: '',
+          is_primary: true,
+          display_order: 1,
+          upload_date: ''
+        }] : [],
+        categories: place.category ? [{
+          id: place.category.id,
+          name_ar: place.category.name_ar || '',
+          name_en: place.category.name_en || '',
+          description_ar: '',
+          description_en: '',
+          slug: '',
+          icon: '',
+          color: '',
+          is_active: true,
+          sort_order: 0,
+          created_at: '',
+          updated_at: ''
+        }] : []
+      };
+
+      return transformedPlace;
+    });
+
+    return transformedPlaces;
+  } catch (error) {
+    console.error('Error fetching places by wilayah:', error);
+    throw error;
+  }
+};
+
 // UTILITY: Get category name for display
 export const getCategoryName = (categoryType: CategoryType, locale: 'ar' | 'en' = 'en'): string => {
   const names = {
