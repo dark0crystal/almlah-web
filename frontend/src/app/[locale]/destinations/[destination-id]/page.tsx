@@ -319,7 +319,7 @@ export default function GovernateDetailsPage({ params }: GovernateDetailsProps) 
           )}
 
           {/* Places to Visit Section */}
-          <div className="mt-12 overflow-hidden">
+          <div className="mt-12">
             <PostCardsWrapper 
               governateId={governate.id}
               title={locale === 'ar' ? 'الأماكن المراد زيارتها' : 'Places to Visit'}

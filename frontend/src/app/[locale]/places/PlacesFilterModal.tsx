@@ -52,6 +52,7 @@ export default function PlacesFilterModal({
           fetchCategories()
         ]);
         setGovernates(governatesData);
+        console.log('Places filter - loaded categories:', categoriesData);
         setCategories(categoriesData);
       } catch (error) {
         console.error('Error loading filter data:', error);
@@ -100,7 +101,10 @@ export default function PlacesFilterModal({
   };
 
   const getCategoryName = (category: Category): string => {
-    return locale === 'ar' ? category.name_ar : category.name_en;
+    console.log('Getting category name for:', category, 'locale:', locale);
+    const name = locale === 'ar' ? category.name_ar : category.name_en;
+    console.log('Resolved name:', name);
+    return name || category.name_ar || category.name_en || 'Unknown Category';
   };
 
   const hasActiveFilters = tempGovernateId !== null || tempCategoryIds.length > 0;

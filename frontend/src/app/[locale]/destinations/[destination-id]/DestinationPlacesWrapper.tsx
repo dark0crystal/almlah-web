@@ -67,7 +67,7 @@ export default function DestinationPlacesWrapper({
 
   if (loading) {
     return (
-      <div className="w-full py-8">
+      <div className="max-w-5xl mx-auto py-8 px-4">
         <div className={`flex items-center gap-3 mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
           <MapPin className="w-6 h-6 text-emerald-600" />
           <h2 className="text-2xl font-bold text-gray-800">
@@ -87,7 +87,7 @@ export default function DestinationPlacesWrapper({
 
   if (error) {
     return (
-      <div className="w-full py-8">
+      <div className="max-w-5xl mx-auto py-8 px-4">
         <div className={`flex items-center gap-3 mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
           <MapPin className="w-6 h-6 text-emerald-600" />
           <h2 className="text-2xl font-bold text-gray-800">
@@ -106,7 +106,7 @@ export default function DestinationPlacesWrapper({
 
   if (places.length === 0) {
     return (
-      <div className="w-full py-8">
+      <div className="max-w-5xl mx-auto py-8 px-4">
         <div className={`flex items-center gap-3 mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
           <MapPin className="w-6 h-6 text-emerald-600" />
           <h2 className="text-2xl font-bold text-gray-800">
@@ -127,7 +127,7 @@ export default function DestinationPlacesWrapper({
   }
 
   return (
-    <div className="w-full py-8">
+    <div className="max-w-5xl mx-auto py-8 px-4">
       {/* Section Header */}
       <div className={`flex items-center justify-between mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
         <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
