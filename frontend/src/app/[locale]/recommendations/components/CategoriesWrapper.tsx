@@ -13,7 +13,7 @@ export default function CategoriesWrapper({ locale }: CategoriesWrapperProps) {
 
   return (
     <div className="py-12 bg-gray-50">
-      <div className="w-[88vw] px-4">
+      <div className="w-[88vw] mx-auto px-4">
         {/* Section Header */}
         <div className={`text-center mb-12 ${locale === 'ar' ? 'rtl' : 'ltr'}`}>
           <div className="inline-flex items-center gap-3 mb-4">
