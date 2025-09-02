@@ -5,10 +5,10 @@ import { useTranslations } from 'next-intl';
 import { Car } from '@/types';
 
 const cars: Car[] = [
-  { id: '1', name: 'Al Ryam', image: '/alryam.png' },
+  { id: '1', name: 'Mini Coper', image: '/minicober.png' },
   { id: '2', name: 'RB3', image: '/rb3.png' },
-  { id: '3', name: 'Chai', image: '/G63.png' },
-  { id: '4', name: 'Khayma', image: '/khayma.png' },
+  { id: '3', name: 'G63', image: '/G63.png' },
+  { id: '4', name: 'Land Cruiser', image: '/landcruiser.png' },
   { id: '5', name: 'G63', image: '/G63.png' },
 ];
 
