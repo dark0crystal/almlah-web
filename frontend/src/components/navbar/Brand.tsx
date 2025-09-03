@@ -14,11 +14,10 @@ const lalezarFont = Lalezar({
 // Map car names to video file names
 const getVideoFileName = (carName: string): string => {
     const nameMap: { [key: string]: string } = {
-        'Al Ryam': 'alryam',
+        'Mini Coper': 'minicober',
         'RB3': 'rb3',
-        'Chai': 'chai',
-        'Khayma': 'khayma',
-        'G63': 'g63'
+        'G63': 'g63',
+        'Land Cruiser': 'landcruiser'
     };
     
     return nameMap[carName] || 'rb3'; // Default to rb3 if not found
