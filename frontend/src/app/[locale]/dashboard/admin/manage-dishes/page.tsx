@@ -46,6 +46,29 @@ interface Governate {
   slug: string;
 }
 
+interface DishFormData {
+  name_ar: string;
+  name_en: string;
+  description_ar: string;
+  description_en: string;
+  slug: string;
+  governate_id: string;
+  preparation_time_minutes: number;
+  serving_size: number;
+  difficulty: 'easy' | 'medium' | 'hard';
+  is_traditional: boolean;
+  is_featured: boolean;
+  is_active: boolean;
+  sort_order: number;
+  images: {
+    image_url: string;
+    alt_text_ar: string;
+    alt_text_en: string;
+    is_primary: boolean;
+    display_order: number;
+  }[];
+}
+
 interface DishListResponse {
   dishes: Dish[];
   total: number;
@@ -57,7 +80,7 @@ interface DishListResponse {
 // API service functions
 const API_HOST = 'http://127.0.0.1:9000';
 
-const apiCall = async (endpoint: string, options: RequestInit = {}): Promise<any> => {
+const apiCall = async (endpoint: string, options: RequestInit = {}): Promise<{ data: unknown; message?: string }> => {
   const token = localStorage.getItem('authToken');
   
   const response = await fetch(`${API_HOST}${endpoint}`, {
@@ -85,17 +108,28 @@ const apiCall = async (endpoint: string, options: RequestInit = {}): Promise<any
 };
 
 const dishService = {
-  getAll: async (params: any = {}): Promise<DishListResponse> => {
+  getAll: async (params: {
+    search?: string;
+    governate_id?: string;
+    difficulty?: string;
+    is_traditional?: boolean;
+    is_featured?: boolean;
+    is_active?: boolean;
+    page?: number;
+    page_size?: number;
+    sort_by?: string;
+    sort_order?: string;
+  } = {}): Promise<DishListResponse> => {
     const queryParams = new URLSearchParams();
     
     if (params.search) queryParams.append('search', params.search);
     if (params.governate_id) queryParams.append('governate_id', params.governate_id);
     if (params.difficulty) queryParams.append('difficulty', params.difficulty);
-    if (params.is_traditional !== undefined) queryParams.append('is_traditional', params.is_traditional);
-    if (params.is_featured !== undefined) queryParams.append('is_featured', params.is_featured);
-    if (params.is_active !== undefined) queryParams.append('is_active', params.is_active);
-    if (params.page) queryParams.append('page', params.page);
-    if (params.page_size) queryParams.append('page_size', params.page_size);
+    if (params.is_traditional !== undefined) queryParams.append('is_traditional', params.is_traditional.toString());
+    if (params.is_featured !== undefined) queryParams.append('is_featured', params.is_featured.toString());
+    if (params.is_active !== undefined) queryParams.append('is_active', params.is_active.toString());
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params.sort_by) queryParams.append('sort_by', params.sort_by);
     if (params.sort_order) queryParams.append('sort_order', params.sort_order);
 
@@ -103,28 +137,30 @@ const dishService = {
     const url = `/api/v1/dishes${queryString ? `?${queryString}` : ''}`;
     
     const response = await apiCall(url);
-    return response.data;
+    return response.data as DishListResponse;
   },
 
   getById: async (id: string): Promise<Dish> => {
     const response = await apiCall(`/api/v1/dishes/${id}`);
-    return response.data;
+    return response.data as Dish;
   },
 
-  create: async (data: any): Promise<Dish> => {
+  create: async (data: DishFormData): Promise<Dish> => {
+    console.log('🚀 Sending dish creation request with data:', data);
+    console.log('🖼️ Images being sent:', data.images);
     const response = await apiCall('/api/v1/dishes', {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return response.data;
+    return response.data as Dish;
   },
 
-  update: async (id: string, data: any): Promise<Dish> => {
+  update: async (id: string, data: DishFormData): Promise<Dish> => {
     const response = await apiCall(`/api/v1/dishes/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-    return response.data;
+    return response.data as Dish;
   },
 
   delete: async (id: string): Promise<void> => {
@@ -137,7 +173,7 @@ const dishService = {
 const governateService = {
   getAll: async (): Promise<Governate[]> => {
     const response = await apiCall('/api/v1/governates');
-    return response.data;
+    return response.data as Governate[];
   }
 };
 
@@ -223,7 +259,7 @@ export default function ManageDishesPage() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleSave = async (data: any) => {
+  const handleSave = async (data: DishFormData) => {
     try {
       if (editingDish) {
         await dishService.update(editingDish.id, data);

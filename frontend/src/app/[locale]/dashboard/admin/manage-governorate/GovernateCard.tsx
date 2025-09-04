@@ -2,39 +2,68 @@
 import React from 'react';
 import { Edit, Trash2, MapPin, Eye, Image as ImageIcon } from 'lucide-react';
 
+interface Governate {
+  id: string;
+  name_ar: string;
+  name_en: string;
+  subtitle_ar?: string;
+  subtitle_en?: string;
+  description_ar?: string;
+  description_en?: string;
+  slug: string;
+  latitude?: number;
+  longitude?: number;
+  sort_order: number;
+  is_active?: boolean;
+  wilayah_count?: number;
+  place_count?: number;
+  images?: unknown[];
+  gallery_images?: string;
+}
+
 interface GovernateCardProps {
-  governate: any;
-  onEdit: (governate: any) => void;
-  onDelete: (governate: any) => void;
-  onViewWilayahs: (governate: any) => void;
+  governate: Governate;
+  onEdit: (governate: Governate) => void;
+  onDelete: (governate: Governate) => void;
+  onViewWilayahs: (governate: Governate) => void;
   currentLang: string;
 }
 
 // Helper function to get display name based on current language
-const getDisplayName = (item: any, currentLang: string): string => {
+const getDisplayName = (item: Governate | null, currentLang: string): string => {
   if (!item) return '';
   return currentLang === 'ar' ? item.name_ar : item.name_en;
 };
 
 // Helper function to get display subtitle based on current language
-const getDisplaySubtitle = (item: any, currentLang: string): string => {
+const getDisplaySubtitle = (item: Governate | null, currentLang: string): string => {
   if (!item) return '';
-  return currentLang === 'ar' ? item.subtitle_ar : item.subtitle_en;
+  return currentLang === 'ar' ? (item.subtitle_ar || '') : (item.subtitle_en || '');
 };
 
 // Helper function to get display description based on current language
-const getDisplayDescription = (item: any, currentLang: string): string => {
+const getDisplayDescription = (item: Governate | null, currentLang: string): string => {
   if (!item) return '';
-  return currentLang === 'ar' ? item.description_ar : item.description_en;
+  return currentLang === 'ar' ? (item.description_ar || '') : (item.description_en || '');
 };
 
 // Helper function to parse gallery images
-const parseGalleryImages = (galleryImagesJson: string | null): any[] => {
+interface GalleryImage {
+  id: string;
+  path: string;
+  alt_text: string;
+  caption: string;
+  is_primary: boolean;
+  display_order: number;
+  url: string;
+}
+
+const parseGalleryImages = (galleryImagesJson: string | null): GalleryImage[] => {
   if (!galleryImagesJson) return [];
   
   try {
     const parsed = JSON.parse(galleryImagesJson);
-    return Array.isArray(parsed) ? parsed.map((img: any, index: number) => ({
+    return Array.isArray(parsed) ? parsed.map((img: { id?: string; path: string; alt_text?: string; caption?: string; is_primary?: boolean; display_order?: number; url: string }, index: number) => ({
       id: img.id || `existing-${index}`,
       path: img.path,
       alt_text: img.alt_text || '',

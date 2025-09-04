@@ -6,6 +6,45 @@ import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { GovernateCard } from './GovernateCard';
 import { GovernateFormModal } from './GovernateFormModal';
 
+// Type definitions
+interface Governate {
+  id: string;
+  name_ar: string;
+  name_en: string;
+  subtitle_ar?: string;
+  subtitle_en?: string;
+  slug: string;
+  description_ar?: string;
+  description_en?: string;
+  latitude?: string;
+  longitude?: string;
+  sort_order: number;
+  images?: GovernateImage[];
+  gallery_images?: string;
+}
+
+interface GovernateImage {
+  id: string;
+  image_url: string;
+  alt_text: string;
+  is_primary: boolean;
+  display_order: number;
+}
+
+interface GovernateFormData {
+  name_ar: string;
+  name_en: string;
+  subtitle_ar?: string;
+  subtitle_en?: string;
+  slug: string;
+  description_ar?: string;
+  description_en?: string;
+  latitude?: string;
+  longitude?: string;
+  sort_order: number;
+  gallery_images: any[];
+}
+
 // API service functions
 const API_HOST = 'http://localhost:9000';
 
@@ -72,7 +111,7 @@ const governateAPI = {
     }
   },
 
-  create: async (governateData: any) => {
+  create: async (governateData: GovernateFormData) => {
     console.log('Creating governate with data:', governateData);
     try {
       const response = await fetch(`${API_HOST}/api/v1/governates`, {
@@ -105,7 +144,7 @@ const governateAPI = {
     }
   },
 
-  update: async (id: string, governateData: any) => {
+  update: async (id: string, governateData: GovernateFormData) => {
     try {
       const response = await fetch(`${API_HOST}/api/v1/governates/${id}`, {
         method: 'PUT',
@@ -180,14 +219,14 @@ const governateAPI = {
 
 // Main ManageGovernorate Component
 export default function ManageGovernorate() {
-  const [governorates, setGovernorates] = useState<any[]>([]);
-  const [filteredGovernorates, setFilteredGovernorates] = useState<any[]>([]);
+  const [governorates, setGovernorates] = useState<Governate[]>([]);
+  const [filteredGovernorates, setFilteredGovernorates] = useState<Governate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [selectedGovernate, setSelectedGovernate] = useState<any>(null);
+  const [selectedGovernate, setSelectedGovernate] = useState<Governate | null>(null);
   const [currentLang, setCurrentLang] = useState('en');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
@@ -288,7 +327,7 @@ export default function ManageGovernorate() {
     }
   };
 
-  const handleSaveGovernate = async (id: string | null, governateData: any) => {
+  const handleSaveGovernate = async (id: string | null, governateData: GovernateFormData) => {
     try {
       let result;
       if (id) {
@@ -321,7 +360,7 @@ export default function ManageGovernorate() {
     }
   };
 
-  const handleViewWilayahs = async (governate: any) => {
+  const handleViewWilayahs = async (governate: Governate) => {
     try {
       const wilayahs = await governateAPI.getWilayahs(governate.id);
       console.log('Wilayahs for', governate.name_en, ':', wilayahs);

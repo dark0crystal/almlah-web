@@ -756,7 +756,7 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-sm font-medium text-gray-700">Add New Image</h4>
                 <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                  Select image, then click "Add Image" button
+                  Select image, then click &quot;Add Image&quot; button
                 </span>
               </div>
               
