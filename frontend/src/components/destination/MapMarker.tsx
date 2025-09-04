@@ -1,10 +1,10 @@
 "use client"
 
 import React, { useState } from 'react';
-import { MapPin } from 'lucide-react';
 import { useLocale } from 'next-intl';
+import { MapMarkerProps } from './types';
 
-export default function MapMarker({ destination, isActive, onClick }) {
+export default function MapMarker({ destination, isActive = false, onClick }: MapMarkerProps) {
   const locale = useLocale();
   const [imageError, setImageError] = useState(false);
 
@@ -57,7 +57,7 @@ export default function MapMarker({ destination, isActive, onClick }) {
         }`}>
           {getImageSrc() && !imageError ? (
             <img 
-              src={getImageSrc()}
+              src={getImageSrc() || undefined}
               alt={getDisplayName()}
               className="w-full h-full rounded-full object-cover"
               onError={() => setImageError(true)}

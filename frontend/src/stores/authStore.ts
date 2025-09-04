@@ -169,7 +169,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
       const userData: User = {
         ...profileResponse.data.user,
-        permissions: permissionsResponse.data.map((p: any) => p.name),
+        permissions: permissionsResponse.data.map((p: { name: string }) => p.name),
         roles: rolesResponse.data
       };
 
