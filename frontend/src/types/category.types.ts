@@ -35,9 +35,9 @@ export interface FormErrors {
   [key: string]: string;
 }
 
-export interface APIResponse {
+export interface APIResponse<T = unknown> {
   success: boolean;
-  data?: any;
+  data?: T;
   error?: string;
 }
 

@@ -125,7 +125,7 @@ export type ContentSectionImage = z.infer<typeof contentSectionImageSchema>;
 export type PlaceImage = z.infer<typeof placeImageSchema>;
 
 // Validation functions
-export const validateStep = (step: number, data: any) => {
+export const validateStep = (step: number, data: Record<string, unknown>) => {
   switch (step) {
     case 1:
       return categorySelectionSchema.safeParse(data);

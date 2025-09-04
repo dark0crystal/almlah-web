@@ -523,7 +523,7 @@ export const fetchPlaceByIdWithLanguage = async (placeId: string, language: 'ar'
       governate_id: placeData.governate?.id || '',
       wilayah_id: placeData.wilayah?.id || '',
       category_id: placeData.categories?.[0]?.id || '',
-      primary_image: placeData.images?.find((img: any) => img.is_primary)?.url || 
+      primary_image: placeData.images?.find((img: { is_primary: boolean; url: string }) => img.is_primary)?.url || 
                      placeData.images?.[0]?.url || '',
       phone: placeData.phone || '',
       email: placeData.email || '',
@@ -546,7 +546,7 @@ export const fetchPlaceByIdWithLanguage = async (placeId: string, language: 'ar'
         name_en: language === 'en' ? placeData.wilayah.name : '',
         slug: placeData.wilayah.slug
       } : undefined,
-      images: placeData.images?.map((img: any) => ({
+      images: placeData.images?.map((img: { id: string; url: string; alt_text_ar: string; alt_text_en: string; is_primary: boolean; display_order: number }) => ({
         id: img.id,
         place_id: placeData.id,
         image_url: img.url,
@@ -559,7 +559,7 @@ export const fetchPlaceByIdWithLanguage = async (placeId: string, language: 'ar'
         created_at: '',
         updated_at: ''
       })) || [],
-      content_sections: placeData.content_sections?.map((section: any) => ({
+      content_sections: placeData.content_sections?.map((section: { id?: string; title_ar: string; title_en: string; content_ar: string; content_en: string; display_order: number; images?: any[] }) => ({
         id: section.id,
         section_type: section.section_type,
         title_ar: language === 'ar' ? section.title : '',
@@ -567,7 +567,7 @@ export const fetchPlaceByIdWithLanguage = async (placeId: string, language: 'ar'
         content_ar: language === 'ar' ? section.content : '',
         content_en: language === 'en' ? section.content : '',
         sort_order: section.sort_order,
-        images: section.images?.map((img: any) => ({
+        images: section.images?.map((img: { id: string; url: string; alt_text_ar: string; alt_text_en: string; is_primary: boolean; display_order: number }) => ({
           id: img.id,
           image_url: img.image_url,
           alt_text_ar: img.alt_text_ar,
@@ -577,13 +577,13 @@ export const fetchPlaceByIdWithLanguage = async (placeId: string, language: 'ar'
           sort_order: img.sort_order
         })) || []
       })) || [],
-      properties: placeData.properties?.map((prop: any) => ({
+      properties: placeData.properties?.map((prop: { id: string; key: string; value: string; display_order: number }) => ({
         id: prop.id,
         name: prop.name,
         icon: prop.icon,
         type: prop.type
       })) || [],
-      categories: placeData.categories?.map((cat: any) => ({
+      categories: placeData.categories?.map((cat: { id: string; name_ar: string; name_en: string }) => ({
         id: cat.id,
         name_ar: language === 'ar' ? cat.name : '',
         name_en: language === 'en' ? cat.name : '',
@@ -916,7 +916,7 @@ export const fetchCategories = async (): Promise<any[]> => {
       return [];
     }
 
-    return data.map((cat: any) => ({
+    return data.map((cat: { id: string; name_ar: string; name_en: string; description_ar?: string; description_en?: string; slug: string; is_active: boolean }) => ({
       id: cat.id,
       name_ar: cat.name_ar || '',
       name_en: cat.name_en || '',
@@ -956,7 +956,7 @@ export const fetchGovernates = async (): Promise<Governate[]> => {
       return [];
     }
 
-    return data.map((gov: any) => ({
+    return data.map((gov: { id: string; name_ar: string; name_en: string; slug: string }) => ({
       id: gov.id,
       name_ar: gov.name_ar || '',
       name_en: gov.name_en || '',
