@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 
 export interface PendingImageUpload {
@@ -31,7 +31,55 @@ export default function ImageUpload({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const displayImage = previewUrl || currentImage;
+  // Helper function to check if a string is a valid URL
+  const isValidUrl = (string: string) => {
+    try {
+      new URL(string);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
+  // Helper function to check if a string is a data URL (base64)
+  const isDataUrl = (string: string) => {
+    return string.startsWith('data:');
+  };
+
+  // Helper function to check if a string is a blob URL
+  const isBlobUrl = (string: string) => {
+    return string.startsWith('blob:');
+  };
+
+  // Get the display image with proper URL handling
+  const getDisplayImage = () => {
+    const image = previewUrl || currentImage;
+    if (!image) return null;
+    
+    // If it's already a valid URL, data URL, or blob URL, use it as is
+    if (isValidUrl(image) || isDataUrl(image) || isBlobUrl(image)) {
+      return image;
+    }
+    
+    // If it's a relative path, make it absolute
+    if (image.startsWith('/')) {
+      return image;
+    }
+    
+    // If it's a relative path without leading slash, add it
+    return `/${image}`;
+  };
+
+  const displayImage = getDisplayImage();
+
+  // Clean up blob URLs on unmount
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -100,6 +148,11 @@ export default function ImageUpload({
   };
 
   const handleRemoveImage = () => {
+    // Clean up blob URL if it exists
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    
     setPreviewUrl(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';

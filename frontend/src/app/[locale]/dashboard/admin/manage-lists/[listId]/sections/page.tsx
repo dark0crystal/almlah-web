@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { ListDetail, ListSection, listsApi } from '@/services/listsApi';
-import SectionFormModal from '@/components/lists/SectionFormModal';
+import SectionFormModal from '@/components/lists/EnhancedSectionFormModal';
 import SectionCard from '@/components/lists/SectionCard';
 import DeleteConfirmModal from '../../DeleteConfirmModal';
 import {
