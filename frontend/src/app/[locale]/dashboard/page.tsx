@@ -75,6 +75,15 @@ const ProtectedDashboard = () => {
       requireAny: true
     },
     {
+      id: 'lists',
+      label: 'إدارة القوائم',
+      labelEn: 'Manage Lists',
+      icon: '📝',
+      route: '/dashboard/admin/manage-lists',
+      requiredPermissions: ['can_view_list', 'can_create_list', 'can_manage_list'],
+      requireAny: true
+    },
+    {
       id: 'governates',
       label: 'إدارة المحافظات',
       labelEn: 'Manage Governates',

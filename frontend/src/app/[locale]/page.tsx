@@ -5,7 +5,7 @@ import ArabicCardsLayout from '@/components/IntroSection/Cards';
 import CategoryCardsWrapper from '@/components/cards/categoryCards/CategoryCardsWrapper';
 import PostCardsWrapper from '@/components/cards/postCards/PostCardWrapper';
 import ScrollAnimatedPng from '@/components/animated/MovingToKashtah';
-import RecommendationsCarousel from '@/components/recommendations/RecommendationsCarousel';
+import ListsCarousel from '@/components/lists/ListsCarousel';
 import Footer from '@/components/Footer';
 
 export default async function HomePage() {
@@ -32,7 +32,7 @@ export default async function HomePage() {
        
         <PostCardsWrapper/>
         
-        <RecommendationsCarousel/>
+        <ListsCarousel/>
       </div>
       <Footer />
     </div>
