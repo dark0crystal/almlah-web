@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 
 export default function Footer() {
   const t = useTranslations('footer');
@@ -30,19 +31,19 @@ export default function Footer() {
             </h3>
             <ul className="space-y-1 sm:space-y-2">
               <li>
-                <a href="/" className="text-gray-600 hover:text-gray-800 transition-colors text-sm sm:text-base">
+                <Link href="/" className="text-gray-600 hover:text-gray-800 transition-colors text-sm sm:text-base">
                   {t('home')}
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/places" className="text-gray-600 hover:text-gray-800 transition-colors text-sm sm:text-base">
+                <Link href="/places" className="text-gray-600 hover:text-gray-800 transition-colors text-sm sm:text-base">
                   {t('places')}
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/restaurants" className="text-gray-600 hover:text-gray-800 transition-colors text-sm sm:text-base">
+                <Link href="/restaurants" className="text-gray-600 hover:text-gray-800 transition-colors text-sm sm:text-base">
                   {t('restaurants')}
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

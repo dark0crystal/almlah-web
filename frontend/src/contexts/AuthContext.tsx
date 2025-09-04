@@ -107,7 +107,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       const userData: User = {
         ...profileResponse.data.user,
-        permissions: permissionsResponse.data.map((p: any) => p.name),
+        permissions: permissionsResponse.data.map((p: { name: string }) => p.name),
         roles: rolesResponse.data
       };
 

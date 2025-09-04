@@ -2,6 +2,46 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Settings, Save, X, AlertTriangle, Users, Shield, Key, Search, Filter } from 'lucide-react';
 
+// Type definitions
+interface Role {
+  id: string;
+  name: string;
+  display_name: string;
+  description: string;
+  is_active: boolean;
+  permissions?: Permission[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface Permission {
+  id: string;
+  name: string;
+  display_name: string;
+  description: string;
+  resource: string;
+  action: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface RoleFormData {
+  name?: string;
+  display_name: string;
+  description?: string;
+  is_active: boolean;
+}
+
+interface PermissionFormData {
+  name?: string;
+  display_name: string;
+  description?: string;
+  resource: string;
+  action: string;
+  is_active: boolean;
+}
+
 // API Configuration
 const API_HOST = 'http://localhost:9000';
 
@@ -40,7 +80,7 @@ const rbacAPI = {
     }
   },
 
-  createRole: async (roleData: any) => {
+  createRole: async (roleData: RoleFormData) => {
     try {
       const payload = {
         name: roleData.name?.trim(),
@@ -73,7 +113,7 @@ const rbacAPI = {
     }
   },
 
-  updateRole: async (id: string, roleData: any) => {
+  updateRole: async (id: string, roleData: RoleFormData) => {
     try {
       const payload = {
         display_name: roleData.display_name?.trim(),
@@ -140,7 +180,7 @@ const rbacAPI = {
     }
   },
 
-  createPermission: async (permissionData: any) => {
+  createPermission: async (permissionData: PermissionFormData) => {
     try {
       const name = permissionData.name?.trim() || 
                   `can_${permissionData.action?.trim()}_${permissionData.resource?.trim()}`;
@@ -178,7 +218,7 @@ const rbacAPI = {
     }
   },
 
-  updatePermission: async (id: string, permissionData: any) => {
+  updatePermission: async (id: string, permissionData: PermissionFormData) => {
     try {
       const payload = {
         display_name: permissionData.display_name?.trim(),
@@ -399,8 +439,8 @@ const LoginModal = ({ isOpen, onClose, onLogin }: { isOpen: boolean, onClose: ()
 const RoleFormModal = ({ isOpen, onClose, role, onSave }: { 
   isOpen: boolean, 
   onClose: () => void, 
-  role: any, 
-  onSave: (id: string | null, roleData: any) => Promise<void> 
+  role: Role | null, 
+  onSave: (id: string | null, roleData: RoleFormData) => Promise<void> 
 }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -468,8 +508,9 @@ const RoleFormModal = ({ isOpen, onClose, role, onSave }: {
     try {
       await onSave(role?.id || null, formData);
       onClose();
-    } catch (error: any) {
-      setErrors({ general: error.message });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+      setErrors({ general: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -590,8 +631,8 @@ const RoleFormModal = ({ isOpen, onClose, role, onSave }: {
 const PermissionFormModal = ({ isOpen, onClose, permission, onSave }: { 
   isOpen: boolean, 
   onClose: () => void, 
-  permission: any, 
-  onSave: (id: string | null, permissionData: any) => Promise<void> 
+  permission: Permission | null, 
+  onSave: (id: string | null, permissionData: PermissionFormData) => Promise<void> 
 }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -683,8 +724,9 @@ const PermissionFormModal = ({ isOpen, onClose, permission, onSave }: {
     try {
       await onSave(permission?.id || null, formData);
       onClose();
-    } catch (error: any) {
-      setErrors({ general: error.message });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+      setErrors({ general: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -850,7 +892,7 @@ const PermissionFormModal = ({ isOpen, onClose, permission, onSave }: {
 const DeleteConfirmModal = ({ isOpen, onClose, item, itemType, onConfirm, loading }: { 
   isOpen: boolean, 
   onClose: () => void, 
-  item: any, 
+  item: Role | Permission, 
   itemType: string, 
   onConfirm: () => Promise<void>, 
   loading: boolean 
@@ -910,8 +952,8 @@ const DeleteConfirmModal = ({ isOpen, onClose, item, itemType, onConfirm, loadin
 const RolePermissionsModal = ({ isOpen, onClose, role, permissions, onSave }: { 
   isOpen: boolean, 
   onClose: () => void, 
-  role: any, 
-  permissions: any[], 
+  role: Role, 
+  permissions: Permission[], 
   onSave: () => Promise<void> 
 }) => {
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
@@ -921,7 +963,7 @@ const RolePermissionsModal = ({ isOpen, onClose, role, permissions, onSave }: {
 
   useEffect(() => {
     if (role && role.permissions) {
-      setSelectedPermissions(role.permissions.map((p: any) => p.id));
+      setSelectedPermissions(role.permissions.map((p: Permission) => p.id));
     }
   }, [role]);
 
@@ -945,7 +987,7 @@ const RolePermissionsModal = ({ isOpen, onClose, role, permissions, onSave }: {
 
   setLoading(true);
   try {
-    const currentPermissionIds = (role.permissions || []).map((p: any) => p.id);
+    const currentPermissionIds = (role.permissions || []).map((p: Permission) => p.id);
     const toAdd = selectedPermissions.filter(id => !currentPermissionIds.includes(id));
     const toRemove = currentPermissionIds.filter(id => !selectedPermissions.includes(id));
 
@@ -1118,8 +1160,8 @@ const RolePermissionsModal = ({ isOpen, onClose, role, permissions, onSave }: {
 // Main RBAC Management Component
 export default function RBACManagement() {
   const [activeTab, setActiveTab] = useState<'roles' | 'permissions'>('roles');
-  const [roles, setRoles] = useState<any[]>([]);
-  const [permissions, setPermissions] = useState<any[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -1131,7 +1173,7 @@ export default function RBACManagement() {
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showRolePermissionsModal, setShowRolePermissionsModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedItem, setSelectedItem] = useState<Role | Permission | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -1141,7 +1183,7 @@ export default function RBACManagement() {
     }
   }, []);
 
-  const handleAuthError = (error: any) => {
+  const handleAuthError = (error: unknown) => {
     if (error.message.includes('401') || error.message.includes('403') || error.message.includes('Unauthorized')) {
       setIsAuthenticated(false);
       localStorage.removeItem('authToken');
@@ -1161,7 +1203,7 @@ export default function RBACManagement() {
       
       setRoles(Array.isArray(rolesData) ? rolesData : []);
       setPermissions(Array.isArray(permissionsData) ? permissionsData : []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       handleAuthError(err);
       setError(err.message);
     } finally {
@@ -1184,7 +1226,7 @@ export default function RBACManagement() {
   };
 
   // Role handlers
-  const handleSaveRole = async (id: string | null, roleData: any) => {
+  const handleSaveRole = async (id: string | null, roleData: RoleFormData) => {
     try {
       if (id) {
         await rbacAPI.updateRole(id, roleData);
@@ -1192,7 +1234,7 @@ export default function RBACManagement() {
         await rbacAPI.createRole(roleData);
       }
       await loadData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       handleAuthError(err);
       throw err;
     }
@@ -1207,7 +1249,7 @@ export default function RBACManagement() {
       await loadData();
       setShowDeleteModal(false);
       setSelectedItem(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       handleAuthError(err);
       setError(err.message);
     } finally {
@@ -1216,7 +1258,7 @@ export default function RBACManagement() {
   };
 
   // Permission handlers
-  const handleSavePermission = async (id: string | null, permissionData: any) => {
+  const handleSavePermission = async (id: string | null, permissionData: PermissionFormData) => {
     try {
       if (id) {
         await rbacAPI.updatePermission(id, permissionData);
@@ -1224,7 +1266,7 @@ export default function RBACManagement() {
         await rbacAPI.createPermission(permissionData);
       }
       await loadData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       handleAuthError(err);
       throw err;
     }
@@ -1239,7 +1281,7 @@ export default function RBACManagement() {
       await loadData();
       setShowDeleteModal(false);
       setSelectedItem(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       handleAuthError(err);
       setError(err.message);
     } finally {
