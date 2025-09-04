@@ -190,7 +190,25 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
     
     if (!validateForm()) return;
 
-    console.log('Submitting dish data:', formData);
+    console.log('🍽️ Submitting dish data:', formData);
+    console.log('🖼️ Images in formData:', formData.images);
+    console.log('🔢 Number of images:', formData.images.length);
+    
+    // Log each image for detailed debugging
+    formData.images.forEach((img, index) => {
+      console.log(`   Image ${index + 1}:`, {
+        url: img.image_url,
+        alt_ar: img.alt_text_ar,
+        alt_en: img.alt_text_en,
+        is_primary: img.is_primary,
+        display_order: img.display_order
+      });
+    });
+
+    // Warn if no images are added
+    if (formData.images.length === 0) {
+      console.warn('⚠️ No images added to this dish!');
+    }
 
     try {
       setSaving(true);
@@ -665,7 +683,14 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
 
           {/* Images Section */}
           <div className="border-t pt-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Images</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Images</h3>
+              {formData.images.length > 0 && (
+                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-md text-sm font-medium">
+                  {formData.images.length} image{formData.images.length !== 1 ? 's' : ''} added
+                </span>
+              )}
+            </div>
             
             {/* Existing Images */}
             {formData.images.length > 0 && (
@@ -728,7 +753,12 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
 
             {/* Add New Image */}
             <div className="border border-dashed border-gray-300 rounded-lg p-4">
-              <h4 className="text-sm font-medium text-gray-700 mb-3">Add New Image</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-medium text-gray-700">Add New Image</h4>
+                <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                  Select image, then click "Add Image" button
+                </span>
+              </div>
               
               {/* Upload Method Selection */}
               <div className="mb-4">
@@ -848,14 +878,18 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
                   type="button"
                   onClick={addImage}
                   disabled={(!selectedFile && !newImage.image_url.trim()) || uploadingImage}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+                  className={`px-4 py-2 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors ${
+                    (selectedFile || newImage.image_url.trim()) && !uploadingImage
+                      ? 'bg-green-600 hover:bg-green-700 shadow-md'
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
                 >
                   {uploadingImage ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <Plus className="w-4 h-4" />
                   )}
-                  {uploadingImage ? 'Uploading...' : 'Add Image'}
+                  {uploadingImage ? 'Uploading...' : (selectedFile || newImage.image_url.trim()) ? 'Add Image to Dish' : 'Add Image'}
                 </button>
               </div>
             </div>
@@ -869,21 +903,44 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
               <div>Images in Form: {formData.images.length}</div>
               <div>Selected File: {selectedFile ? selectedFile.name : 'None'}</div>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                console.log('🐛 Debug Info:', {
-                  hasAuthToken: !!localStorage.getItem('authToken'),
-                  authToken: localStorage.getItem('authToken'),
-                  formDataImages: formData.images,
-                  selectedFile: selectedFile,
-                  newImageState: newImage
-                });
-              }}
-              className="mt-2 px-3 py-1 bg-gray-200 text-gray-700 rounded text-xs"
-            >
-              Log Debug Info
-            </button>
+            <div className="flex gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  console.log('🐛 Debug Info:', {
+                    hasAuthToken: !!localStorage.getItem('authToken'),
+                    authToken: localStorage.getItem('authToken'),
+                    formDataImages: formData.images,
+                    selectedFile: selectedFile,
+                    newImageState: newImage
+                  });
+                }}
+                className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-xs"
+              >
+                Log Debug Info
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  // Add a test image directly to form
+                  const testImage = {
+                    image_url: 'https://via.placeholder.com/300x200?text=Test+Image',
+                    alt_text_ar: 'صورة تجريبية',
+                    alt_text_en: 'Test Image',
+                    is_primary: formData.images.length === 0,
+                    display_order: formData.images.length + 1
+                  };
+                  setFormData(prev => ({
+                    ...prev,
+                    images: [...prev.images, testImage]
+                  }));
+                  console.log('✅ Test image added');
+                }}
+                className="px-3 py-1 bg-green-200 text-green-700 rounded text-xs"
+              >
+                Add Test Image
+              </button>
+            </div>
           </div>
 
           {/* Form Actions */}
