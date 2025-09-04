@@ -8,35 +8,48 @@ interface DishesSplashScreenProps {
 const DishesSplashScreen: React.FC<DishesSplashScreenProps> = ({ onComplete }) => {
   const [isVisible, setIsVisible] = useState(true);
 
-  // Array of available PNG images with duplicates
+  // Array of available images from dishesMapImages directory with duplicates
   const images = [
-    '/alryam.png',
-    '/chai.png',
-    '/khayma.png',
-    '/rb3.png',
-    '/samhah.png',
-    '/alryam.png',
-    '/chai.png',
-    '/khayma.png',
-    '/rb3.png',
-    '/samhah.png',
-    '/alryam.png',
-    '/chai.png',
-    '/khayma.png',
-    '/rb3.png',
-    '/samhah.png'
+    '/dishesMapImages/arsyah.png',
+    '/dishesMapImages/kbz.png',
+    '/dishesMapImages/majeen.png',
+    '/dishesMapImages/mishkak.png',
+    '/dishesMapImages/arsyah.png',
+    '/dishesMapImages/kbz.png',
+    '/dishesMapImages/majeen.png',
+    '/dishesMapImages/mishkak.png',
+    '/dishesMapImages/arsyah.png',
+    '/dishesMapImages/kbz.png',
+    '/dishesMapImages/majeen.png'
   ];
 
-  // Generate random positions and delays for each image
+  // Generate random positions and delays for each image with larger gaps
   const generateImageProps = () => {
-    return images.map((img, index) => ({
-      src: img,
-      left: Math.random() * 80 + 10, // Random position between 10% and 90%
-      delay: Math.random() * 1000, // Random delay up to 1000ms
-      duration: 2000, // Fixed duration of 2 seconds
-      rotation: Math.random() * 60 - 30, // Random rotation between -30 and 30 degrees
-      id: `image-${index}`
-    }));
+    const positions: number[] = [];
+    return images.map((img, index) => {
+      let left;
+      let attempts = 0;
+      
+      // Ensure minimum 15% gap between images
+      do {
+        left = Math.random() * 50 + 25; // Random position between 25% and 75%
+        attempts++;
+      } while (
+        positions.some(pos => Math.abs(pos - left) < 15) && 
+        attempts < 10
+      );
+      
+      positions.push(left);
+      
+      return {
+        src: img,
+        left,
+        delay: index * 200 + Math.random() * 300, // More staggered timing
+        duration: 2000,
+        rotation: Math.random() * 60 - 30,
+        id: `image-${index}`
+      };
+    });
   };
 
   const [imageProps] = useState(generateImageProps);
@@ -62,7 +75,7 @@ const DishesSplashScreen: React.FC<DishesSplashScreenProps> = ({ onComplete }) =
     <div className="fixed inset-0 z-50 overflow-hidden" style={{ backgroundColor: '#f3f3eb' }}>
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-200/20 to-orange-200/20"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
       </div>
 
       {/* Animated PNG images */}
@@ -76,13 +89,14 @@ const DishesSplashScreen: React.FC<DishesSplashScreenProps> = ({ onComplete }) =
               bottom: '-120px',
               animationDelay: `${props.delay}ms`,
               animationDuration: `${props.duration}ms`,
-              transform: `rotate(${props.rotation}deg)`
+              transform: `rotate(${props.rotation}deg)`,
+              margin: '10px'
             }}
           >
             <img
               src={props.src}
               alt="Floating image"
-              className="w-24 h-24 object-contain opacity-80"
+              className="w-48 h-48 object-contain"
             />
           </div>
         ))}
@@ -96,10 +110,10 @@ const DishesSplashScreen: React.FC<DishesSplashScreenProps> = ({ onComplete }) =
             opacity: 0;
           }
           10% {
-            opacity: 0.8;
+            opacity: 1;
           }
           90% {
-            opacity: 0.8;
+            opacity: 1;
           }
           100% {
             transform: translateY(-120vh) rotate(${imageProps[0]?.rotation || 0}deg);
