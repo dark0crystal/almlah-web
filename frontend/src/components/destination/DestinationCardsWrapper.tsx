@@ -3,11 +3,12 @@
 import React, { useRef, useEffect } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import DestinationCard from './DestinationCard';
+import { DestinationCardWrapperProps } from './types';
 
-export default function DestinationCardWrapper({ destinations, highlightedDestination, onDestinationHighlight }) {
+export default function DestinationCardWrapper({ destinations, highlightedDestination, onDestinationHighlight }: DestinationCardWrapperProps) {
   const locale = useLocale();
-  const desktopScrollRef = useRef(null);
-  const mobileScrollRef = useRef(null);
+  const desktopScrollRef = useRef<HTMLDivElement>(null);
+  const mobileScrollRef = useRef<HTMLDivElement>(null);
 
   // Scroll to highlighted destination
   useEffect(() => {
@@ -18,7 +19,7 @@ export default function DestinationCardWrapper({ destinations, highlightedDestin
         // Desktop/tablet scroll (vertical)
         if (desktopScrollRef.current) {
           const container = desktopScrollRef.current.parentElement; // The scrollable container
-          const cardElement = desktopScrollRef.current.children[destinationIndex];
+          const cardElement = desktopScrollRef.current.children[destinationIndex] as HTMLElement;
           if (cardElement && container) {
             const cardTop = cardElement.offsetTop;
             container.scrollTo({
@@ -31,7 +32,7 @@ export default function DestinationCardWrapper({ destinations, highlightedDestin
         // Mobile scroll (horizontal)
         if (mobileScrollRef.current) {
           const container = mobileScrollRef.current.parentElement; // The scrollable container
-          const cardElement = mobileScrollRef.current.children[destinationIndex];
+          const cardElement = mobileScrollRef.current.children[destinationIndex] as HTMLElement;
           if (cardElement && container) {
             const cardLeft = cardElement.offsetLeft;
             container.scrollTo({

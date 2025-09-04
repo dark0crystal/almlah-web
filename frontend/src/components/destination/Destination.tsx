@@ -4,6 +4,7 @@ import { MapPin, AlertCircle, Loader2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import DestinationCardWrapper from './DestinationCardsWrapper';
 import DestinationsMap from './DestinationsMap';
+import type { Destination, GovernorateData, GovernorateImage } from './types';
 
 // API Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000';
@@ -42,18 +43,18 @@ const fetchGovernoratesFromAPI = async () => {
 };
 
 // Function to get primary image from governorate images
-const getPrimaryImage = (images) => {
+const getPrimaryImage = (images: GovernorateImage[] | undefined): string | null => {
   if (!images || !Array.isArray(images) || images.length === 0) {
     return null;
   }
   
   // Find primary image or use first image
   const primaryImage = images.find(img => img.is_primary) || images[0];
-  return primaryImage?.url || primaryImage?.image_url;
+  return primaryImage?.url || primaryImage?.image_url || null;
 };
 
 // Function to transform API data to component format
-const transformGovernorateData = (governorates, locale) => {
+const transformGovernorateData = (governorates: GovernorateData[], locale: string): Destination[] => {
   return governorates.map((gov, index) => ({
     id: gov.id,
     name: locale === 'ar' ? gov.name_ar : gov.name_en,
@@ -70,10 +71,10 @@ const transformGovernorateData = (governorates, locale) => {
 };
 
 export default function Destination() {
-  const [destinationList, setDestinationList] = useState([]);
+  const [destinationList, setDestinationList] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [highlightedDestination, setHighlightedDestination] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+  const [highlightedDestination, setHighlightedDestination] = useState<number | null>(null);
   const locale = useLocale();
   const t = useTranslations('destinations');
 
@@ -100,7 +101,7 @@ export default function Destination() {
   }, [locale, t]);
 
   // Handle marker click - highlight corresponding card
-  const handleMarkerClick = (destinationId) => {
+  const handleMarkerClick = (destinationId: number) => {
     setHighlightedDestination(destinationId);
   };
 

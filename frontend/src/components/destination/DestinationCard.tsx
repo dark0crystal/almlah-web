@@ -3,11 +3,12 @@ import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
+import { DestinationCardProps } from './types';
 
 // Fallback image for governorates without images
 const fallbackImage = '/img5.jpeg';
 
-export default function DestinationCard({ destination, isHighlighted = false }) {
+export default function DestinationCard({ destination, isHighlighted = false }: DestinationCardProps) {
   const locale = useLocale(); // Get current locale from next-intl
   const router = useRouter();
 
@@ -59,7 +60,8 @@ export default function DestinationCard({ destination, isHighlighted = false }) 
             fill
             className="object-cover hover:scale-105 transition-transform duration-300"
             onError={(e) => {
-              e.target.src = fallbackImage;
+              const target = e.target as HTMLImageElement;
+              target.src = fallbackImage;
             }}
           />
         ) : (

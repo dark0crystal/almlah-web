@@ -1,6 +1,7 @@
 "use client"
 import React, { useCallback, useState, useEffect } from 'react';
 import { GoogleMap, useLoadScript, Marker, InfoWindow } from '@react-google-maps/api';
+import { DestinationsMapProps, Destination } from './types';
 
 const libraries: ("places" | "geometry")[] = ['places'];
 
@@ -14,10 +15,10 @@ const mapContainerStyle = {
 // Oman's geographic center and bounds
 const OMAN_CENTER = { lat: 23.5859, lng: 58.4059 }; // Muscat coordinates
 
-export default function DestinationsMap({ destinations = [], language = 'ar', onMarkerClick }) {
-    const [activeDestination, setActiveDestination] = useState(null);
-    const [selectedMarker, setSelectedMarker] = useState(null);
-    const [markerIcons, setMarkerIcons] = useState({});
+export default function DestinationsMap({ destinations = [], language = 'ar', onMarkerClick }: DestinationsMapProps) {
+    const [activeDestination, setActiveDestination] = useState<number | null>(null);
+    const [selectedMarker, setSelectedMarker] = useState<Destination | null>(null);
+    const [markerIcons, setMarkerIcons] = useState<Record<number, string>>({});
 
     const { isLoaded, loadError } = useLoadScript({
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
@@ -29,7 +30,7 @@ export default function DestinationsMap({ destinations = [], language = 'ar', on
         if (!destinations.length) return;
 
         const loadIcons = async () => {
-            const icons = {};
+            const icons: Record<number, string> = {};
             for (const destination of destinations) {
                 try {
                     const icon = await createCustomMarkerIcon(destination);
@@ -80,7 +81,7 @@ export default function DestinationsMap({ destinations = [], language = 'ar', on
         }
     }, [destinations]);
 
-    const handleMarkerClick = useCallback((destination) => {
+    const handleMarkerClick = useCallback((destination: Destination) => {
         setActiveDestination(destination.id);
         setSelectedMarker(destination);
         
@@ -90,13 +91,19 @@ export default function DestinationsMap({ destinations = [], language = 'ar', on
         }
     }, [onMarkerClick]);
 
-    const createCustomMarkerIcon = (destination) => {
+    const createCustomMarkerIcon = (destination: Destination): Promise<string> => {
         return new Promise((resolve) => {
             const canvas = document.createElement('canvas');
             const size = 40;
             canvas.width = size;
             canvas.height = size;
             const ctx = canvas.getContext('2d');
+
+            if (!ctx) {
+                // Fallback if canvas context is not available
+                resolve('');
+                return;
+            }
 
             if (destination.image) {
                 // Load and draw the image
@@ -132,6 +139,11 @@ export default function DestinationsMap({ destinations = [], language = 'ar', on
             }
 
             function drawFallbackMarker() {
+                if (!ctx) {
+                    resolve('');
+                    return;
+                }
+                
                 // Draw circle background
                 ctx.beginPath();
                 ctx.arc(size / 2, size / 2, size / 2 - 3, 0, 2 * Math.PI);
@@ -219,11 +231,11 @@ export default function DestinationsMap({ destinations = [], language = 'ar', on
                     return null;
                 })}
 
-                {selectedMarker && (
+                {selectedMarker && selectedMarker.governorateData.latitude && selectedMarker.governorateData.longitude && (
                     <InfoWindow
                         position={{
-                            lat: selectedMarker.governorateData.latitude,
-                            lng: selectedMarker.governorateData.longitude
+                            lat: selectedMarker.governorateData.latitude!,
+                            lng: selectedMarker.governorateData.longitude!
                         }}
                         onCloseClick={() => setSelectedMarker(null)}
                     >
