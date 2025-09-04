@@ -1,7 +1,7 @@
 import { Search, ChevronDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
-import chai from '../../public/chai.png';
+import alsahwah from '../../public/pngs/alsahwah.png';
 
 interface HeaderProps {
   title?: string;
@@ -48,8 +48,8 @@ export default function Header({
           <div className="absolute top-4 right-4 z-20">
             <div className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 bg-white/10 border-2 border-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm p-2">
               <Image
-                src={chai}
-                alt="Chai"
+                src={alsahwah}
+                alt="Alsahwah"
                 className="w-full h-full object-contain"
               />
             </div>
