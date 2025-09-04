@@ -9,7 +9,7 @@ export default function RecommendationsCarousel() {
   const locale = useLocale() as 'ar' | 'en';
   
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 py-8">
+    <section className="w-[88vw]">
       {/* Section Header */}
       <div className={`mb-8 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
         <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">

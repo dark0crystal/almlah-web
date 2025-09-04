@@ -102,7 +102,8 @@ export default function ZatarPage() {
     // Convert time string (e.g., "10:00 AM") to number (e.g., 1000)
     const parseTime = (timeStr: string) => {
       const [time, period] = timeStr.split(' ');
-      let [hours, minutes] = time.split(':').map(Number);
+      let [hours] = time.split(':').map(Number);
+      const [, minutes] = time.split(':').map(Number);
       
       if (period === 'PM' && hours !== 12) hours += 12;
       if (period === 'AM' && hours === 12) hours = 0;

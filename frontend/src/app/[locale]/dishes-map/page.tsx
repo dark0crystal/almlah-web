@@ -1,5 +1,6 @@
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DishModal } from '@/components/modals/DishModal';
 import DishesSplashScreen from './DishesSplashScreen';
@@ -46,6 +47,7 @@ export default function DishesMap() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSplash, setShowSplash] = useState(true);
+  const [hoveredMarker, setHoveredMarker] = useState<string | null>(null);
 
   // Load initial data
   useEffect(() => {
@@ -130,6 +132,79 @@ export default function DishesMap() {
 
   const selectedDishes = selectedGovernorate ? dishesData[selectedGovernorate] || [] : [];
   const hoveredGovernorateData = hoveredGovernorate ? governorates.find(gov => gov.slug === hoveredGovernorate) : null;
+
+  // Default dish image for dishes without images
+  const defaultDishImage = '/dishesmapdefualt.png';
+
+  // Generate marker positions for dishes in each governorate
+  const generateMarkerPositions = (governorateId: string, dishCount: number) => {
+    // Base positions for each governorate (approximate center of each region)
+    const governoratePositions: { [key: string]: { x: number; y: number } } = {
+      'musandam': { x: 530, y: 120 },
+      'al-batinah-north': { x: 580, y: 280 },
+      'al-buraimi': { x: 480, y: 250 },
+      'ad-dhahirah': { x: 500, y: 350 },
+      'dhofar': { x: 400, y: 700 },
+      'al-wusta': { x: 500, y: 550 },
+      'alsharqiyah-south': { x: 720, y: 600 },
+      'alsharqiyah-north': { x: 780, y: 450 },
+      'muscat': { x: 750, y: 380 },
+      'al-batinah-south': { x: 650, y: 320 },
+      'ad-dakhiliyah': { x: 650, y: 400 }
+    };
+
+    const basePos = governoratePositions[governorateId];
+    if (!basePos || dishCount === 0) return [];
+
+    const positions = [];
+    const radius = Math.min(40, dishCount * 6); // Reduced radius for closer markers, max 40px
+
+    if (dishCount === 1) {
+      // Single dish at center
+      positions.push({ x: basePos.x, y: basePos.y });
+    } else {
+      // Multiple dishes in circle around center
+      for (let i = 0; i < dishCount; i++) {
+        const angle = (2 * Math.PI * i) / dishCount;
+        const x = basePos.x + radius * Math.cos(angle);
+        const y = basePos.y + radius * Math.sin(angle);
+        positions.push({ x, y });
+      }
+    }
+
+    return positions;
+  };
+
+  // Generate all dish markers data
+  const dishMarkers = useMemo(() => {
+    const markers: Array<{
+      id: string;
+      dish: Dish;
+      position: { x: number; y: number };
+      image: string;
+      governorate: string;
+    }> = [];
+
+    Object.entries(dishesData).forEach(([governorateSlug, dishes]) => {
+      const positions = generateMarkerPositions(governorateSlug, dishes.length);
+      dishes.forEach((dish, index) => {
+        if (positions[index]) {
+          // Use the first dish image if available, otherwise use default
+          const dishImage = dish.images && dish.images.length > 0 ? dish.images[0] : defaultDishImage;
+          
+          markers.push({
+            id: `${governorateSlug}-${dish.id}`,
+            dish,
+            position: positions[index],
+            image: dishImage,
+            governorate: governorateSlug
+          });
+        }
+      });
+    });
+
+    return markers;
+  }, [dishesData, defaultDishImage]);
 
   const handleSplashComplete = () => {
     setShowSplash(false);
@@ -367,6 +442,43 @@ export default function DishesMap() {
                 onMouseLeave={handleGovernorateLeave}
               />
             </g>
+
+            {/* Dish Markers */}
+            {[...dishMarkers]
+              .sort((a, b) => {
+                // Put hovered marker last (on top)
+                if (a.id === hoveredMarker) return 1;
+                if (b.id === hoveredMarker) return -1;
+                return 0;
+              })
+              .map((marker) => (
+                <g key={marker.id}>
+                  <foreignObject
+                    x={marker.position.x - 60}
+                    y={marker.position.y - 60}
+                    width="120"
+                    height="120"
+                    className="cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDishClick(marker.dish);
+                    }}
+                    onMouseEnter={() => setHoveredMarker(marker.id)}
+                    onMouseLeave={() => setHoveredMarker(null)}
+                  >
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 flex items-center justify-center hover:scale-110 transition-transform duration-200">
+                      <Image
+                        src={marker.image}
+                        alt={marker.dish.name}
+                        width={96}
+                        height={96}
+                        className="w-14 h-14 sm:w-18 sm:h-18 md:w-20 md:h-20 lg:w-24 lg:h-24 object-contain drop-shadow-lg hover:drop-shadow-xl transition-all duration-200"
+                        style={{ filter: 'none' }}
+                      />
+                    </div>
+                  </foreignObject>
+                </g>
+              ))}
           </svg>
         </div>
       </div>
