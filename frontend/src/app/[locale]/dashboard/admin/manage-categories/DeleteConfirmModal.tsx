@@ -31,14 +31,15 @@ interface DeleteConfirmModalProps {
 }
 
 // Helper function to ensure array format
-const ensureArray = (data: any): Category[] => {
+const ensureArray = (data: unknown): Category[] => {
   if (!data) return [];
   if (Array.isArray(data)) return data;
-  if (typeof data === 'object') {
-    if (data.primary) return data.primary;
-    if (data.categories) return data.categories;
-    if (data.data) return ensureArray(data.data);
-    return [data];
+  if (typeof data === 'object' && data !== null) {
+    const obj = data as Record<string, unknown>;
+    if (obj.primary && Array.isArray(obj.primary)) return obj.primary as Category[];
+    if (obj.categories && Array.isArray(obj.categories)) return obj.categories as Category[];
+    if (obj.data) return ensureArray(obj.data);
+    return [obj as Category];
   }
   return [];
 };
@@ -73,7 +74,7 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
         
         <div className="mb-6">
           <p className="text-gray-600 mb-3">
-            Are you sure you want to delete <strong>"{getDisplayName(category, currentLang)}"</strong>?
+            Are you sure you want to delete <strong>&quot;{getDisplayName(category, currentLang)}&quot;</strong>?
           </p>
           
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-3">

@@ -32,14 +32,15 @@ interface CategoryItemProps {
 }
 
 // Helper function to ensure array format
-const ensureArray = (data: any): Category[] => {
+const ensureArray = (data: unknown): Category[] => {
   if (!data) return [];
   if (Array.isArray(data)) return data;
-  if (typeof data === 'object') {
-    if (data.primary) return data.primary;
-    if (data.categories) return data.categories;
-    if (data.data) return ensureArray(data.data);
-    return [data];
+  if (typeof data === 'object' && data !== null) {
+    const obj = data as Record<string, unknown>;
+    if (obj.primary && Array.isArray(obj.primary)) return obj.primary as Category[];
+    if (obj.categories && Array.isArray(obj.categories)) return obj.categories as Category[];
+    if (obj.data) return ensureArray(obj.data);
+    return [obj as Category];
   }
   return [];
 };
