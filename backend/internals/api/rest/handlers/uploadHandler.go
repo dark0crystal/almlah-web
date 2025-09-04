@@ -45,7 +45,7 @@ func (h *UploadHandler) UploadFile(ctx *fiber.Ctx) error {
 
 	// Validate folder name to prevent path traversal
 	folder = strings.TrimSpace(folder)
-	if strings.Contains(folder, "..") || strings.Contains(folder, "/") || strings.Contains(folder, "\\") {
+	if strings.Contains(folder, "..") || strings.Contains(folder, "\\") {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid folder name"))
 	}
 
