@@ -1,11 +1,20 @@
 import React from 'react';
 import { AlertCircle } from 'lucide-react';
 
+interface WilayahToDelete {
+  id: string;
+  name_ar: string;
+  name_en: string;
+  place_count: number;
+  governate?: { name_en: string };
+  images?: { length: number };
+}
+
 interface DeleteConfirmationModalProps {
-  deleteConfirm: any;
+  deleteConfirm: WilayahToDelete | null;
   deleteLoading: boolean;
   onCancel: () => void;
-  onConfirm: (wilayah: any) => void;
+  onConfirm: (wilayah: WilayahToDelete) => void;
 }
 
 const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({

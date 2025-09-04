@@ -1,10 +1,19 @@
 import React from 'react';
 import { Edit2, Trash2, MapPin, ImageIcon } from 'lucide-react';
 
+interface Wilayah {
+  id: string;
+  name_ar: string;
+  name_en: string;
+  governate_id: string;
+  sort_order: number;
+  images?: { id: string; url: string; is_primary: boolean }[];
+}
+
 interface WilayahCardProps {
-  wilayah: any;
-  onEdit: (wilayah: any) => void;
-  onDelete: (wilayah: any) => void;
+  wilayah: Wilayah;
+  onEdit: (wilayah: Wilayah) => void;
+  onDelete: (wilayah: Wilayah) => void;
 }
 
 const WilayahCard: React.FC<WilayahCardProps> = ({

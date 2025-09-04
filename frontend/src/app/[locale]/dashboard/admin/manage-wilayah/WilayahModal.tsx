@@ -5,7 +5,7 @@ import { ExistingImage } from '@/types/image';
 
 interface WilayahModalProps {
   showModal: boolean;
-  editingWilayah: any;
+  editingWilayah: { id: string; name_ar: string; name_en: string; governate_id: string; sort_order: number; } | null;
   formData: {
     governate_id: string;
     name_ar: string;
@@ -20,13 +20,13 @@ interface WilayahModalProps {
     sort_order: string;
   };
   errors: Record<string, string>;
-  governates: any[];
+  governates: { id: string; name_ar: string; name_en: string; }[];
   existingImages: ExistingImage[];
   submitLoading: boolean;
   imageUploadProgress: number;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
-  onFormDataChange: (field: string, value: any) => void;
+  onFormDataChange: (field: string, value: string | number) => void;
   onNameEnChange: (value: string) => void;
   onExistingImagesChange: (images: ExistingImage[]) => void;
   onNewImagesChange: (files: File[]) => void;

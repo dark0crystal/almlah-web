@@ -515,7 +515,7 @@ export default function ManageWilayah() {
   };
 
   // Handle form data changes
-  const handleFormDataChange = (field: string, value: any) => {
+  const handleFormDataChange = (field: string, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
