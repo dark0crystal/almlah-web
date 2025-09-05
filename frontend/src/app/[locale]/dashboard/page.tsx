@@ -21,6 +21,8 @@ const ProtectedDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeItem, setActiveItem] = useState('dashboard');
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
   const router = useRouter();
   
   // Zustand store hooks
@@ -157,10 +159,22 @@ const ProtectedDashboard = () => {
     return false;
   }) : [];
 
-  // Handle navigation
-  const handleNavigation = (item: MenuItem) => {
+  // Handle navigation with loading state
+  const handleNavigation = async (item: MenuItem) => {
+    if (isNavigating) return; // Prevent multiple clicks during navigation
+    
+    setIsNavigating(true);
+    setNavigatingTo(item.id);
     setActiveItem(item.id);
-    router.push(item.route);
+    
+    try {
+      await router.push(item.route);
+    } catch (error) {
+      console.error('Navigation error:', error);
+      // Reset state on error
+      setIsNavigating(false);
+      setNavigatingTo(null);
+    }
   };
 
   // Toggle sidebar
@@ -189,9 +203,37 @@ const ProtectedDashboard = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Clear loading state after navigation completes
+  useEffect(() => {
+    const clearLoadingState = () => {
+      setIsNavigating(false);
+      setNavigatingTo(null);
+    };
+
+    // Clear loading state when component mounts (after navigation)
+    const timer = setTimeout(() => {
+      clearLoadingState();
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <PageGuard>
       <div className="min-h-screen bg-gray-50 rtl" dir="rtl">
+      {/* Navigation Loading Overlay */}
+      {isNavigating && (
+        <div className="fixed inset-0 bg-black bg-opacity-20 z-50 flex items-center justify-center backdrop-blur-sm">
+          <div className="bg-white rounded-xl p-6 shadow-2xl border border-gray-200 flex items-center gap-4">
+            <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+            <div className="text-gray-900">
+              <div className="font-semibold text-lg">جاري التحميل...</div>
+              <div className="text-sm text-gray-600">Loading page...</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div 
@@ -234,31 +276,51 @@ const ProtectedDashboard = () => {
 
         {/* Navigation */}
         <nav className="p-4 space-y-2">
-          {filteredMenuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => handleNavigation(item)}
-              className={`
-                w-full flex items-center gap-3 px-3 py-3 rounded-lg text-right transition-all duration-200
-                ${activeItem === item.id 
-                  ? 'bg-blue-50 text-blue-700 border border-blue-200' 
-                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                }
-                ${!sidebarOpen && 'justify-center px-2'}
-              `}
-            >
-              <span className="text-xl flex-shrink-0">{item.icon}</span>
-              {sidebarOpen && (
-                <div className="flex-1">
-                  <div className="text-sm font-medium">{item.label}</div>
-                  <div className="text-xs text-gray-500">{item.labelEn}</div>
-                </div>
-              )}
-              {sidebarOpen && activeItem === item.id && (
-                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-              )}
-            </button>
-          ))}
+          {filteredMenuItems.map((item) => {
+            const isItemLoading = navigatingTo === item.id && isNavigating;
+            
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleNavigation(item)}
+                disabled={isNavigating}
+                className={`
+                  w-full flex items-center gap-3 px-3 py-3 rounded-lg text-right transition-all duration-200
+                  ${activeItem === item.id 
+                    ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                  }
+                  ${!sidebarOpen && 'justify-center px-2'}
+                  ${isNavigating && !isItemLoading ? 'opacity-50 cursor-not-allowed' : ''}
+                  ${isItemLoading ? 'bg-blue-100 border-blue-300' : ''}
+                `}
+              >
+                <span className="text-xl flex-shrink-0">
+                  {isItemLoading ? (
+                    <div className="animate-spin w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                  ) : (
+                    item.icon
+                  )}
+                </span>
+                {sidebarOpen && (
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">
+                      {isItemLoading ? 'جاري التحميل...' : item.label}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {isItemLoading ? 'Loading...' : item.labelEn}
+                    </div>
+                  </div>
+                )}
+                {sidebarOpen && activeItem === item.id && !isItemLoading && (
+                  <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                )}
+                {sidebarOpen && isItemLoading && (
+                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                )}
+              </button>
+            );
+          })}
         </nav>
 
         {/* User Profile Section */}

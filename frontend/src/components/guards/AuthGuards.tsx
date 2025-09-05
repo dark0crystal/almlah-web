@@ -62,7 +62,7 @@ export const PageGuard: React.FC<PageGuardProps> = ({
   requiredRoles = [],
   requiredPermissions = [],
   requireAll = false,
-  redirectTo = '/login'
+  redirectTo = '/auth/login'
 }) => {
   const { 
     isLoading, 
