@@ -3,17 +3,14 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { 
   Upload, 
-  X, 
   Star, 
   StarOff, 
-  Move, 
-  Image as ImageIcon, 
-  AlertCircle, 
-  Check,
+  AlertCircle,
   Loader2,
   Edit3,
   Trash2
 } from 'lucide-react';
+import Image from 'next/image';
 import { SupabaseStorageService } from '../services/supabaseStorage';
 import { ImageFile, ExistingImage, ImageUploadProps } from '../types/image';
 
@@ -37,7 +34,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     acceptedTypes = ['image/jpeg', 'image/png', 'image/webp'],
     bucket,
     folder,
-    allowReorder = true,
+    // allowReorder = true, // Currently unused
     allowSetPrimary = true,
     showMetadataFields = true
   } = config;
@@ -261,10 +258,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       <div className="relative group bg-gray-100 rounded-lg overflow-hidden">
         {/* Image */}
         <div className="aspect-square relative">
-          <img
+          <Image
             src={imageUrl}
             alt={isExisting ? (image as ExistingImage).alt_text : 'Preview'}
             className="w-full h-full object-cover"
+            width={300}
+            height={300}
           />
           
           {/* Upload progress overlay */}

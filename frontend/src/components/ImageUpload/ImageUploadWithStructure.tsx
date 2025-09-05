@@ -1,14 +1,14 @@
 // components/ImageUpload/ImageUploadWithStructure.tsx - Enhanced integration
 "use client";
 import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import { PlaceImage } from '../../stores/usePlaceStore';
 import { 
   processMultipleImageFiles, 
   setPrimaryImage, 
   reorderImages, 
   updatePlaceImageMetadata,
-  formatFileSize,
-  cleanupImagePreviews
+  formatFileSize
 } from '../../utils/imageUploadUtils';
 import { 
   CloudArrowUpIcon, 
@@ -299,10 +299,12 @@ const ImageCard: React.FC<ImageCardProps> = ({
     <div className="relative group bg-white border border-gray-200 rounded-lg overflow-hidden">
       {/* Image */}
       <div className="aspect-video relative">
-        <img
+        <Image
           src={image.preview || image.url}
           alt={image.alt_text}
-          className="w-full h-full object-cover"
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
         
         {/* Primary Badge */}

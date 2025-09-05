@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Image from 'next/image';
-import { uploadService, PendingUpload, UploadResult } from '@/services/uploadService';
+import { uploadService, PendingUpload } from '@/services/uploadService';
 
 export interface ImageUploadProps {
   currentImage?: string;
@@ -41,7 +41,7 @@ export default function ImageUpload({
     try {
       new URL(string);
       return true;
-    } catch (_) {
+    } catch {
       return false;
     }
   };
@@ -142,8 +142,9 @@ export default function ImageUpload({
             throw new Error(`Some uploads failed: ${errorMessages.join(', ')}`);
           }
         }
-      } catch (err: any) {
-        setError(err.message || (locale === 'ar' ? 'فشل في رفع الصورة' : 'Failed to upload image'));
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        setError(errorMessage || (locale === 'ar' ? 'فشل في رفع الصورة' : 'Failed to upload image'));
       } finally {
         setUploading(false);
         setUploadProgress(0);
@@ -260,9 +261,11 @@ export default function ImageUpload({
           {pendingUploads.map((upload) => (
             <div key={upload.id} className="flex items-center justify-between p-2 bg-blue-50 rounded-lg">
               <div className="flex items-center space-x-2">
-                <img 
+                <Image
                   src={upload.previewUrl} 
                   alt="Preview" 
+                  width={32}
+                  height={32}
                   className="w-8 h-8 object-cover rounded"
                 />
                 <span className="text-sm text-gray-700 truncate">{upload.file.name}</span>
