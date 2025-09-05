@@ -7,6 +7,16 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { useTranslations } from 'next-intl';
+import {
+  LoginAuthAPI,
+  GoogleCredentialResponse,
+  GoogleSignInProps,
+  LoginCredentials,
+  AuthResult,
+  LoginFormData,
+  InputChangeHandler,
+  FormSubmitHandler
+} from '../types';
 
 // Validate environment variables on component mount
 if (typeof window !== 'undefined') {
@@ -14,8 +24,8 @@ if (typeof window !== 'undefined') {
 }
 
 // API Service
-const authAPI = {
-  login: async (credentials) => {
+const authAPI: LoginAuthAPI = {
+  login: async (credentials: LoginCredentials): Promise<AuthResult> => {
     const response = await fetch(`${env.API_HOST}/api/v1/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -35,7 +45,7 @@ const authAPI = {
     return data.data;
   },
 
-  googleAuth: async (token) => {
+  googleAuth: async (token: string): Promise<AuthResult> => {
     console.log('Sending Google auth request with token:', token.substring(0, 50) + '...');
     const response = await fetch(`${env.API_HOST}/api/v1/auth/google`, {
       method: 'POST',
@@ -60,7 +70,7 @@ const authAPI = {
 };
 
 // Google Sign-In Component
-const GoogleSignIn = ({ onSuccess, onError, disabled }) => {
+const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disabled }) => {
   const [googleLoaded, setGoogleLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const t = useTranslations('auth.login');
@@ -92,7 +102,7 @@ const GoogleSignIn = ({ onSuccess, onError, disabled }) => {
   }, [onError, t]);
 
   const initializeGoogleSignIn = () => {
-    if (typeof google !== 'undefined' && google.accounts) {
+    if (typeof window !== 'undefined' && window.google?.accounts) {
       console.log('Initializing Google Sign-In...');
       
       if (!env.GOOGLE_CLIENT_ID) {
@@ -101,7 +111,7 @@ const GoogleSignIn = ({ onSuccess, onError, disabled }) => {
         return;
       }
       
-      google.accounts.id.initialize({
+      window.google.accounts.id.initialize({
         client_id: env.GOOGLE_CLIENT_ID,
         callback: handleCredentialResponse,
         auto_select: false,
@@ -113,7 +123,7 @@ const GoogleSignIn = ({ onSuccess, onError, disabled }) => {
     }
   };
 
-  const handleCredentialResponse = async (response) => {
+  const handleCredentialResponse = async (response: GoogleCredentialResponse) => {
     console.log('Google credential response received:', response);
     setLoading(true);
     try {
@@ -122,16 +132,16 @@ const GoogleSignIn = ({ onSuccess, onError, disabled }) => {
       onSuccess(result);
     } catch (error) {
       console.error('Google auth failed:', error);
-      onError(error.message || 'Google authentication failed');
+      onError((error as Error).message || 'Google authentication failed');
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleSignIn = () => {
-    if (googleLoaded && typeof google !== 'undefined' && google.accounts) {
+    if (googleLoaded && typeof window !== 'undefined' && window.google?.accounts) {
       console.log('Prompting Google Sign-In...');
-      google.accounts.id.prompt();
+      window.google.accounts.id.prompt();
     } else {
       console.error('Google Sign-In not loaded');
       onError(t('errors.googleNotLoaded'));
@@ -166,7 +176,7 @@ const LoginForm = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: ''
   });
@@ -180,7 +190,7 @@ const LoginForm = () => {
   // Get redirect path from URL params (set by PageGuard)
   const redirectTo = searchParams?.get('redirect') || '/dashboard';
 
-  const handleInputChange = (e) => {
+  const handleInputChange: InputChangeHandler = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (error) setError('');
@@ -193,7 +203,7 @@ const LoginForm = () => {
     return null;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit: FormSubmitHandler = async (e) => {
     e.preventDefault();
     
     const validationError = validateForm();
@@ -227,13 +237,13 @@ const LoginForm = () => {
       
     } catch (error) {
       console.error('Login error:', error);
-      setError(error.message);
+      setError((error as Error).message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSuccess = async (result) => {
+  const handleGoogleSuccess = async (result: AuthResult) => {
     try {
       setLoading(true);
       setError('');
@@ -250,7 +260,7 @@ const LoginForm = () => {
       
     } catch (error) {
       console.error('Google auth error:', error);
-      setError(error.message);
+      setError((error as Error).message);
     } finally {
       setLoading(false);
     }
