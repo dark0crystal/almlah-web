@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from 'next-intl';
 import PlaceCard from "./PlaceCard";
-import GovernateFilter from "./GovernateFilterComponent";
+// import GovernateFilter from "./GovernateFilterComponent";
 import PlaceSearchBar from "./PlaceSearchBar";
 import FilterButton from "./FilterButton";
 import PlacesFilterModal from "./PlacesFilterModal";
@@ -149,7 +149,7 @@ export default function PlacesCardsWrapper({
           <PlaceSearchBar
             selectedGovernateId={selectedGovernateId}
             categoryId={categoryId}
-            onPlaceSelect={onPlaceClick}
+            onPlaceSelect={(place) => onPlaceClick?.(place.id)}
             locale={locale}
             placeholder={locale === 'ar' ? 'البحث عن الأماكن...' : 'Search places...'}
           />
@@ -249,7 +249,7 @@ export default function PlacesCardsWrapper({
       <PlacesFilterModal
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
-        selectedGovernateId={selectedGovernateId}
+        selectedGovernateId={selectedGovernateId || null}
         selectedCategoryIds={selectedCategoryIds}
         onApplyFilters={(governateId, categoryIds) => {
           onGovernateChange?.(governateId);

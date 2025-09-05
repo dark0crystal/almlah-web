@@ -1,17 +1,23 @@
-"use client"
+//"use client"
 import { useState, useEffect } from "react";
 import { X, MapPin, Grid3X3, Check } from "lucide-react";
-import { useTranslations } from 'next-intl';
+// import { useTranslations } from 'next-intl';
 import { fetchGovernates, fetchCategories } from "@/services/placesApi";
 import { Governate } from "@/types";
 
+// Update the Category interface to match the API response
 interface Category {
   id: string;
   name_ar: string;
   name_en: string;
+  description_ar?: string;
+  description_en?: string;
   slug: string;
   icon: string;
   type: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface PlacesFilterModalProps {
@@ -31,7 +37,7 @@ export default function PlacesFilterModal({
   onApplyFilters,
   locale
 }: PlacesFilterModalProps) {
-  const t = useTranslations('places');
+  // const t = useTranslations('places');
   
   // State for filter options
   const [governates, setGovernates] = useState<Governate[]>([]);
@@ -53,7 +59,13 @@ export default function PlacesFilterModal({
         ]);
         setGovernates(governatesData);
         console.log('Places filter - loaded categories:', categoriesData);
-        setCategories(categoriesData);
+        // Ensure all required fields are present
+        const processedCategories = categoriesData.map(cat => ({
+          ...cat,
+          icon: cat.icon || "", // Ensure icon is never undefined
+          type: cat.type || "" // Ensure type is never undefined
+        }));
+        setCategories(processedCategories);
       } catch (error) {
         console.error('Error loading filter data:', error);
       } finally {

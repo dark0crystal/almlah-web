@@ -1,6 +1,6 @@
 "use client"
 import { useState } from "react";
-import { MapPin, Star } from "lucide-react";
+import { MapPin } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTranslations } from 'next-intl';

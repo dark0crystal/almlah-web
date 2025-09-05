@@ -1,9 +1,10 @@
 "use client"
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Search, X, MapPin } from "lucide-react";
 import { useTranslations } from 'next-intl';
 import { searchPlaces } from "@/services/placesApi";
 import { Place } from "@/types";
+import Image from 'next/image';
 
 interface PlaceSearchBarProps {
   selectedGovernateId?: string | null;
@@ -44,6 +45,21 @@ export default function PlaceSearchBar({
     };
   }, []);
 
+  // Define performSearch with useCallback to avoid infinite re-renders
+  const performSearch = useCallback(async () => {
+    try {
+      setLoading(true);
+      const searchResults = await searchPlaces(query, categoryId, selectedGovernateId);
+      setResults(searchResults.slice(0, 8)); // Limit to 8 results
+      setShowResults(true);
+    } catch (error) {
+      console.error('Search error:', error);
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [query, categoryId, selectedGovernateId]);
+
   // Search function with debouncing
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -56,21 +72,7 @@ export default function PlaceSearchBar({
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [query, categoryId, selectedGovernateId]);
-
-  const performSearch = async () => {
-    try {
-      setLoading(true);
-      const searchResults = await searchPlaces(query, categoryId, selectedGovernateId);
-      setResults(searchResults.slice(0, 8)); // Limit to 8 results
-      setShowResults(true);
-    } catch (error) {
-      console.error('Search error:', error);
-      setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [query, performSearch]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -134,6 +136,17 @@ export default function PlaceSearchBar({
     return '';
   };
 
+  // Helper function to get image URL safely
+  const getImageUrl = (place: Place): string | null => {
+    if (place.primary_image) {
+      return place.primary_image;
+    }
+    if (place.images && place.images.length > 0 && place.images[0]?.image_url) {
+      return place.images[0].image_url;
+    }
+    return null;
+  };
+
   return (
     <div ref={searchRef} className="relative w-full">
       {/* Search Input */}
@@ -188,51 +201,58 @@ export default function PlaceSearchBar({
             </div>
           ) : (
             <div className="py-2">
-              {results.map((place) => (
-                <button
-                  key={place.id}
-                  onClick={() => handlePlaceClick(place)}
-                  className={`w-full px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3 ${
-                    locale === 'ar' ? 'text-right' : 'text-left'
-                  }`}
-                >
-                  {/* Place Image or Icon */}
-                  <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                    {place.primary_image || (place.images && place.images.length > 0) ? (
-                      <img
-                        src={place.primary_image || place.images?.[0]?.image_url}
-                        alt={getPlaceName(place)}
-                        className="w-10 h-10 object-cover rounded-lg"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          target.nextElementSibling?.classList.remove('hidden');
-                        }}
-                      />
-                    ) : null}
-                    <MapPin className="w-5 h-5 text-gray-400" />
-                  </div>
+              {results.map((place) => {
+                const imageUrl = getImageUrl(place);
+                const placeName = getPlaceName(place);
+                
+                return (
+                  <button
+                    key={place.id}
+                    onClick={() => handlePlaceClick(place)}
+                    className={`w-full px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3 ${
+                      locale === 'ar' ? 'text-right' : 'text-left'
+                    }`}
+                  >
+                    {/* Place Image or Icon */}
+                    <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                      {imageUrl ? (
+                        <Image
+                          src={imageUrl}
+                          alt={placeName}
+                          width={40}
+                          height={40}
+                          className="object-cover rounded-lg"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <MapPin className={`w-5 h-5 text-gray-400 ${imageUrl ? 'hidden' : ''}`} />
+                    </div>
 
-                  {/* Place Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-medium text-gray-900 truncate">
-                        {getPlaceName(place)}
-                      </h3>
-                      <span className="text-xs text-orange-600 font-medium">
-                        {getCategoryText(place)}
-                      </span>
+                    {/* Place Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-medium text-gray-900 truncate">
+                          {placeName}
+                        </h3>
+                        <span className="text-xs text-orange-600 font-medium">
+                          {getCategoryText(place)}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                        <p className="text-sm text-gray-500 truncate">
+                          {getLocationString(place)}
+                        </p>
+                      </div>
                     </div>
-                    
-                    <div className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                      <p className="text-sm text-gray-500 truncate">
-                        {getLocationString(place)}
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
