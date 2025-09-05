@@ -5,13 +5,8 @@ import { useRouter, useParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Mountain } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
 import WilayahCard from './WilayahCard';
-import { SimpleWilayah, WilayahWithImages, fetchWilayahImages, getPrimaryWilayahImage } from '@/services/governateApi';
-
-interface WilayahCardsWrapperProps {
-  wilayahs: SimpleWilayah[];
-  governateName: string;
-  onWilayahClick?: (wilayah: WilayahWithImages) => void;
-}
+import { WilayahWithImages, fetchWilayahImages, getPrimaryWilayahImage } from '@/services/governateApi';
+import { WilayahCardsWrapperProps } from '../types';
 
 export default function WilayahCardsWrapper({ 
   wilayahs, 

@@ -6,18 +6,7 @@ import { MapPin } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 
-export interface WilayahCardProps {
-  wilayah: {
-    id: string;
-    name_ar: string;
-    name_en: string;
-    slug: string;
-    image_url?: string;
-    place_count?: number;
-  };
-  locale: 'ar' | 'en';
-  onClick?: (wilayah: { id: string; name_ar: string; name_en: string; slug: string; image_url?: string; place_count?: number }) => void;
-}
+import { WilayahCardProps } from '../types';
 
 export default function WilayahCard({ wilayah, locale, onClick }: WilayahCardProps) {
   const t = useTranslations('wilayah');

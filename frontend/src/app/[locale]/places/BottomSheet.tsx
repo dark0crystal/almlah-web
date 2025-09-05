@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useRef } from "react";
-import { ChevronUp, X, Map } from "lucide-react";
+import { ChevronUp, Map } from "lucide-react";
 import PlacesCardsWrapper from "./PlacesCardsWrapper";
 
 interface BottomSheetProps {
@@ -187,7 +187,7 @@ export default function BottomSheet({
       document.removeEventListener('mouseup', handleGlobalMouseUp);
       document.removeEventListener('mousemove', handleGlobalMouseMove);
     };
-  }, [isMouseDragging, currentY, startY, sheetState]);
+  }, [isMouseDragging, currentY, startY, sheetState, handleMouseUp]);
 
   // Handle header click to toggle states
   const handleHeaderClick = () => {

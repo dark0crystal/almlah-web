@@ -7,16 +7,12 @@ import DishesSplashScreen from './DishesSplashScreen';
 import { Dish } from '@/types';
 import { 
   dishesApi, 
-  DishResponse,
-  convertApiDishToFrontendDish,
-  getDishName,
-  getDishDescription
+  convertApiDishToFrontendDish
 } from '@/lib/api/dishesApi';
 import { 
   governoratesApi, 
   GovernorateResponse,
-  getGovernorateName,
-  createGovernorateMapping
+  getGovernorateName
 } from '@/lib/api/governoratesApi';
 
 // Map SVG IDs to our internal governorate names

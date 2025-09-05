@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 interface DishesSplashScreenProps {
   onComplete: () => void;
@@ -93,9 +94,11 @@ const DishesSplashScreen: React.FC<DishesSplashScreenProps> = ({ onComplete }) =
               margin: '10px'
             }}
           >
-            <img
+            <Image
               src={props.src}
               alt="Floating image"
+              width={192}
+              height={192}
               className="w-48 h-48 object-contain"
             />
           </div>
