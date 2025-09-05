@@ -27,6 +27,15 @@ type AppConfig struct {
 	AWSRegion          string
 	AWSAccessKeyID     string
 	AWSSecretKey       string
+
+	// Google Maps API configuration
+	GoogleMapsAPIKey   string
+
+	// Supabase configuration
+	SupabaseURL             string
+	SupabaseServiceRoleKey  string
+	SupabaseStorageBucket   string
+
 }
 
 func SetupEnv() (cfg AppConfig, err error) {
@@ -92,6 +101,14 @@ func SetupEnv() (cfg AppConfig, err error) {
 		AWSRegion:          getEnv("AWS_REGION", ""),
 		AWSAccessKeyID:     getEnv("AWS_ACCESS_KEY_ID", ""),
 		AWSSecretKey:       getEnv("AWS_SECRET_ACCESS_KEY", ""),
+
+		// Google Maps API configuration
+		GoogleMapsAPIKey:   getEnv("GOOGLE_MAPS_API_KEY", ""),
+
+		// Supabase configuration
+		SupabaseURL:             getEnv("SUPABASE_URL", ""),
+		SupabaseServiceRoleKey:  getEnv("SUPABASE_SERVICE_ROLE_KEY", ""),
+		SupabaseStorageBucket:   getEnv("SUPABASE_STORAGE_BUCKET", ""),
 	}, nil
 }
 
