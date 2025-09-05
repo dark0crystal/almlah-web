@@ -2,19 +2,11 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useTranslations } from 'next-intl';
-
-interface GovernateImagesModalProps {
-  images: string[];
-  governateName: string;
-  language?: 'ar' | 'en';
-  onClose: () => void;
-  initialIndex?: number;
-}
+import { GovernateImagesModalProps } from '../types';
 
 export default function GovernateImagesModal({ 
   images, 
   governateName,
-  language = 'ar',
   onClose, 
   initialIndex = 0 
 }: GovernateImagesModalProps) {

@@ -1,26 +1,16 @@
 "use client";
-import { MapPin, Navigation, Building, Calendar, Users, ExternalLink } from 'lucide-react';
+import { MapPin, Navigation, Building, Calendar, ExternalLink } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
-import { GovernateDetails, SimpleWilayah } from '@/services/governateApi';
-
-interface GovernateInfoSidebarProps {
-  governate: GovernateDetails;
-  wilayahs: SimpleWilayah[];
-  language?: 'ar' | 'en';
-  onGetDirections?: () => void;
-}
+import { GovernateInfoSidebarProps } from '../types';
 
 export default function GovernateInfoSidebar({ 
   governate, 
   wilayahs, 
-  language = 'ar',
   onGetDirections 
 }: GovernateInfoSidebarProps) {
   
   const locale = useLocale() as 'ar' | 'en';
   const t = useTranslations('governate');
-  
-  const governateName = locale === 'ar' ? governate.name_ar : governate.name_en;
 
   return (
     <div className="space-y-6">

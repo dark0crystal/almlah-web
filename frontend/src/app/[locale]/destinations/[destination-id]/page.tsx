@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
-import { MapPin, Users, Building, ArrowLeft, Share2, ExternalLink } from 'lucide-react';
+import { MapPin, Building, ArrowLeft, Share2 } from 'lucide-react';
 import Image from 'next/image';
 import GovernateImagesContainer from "./GovernateImagesContainer";
 import GovernateLoadingSkeleton from "./GovernateLoadingSkeleton";
@@ -11,12 +11,8 @@ import PostCardsWrapper from "@/components/cards/postCards/PostCardWrapper";
 import WilayahCardsWrapper from "./WilayahCardsWrapper";
 import Footer from '@/components/Footer';
 import { fetchGovernateById, fetchGovernateWilayahs, GovernateDetails, SimpleWilayah } from '@/services/governateApi';
-import sepnakhlah from "../../../../../public/seperators/sepnakhlah.png"
-interface GovernateDetailsProps {
-  params?: {
-    'destination-id': string;
-  };
-}
+import sepnakhlah from "../../../../../public/seperators/sepnakhlah.png";
+import { GovernateDetailsProps } from '../types';
 
 export default function GovernateDetailsPage({ params }: GovernateDetailsProps) {
   const [governate, setGovernate] = useState<GovernateDetails | null>(null);
@@ -28,7 +24,6 @@ export default function GovernateDetailsPage({ params }: GovernateDetailsProps) 
   const locale = useLocale() as 'ar' | 'en';
   const t = useTranslations('governate');
   const tNav = useTranslations('navigation');
-  const tCommon = useTranslations('common');
   
   // Get governate ID from params or URL
   const urlParams = useParams();
@@ -40,8 +35,8 @@ export default function GovernateDetailsPage({ params }: GovernateDetailsProps) 
   console.log('GovernateDetails - governateId:', governateId);
   console.log('GovernateDetails - locale:', locale);
 
-  // Load governate function
-  const loadGovernate = async () => {
+  // Load governate function - wrapped in useCallback to prevent unnecessary re-renders
+  const loadGovernate = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -75,7 +70,7 @@ export default function GovernateDetailsPage({ params }: GovernateDetailsProps) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [governateId, t]);
 
   // Load governate data when component mounts
   useEffect(() => {
@@ -87,7 +82,7 @@ export default function GovernateDetailsPage({ params }: GovernateDetailsProps) 
     }
 
     loadGovernate();
-  }, [governateId, t]);
+  }, [governateId, t, loadGovernate]);
 
   // Update page title
   useEffect(() => {
@@ -122,13 +117,6 @@ export default function GovernateDetailsPage({ params }: GovernateDetailsProps) 
     }
   };
 
-  // Handle directions to governate
-  const handleGetDirections = () => {
-    if (governate && governate.latitude && governate.longitude) {
-      const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${governate.latitude},${governate.longitude}`;
-      window.open(directionsUrl, '_blank');
-    }
-  };
 
   // Handle retry
   const handleRetry = () => {

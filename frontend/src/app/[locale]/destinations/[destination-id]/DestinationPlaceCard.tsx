@@ -4,12 +4,7 @@ import { MapPin } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTranslations } from 'next-intl';
-import { Place } from "@/types";
-
-interface DestinationPlaceCardProps {
-  place: Place;
-  locale: string;
-}
+import { DestinationPlaceCardProps } from '../types';
 
 export default function DestinationPlaceCard({ place, locale }: DestinationPlaceCardProps) {
   const router = useRouter();

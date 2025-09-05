@@ -1,21 +1,10 @@
 "use client";
 import { AlertTriangle, RefreshCw, ArrowLeft, Home } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-
-interface GovernateErrorComponentProps {
-  error: string;
-  language?: 'ar' | 'en';
-  onRetry?: () => void;
-  onGoBack?: () => void;
-  onGoHome?: () => void;
-  showRetry?: boolean;
-  showGoBack?: boolean;
-  showGoHome?: boolean;
-}
+import { GovernateErrorComponentProps } from '../types';
 
 export default function GovernateErrorComponent({
   error,
-  language = 'ar',
   onRetry,
   onGoBack,
   onGoHome,

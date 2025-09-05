@@ -4,12 +4,7 @@ import { useState } from "react";
 import { useTranslations } from 'next-intl';
 import GovernateImagesModal from "./GovernateImagesModal";
 import { GovernateImage, getGovernateImageUrl, getSortedImages } from '@/services/governateApi';
-
-interface GovernateImagesContainerProps {
-  images: GovernateImage[];
-  governateName: string;
-  language?: 'ar' | 'en';
-}
+import { GovernateImagesContainerProps } from '../types';
 
 export default function GovernateImagesContainer({ 
   images, 

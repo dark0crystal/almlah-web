@@ -5,11 +5,7 @@ import { MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import DestinationPlaceCard from "./DestinationPlaceCard";
 import { fetchTourismPlaces, CATEGORY_IDS } from "@/services/placesApi";
 import { Place } from "@/types";
-
-interface DestinationPlacesWrapperProps {
-  governateId: string;
-  categoryId?: string; // Optional category filter
-}
+import { DestinationPlacesWrapperProps } from '../types';
 
 export default function DestinationPlacesWrapper({ 
   governateId, 
@@ -36,9 +32,9 @@ export default function DestinationPlacesWrapper({
         
         console.log('Places loaded:', data);
         setPlaces(data);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error loading places:', err);
-        setError(err.message || t('error'));
+        setError((err instanceof Error ? err.message : String(err)) || t('error'));
         setPlaces([]);
       } finally {
         setLoading(false);
@@ -168,8 +164,7 @@ export default function DestinationPlacesWrapper({
           className={`flex gap-4 overflow-x-auto scrollbar-hide pb-2 ${isRTL ? 'dir-rtl' : 'dir-ltr'}`}
           style={{ 
             scrollbarWidth: 'none', 
-            msOverflowStyle: 'none',
-            WebkitScrollbar: { display: 'none' }
+            msOverflowStyle: 'none'
           }}
         >
           {places.map((place) => (
