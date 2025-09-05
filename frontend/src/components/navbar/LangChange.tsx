@@ -1,10 +1,9 @@
 'use client'
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useTranslations, useLocale } from "next-intl";
+import { useLocale } from "next-intl";
 
 export default function LanguageChange() {
-    const t = useTranslations("Links");
     const pathName = usePathname();
     const locale = useLocale();
 

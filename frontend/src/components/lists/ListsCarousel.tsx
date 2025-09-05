@@ -1,12 +1,12 @@
 'use client';
 
-import { useTranslations, useLocale } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { useState, useEffect } from 'react';
 import { ListSummary, listsApi } from '@/services/listsApi';
 import ListCard from './ListCard';
 
 export default function ListsCarousel() {
-  const t = useTranslations('HomePage');
+  // const t = useTranslations('HomePage');
   const locale = useLocale() as 'ar' | 'en';
   const [lists, setLists] = useState<ListSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,7 +84,7 @@ export default function ListsCarousel() {
     <section className="w-[88vw]">
       {/* Section Header */}
       <div className={`mb-8 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+        <h2 className="text-2xl font-bold text-gray-900 mb-3">
           {locale === 'ar' ? 'قوائـم الـمـلاح' : 'Almlah Lists'}
         </h2>
       </div>

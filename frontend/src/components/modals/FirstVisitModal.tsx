@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Car } from '@/types';
@@ -24,7 +24,6 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [dominantColors, setDominantColors] = useState<{ [key: string]: string }>({});
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 

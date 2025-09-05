@@ -6,11 +6,11 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import Brand from "./Brand";
 
-type NavBarProps = {
-  style: string;
-};
+// type NavBarProps = {
+//   style: string;
+// };
 
-export default async function NavBar({ style }: NavBarProps) {
+export default async function NavBar(): Promise<JSX.Element> {
   const locale = (await getLocale()).substring(0, 2); // This will give you "ar" or "en"
   const direction = locale === 'ar' ? 'rtl' : 'ltr'; // Determine direction programmatically
   const t = await getTranslations("navbar");

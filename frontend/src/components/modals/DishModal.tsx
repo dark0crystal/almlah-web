@@ -1,5 +1,6 @@
 "use client"
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Dish } from '@/types';
@@ -134,10 +135,11 @@ export const DishModal: React.FC<DishModalProps> = ({ dish, isOpen, onClose }) =
                               : 'border-gray-300 hover:border-amber-300'
                           }`}
                         >
-                          <img
+                          <Image
                             src={image}
                             alt={`${dish.name} thumbnail ${index + 1}`}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
                             onError={handleImageError}
                           />
                         </button>

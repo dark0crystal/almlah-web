@@ -19,33 +19,30 @@ type MobileMenuProps = {
   dashboardLinks: { direction: string; name: string }[];
 };
 
-export default function MobileMenu({ navLinks, dashboardLinks }: MobileMenuProps) {
+export default function MobileMenu({ navLinks }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(false);
+  // const [showDashboard, setShowDashboard] = useState(false);
   const pathname = usePathname();
   const locale = useLocale().substring(0, 2);
   const direction = locale === 'ar' ? 'rtl' : 'ltr';
-  const t = useTranslations('navbar');
+  // const t = useTranslations('navbar'); // Unused for now
   const tLinks = useTranslations('Links');
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
-    setShowDashboard(false);
   };
 
   const closeMenu = () => {
     setIsOpen(false);
-    setShowDashboard(false);
   };
 
-  const toggleDashboard = () => {
-    setShowDashboard(!showDashboard);
-  };
+  // const toggleDashboard = () => {
+  //   setShowDashboard(!showDashboard);
+  // }; // Unused for now
 
   // Close menu when pathname changes (navigation occurs)
   useEffect(() => {
     setIsOpen(false);
-    setShowDashboard(false);
   }, [pathname]);
 
   const getIcon = (href: string) => {
