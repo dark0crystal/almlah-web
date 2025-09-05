@@ -532,3 +532,4 @@ func (h *PlaceHandler) GetPlacesByFilters(ctx *fiber.Ctx) error {
     
     return ctx.JSON(utils.SuccessResponse("Places retrieved successfully", places))
 }
+
