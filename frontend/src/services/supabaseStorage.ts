@@ -44,15 +44,14 @@ export class SupabaseStorageService {
     bucket,
     folder,
     fileName,
-    file,
-    onProgress
-  }: UploadOptions): Promise<UploadResult> {
+    file
+  }: Omit<UploadOptions, 'onProgress'>): Promise<UploadResult> {
     try {
       const filePath = `${folder}/${fileName}`;
       console.log('🔄 Uploading file to Supabase:', { bucket, filePath, fileName: file.name });
 
       // Upload the file
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from(bucket)
         .upload(filePath, file, {
           cacheControl: '3600',

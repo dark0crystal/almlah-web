@@ -58,7 +58,7 @@ export const CategorySelectionStep: React.FC = () => {
     nextStep();
   };
 
-  const onError = (formErrors: any) => {
+  const onError = (formErrors: Record<string, { message: string }>) => {
     const errorMessages: Record<string, string> = {};
     Object.keys(formErrors).forEach(key => {
       errorMessages[key] = formErrors[key].message;

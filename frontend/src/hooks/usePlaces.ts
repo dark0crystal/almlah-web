@@ -31,7 +31,6 @@ export interface UsePlacesResult {
 export const usePlaces = (options: UsePlacesOptions = {}): UsePlacesResult => {
   const {
     filters = {},
-    language = 'ar',
     autoFetch = true,
     fallbackToAll = true
   } = options;
@@ -154,7 +153,6 @@ export const usePlaces = (options: UsePlacesOptions = {}): UsePlacesResult => {
 // Specialized hook for recent places with new status using optimized endpoint
 export const useRecentPlaces = (
   limit: number = 6, 
-  language: 'ar' | 'en' = 'ar',
   minCount: number = 6,
   fallback: boolean = true
 ) => {

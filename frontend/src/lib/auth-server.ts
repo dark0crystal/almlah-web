@@ -95,7 +95,7 @@ export async function verifyAuth(): Promise<AuthResult> {
 
     const user: ServerUser = {
       ...profileData.data.user,
-      permissions: permissionsData.data.map((p: any) => p.name),
+      permissions: permissionsData.data.map((p: { name: string }) => p.name),
       roles: rolesData.data
     };
 

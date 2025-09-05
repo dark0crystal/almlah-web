@@ -15,6 +15,21 @@ export const CATEGORY_IDS = {
 // Type for category keys
 export type CategoryType = keyof typeof CATEGORY_IDS;
 
+// Category interface
+interface Category {
+  id: string;
+  name_ar: string;
+  name_en: string;
+  description_ar?: string;
+  description_en?: string;
+  slug: string;
+  icon?: string;
+  type?: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 // Actual backend response format from your Go service (dto.PlaceResponse)
 interface BackendPlaceCompleteResponse {
   id: string;
@@ -559,7 +574,7 @@ export const fetchPlaceByIdWithLanguage = async (placeId: string, language: 'ar'
         created_at: '',
         updated_at: ''
       })) || [],
-      content_sections: placeData.content_sections?.map((section: { id?: string; title_ar: string; title_en: string; content_ar: string; content_en: string; display_order: number; images?: any[] }) => ({
+      content_sections: placeData.content_sections?.map((section: { id?: string; title_ar: string; title_en: string; content_ar: string; content_en: string; display_order: number; images?: Array<{ id: string; image_url: string; alt_text_ar: string; alt_text_en: string; caption_ar: string; caption_en: string; sort_order: number }> }) => ({
         id: section.id,
         section_type: section.section_type,
         title_ar: language === 'ar' ? section.title : '',
@@ -894,7 +909,7 @@ export const searchPlaces = async (
 };
 
 // NEW: Fetch categories function
-export const fetchCategories = async (): Promise<any[]> => {
+export const fetchCategories = async (): Promise<Category[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/categories`, {
       headers: { 'Content-Type': 'application/json' },

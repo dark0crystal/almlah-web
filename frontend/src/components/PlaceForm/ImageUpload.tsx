@@ -4,7 +4,6 @@ import { useImageUpload } from '../../hooks/useImageUpload';
 import { ImageUploadProps, ImageFile, ExistingImage } from '../../types/image';
 import { 
   CloudArrowUpIcon, 
-  PhotoIcon, 
   XMarkIcon, 
   StarIcon, 
   ExclamationTriangleIcon,
@@ -12,6 +11,7 @@ import {
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
+import Image from 'next/image';
 
 export const ImageUpload: React.FC<ImageUploadProps> = ({
   config,
@@ -33,11 +33,11 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     removePendingFile,
     updatePendingFile,
     setPrimaryFile,
-    uploadFiles,
+    // uploadFiles, // Currently unused
     retryFailedUploads,
     clearPendingFiles,
     hasFailedUploads,
-    hasPendingUploads
+    // hasPendingUploads // Currently unused
   } = useImageUpload({
     config,
     onImagesChange: (newImages) => {
@@ -265,10 +265,12 @@ const PendingImageCard: React.FC<PendingImageCardProps> = ({
   return (
     <div className="relative">
       <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-        <img
+        <Image
           src={file.preview}
           alt="Pending upload"
           className="w-full h-full object-cover"
+          width={300}
+          height={300}
         />
       </div>
       
@@ -373,10 +375,12 @@ const ExistingImageCard: React.FC<ExistingImageCardProps> = ({
   return (
     <div className="relative group">
       <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-        <img
+        <Image
           src={image.url}
           alt={image.alt_text || 'Uploaded image'}
           className="w-full h-full object-cover"
+          width={300}
+          height={300}
         />
       </div>
       
