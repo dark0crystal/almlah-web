@@ -1,4 +1,4 @@
-"use client"
+'use client'
 import React, { useCallback, useState, useEffect } from 'react';
 import { GoogleMap, useLoadScript, Marker, InfoWindow } from '@react-google-maps/api';
 import { useTranslations } from 'next-intl';
@@ -26,6 +26,16 @@ interface RestaurantsMapProps {
   selectedPlaceId?: string | null;
 }
 
+// Helper function to safely get coordinates
+const getSafeCoordinates = (place: Place): { lat: number; lng: number } | null => {
+  if (place.lat !== undefined && place.lng !== undefined && 
+      !isNaN(place.lat) && !isNaN(place.lng) && 
+      place.lat !== 0 && place.lng !== 0) {
+    return { lat: place.lat, lng: place.lng };
+  }
+  return null;
+};
+
 export default function RestaurantsMap({ 
   selectedGovernateId, 
   categoryId, 
@@ -37,7 +47,6 @@ export default function RestaurantsMap({
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activePlace, setActivePlace] = useState<string | null>(null);
   const [selectedMarker, setSelectedMarker] = useState<Place | null>(null);
 
   const { isLoaded, loadError } = useLoadScript({
@@ -78,12 +87,12 @@ export default function RestaurantsMap({
         
         // Filter places with valid coordinates
         const validPlaces = data.filter(place => {
-          const hasValidLat = place.lat && !isNaN(place.lat) && place.lat !== 0 && Math.abs(place.lat) <= 90;
-          const hasValidLng = place.lng && !isNaN(place.lng) && place.lng !== 0 && Math.abs(place.lng) <= 180;
+          const coordinates = getSafeCoordinates(place);
+          const isValid = coordinates !== null;
           
-          console.log(`Place ${place.name_en}: lat=${place.lat}, lng=${place.lng}, valid=${hasValidLat && hasValidLng}`);
+          console.log(`Place ${place.name_en}: lat=${place.lat}, lng=${place.lng}, valid=${isValid}`);
           
-          return hasValidLat && hasValidLng;
+          return isValid;
         });
         
         console.log('Valid places with coordinates:', validPlaces);
@@ -111,25 +120,24 @@ export default function RestaurantsMap({
   const onMapLoad = useCallback((map: google.maps.Map) => {
     // Fit map to show all places if we have multiple
     if (places.length > 1) {
-      const validPlaces = places.filter(r => 
-        r.lat && r.lng
-      );
-
-      if (validPlaces.length > 1) {
-        const bounds = new google.maps.LatLngBounds();
-        validPlaces.forEach(place => {
-          bounds.extend({
-            lat: place.lat,
-            lng: place.lng
-          });
-        });
+      const bounds = new google.maps.LatLngBounds();
+      let hasValidBounds = false;
+      
+      places.forEach(place => {
+        const coordinates = getSafeCoordinates(place);
+        if (coordinates) {
+          bounds.extend(coordinates);
+          hasValidBounds = true;
+        }
+      });
+      
+      if (hasValidBounds) {
         map.fitBounds(bounds, { top: 50, bottom: 50, left: 50, right: 50 });
       }
     }
   }, [places]);
 
   const handleMarkerClick = useCallback((place: Place) => {
-    setActivePlace(place.id);
     setSelectedMarker(place);
     
     // Notify parent component about marker click
@@ -137,115 +145,6 @@ export default function RestaurantsMap({
       onMarkerClick(place.id);
     }
   }, [onMarkerClick]);
-
-  const createCustomRestaurantMarker = (restaurant: Place) => {
-    const canvas = document.createElement('canvas');
-    const size = 48;
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
-
-    // Get restaurant image source with proper URL handling
-    const getImageSrc = () => {
-      let imageUrl = '';
-      
-      // First try primary_image
-      if (restaurant.primary_image) {
-        imageUrl = restaurant.primary_image;
-      }
-      // Then try images array
-      else if (restaurant.images && restaurant.images.length > 0) {
-        const primaryImage = restaurant.images.find(img => img.is_primary) || restaurant.images[0];
-        imageUrl = primaryImage.image_url;
-      }
-      
-      // If no image found, return null
-      if (!imageUrl) {
-        return null;
-      }
-      
-      // If it's already a full URL, return as is
-      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-        return imageUrl;
-      }
-      
-      // If it's a relative path, add API base URL
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000";
-      if (imageUrl.startsWith('/')) {
-        return `${API_BASE_URL}${imageUrl}`;
-      }
-      
-      return imageUrl;
-    };
-
-    const imageSrc = getImageSrc();
-
-    if (imageSrc) {
-      // Try to load and draw the restaurant image
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      
-      return new Promise((resolve) => {
-        img.onload = () => {
-          // Draw circle background
-          ctx.beginPath();
-          ctx.arc(size / 2, size / 2, size / 2 - 3, 0, 2 * Math.PI);
-          ctx.fillStyle = '#ea580c'; // Orange background for restaurants
-          ctx.fill();
-          
-          // Draw white border
-          ctx.strokeStyle = 'white';
-          ctx.lineWidth = 3;
-          ctx.stroke();
-
-          // Clip to circle for image
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(size / 2, size / 2, size / 2 - 3, 0, 2 * Math.PI);
-          ctx.clip();
-
-          // Draw the restaurant image
-          ctx.drawImage(img, 3, 3, size - 6, size - 6);
-          ctx.restore();
-
-          resolve(canvas.toDataURL());
-        };
-
-        img.onerror = () => {
-          // Fallback: create colored marker with initial
-          createFallbackMarker();
-          resolve(canvas.toDataURL());
-        };
-
-        img.src = imageSrc;
-      });
-    } else {
-      // No image, create fallback marker
-      createFallbackMarker();
-      return Promise.resolve(canvas.toDataURL());
-    }
-
-    function createFallbackMarker() {
-      // Draw circle background
-      ctx.beginPath();
-      ctx.arc(size / 2, size / 2, size / 2 - 3, 0, 2 * Math.PI);
-      ctx.fillStyle = '#ea580c'; // Orange for restaurants
-      ctx.fill();
-      
-      // Draw white border
-      ctx.strokeStyle = 'white';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-
-      // Add restaurant name initial
-      const name = locale === 'ar' ? restaurant.name_ar : restaurant.name_en;
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 16px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(name.charAt(0), size / 2, size / 2);
-    }
-  };
 
   if (loadError) {
     return (
@@ -318,7 +217,8 @@ export default function RestaurantsMap({
         onLoad={onMapLoad}
       >
         {places.map((place) => {
-          if (place.lat && place.lng) {
+          const coordinates = getSafeCoordinates(place);
+          if (coordinates) {
             return (
               <RestaurantMarker
                 key={place.id}
@@ -332,17 +232,17 @@ export default function RestaurantsMap({
           return null;
         })}
 
-        {selectedMarker && (
-          <InfoWindow
-            position={{
-              lat: selectedMarker.lat,
-              lng: selectedMarker.lng
-            }}
-            onCloseClick={() => setSelectedMarker(null)}
-          >
-            <RestaurantInfoContent restaurant={selectedMarker} locale={locale} />
-          </InfoWindow>
-        )}
+        {selectedMarker && (() => {
+          const coordinates = getSafeCoordinates(selectedMarker);
+          return coordinates ? (
+            <InfoWindow
+              position={coordinates}
+              onCloseClick={() => setSelectedMarker(null)}
+            >
+              <RestaurantInfoContent restaurant={selectedMarker} locale={locale} />
+            </InfoWindow>
+          ) : null;
+        })()}
       </GoogleMap>
 
       {/* Map info overlay */}
@@ -378,6 +278,7 @@ function RestaurantMarker({
   onClick: () => void; 
 }) {
   const [iconUrl, setIconUrl] = useState<string>('');
+  const coordinates = getSafeCoordinates(restaurant);
 
   useEffect(() => {
     const createIcon = async () => {
@@ -479,14 +380,11 @@ function RestaurantMarker({
     createIcon();
   }, [restaurant, locale]);
 
-  if (!iconUrl) return null;
+  if (!iconUrl || !coordinates) return null;
 
   return (
     <Marker
-      position={{
-        lat: restaurant.lat,
-        lng: restaurant.lng
-      }}
+      position={coordinates}
       icon={{
         url: iconUrl,
         scaledSize: new google.maps.Size(isSelected ? 56 : 48, isSelected ? 56 : 48),
@@ -551,9 +449,11 @@ function RestaurantInfoContent({ restaurant, locale }: { restaurant: Place; loca
           📞 {restaurant.phone}
         </p>
       )}
-      <div style={{ fontSize: '12px', color: '#888', marginTop: '8px' }}>
-        {locale === 'ar' ? 'الإحداثيات' : 'Coordinates'}: {restaurant.lat.toFixed(4)}, {restaurant.lng.toFixed(4)}
-      </div>
+      {restaurant.lat !== undefined && restaurant.lng !== undefined && (
+        <div style={{ fontSize: '12px', color: '#888', marginTop: '8px' }}>
+          {locale === 'ar' ? 'الإحداثيات' : 'Coordinates'}: {restaurant.lat.toFixed(4)}, {restaurant.lng.toFixed(4)}
+        </div>
+      )}
     </div>
   );
 }

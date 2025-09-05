@@ -66,9 +66,9 @@ export default function RestaurantsModal({
         
         console.log('Restaurants loaded for modal:', limitedRestaurants);
         setRestaurants(limitedRestaurants);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error loading restaurants for modal:', err);
-        setError(err.message || t('error'));
+        setError(err instanceof Error ? err.message : t('error'));
         setRestaurants([]);
       } finally {
         setLoading(false);

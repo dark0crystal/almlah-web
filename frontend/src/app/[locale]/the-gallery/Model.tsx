@@ -1,14 +1,14 @@
 'use client'
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useMemo } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
-import { motion } from "framer-motion"
+// import { motion } from "framer-motion"
 import { animate, useMotionValue } from 'framer-motion'
 import { vertex, fragment } from './Shader'
 import { useTexture } from '@react-three/drei';
 import useMouse from './useMouse'
 import useDimension from './useDimension'
 import { projects } from './data'
-import { Mesh, PlaneGeometry, ShaderMaterial } from 'three'
+// import { Mesh, PlaneGeometry, ShaderMaterial } from 'three'
 
 interface ModelProps {
   activeMenu: number | null;
@@ -17,12 +17,25 @@ interface ModelProps {
 const lerp = (x: number, y: number, a: number) => x * (1 - a) + y * a
 
 const Model: React.FC<ModelProps> = ({ activeMenu }) => {
-  const plane = useRef<any>(null);
+  const plane = useRef<THREE.Mesh>(null);
   const { viewport } = useThree();
   const dimension = useDimension();
   const mouse = useMouse();
   const opacity = useMotionValue(0);
-  const textures = projects.map(project => useTexture(project.src))
+  
+  // Load textures outside of map to avoid hook rule violation
+  const texture0 = useTexture(projects[0].src);
+  const texture1 = useTexture(projects[1].src);
+  const texture2 = useTexture(projects[2].src);
+  const texture3 = useTexture(projects[3].src);
+  const texture4 = useTexture(projects[4].src);
+  const texture5 = useTexture(projects[5].src);
+  const texture6 = useTexture(projects[6].src);
+  const texture7 = useTexture(projects[7].src);
+  const texture8 = useTexture(projects[8].src);
+  const texture9 = useTexture(projects[9].src);
+  
+  const textures = useMemo(() => [texture0, texture1, texture2, texture3, texture4, texture5, texture6, texture7, texture8, texture9], [texture0, texture1, texture2, texture3, texture4, texture5, texture6, texture7, texture8, texture9]);
   const { width, height } = textures[0].image;
   
   // Aspect ratio calculation

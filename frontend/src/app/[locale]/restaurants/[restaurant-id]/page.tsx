@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
+import React from 'react';
 import RestaurantImagesContainer from "./RestaurantImagesContainer";
 import RestaurantAboutAndLocation from "./RestaurantAboutAndLocation";
 import { fetchPlaceById } from '@/services/placesApi';
@@ -9,9 +10,10 @@ import { Place } from '@/types';
 import Footer from '@/components/Footer';
 
 interface RestaurantDetailsProps {
-  params?: {
-    'restaurant-id': string; // Match your file structure
-  };
+  params?: Promise<{
+    'restaurant-id': string;
+    locale?: string;
+  }>;
 }
 
 export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
@@ -26,15 +28,18 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
   const urlParams = useParams();
   const router = useRouter();
   
+  // Unwrap the params promise with React.use()
+  const unwrappedParams = params ? React.use(params) : null;
+  
   // Extract restaurant ID - handle both cases
-  const restaurantId = params?.['restaurant-id'] || urlParams?.['restaurant-id'] as string;
+  const restaurantId = unwrappedParams?.['restaurant-id'] || urlParams?.['restaurant-id'] as string;
   
   console.log('RestaurantDetails - restaurantId:', restaurantId);
-  console.log('RestaurantDetails - params:', params);
+  console.log('RestaurantDetails - unwrappedParams:', unwrappedParams);
   console.log('RestaurantDetails - urlParams:', urlParams);
 
   // Load restaurant function - fetches complete data in both languages
-  const loadRestaurant = async () => {
+  const loadRestaurant = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -62,7 +67,7 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [restaurantId, t]);
 
   // Load restaurant data when component mounts
   useEffect(() => {
@@ -74,7 +79,7 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
     }
 
     loadRestaurant();
-  }, [restaurantId]);
+  }, [restaurantId, loadRestaurant, t]);
 
   // Update page title
   useEffect(() => {
@@ -82,7 +87,7 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
       const restaurantName = language === 'ar' ? restaurant.name_ar : restaurant.name_en;
       document.title = `${restaurantName} - ${t('title')}`;
     }
-  }, [restaurant, language]);
+  }, [restaurant, language, t]);
 
   if (loading) {
     return (
@@ -202,13 +207,6 @@ export default function RestaurantDetails({ params }: RestaurantDetailsProps) {
 
   // Now we have complete restaurant data with both languages
   const restaurantName = language === 'ar' ? restaurant.name_ar : restaurant.name_en;
-  const restaurantDescription = language === 'ar' ? restaurant.description_ar : restaurant.description_en;
-  const restaurantSubtitle = language === 'ar' ? restaurant.subtitle_ar : restaurant.subtitle_en;
-
-  // Get cuisine type from categories
-  const cuisineType = restaurant.categories && restaurant.categories.length > 0
-    ? (language === 'ar' ? restaurant.categories[0].name_ar : restaurant.categories[0].name_en)
-    : (language === 'ar' ? 'مطعم' : 'Restaurant');
 
   console.log('Rendering restaurant with complete data:', {
     id: restaurant.id,

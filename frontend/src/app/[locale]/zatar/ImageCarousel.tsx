@@ -1,6 +1,7 @@
 "use client"
 import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import Image from 'next/image';
 
 interface ImageCarouselProps {
   images: string[];
@@ -120,10 +121,11 @@ export default function ImageCarousel({ images, alt, className = "" }: ImageCaro
                   </div>
                 </div>
               ) : (
-                <img
+                <Image
                   src={image}
                   alt={`${alt} - Image ${index + 1}`}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
                   onLoad={() => handleImageLoad(index)}
                   onError={() => handleImageError(index)}
                   style={{ display: isLoading[index] ? 'none' : 'block' }}
