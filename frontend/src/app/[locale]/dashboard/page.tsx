@@ -1,6 +1,7 @@
 // components/Layout/ProtectedDashboard.tsx
 "use client"
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -220,7 +221,7 @@ const ProtectedDashboard = () => {
 
   return (
     <PageGuard>
-      <div className="min-h-screen bg-gray-50 rtl" dir="rtl">
+      <div className="min-h-screen rtl" dir="rtl">
       {/* Navigation Loading Overlay */}
       {isNavigating && (
         <div className="fixed inset-0 bg-black bg-opacity-20 z-50 flex items-center justify-center backdrop-blur-sm">
@@ -328,7 +329,7 @@ const ProtectedDashboard = () => {
           <div className={`flex items-center gap-3 ${!sidebarOpen && 'justify-center'}`}>
             <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
               {user?.profilePicture ? (
-                <img src={user.profilePicture} alt="Profile" className="w-10 h-10 rounded-full" />
+                <Image src={user.profilePicture} alt="Profile" width={40} height={40} className="w-10 h-10 rounded-full" />
               ) : (
                 <span className="text-white font-bold">👤</span>
               )}

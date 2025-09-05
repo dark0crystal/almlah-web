@@ -14,7 +14,7 @@ export default async function AdminLayout({
   
   try {
     // Require admin or super_admin role to access admin section
-    const auth = await requireAnyRole(['admin', 'super_admin'], currentPath);
+    await requireAnyRole(['admin', 'super_admin'], currentPath);
     
     return (
       <div className="admin-layout">

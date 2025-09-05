@@ -39,7 +39,12 @@ const ensureArray = (data: unknown): Category[] => {
     if (obj.primary && Array.isArray(obj.primary)) return obj.primary as Category[];
     if (obj.categories && Array.isArray(obj.categories)) return obj.categories as Category[];
     if (obj.data) return ensureArray(obj.data);
-    return [obj as Category];
+    
+    // Check if the object has required Category properties
+    if (obj.id && obj.name_ar && obj.name_en && obj.slug) {
+      return [obj as unknown as Category];
+    }
+    return [];
   }
   return [];
 };

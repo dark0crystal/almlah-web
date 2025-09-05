@@ -1,6 +1,6 @@
 import Destination from '@/components/destination/Destination';
 import Heading from '@/components/hero/Heading';
-import {getTranslations} from 'next-intl/server';
+// import {getTranslations} from 'next-intl/server';
 import ArabicCardsLayout from '@/components/IntroSection/Cards';
 import CategoryCardsWrapper from '@/components/cards/categoryCards/CategoryCardsWrapper';
 import PostCardsWrapper from '@/components/cards/postCards/PostCardWrapper';

@@ -1,11 +1,21 @@
 // app/auth/signup/page.tsx - Updated to work with new auth store
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Eye, EyeOff, Mail, Lock, User, AlertTriangle, CheckCircle, Loader } from 'lucide-react';
 import { env, validateEnv } from '@/config/env';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
+import {
+  SignupAuthAPI,
+  GoogleCredentialResponse,
+  GoogleSignInProps,
+  RegisterData,
+  AuthResult,
+  SignupFormData,
+  InputChangeHandler,
+  FormSubmitHandler
+} from '../types';
 
 // Validate environment variables on component mount
 if (typeof window !== 'undefined') {
@@ -13,8 +23,8 @@ if (typeof window !== 'undefined') {
 }
 
 // API Service
-const authAPI = {
-  register: async (userData) => {
+const authAPI: SignupAuthAPI = {
+  register: async (userData: RegisterData): Promise<AuthResult> => {
     const response = await fetch(`${env.API_HOST}/api/v1/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -34,7 +44,7 @@ const authAPI = {
     return data.data;
   },
 
-  googleAuth: async (token) => {
+  googleAuth: async (token: string): Promise<AuthResult> => {
     console.log('Sending Google auth request with token:', token.substring(0, 50) + '...');
     const response = await fetch(`${env.API_HOST}/api/v1/auth/google`, {
       method: 'POST',
@@ -59,9 +69,60 @@ const authAPI = {
 };
 
 // Google Sign-In Component
-const GoogleSignIn = ({ onSuccess, onError, disabled }) => {
+const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disabled }) => {
   const [googleLoaded, setGoogleLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const initializeGoogleSignIn = useCallback(() => {
+    if (typeof window !== 'undefined' && window.google?.accounts) {
+      console.log('Initializing Google Sign-In...');
+      
+      if (!env.GOOGLE_CLIENT_ID) {
+        console.error('Google Client ID not configured');
+        onError('Google Sign-In not configured. Please contact support.');
+        return;
+      }
+      
+      window.google.accounts.id.initialize({
+        client_id: env.GOOGLE_CLIENT_ID,
+        callback: handleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
+
+      // Render the button
+      const buttonElement = document.getElementById('google-signup-button');
+      if (buttonElement) {
+        window.google.accounts.id.renderButton(
+          buttonElement,
+          { 
+            theme: 'outline', 
+            size: 'large',
+            width: '100%',
+            text: 'continue_with'
+          }
+        );
+      }
+      console.log('Google Sign-In button rendered');
+    } else {
+      console.error('Google Identity Services not available');
+    }
+  }, [onError, handleCredentialResponse]);
+
+  const handleCredentialResponse = useCallback(async (response: GoogleCredentialResponse) => {
+    console.log('Google credential response received:', response);
+    setLoading(true);
+    try {
+      const result = await authAPI.googleAuth(response.credential);
+      console.log('Google auth successful:', result);
+      onSuccess(result);
+    } catch (error) {
+      console.error('Google auth failed:', error);
+      onError((error as Error).message || 'Google authentication failed');
+    } finally {
+      setLoading(false);
+    }
+  }, [onSuccess, onError]);
 
   React.useEffect(() => {
     // Load Google Identity Services
@@ -87,60 +148,12 @@ const GoogleSignIn = ({ onSuccess, onError, disabled }) => {
         existingScript.remove();
       }
     };
-  }, []);
-
-  const initializeGoogleSignIn = () => {
-    if (typeof google !== 'undefined' && google.accounts) {
-      console.log('Initializing Google Sign-In...');
-      
-      if (!env.GOOGLE_CLIENT_ID) {
-        console.error('Google Client ID not configured');
-        onError('Google Sign-In not configured. Please contact support.');
-        return;
-      }
-      
-      google.accounts.id.initialize({
-        client_id: env.GOOGLE_CLIENT_ID,
-        callback: handleCredentialResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
-
-      // Render the button
-      google.accounts.id.renderButton(
-        document.getElementById('google-signup-button'),
-        { 
-          theme: 'outline', 
-          size: 'large',
-          width: '100%',
-          text: 'continue_with'
-        }
-      );
-      console.log('Google Sign-In button rendered');
-    } else {
-      console.error('Google Identity Services not available');
-    }
-  };
-
-  const handleCredentialResponse = async (response) => {
-    console.log('Google credential response received:', response);
-    setLoading(true);
-    try {
-      const result = await authAPI.googleAuth(response.credential);
-      console.log('Google auth successful:', result);
-      onSuccess(result);
-    } catch (error) {
-      console.error('Google auth failed:', error);
-      onError(error.message || 'Google authentication failed');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [initializeGoogleSignIn, onError]);
 
   const handleGoogleSignIn = () => {
-    if (googleLoaded && typeof google !== 'undefined' && google.accounts) {
+    if (googleLoaded && typeof window !== 'undefined' && window.google?.accounts) {
       console.log('Prompting Google Sign-In...');
-      google.accounts.id.prompt();
+      window.google.accounts.id.prompt();
     } else {
       console.error('Google Sign-In not loaded');
       onError('Google Sign-In not loaded. Please refresh the page.');
@@ -179,7 +192,7 @@ const SignupForm = () => {
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<SignupFormData>({
     email: '',
     password: '',
     confirmPassword: '',
@@ -192,7 +205,7 @@ const SignupForm = () => {
   const { login } = useAuthStore();
   const router = useRouter();
 
-  const handleInputChange = (e) => {
+  const handleInputChange: InputChangeHandler = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (error) setError('');
@@ -210,7 +223,7 @@ const SignupForm = () => {
     return null;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit: FormSubmitHandler = async (e) => {
     e.preventDefault();
     
     const validationError = validateForm();
@@ -255,13 +268,13 @@ const SignupForm = () => {
       
     } catch (error) {
       console.error('Registration error:', error);
-      setError(error.message);
+      setError((error as Error).message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSuccess = async (result) => {
+  const handleGoogleSuccess = async (result: AuthResult) => {
     try {
       setLoading(true);
       setError('');
@@ -277,7 +290,7 @@ const SignupForm = () => {
       
     } catch (error) {
       console.error('Google auth error:', error);
-      setError(error.message);
+      setError((error as Error).message);
     } finally {
       setLoading(false);
     }

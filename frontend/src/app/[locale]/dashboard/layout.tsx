@@ -15,7 +15,7 @@ export default async function DashboardLayout({
   
   try {
     // Require authentication to access dashboard
-    const auth = await requireAuth(currentPath);
+    await requireAuth(currentPath);
     
     // If we get here, user is authenticated
     return (

@@ -59,13 +59,13 @@ const generateSlug = (name: string): string => {
 // Helper function to ensure array format
 const ensureArray = (data: unknown): Category[] => {
   if (!data) return [];
-  if (Array.isArray(data)) return data;
+  if (Array.isArray(data)) return data as Category[];
   if (typeof data === 'object' && data !== null) {
     const obj = data as Record<string, unknown>;
     if (obj.primary && Array.isArray(obj.primary)) return obj.primary as Category[];
     if (obj.categories && Array.isArray(obj.categories)) return obj.categories as Category[];
     if (obj.data) return ensureArray(obj.data);
-    return [obj as Category];
+    return [obj as unknown as Category];
   }
   return [];
 };

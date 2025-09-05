@@ -31,29 +31,85 @@ interface CategoryItemProps {
   currentLang: 'en' | 'ar' | 'both';
 }
 
+// Helper function to validate and convert to Category
+const validateCategory = (obj: unknown): Category | null => {
+  if (typeof obj !== 'object' || obj === null) return null;
+  
+  const record = obj as Record<string, unknown>;
+  
+  // Check required fields
+  if (typeof record.id !== 'string' || 
+      typeof record.name_ar !== 'string' || 
+      typeof record.name_en !== 'string' || 
+      typeof record.slug !== 'string' ||
+      typeof record.type !== 'string' ||
+      (record.type !== 'primary' && record.type !== 'secondary') ||
+      typeof record.sort_order !== 'number' ||
+      typeof record.is_active !== 'boolean') {
+    return null;
+  }
+  
+  // Build the category object with proper typing
+  return {
+    id: record.id as string,
+    name: typeof record.name === 'string' ? record.name : undefined,
+    name_ar: record.name_ar as string,
+    name_en: record.name_en as string,
+    slug: record.slug as string,
+    description: typeof record.description === 'string' ? record.description : undefined,
+    description_ar: typeof record.description_ar === 'string' ? record.description_ar : undefined,
+    description_en: typeof record.description_en === 'string' ? record.description_en : undefined,
+    icon: typeof record.icon === 'string' ? record.icon : undefined,
+    type: record.type as 'primary' | 'secondary',
+    parent_id: typeof record.parent_id === 'string' ? record.parent_id : null,
+    sort_order: record.sort_order as number,
+    is_active: record.is_active as boolean,
+    place_count: typeof record.place_count === 'number' ? record.place_count : undefined,
+    subcategories: Array.isArray(record.subcategories) ? ensureArray(record.subcategories) : undefined,
+    children: Array.isArray(record.children) ? ensureArray(record.children) : undefined
+  };
+};
+
 // Helper function to ensure array format
 const ensureArray = (data: unknown): Category[] => {
   if (!data) return [];
-  if (Array.isArray(data)) return data;
+  if (Array.isArray(data)) {
+    return data
+      .map(item => validateCategory(item))
+      .filter((item): item is Category => item !== null);
+  }
+  
   if (typeof data === 'object' && data !== null) {
     const obj = data as Record<string, unknown>;
-    if (obj.primary && Array.isArray(obj.primary)) return obj.primary as Category[];
-    if (obj.categories && Array.isArray(obj.categories)) return obj.categories as Category[];
-    if (obj.data) return ensureArray(obj.data);
-    return [obj as Category];
+    
+    // Check for nested structures
+    if (obj.primary && Array.isArray(obj.primary)) {
+      return ensureArray(obj.primary);
+    }
+    if (obj.categories && Array.isArray(obj.categories)) {
+      return ensureArray(obj.categories);
+    }
+    if (obj.data) {
+      return ensureArray(obj.data);
+    }
+    
+    // Try to convert single object
+    const category = validateCategory(obj);
+    return category ? [category] : [];
   }
+  
   return [];
 };
 
 // Helper function to get display name based on current language
 const getDisplayName = (category: Category, currentLang: 'en' | 'ar' | 'both'): string => {
-  if (category.name) return category.name; // Localized response
+  if (category.name) return category.name;
   return currentLang === 'ar' ? category.name_ar : category.name_en;
 };
 
 // Helper function to get display description based on current language
 const getDisplayDescription = (category: Category, currentLang: 'en' | 'ar' | 'both'): string | undefined => {
-  if (category.description) return category.description; // Localized response
+  if (category.description) return category.description;
   return currentLang === 'ar' ? category.description_ar : category.description_en;
 };
 
