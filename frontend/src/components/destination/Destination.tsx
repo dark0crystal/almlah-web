@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { MapPin, AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import DestinationCardWrapper from './DestinationCardsWrapper';
 import DestinationsMap from './DestinationsMap';
@@ -89,8 +89,8 @@ export default function Destination() {
         const transformedData = transformGovernorateData(governorates, locale);
         
         setDestinationList(transformedData);
-      } catch (err) {
-        console.error('Failed to load governorates:', err);
+      } catch (error) {
+        console.error('Failed to load governorates:', error);
         setError(t('errors.loadFailed'));
       } finally {
         setLoading(false);
@@ -121,8 +121,9 @@ export default function Destination() {
         const governorates = await fetchGovernoratesFromAPI();
         const transformedData = transformGovernorateData(governorates, locale);
         setDestinationList(transformedData);
-      } catch (err) {
+      } catch (error) {
         setError(t('errors.loadFailed'));
+        console.log(error)
       } finally {
         setLoading(false);
       }

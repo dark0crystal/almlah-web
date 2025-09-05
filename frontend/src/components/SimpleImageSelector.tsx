@@ -2,7 +2,8 @@
 "use client";
 
 import React, { useState, useRef, useCallback } from 'react';
-import { Upload, X, Star, StarOff, Trash2, Edit3, Image as ImageIcon } from 'lucide-react';
+import Image from 'next/image';
+import { Upload, Star, StarOff, Trash2, Edit3, Image as ImageIcon } from 'lucide-react';
 import { ExistingImage } from '../types/image';
 
 interface SimpleImageSelectorProps {
@@ -196,10 +197,11 @@ const SimpleImageSelector: React.FC<SimpleImageSelectorProps> = ({
       <div className="relative group bg-gray-100 rounded-lg overflow-hidden">
         {/* Image */}
         <div className="aspect-square relative">
-          <img
+          <Image
             src={imageUrl}
             alt={altText || 'Preview'}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
           />
           
           {/* Primary badge */}

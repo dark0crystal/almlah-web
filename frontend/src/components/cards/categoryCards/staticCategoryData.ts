@@ -1,4 +1,5 @@
 // categoryData.ts
+import { StaticImageData } from 'next/image';
 import rb3 from "../../../../public/rb3.png";
 import chai from "../../../../public/chai.png"
 // Import other images from your public folder
@@ -16,7 +17,7 @@ export interface CategoryData {
   subtitle?: string;
   icon?: string;
   bgColor: string;
-  bgImage?: string | any; // Can be string URL or imported image
+  bgImage?: string | StaticImageData; // Can be string URL or imported image
   textColor?: string;
   slug?: string; // Navigation route
   href?: string; // Custom href if different from slug-based routing

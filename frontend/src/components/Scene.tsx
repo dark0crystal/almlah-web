@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useCallback } from 'react'
 import useWindow from '@/hooks/useWindow'
 
 export default function Scene() {
@@ -7,38 +7,45 @@ export default function Scene() {
   const canvas = useRef<HTMLCanvasElement>(null);
   const prevPosition = useRef<{x: number, y: number} | null>(null)
 
-  useEffect( () => {
-    dimension.width > 0 && init();
-  }, [dimension])
-
-  const init = () => {
+  const init = useCallback(() => {
     if (!canvas.current) return;
     const ctx = canvas.current.getContext("2d");
     if (!ctx) return;
     ctx.fillStyle = "#f3f3eb";
     ctx.fillRect(0, 0, dimension.width, dimension.height); 
     ctx.globalCompositeOperation = "destination-out";
-  }
+  }, [dimension.width, dimension.height])
+
+  useEffect(() => {
+    if (dimension.width > 0) {
+      init();
+    }
+  }, [dimension, init])
 
   const lerp = (x: number, y: number, a: number) => x * (1 - a) + y * a;
 
   const manageMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const { clientX, clientY, movementX, movementY } = e;
+    if (!canvas.current) return;
+    
+    const rect = canvas.current.getBoundingClientRect();
+    const clientX = e.clientX - rect.left;
+    const clientY = e.clientY - rect.top;
+    const { movementX, movementY } = e;
+    
     handleMovement(clientX, clientY, movementX, movementY);
   }
 
   const manageTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault(); // Prevent scrolling
+    e.preventDefault();
+    if (!canvas.current) return;
+    
     const touch = e.touches[0];
     if (!touch) return;
 
-    const rect = canvas.current?.getBoundingClientRect();
-    if (!rect) return;
-
+    const rect = canvas.current.getBoundingClientRect();
     const clientX = touch.clientX - rect.left;
     const clientY = touch.clientY - rect.top;
 
-    // Calculate movement based on previous position
     let movementX = 0;
     let movementY = 0;
     
@@ -53,19 +60,19 @@ export default function Scene() {
   const handleMovement = (clientX: number, clientY: number, movementX: number, movementY: number) => {
     const nbOfCircles = Math.max(Math.abs(movementX), Math.abs(movementY)) / 10;
 
-    if(prevPosition.current != null){
+    if (prevPosition.current != null) {
       const { x, y } = prevPosition.current;
-      for(let i = 0 ; i < nbOfCircles ; i++){
+      for (let i = 0; i < nbOfCircles; i++) {
         const targetX = lerp(x, clientX, (1 / nbOfCircles) * i);
         const targetY = lerp(y, clientY, (1 / nbOfCircles) * i);
-        draw(targetX, targetY, 50)
+        draw(targetX, targetY, 50);
       }
     }
 
     prevPosition.current = {
       x: clientX,
       y: clientY
-    }
+    };
   }
 
   const handleTouchEnd = () => {
@@ -83,7 +90,7 @@ export default function Scene() {
 
   return (
     <div className='relative w-full h-full'>
-      {dimension.width == 0 && <div className='absolute w-full h-full' style={{backgroundColor: '#f3f3eb'}}/>}
+      {dimension.width === 0 && <div className='absolute w-full h-full' style={{backgroundColor: '#f3f3eb'}}/>}
       <canvas 
         ref={canvas} 
         onMouseMove={manageMouseMove} 
@@ -92,7 +99,7 @@ export default function Scene() {
         onTouchEnd={handleTouchEnd}
         height={dimension.height} 
         width={dimension.width}
-        style={{ touchAction: 'none' }} // Prevent default touch behaviors
+        style={{ touchAction: 'none' }}
       />
     </div>
   )

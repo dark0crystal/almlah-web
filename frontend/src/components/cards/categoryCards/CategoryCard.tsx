@@ -1,5 +1,5 @@
 // CategoryCard.tsx
-import Image from 'next/image';
+import Image, { StaticImageData } from 'next/image';
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
 
@@ -8,7 +8,7 @@ interface CategoryCardProps {
   subtitle?: string;
   icon?: string;
   bgColor: string;
-  bgImage?: string | any; // Can be string URL or imported image
+  bgImage?: string | StaticImageData; // Can be string URL or imported image
   textColor?: string;
   slug?: string; // For navigation
   href?: string; // Custom href

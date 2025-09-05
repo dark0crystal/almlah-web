@@ -1,6 +1,6 @@
 // CategoryCardsWrapper.tsx
 "use client"
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import CategoryCard from './CategoryCard';
 import { categoriesData } from './staticCategoryData';
@@ -21,26 +21,26 @@ export default function CategoryCardsWrapper({
   const router = useRouter();
   
   // Calculate items per row based on screen size
-  const getItemsPerRow = () => {
-    // On large screens (lg): 5 items per row
-    // On medium screens (md): 3 items per row  
-    // On small screens: 2 items per row
-    return {
-      lg: 5,
-      md: 3,
-      sm: 2
-    };
-  };
+  // const getItemsPerRow = () => {
+  //   // On large screens (lg): 5 items per row
+  //   // On medium screens (md): 3 items per row  
+  //   // On small screens: 2 items per row
+  //   return {
+  //     lg: 5,
+  //     md: 3,
+  //     sm: 2
+  //   };
+  // };
   
   // For large screens, show only one row (5 items) initially
-  const getInitialLimit = () => {
+  const getInitialLimit = useCallback(() => {
     if (typeof window !== 'undefined') {
       if (window.innerWidth >= 1024) return 5; // lg breakpoint
       if (window.innerWidth >= 768) return 3;  // md breakpoint
       return 2; // sm and below
     }
     return initialLimit;
-  };
+  }, [initialLimit]);
   
   // Update responsive limit on mount and resize
   useEffect(() => {
@@ -52,7 +52,7 @@ export default function CategoryCardsWrapper({
     window.addEventListener('resize', updateLimit);
     
     return () => window.removeEventListener('resize', updateLimit);
-  }, []);
+  }, [getInitialLimit]);
   
   // Determine which categories to display
   const displayedCategories = showAll 
