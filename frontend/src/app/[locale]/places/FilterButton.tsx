@@ -1,11 +1,11 @@
-"use client"
+"use client";
 import { SlidersHorizontal } from "lucide-react";
 
 interface FilterButtonProps {
   onClick: () => void;
   hasActiveFilters?: boolean;
   filterCount?: number;
-  locale: string;
+  locale?: string;
   className?: string;
 }
 
@@ -13,7 +13,6 @@ export default function FilterButton({
   onClick,
   hasActiveFilters = false,
   filterCount = 0,
-  locale,
   className = ""
 }: FilterButtonProps) {
   return (

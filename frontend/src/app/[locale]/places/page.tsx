@@ -2,11 +2,11 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from 'next-intl';
-import { MapPin } from "lucide-react";
+// import { MapPin } from "lucide-react";
 import PlacesCardsWrapper from "./PlacesCardsWrapper";
 import PlacesMap from "./PlacesMap";
 import BottomSheet, { SheetState } from "./BottomSheet";
-import { CATEGORY_IDS, type CategoryType, getCategoryName } from "@/services/placesApi";
+import { CATEGORY_IDS, type CategoryType } from "@/services/placesApi";
 
 interface PlacesProps {
   categoryType?: CategoryType; // NEW: Optional category type prop
@@ -27,7 +27,7 @@ export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
   // State for sharing filters between components
   const [selectedGovernateId, setSelectedGovernateId] = useState<string | null>(null);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchQuery] = useState<string>("");
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [bottomSheetState, setBottomSheetState] = useState<SheetState>('collapsed');
   const [forceBottomSheetState, setForceBottomSheetState] = useState<SheetState | undefined>(undefined);

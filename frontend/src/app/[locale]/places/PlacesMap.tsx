@@ -131,56 +131,56 @@ export default function PlacesMap({ selectedGovernateId, categoryId, onMarkerCli
     }
   }, [onMarkerClick]);
 
-  const createCustomMarkerIcon = (place: Place) => {
-    const canvas = document.createElement('canvas');
-    const size = selectedPlaceId === place.id ? 56 : 48;
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
+  // const createCustomMarkerIcon = (place: Place) => {
+  //   const canvas = document.createElement('canvas');
+  //   const size = selectedPlaceId === place.id ? 56 : 48;
+  //   canvas.width = size;
+  //   canvas.height = size;
+  //   const ctx = canvas.getContext('2d');
 
-    // Get place image
-    const getImageSrc = () => {
-      return place.primary_image || place.images?.[0]?.image_url || null;
-    };
+  //   // Get place image
+  //   const getImageSrc = () => {
+  //     return place.primary_image || place.images?.[0]?.image_url || null;
+  //   };
 
-    // Generate a consistent color based on place ID
-    const getMarkerColor = () => {
-      const colors = [
-        '#3b82f6', '#10b981', '#8b5cf6', '#ef4444', 
-        '#f59e0b', '#6366f1', '#ec4899', '#14b8a6',
-        '#f97316', '#06b6d4', '#059669'
-      ];
-      const hash = place.id.split('').reduce((a, b) => {
-        a = ((a << 5) - a) + b.charCodeAt(0);
-        return a & a;
-      }, 0);
-      return colors[Math.abs(hash) % colors.length];
-    };
+  //   // Generate a consistent color based on place ID
+  //   const getMarkerColor = () => {
+  //     const colors = [
+  //       '#3b82f6', '#10b981', '#8b5cf6', '#ef4444', 
+  //       '#f59e0b', '#6366f1', '#ec4899', '#14b8a6',
+  //       '#f97316', '#06b6d4', '#059669'
+  //     ];
+  //     const hash = place.id.split('').reduce((a, b) => {
+  //       a = ((a << 5) - a) + b.charCodeAt(0);
+  //       return a & a;
+  //     }, 0);
+  //     return colors[Math.abs(hash) % colors.length];
+  //   };
 
-    // Draw circle background
-    ctx.beginPath();
-    ctx.arc(size / 2, size / 2, size / 2 - 3, 0, 2 * Math.PI);
-    ctx.fillStyle = getImageSrc() ? '#3B82F6' : getMarkerColor();
-    ctx.fill();
+  //   // Draw circle background
+  //   ctx.beginPath();
+  //   ctx.arc(size / 2, size / 2, size / 2 - 3, 0, 2 * Math.PI);
+  //   ctx.fillStyle = getImageSrc() ? '#3B82F6' : getMarkerColor();
+  //   ctx.fill();
     
-    // Draw white border (thicker if selected)
-    ctx.strokeStyle = selectedPlaceId === place.id ? '#3b82f6' : 'white';
-    ctx.lineWidth = 3;
-    ctx.stroke();
+  //   // Draw white border (thicker if selected)
+  //   ctx.strokeStyle = selectedPlaceId === place.id ? '#3b82f6' : 'white';
+  //   ctx.lineWidth = 3;
+  //   ctx.stroke();
 
-    // Add text if no image
-    const imageSrc = getImageSrc();
-    if (!imageSrc) {
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 16px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const name = locale === 'ar' ? place.name_ar : place.name_en;
-      ctx.fillText(name.charAt(0), size / 2, size / 2);
-    }
+  //   // Add text if no image
+  //   const imageSrc = getImageSrc();
+  //   if (!imageSrc) {
+  //     ctx.fillStyle = 'white';
+  //     ctx.font = 'bold 16px Arial';
+  //     ctx.textAlign = 'center';
+  //     ctx.textBaseline = 'middle';
+  //     const name = locale === 'ar' ? place.name_ar : place.name_en;
+  //     ctx.fillText(name.charAt(0), size / 2, size / 2);
+  //   }
 
-    return canvas.toDataURL();
-  };
+  //   return canvas.toDataURL();
+  // };
 
   if (loadError) {
     return (
@@ -266,7 +266,7 @@ export default function PlacesMap({ selectedGovernateId, categoryId, onMarkerCli
           }
           return null;
         })}
-
+  
         {selectedPlace && (
           <InfoWindow
             position={{
@@ -279,7 +279,7 @@ export default function PlacesMap({ selectedGovernateId, categoryId, onMarkerCli
           </InfoWindow>
         )}
       </GoogleMap>
-
+  
       {/* Map info overlay */}
       {isLoaded && places.length > 0 && (
         <div className="absolute top-4 left-4 bg-white bg-opacity-90 backdrop-blur-sm rounded-lg p-3 shadow-lg z-20">
@@ -434,7 +434,7 @@ function PlaceMarker({
 
 // Place Info Window Content Component
 function PlaceInfoContent({ place, locale }: { place: Place; locale: string }) {
-  const t = useTranslations('places');
+  // const t = useTranslations('places');
   const name = locale === 'ar' ? place.name_ar : place.name_en;
   const governateName = locale === 'ar' 
     ? place.governate?.name_ar 

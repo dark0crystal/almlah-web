@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react";
-import { MapPin, Star, Clock, ChevronDown, ChevronUp, X, Search, SlidersHorizontal } from "lucide-react";
+import { MapPin, ChevronDown, ChevronUp, X, Search, SlidersHorizontal } from "lucide-react";
 import { useParams } from "next/navigation";
 import PlaceCard from "./PlaceCard";
 import { fetchPlaces, CATEGORY_IDS, type CategoryType } from "@/services/placesApi";
@@ -68,9 +68,10 @@ export default function PlacesModal({
         
         console.log('Places loaded for modal:', limitedPlaces);
         setPlaces(limitedPlaces);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error loading places for modal:', err);
-        setError(err.message || text.error);
+        const errorMessage = err instanceof Error ? err.message : text.error;
+        setError(errorMessage);
         setPlaces([]);
       } finally {
         setLoading(false);
