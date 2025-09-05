@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 interface ZatarSplashScreenProps {
   onComplete: () => void;
@@ -31,7 +32,7 @@ const ZatarSplashScreen: React.FC<ZatarSplashScreenProps> = ({ onComplete }) => 
   const generateImageProps = () => {
     const positions: number[] = [];
     return images.map((img, index) => {
-      let left;
+      let left: number;
       let attempts = 0;
       
       // Ensure minimum 15% gap between images
@@ -97,10 +98,12 @@ const ZatarSplashScreen: React.FC<ZatarSplashScreenProps> = ({ onComplete }) => 
               margin: '10px'
             }}
           >
-            <img
+            <Image
               src={props.src}
               alt="Floating image"
-              className="w-48 h-48 object-contain"
+              width={192}
+              height={192}
+              className="object-contain"
             />
           </div>
         ))}

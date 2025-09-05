@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from 'next-intl';
-import { MapPin } from "lucide-react";
 import RestaurantsCardsWrapper from "./RestaurantsCardsWrapper";
 import RestaurantsMap from "./RestaurantsMap";
 import RestaurantBottomSheet, { SheetState } from "./RestaurantBottomSheet";
@@ -27,7 +26,7 @@ export default function Restaurants({ categoryType = "FOOD_BEVERAGES" }: Restaur
   // State for sharing filters between components
   const [selectedGovernateId, setSelectedGovernateId] = useState<string | null>(null);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchQuery] = useState<string>("");
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [bottomSheetState, setBottomSheetState] = useState<SheetState>('collapsed');
   const [forceBottomSheetState, setForceBottomSheetState] = useState<SheetState | undefined>(undefined);

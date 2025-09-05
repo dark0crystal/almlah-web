@@ -12,11 +12,7 @@ interface GameStatsData {
   last_updated: string;
 }
 
-interface GameStatsProps {
-  locale: string;
-}
-
-export default function GameStats({ locale }: GameStatsProps) {
+export default function GameStats() {
   const t = useTranslations('zatar.stats');
   const [stats, setStats] = useState<GameStatsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);

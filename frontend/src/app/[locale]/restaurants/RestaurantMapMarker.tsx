@@ -1,9 +1,9 @@
 "use client"
 
 import React from 'react';
-import { Utensils } from 'lucide-react';
 import { useLocale } from 'next-intl';
 import { Place } from '@/types';
+import Image from 'next/image';
 
 interface RestaurantMapMarkerProps {
   restaurant: Place;
@@ -34,7 +34,7 @@ export default function RestaurantMapMarker({ restaurant, isActive, onClick }: R
   };
 
   // Handle image display with proper URL handling
-  const getImageSrc = () => {
+  const getImageSrc = (): string => {
     let imageUrl = '';
     
     // First try primary_image
@@ -47,9 +47,9 @@ export default function RestaurantMapMarker({ restaurant, isActive, onClick }: R
       imageUrl = primaryImage.image_url;
     }
     
-    // If no image found, return null
+    // If no image found, return empty string (will use fallback)
     if (!imageUrl) {
-      return null;
+      return '';
     }
     
     // If it's already a full URL, return as is
@@ -88,6 +88,20 @@ export default function RestaurantMapMarker({ restaurant, isActive, onClick }: R
     return [governateName, wilayahName].filter(Boolean).join(' | ');
   };
 
+  // Handle image loading errors
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = e.currentTarget;
+    target.style.display = 'none';
+    
+    // Show the fallback colored marker
+    const fallbackElement = target.nextSibling as HTMLElement;
+    if (fallbackElement) {
+      fallbackElement.style.display = 'flex';
+    }
+  };
+
+  const imageSrc = getImageSrc();
+
   return (
     <div 
       className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group"
@@ -97,25 +111,21 @@ export default function RestaurantMapMarker({ restaurant, isActive, onClick }: R
         <div className={`w-12 h-12 rounded-full border-4 border-white shadow-lg transition-all duration-300 overflow-hidden ${
           isActive ? 'scale-125 border-orange-500' : 'hover:scale-110'
         }`}>
-          {getImageSrc() ? (
-            <img 
-              src={getImageSrc()}
+          {imageSrc ? (
+            <Image 
+              src={imageSrc}
               alt={getDisplayName()}
-              className="w-full h-full rounded-full object-cover"
-              onError={(e) => {
-                // Hide image on error and show colored marker instead
-                e.target.style.display = 'none';
-                e.target.nextSibling.style.display = 'flex';
-              }}
+              fill
+              className="rounded-full object-cover"
+              onError={handleImageError}
             />
           ) : null}
           
           {/* Fallback colored marker with restaurant initial */}
           <div 
             className={`w-full h-full ${getMarkerColor()} flex items-center justify-center text-white font-bold text-sm ${
-              getImageSrc() ? 'hidden' : 'flex'
+              imageSrc ? 'hidden' : 'flex'
             }`}
-            style={{ display: getImageSrc() ? 'none' : 'flex' }}
           >
             {getDisplayName().charAt(0)}
           </div>

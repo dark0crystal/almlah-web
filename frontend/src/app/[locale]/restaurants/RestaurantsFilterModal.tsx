@@ -1,18 +1,29 @@
 "use client"
 import { useState, useEffect } from "react";
 import { X, MapPin, Grid3X3, Check } from "lucide-react";
-import { useTranslations } from 'next-intl';
+// import { useTranslations } from 'next-intl';
 import { fetchGovernates, fetchCategories } from "@/services/placesApi";
 import { Governate } from "@/types";
 
-interface Category {
+// Define the Category interface that matches your API response
+interface ApiCategory {
   id: string;
   name_ar: string;
   name_en: string;
   slug: string;
-  icon: string;
+  icon: string; // Made required to match the expected type
   type: string;
 }
+
+// Define the actual API response type for categories
+// interface Category {
+//   id: string;
+//   name_ar: string;
+//   name_en: string;
+//   slug: string;
+//   icon?: string; // Optional in API response
+//   type: string;
+// }
 
 interface RestaurantsFilterModalProps {
   isOpen: boolean;
@@ -31,11 +42,11 @@ export default function RestaurantsFilterModal({
   onApplyFilters,
   locale
 }: RestaurantsFilterModalProps) {
-  const t = useTranslations('places');
+  // const t = useTranslations('places');
   
   // State for filter options
   const [governates, setGovernates] = useState<Governate[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<ApiCategory[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Local filter state (before applying)
@@ -53,7 +64,15 @@ export default function RestaurantsFilterModal({
         ]);
         setGovernates(governatesData);
         console.log('Restaurants filter - loaded categories:', categoriesData);
-        setCategories(categoriesData);
+        
+        // Transform the API response to match ApiCategory interface
+        const transformedCategories: ApiCategory[] = categoriesData.map(category => ({
+          ...category,
+          icon: category.icon || '', // Provide default value for optional icon
+          type: category.type || '' // Provide default value for optional type
+        }));
+        
+        setCategories(transformedCategories);
       } catch (error) {
         console.error('Error loading filter data:', error);
       } finally {
@@ -100,7 +119,7 @@ export default function RestaurantsFilterModal({
     return locale === 'ar' ? governate.name_ar : governate.name_en;
   };
 
-  const getCategoryName = (category: Category): string => {
+  const getCategoryName = (category: ApiCategory): string => {
     console.log('Getting restaurant category name for:', category, 'locale:', locale);
     const name = locale === 'ar' ? category.name_ar : category.name_en;
     console.log('Resolved name:', name);

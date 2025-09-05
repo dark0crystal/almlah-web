@@ -1,6 +1,6 @@
-"use client"
-import { useState, useEffect, useRef } from "react";
-import { ChevronUp, X, Map } from "lucide-react";
+//"use client"
+import { useState, useEffect, useRef, useCallback } from "react";
+import { ChevronUp, Map } from "lucide-react";
 import RestaurantsCardsWrapper from "./RestaurantsCardsWrapper";
 
 interface RestaurantBottomSheetProps {
@@ -135,7 +135,7 @@ export default function RestaurantBottomSheet({
     setCurrentY(e.clientY);
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     if (!isMouseDragging) return;
     
     const deltaY = currentY - startY;
@@ -164,7 +164,7 @@ export default function RestaurantBottomSheet({
     setIsMouseDragging(false);
     setStartY(0);
     setCurrentY(0);
-  };
+  }, [isMouseDragging, currentY, startY, sheetState]);
 
   // Add global mouse up listener to handle mouse release outside component
   useEffect(() => {
@@ -187,7 +187,7 @@ export default function RestaurantBottomSheet({
       document.removeEventListener('mouseup', handleGlobalMouseUp);
       document.removeEventListener('mousemove', handleGlobalMouseMove);
     };
-  }, [isMouseDragging, currentY, startY, sheetState]);
+  }, [isMouseDragging, currentY, startY, sheetState, handleMouseUp]);
 
   // Handle header click to toggle states
   const handleHeaderClick = () => {
@@ -227,6 +227,9 @@ export default function RestaurantBottomSheet({
       }
     }
   };
+
+  // Convert undefined to null for selectedGovernateId
+  const normalizedSelectedGovernateId = selectedGovernateId === undefined ? null : selectedGovernateId;
 
   return (
     <div 
@@ -310,7 +313,7 @@ export default function RestaurantBottomSheet({
               <RestaurantsCardsWrapper
                 isMobileMapView={true}
                 categoryId={categoryId}
-                selectedGovernateId={selectedGovernateId}
+                selectedGovernateId={normalizedSelectedGovernateId}
                 onGovernateChange={onGovernateChange}
                 selectedCategoryIds={selectedCategoryIds}
                 onCategoryIdsChange={onCategoryIdsChange}
@@ -324,7 +327,7 @@ export default function RestaurantBottomSheet({
               <RestaurantsCardsWrapper
                 isMobileMapView={false}
                 categoryId={categoryId}
-                selectedGovernateId={selectedGovernateId}
+                selectedGovernateId={normalizedSelectedGovernateId}
                 onGovernateChange={onGovernateChange}
                 selectedCategoryIds={selectedCategoryIds}
                 onCategoryIdsChange={onCategoryIdsChange}

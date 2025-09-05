@@ -3,7 +3,6 @@ import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from 'next-intl';
 import RestaurantCard from "./RestaurantCard";
-import GovernateFilter from "../places/GovernateFilterComponent";
 import PlaceSearchBar from "../places/PlaceSearchBar";
 import FilterButton from "../places/FilterButton";
 import RestaurantsFilterModal from "./RestaurantsFilterModal";
@@ -12,7 +11,7 @@ import { Place } from "@/types";
 
 interface RestaurantsCardsWrapperProps {
   isMobileMapView?: boolean;
-  selectedGovernateId?: string | null;
+  selectedGovernateId: string | null;
   onGovernateChange?: (governateId: string | null) => void;
   categoryId: string;
   selectedCategoryIds?: string[];
@@ -118,7 +117,7 @@ export default function RestaurantsCardsWrapper({
           <PlaceSearchBar
             selectedGovernateId={selectedGovernateId}
             categoryId={categoryId}
-            onPlaceSelect={onPlaceClick}
+            onPlaceSelect={(place) => onPlaceClick?.(place.id)}
             locale={locale}
             placeholder={locale === 'ar' ? 'البحث عن المطاعم...' : 'Search restaurants...'}
           />

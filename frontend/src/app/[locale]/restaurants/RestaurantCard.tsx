@@ -1,8 +1,8 @@
 "use client"
 import { useState } from "react";
-import { MapPin, Star, Clock, Phone } from "lucide-react";
+import { MapPin, Star } from "lucide-react";
 import Image from "next/image";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from 'next-intl';
 import { Place } from "@/types"; // Using Place type instead of Restaurant
 
