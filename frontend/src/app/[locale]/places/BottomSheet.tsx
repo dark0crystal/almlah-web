@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronUp, Map } from "lucide-react";
 import PlacesCardsWrapper from "./PlacesCardsWrapper";
 
@@ -135,7 +135,8 @@ export default function BottomSheet({
     setCurrentY(e.clientY);
   };
 
-  const handleMouseUp = () => {
+  // Wrap handleMouseUp in useCallback to prevent unnecessary re-renders
+  const handleMouseUp = useCallback(() => {
     if (!isMouseDragging) return;
     
     const deltaY = currentY - startY;
@@ -164,7 +165,7 @@ export default function BottomSheet({
     setIsMouseDragging(false);
     setStartY(0);
     setCurrentY(0);
-  };
+  }, [isMouseDragging, currentY, startY, sheetState]);
 
   // Add global mouse up listener to handle mouse release outside component
   useEffect(() => {
@@ -187,7 +188,7 @@ export default function BottomSheet({
       document.removeEventListener('mouseup', handleGlobalMouseUp);
       document.removeEventListener('mousemove', handleGlobalMouseMove);
     };
-  }, [isMouseDragging, currentY, startY, sheetState, handleMouseUp]);
+  }, [isMouseDragging, handleMouseUp]);
 
   // Handle header click to toggle states
   const handleHeaderClick = () => {

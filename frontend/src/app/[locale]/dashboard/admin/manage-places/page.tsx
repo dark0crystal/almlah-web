@@ -1,7 +1,8 @@
 // Enhanced Manage Places Component with Proper Image Fetching
 
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { 
   Search, 
   Plus, 
@@ -15,10 +16,8 @@ import {
   Filter,
   MoreVertical,
   AlertTriangle,
-  Check,
   X,
   Loader2,
-  ExternalLink,
   Star,
   ChevronDown,
   RefreshCw,
@@ -213,7 +212,7 @@ const DeleteConfirmModal = ({ place, isOpen, onClose, onConfirm, isDeleting }) =
         
         <div className="mb-6">
           <p className="text-gray-700 mb-3">
-            Are you sure you want to delete "<strong>{place.name_en}</strong>"?
+            Are you sure you want to delete &quot;<strong>{place.name_en}</strong>&quot;?
           </p>
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
             <p className="text-sm text-yellow-800">
@@ -319,10 +318,11 @@ const PlaceCard = ({ place, onEdit, onDelete, onView }) => {
             <span className="ml-2 text-sm text-gray-500">Loading image...</span>
           </div>
         ) : primaryImage && !imageError ? (
-          <img 
+          <Image 
             src={primaryImage.image_url}
             alt={primaryImage.alt_text || place.name_en}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
             onLoad={handleImageLoad}
             onError={handleImageError}
           />
@@ -492,9 +492,11 @@ const PlaceCard = ({ place, onEdit, onDelete, onView }) => {
             <div className="flex gap-1 overflow-x-auto">
               {images.slice(0, 4).map((image, index) => (
                 <div key={image.id} className="relative flex-shrink-0">
-                  <img
+                  <Image
                     src={image.image_url}
                     alt={image.alt_text || `Image ${index + 1}`}
+                    width={48}
+                    height={48}
                     className="w-12 h-12 object-cover rounded border"
                     onError={(e) => {
                       e.target.style.display = 'none';
@@ -645,25 +647,8 @@ export default function ManagePlaces() {
   const [newPlacesCount, setNewPlacesCount] = useState(0);
 
   // Load initial data
-  useEffect(() => {
-    loadPlaces();
-    loadCategories();
-    loadGovernates();
-  }, []);
-
-  // Auto-refresh places every 30 seconds for live updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!loading && !error) {
-        refreshData();
-      }
-    }, 30000); // 30 seconds
-
-    return () => clearInterval(interval);
-  }, [loading, error, searchQuery, selectedCategory, selectedGovernate]);
-
   // Load places (images will be fetched separately by each PlaceCard)
-  const loadPlaces = async (params = {}) => {
+  const loadPlaces = useCallback(async (params = {}) => {
     try {
       setLoading(true);
       setError(null);
@@ -703,7 +688,24 @@ export default function ManagePlaces() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadPlaces();
+    loadCategories();
+    loadGovernates();
+  }, [loadPlaces]);
+
+  // Auto-refresh places every 30 seconds for live updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!loading && !error) {
+        refreshData();
+      }
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [loading, error, refreshData]);
 
   // Load categories
   const loadCategories = async () => {
@@ -769,7 +771,7 @@ export default function ManagePlaces() {
   };
 
   // Refresh data
-  const refreshData = async () => {
+  const refreshData = useCallback(async () => {
     setRefreshing(true);
     await loadPlaces({ 
       search: searchQuery, 
@@ -777,7 +779,7 @@ export default function ManagePlaces() {
       governateId: selectedGovernate 
     });
     setRefreshing(false);
-  };
+  }, [loadPlaces, searchQuery, selectedCategory, selectedGovernate]);
 
   // Handle place deletion
   const handleDeletePlace = async (placeId) => {

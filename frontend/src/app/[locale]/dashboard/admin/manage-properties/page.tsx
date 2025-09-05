@@ -1,6 +1,6 @@
 "use client"
-import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Search, Filter, Tag, Image, BarChart3, MapPin, X, Save, AlertTriangle, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Plus, Edit, Trash2, Search, Tag, BarChart3, X, Save, AlertTriangle, CheckCircle } from 'lucide-react';
 
 // API configuration
 const API_BASE_URL = 'http://localhost:9000/api/v1';
@@ -99,11 +99,8 @@ const ManageProperties = () => {
     limit: 20
   });
 
-  useEffect(() => {
-    loadData();
-  }, [filters]);
-
-  const loadData = async () => {
+  // FIXED: Wrap loadData in useCallback to prevent unnecessary re-renders
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [propertiesData, categoriesData] = await Promise.all([
@@ -133,7 +130,11 @@ const ManageProperties = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]); // Add filters as dependency
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]); // Now loadData is stable and won't cause infinite re-renders
 
   const loadStats = async () => {
     try {

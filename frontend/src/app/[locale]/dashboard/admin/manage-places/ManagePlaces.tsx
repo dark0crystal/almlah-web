@@ -1,10 +1,9 @@
 // Enhanced Place Management Component with Backend Image Integration
 
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import Image from 'next/image';
 import { 
-  Search, 
-  Plus, 
   Edit, 
   Trash2, 
   Eye, 
@@ -12,15 +11,11 @@ import {
   Calendar,
   Users,
   FileImage,
-  Filter,
   MoreVertical,
   AlertTriangle,
-  Check,
   X,
   Loader2,
-  ExternalLink,
   Star,
-  ChevronDown,
   RefreshCw,
   Upload
 } from 'lucide-react';
@@ -103,7 +98,7 @@ const placeService = {
     formData.append('data', JSON.stringify({ images: imageMetadata }));
     
     // Add image files
-    imageFiles.forEach((file, index) => {
+    imageFiles.forEach((file) => {
       formData.append('images', file);
     });
 
@@ -452,9 +447,11 @@ const ImageManager = ({ placeId, images, onImagesChange, loading }) => {
           {images.map((image) => (
             <div key={image.id} className="border rounded-lg overflow-hidden">
               <div className="relative">
-                <img
+                <Image
                   src={image.image_url}
                   alt={image.alt_text || 'Place image'}
+                  width={400}
+                  height={128}
                   className="w-full h-32 object-cover"
                   onError={(e) => {
                     e.target.src = '/placeholder-image.jpg'; // Add a placeholder image
@@ -555,10 +552,11 @@ const PlaceCard = ({ place, onEdit, onDelete, onView }) => {
       {/* Image */}
       <div className="relative h-48 bg-gray-100">
         {primaryImage ? (
-          <img 
+          <Image 
             src={primaryImage.image_url}
             alt={primaryImage.alt_text || place.name_en}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
             onError={(e) => {
               e.target.src = '/placeholder-image.jpg';
             }}
@@ -711,7 +709,7 @@ const DeleteConfirmModal = ({ place, isOpen, onClose, onConfirm, isDeleting }) =
         
         <div className="mb-6">
           <p className="text-gray-700 mb-3">
-            Are you sure you want to delete "<strong>{place.name_en}</strong>"?
+            Are you sure you want to delete &quot;<strong>{place.name_en}</strong>&quot;?
           </p>
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
             <p className="text-sm text-yellow-800">

@@ -14,7 +14,7 @@ export default async function ManagePlacesLayout({
   
   try {
     // Require place management permissions
-    const auth = await requireAnyPermission([
+    await requireAnyPermission([
       'can_view_place', 
       'can_create_place', 
       'can_manage_place'

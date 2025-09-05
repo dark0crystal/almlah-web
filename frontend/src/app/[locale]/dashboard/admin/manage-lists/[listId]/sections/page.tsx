@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { ListDetail, ListSection, listsApi } from '@/services/listsApi';
@@ -48,7 +48,7 @@ export default function ListSectionsPage() {
   );
 
   // Fetch list and sections
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const listData = await listsApi.getListById(listId);
@@ -60,11 +60,11 @@ export default function ListSectionsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [listId]);
 
   useEffect(() => {
     fetchData();
-  }, [listId]);
+  }, [fetchData]);
 
   // Handle drag end
   const handleDragEnd = async (event: DragEndEvent) => {

@@ -35,7 +35,7 @@ export default function ListPage() {
   }, [slug]);
 
   // Helper function to render list items
-  const renderListItem = (item: any) => {
+  const renderListItem = (item: { id: string; item_type: string; images?: Array<{ id: string; image_url: string; alt_text_ar?: string; alt_text_en?: string }>; [key: string]: unknown }) => {
     // Handle different item types
     if (item.item_type === 'separator') {
       return (
@@ -61,26 +61,28 @@ export default function ListPage() {
     if (item.item_type === 'custom_content') {
       const content = locale === 'ar' ? item.content_ar : item.content_en;
       return (
-        <div key={item.id} className={`py-4 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
-          <div className="prose prose-lg max-w-none text-gray-800 leading-relaxed">
-            {content.split('\n').map((paragraph, pIndex) => (
-              <p key={pIndex} className="mb-4">
-                {paragraph}
-              </p>
-            ))}
+        <div key={item.id} className="py-6 sm:py-8">
+          <div className={`max-w-4xl mx-auto ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
+            <div className="prose prose-lg max-w-none text-gray-800 leading-relaxed">
+              {content.split('\n').map((paragraph, pIndex) => (
+                <p key={pIndex} className="mb-4 sm:mb-6 text-base sm:text-lg">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
           </div>
           
           {/* Custom content images */}
           {item.images && item.images.length > 0 && (
-            <div className="mt-6 space-y-4">
+            <div className="mt-8 sm:mt-10 space-y-6">
               {item.images.map((image) => (
-                <div key={image.id} className="relative w-full h-64 rounded-xl overflow-hidden">
+                <div key={image.id} className="relative w-full h-[180px] sm:h-[220px] lg:h-[280px] rounded-2xl overflow-hidden shadow-lg">
                   <Image
                     src={image.image_url}
                     alt={locale === 'ar' ? image.alt_text_ar : image.alt_text_en}
                     fill
                     className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
                   />
                 </div>
               ))}
@@ -98,15 +100,15 @@ export default function ListPage() {
       const customContent = locale === 'ar' ? item.content_ar : item.content_en;
 
       return (
-        <div key={item.id} className={`py-6 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
+        <div key={item.id} className="py-8 sm:py-12 mb-8 sm:mb-12 border-b border-gray-100 last:border-b-0">
           
           {/* Place Header */}
-          <div className="mb-4">
-            <h3 className="text-xl md:text-2xl font-semibold text-gray-900 mb-2">
+          <div className="mb-6 sm:mb-8 text-center">
+            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4 tracking-tight">
               {placeName}
             </h3>
             {placeSubtitle && (
-              <p className="text-gray-600 mb-3">
+              <p className="text-lg sm:text-xl text-gray-600 mb-4 sm:mb-6 max-w-2xl mx-auto">
                 {placeSubtitle}
               </p>
             )}
@@ -114,27 +116,27 @@ export default function ListPage() {
 
           {/* Place Images */}
           {item.place.images && item.place.images.length > 0 && (
-            <div className="mb-4">
+            <div className="mb-6 sm:mb-8">
               {item.place.images.length === 1 ? (
-                <div className="relative w-full h-64 rounded-xl overflow-hidden">
+                <div className="relative w-full h-[180px] sm:h-[220px] lg:h-[280px] rounded-2xl overflow-hidden shadow-lg">
                   <Image
                     src={item.place.images[0]}
                     alt={placeName}
                     fill
                     className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
                   />
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   {item.place.images.slice(0, 4).map((image, imgIndex) => (
-                    <div key={imgIndex} className="relative h-40 rounded-xl overflow-hidden">
+                    <div key={imgIndex} className="relative h-[150px] sm:h-[180px] rounded-xl overflow-hidden shadow-md">
                       <Image
                         src={image}
                         alt={`${placeName} ${imgIndex + 1}`}
                         fill
                         className="object-cover"
-                        sizes="(max-width: 768px) 50vw, 25vw"
+                        sizes="(max-width: 640px) 100vw, 50vw"
                       />
                     </div>
                   ))}
@@ -144,11 +146,11 @@ export default function ListPage() {
           )}
 
           {/* Content */}
-          <div className="prose max-w-none text-gray-800 leading-relaxed">
+          <div className="max-w-4xl mx-auto">
             {customContent && (
-              <div className="mb-3">
+              <div className={`mb-6 sm:mb-8 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
                 {customContent.split('\n').map((paragraph, pIndex) => (
-                  <p key={pIndex} className="mb-3 text-sm">
+                  <p key={pIndex} className="mb-4 text-base sm:text-lg leading-relaxed text-gray-800">
                     {paragraph}
                   </p>
                 ))}
@@ -156,9 +158,9 @@ export default function ListPage() {
             )}
             
             {placeDescription && (
-              <div>
+              <div className={`${locale === 'ar' ? 'text-right' : 'text-left'}`}>
                 {placeDescription.split('\n').map((paragraph, pIndex) => (
-                  <p key={pIndex} className="mb-3 text-sm">
+                  <p key={pIndex} className="mb-4 text-base sm:text-lg leading-relaxed text-gray-700">
                     {paragraph}
                   </p>
                 ))}
@@ -168,15 +170,15 @@ export default function ListPage() {
 
           {/* Item Images */}
           {item.images && item.images.length > 0 && (
-            <div className="mt-4 space-y-3">
+            <div className="mt-8 sm:mt-10 space-y-6">
               {item.images.map((image) => (
-                <div key={image.id} className="relative w-full h-48 rounded-xl overflow-hidden">
+                <div key={image.id} className="relative w-full h-[180px] sm:h-[220px] lg:h-[280px] rounded-2xl overflow-hidden shadow-lg">
                   <Image
                     src={image.image_url}
                     alt={locale === 'ar' ? image.alt_text_ar : image.alt_text_en}
                     fill
                     className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
                   />
                 </div>
               ))}
@@ -225,50 +227,37 @@ export default function ListPage() {
   const description = locale === 'ar' ? list.description_ar : list.description_en;
 
   return (
-    <div className={`min-h-screen bg-white ${locale === 'ar' ? 'font-arabic' : ''}`}>
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className={`min-h-screen ${locale === 'ar' ? 'font-arabic' : ''}`}>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         
         {/* Header Section */}
-        <div className={`mb-12 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
+        <div className="mb-16 text-center">
+          <div className="mb-8 sm:mb-12">
+            <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-gray-900 mb-4 sm:mb-6 tracking-tight">
+              {title}
+            </h1>
+            {description && (
+              <p className={`text-lg sm:text-xl lg:text-2xl text-gray-600 leading-relaxed max-w-4xl mx-auto ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
+                {description}
+              </p>
+            )}
+          </div>
+          
           {list.featured_image && (
-            <div className="relative w-full h-80 mb-8 rounded-2xl overflow-hidden">
+            <div className="relative w-full h-[200px] sm:h-[250px] lg:h-[300px] mb-8 sm:mb-12 rounded-2xl overflow-hidden shadow-lg">
               <Image
                 src={list.featured_image}
                 alt={title}
                 fill
                 className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
               />
-              <div className="absolute inset-0 bg-black bg-opacity-20" />
-              <div className={`absolute bottom-6 ${locale === 'ar' ? 'right-6' : 'left-6'} text-white`}>
-                <h1 className="text-4xl md:text-5xl font-bold mb-2 drop-shadow-lg">
-                  {title}
-                </h1>
-                {description && (
-                  <p className="text-xl drop-shadow-lg opacity-90">
-                    {description}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-          
-          {!list.featured_image && (
-            <div className="mb-8">
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                {title}
-              </h1>
-              {description && (
-                <p className="text-xl text-gray-600 leading-relaxed">
-                  {description}
-                </p>
-              )}
             </div>
           )}
         </div>
 
         {/* List Content */}
-        <div className="space-y-12">
+        <div className="space-y-16 sm:space-y-20">
           {/* Render Sections if they exist */}
           {list.list_sections && list.list_sections.length > 0 ? (
             list.list_sections
@@ -278,41 +267,41 @@ export default function ListPage() {
                 const sectionDescription = locale === 'ar' ? section.description_ar : section.description_en;
                 
                 return (
-                  <div key={section.id} className={`${locale === 'ar' ? 'text-right' : 'text-left'}`}>
+                  <section key={section.id} className="mb-16 sm:mb-20">
                     {/* Section Header */}
-                    <div className="mb-8">
-                      <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+                    <div className="mb-8 sm:mb-12 text-center">
+                      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 sm:mb-6 tracking-tight">
                         {sectionTitle}
                       </h2>
                       {sectionDescription && (
-                        <p className="text-lg text-gray-600 leading-relaxed mb-4">
+                        <p className={`text-base sm:text-lg lg:text-xl text-gray-600 leading-relaxed max-w-3xl mx-auto mb-6 sm:mb-8 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
                           {sectionDescription}
                         </p>
                       )}
                       
                       {/* Section Images */}
                       {section.images && section.images.length > 0 && (
-                        <div className="mb-6">
+                        <div className="mb-8 sm:mb-12">
                           {section.images.length === 1 ? (
-                            <div className="relative w-full h-64 rounded-xl overflow-hidden">
+                            <div className="relative w-full h-[180px] sm:h-[220px] lg:h-[280px] rounded-2xl overflow-hidden shadow-lg">
                               <Image
                                 src={section.images[0].image_url}
                                 alt={locale === 'ar' ? section.images[0].alt_text_ar : section.images[0].alt_text_en}
                                 fill
                                 className="object-cover"
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
                               />
                             </div>
                           ) : (
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                              {section.images.slice(0, 6).map((image, imgIndex) => (
-                                <div key={image.id} className="relative h-32 md:h-40 rounded-xl overflow-hidden">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                              {section.images.slice(0, 6).map((image) => (
+                                <div key={image.id} className="relative h-[150px] sm:h-[180px] lg:h-[200px] rounded-xl overflow-hidden shadow-md">
                                   <Image
                                     src={image.image_url}
                                     alt={locale === 'ar' ? image.alt_text_ar : image.alt_text_en}
                                     fill
                                     className="object-cover"
-                                    sizes="(max-width: 768px) 50vw, 33vw"
+                                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                   />
                                 </div>
                               ))}
@@ -323,20 +312,20 @@ export default function ListPage() {
                     </div>
 
                     {/* Section Items */}
-                    <div className="space-y-8 ml-4 border-l-2 border-gray-200 pl-6">
+                    <div className="space-y-8 sm:space-y-12">
                       {section.section_items && section.section_items.length > 0 ? (
                         section.section_items
                           .sort((a, b) => a.sort_order - b.sort_order)
                           .map((item) => renderListItem(item))
                       ) : (
-                        <div className="text-center py-8">
-                          <p className="text-gray-500">
+                        <div className="text-center py-12 sm:py-16">
+                          <p className="text-gray-500 text-lg">
                             {locale === 'ar' ? 'هذا القسم فارغ حالياً' : 'This section is currently empty'}
                           </p>
                         </div>
                       )}
                     </div>
-                  </div>
+                  </section>
                 );
               })
           ) : (
@@ -359,16 +348,16 @@ export default function ListPage() {
         </div>
 
         {/* Footer/Attribution */}
-        <div className="mt-16 pt-8 border-t border-gray-200">
-          <div className={`text-center ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
-            <p className="text-gray-500 text-sm">
+        <div className="mt-20 sm:mt-24 pt-8 sm:pt-12 border-t border-gray-200">
+          <div className="text-center">
+            <p className="text-gray-500 text-sm sm:text-base">
               {locale === 'ar' 
                 ? `تم إنشاء هذه القائمة في ${new Date(list.created_at).toLocaleDateString('ar-OM')}`
                 : `This list was created on ${new Date(list.created_at).toLocaleDateString('en-US')}`
               }
             </p>
             {list.creator && (
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-gray-500 text-sm sm:text-base mt-2">
                 {locale === 'ar' 
                   ? `بواسطة ${list.creator.name}`
                   : `By ${list.creator.name}`

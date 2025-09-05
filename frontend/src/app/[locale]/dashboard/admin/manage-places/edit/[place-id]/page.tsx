@@ -1,6 +1,7 @@
 
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { 
   Save, 
   ArrowLeft, 
@@ -9,7 +10,6 @@ import {
   Upload,
   FileImage,
   MapPin,
-  Globe,
   Phone,
   Mail,
   ExternalLink,
@@ -18,7 +18,6 @@ import {
   Check,
   X,
   Eye,
-  Move,
   Star,
   RefreshCw,
   Edit
@@ -26,7 +25,78 @@ import {
 
 // Import the enhanced services from the previous component
 import { placeService } from '../../ManagePlaces'; // Adjust import path as needed
-import SimpleImageManager from '../../SimpleImageManager';
+
+// TypeScript Interfaces
+interface Category {
+  id: string;
+  name_en: string;
+  name_ar: string;
+}
+
+interface Governate {
+  id: string;
+  name_en: string;
+  name_ar: string;
+}
+
+interface Wilayah {
+  id: string;
+  name_en: string;
+  name_ar: string;
+}
+
+interface ContentSection {
+  id: string;
+  section_type: string;
+  title_ar: string;
+  title_en: string;
+  content_ar: string;
+  content_en: string;
+  sort_order: number;
+  is_active: boolean;
+  isNew?: boolean;
+}
+
+interface ImageMetadata {
+  alt_text?: string;
+  is_primary?: boolean;
+  display_order?: number;
+}
+
+interface SectionData {
+  section_type: string;
+  title_ar: string;
+  title_en: string;
+  content_ar: string;
+  content_en: string;
+  sort_order: number;
+}
+
+interface FormData {
+  nameAr: string;
+  nameEn: string;
+  descriptionAr: string;
+  descriptionEn: string;
+  subtitleAr: string;
+  subtitleEn: string;
+  governateId: string;
+  wilayahId: string;
+  latitude: string;
+  longitude: string;
+  phone: string;
+  email: string;
+  website: string;
+  categoryIds: string[];
+}
+
+interface PlaceImage {
+  id: string;
+  image_url: string;
+  alt_text?: string;
+  is_primary: boolean;
+  display_order: number;
+  upload_date: string;
+}
 
 // API Configuration
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:9000/api/v1';
@@ -52,7 +122,7 @@ const metaService = {
     return response.json();
   },
 
-  getWilayahs: async (governateId) => {
+  getWilayahs: async (governateId: string) => {
     const response = await fetch(`${API_BASE_URL}/wilayahs?governate_id=${governateId}`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -65,7 +135,7 @@ const metaService = {
 
 // Content Section Services
 const contentSectionService = {
-  createContentSection: async (placeId, sectionData) => {
+  createContentSection: async (placeId: string, sectionData: SectionData) => {
     const response = await fetch(`${API_BASE_URL}/places/${placeId}/content-sections`, {
       method: 'POST',
       headers: {
@@ -82,7 +152,7 @@ const contentSectionService = {
     return response.json();
   },
 
-  updateContentSection: async (placeId, sectionId, sectionData) => {
+  updateContentSection: async (placeId: string, sectionId: string, sectionData: SectionData) => {
     const response = await fetch(`${API_BASE_URL}/places/${placeId}/content-sections/${sectionId}`, {
       method: 'PUT',
       headers: {
@@ -99,7 +169,7 @@ const contentSectionService = {
     return response.json();
   },
 
-  deleteContentSection: async (placeId, sectionId) => {
+  deleteContentSection: async (placeId: string, sectionId: string) => {
     const response = await fetch(`${API_BASE_URL}/places/${placeId}/content-sections/${sectionId}`, {
       method: 'DELETE',
       headers: {
@@ -117,20 +187,14 @@ const contentSectionService = {
 };
 
 // Enhanced Image Manager Component for Place Edit
-const PlaceImageManager = ({ placeId, onImageCountChange }) => {
-  const [images, setImages] = useState([]);
+const PlaceImageManager = ({ placeId, onImageCountChange }: { placeId: string; onImageCountChange?: (count: number) => void }) => {
+  const [images, setImages] = useState<PlaceImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  useEffect(() => {
-    if (placeId) {
-      loadImages();
-    }
-  }, [placeId]);
-
-  const loadImages = async () => {
+  const loadImages = useCallback(async () => {
     try {
       setLoading(true);
       const response = await placeService.getPlaceImages(placeId);
@@ -144,9 +208,15 @@ const PlaceImageManager = ({ placeId, onImageCountChange }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [placeId, onImageCountChange]);
 
-  const handleFileUpload = async (files) => {
+  useEffect(() => {
+    if (placeId) {
+      loadImages();
+    }
+  }, [placeId, loadImages]);
+
+  const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
     try {
@@ -207,7 +277,7 @@ const PlaceImageManager = ({ placeId, onImageCountChange }) => {
     handleFileUpload(files);
   };
 
-  const updateImageMetadata = async (imageId, updates) => {
+  const updateImageMetadata = async (imageId: string, updates: ImageMetadata) => {
     try {
       const response = await placeService.updateImage(placeId, imageId, updates);
       if (response.success) {
@@ -219,7 +289,7 @@ const PlaceImageManager = ({ placeId, onImageCountChange }) => {
     }
   };
 
-  const deleteImage = async (imageId) => {
+  const deleteImage = async (imageId: string) => {
     if (!confirm('Are you sure you want to delete this image?')) return;
 
     try {
@@ -233,7 +303,7 @@ const PlaceImageManager = ({ placeId, onImageCountChange }) => {
     }
   };
 
-  const setPrimaryImage = async (imageId) => {
+  const setPrimaryImage = async (imageId: string) => {
     try {
       const response = await placeService.updateImage(placeId, imageId, { is_primary: true });
       if (response.success) {
@@ -335,9 +405,11 @@ const PlaceImageManager = ({ placeId, onImageCountChange }) => {
           {images.map((image) => (
             <div key={image.id} className="border rounded-lg overflow-hidden">
               <div className="relative">
-                <img
+                <Image
                   src={image.image_url}
                   alt={image.alt_text || 'Place image'}
+                  width={300}
+                  height={128}
                   className="w-full h-32 object-cover"
                   onError={(e) => {
                     e.target.src = '/placeholder-image.jpg';
@@ -430,7 +502,7 @@ const PlaceImageManager = ({ placeId, onImageCountChange }) => {
 };
 
 // Content Section Editor Component
-const ContentSectionEditor = ({ placeId, sections, onSectionsChange }) => {
+const ContentSectionEditor = ({ placeId, sections, onSectionsChange }: { placeId: string; sections: ContentSection[]; onSectionsChange: (sections: ContentSection[]) => void }) => {
   const [saving, setSaving] = useState(false);
 
   const addSection = () => {
@@ -448,14 +520,14 @@ const ContentSectionEditor = ({ placeId, sections, onSectionsChange }) => {
     onSectionsChange([...sections, newSection]);
   };
 
-  const updateSection = (sectionId, updates) => {
+  const updateSection = (sectionId: string, updates: Partial<ContentSection>) => {
     const updatedSections = sections.map(section =>
       section.id === sectionId ? { ...section, ...updates } : section
     );
     onSectionsChange(updatedSections);
   };
 
-  const deleteSection = async (sectionId, isNew = false) => {
+  const deleteSection = async (sectionId: string, isNew = false) => {
     if (!confirm('Are you sure you want to delete this content section?')) return;
 
     try {
@@ -619,7 +691,7 @@ export default function PlaceEdit() {
   const [imageCount, setImageCount] = useState(0);
   
   // Form data
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     nameAr: '',
     nameEn: '',
     descriptionAr: '',
@@ -636,27 +708,15 @@ export default function PlaceEdit() {
     categoryIds: []
   });
 
-  const [contentSections, setContentSections] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [governates, setGovernates] = useState([]);
-  const [wilayahs, setWilayahs] = useState([]);
+  const [contentSections, setContentSections] = useState<ContentSection[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [governates, setGovernates] = useState<Governate[]>([]);
+  const [wilayahs, setWilayahs] = useState<Wilayah[]>([]);
 
   // Get place ID from URL
-  const placeId = window.location.pathname.split('/').pop();
+  const placeId = window.location.pathname.split('/').pop() || '';
 
-  useEffect(() => {
-    loadPlace();
-    loadCategories();
-    loadGovernates();
-  }, []);
-
-  useEffect(() => {
-    if (formData.governateId) {
-      loadWilayahs(formData.governateId);
-    }
-  }, [formData.governateId]);
-
-  const loadPlace = async () => {
+  const loadPlace = useCallback(async () => {
     try {
       setLoading(true);
       const response = await placeService.getPlaceById(placeId);
@@ -693,7 +753,7 @@ export default function PlaceEdit() {
           phone: placeData.phone || '',
           email: placeData.email || '',
           website: placeData.website || '',
-          categoryIds: placeData.categories?.map(cat => cat.id) || []
+          categoryIds: placeData.categories?.map((cat: Category) => cat.id) || []
         };
         
         console.log('📝 Setting form data:', formDataToSet);
@@ -710,7 +770,19 @@ export default function PlaceEdit() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [placeId]);
+
+  useEffect(() => {
+    loadPlace();
+    loadCategories();
+    loadGovernates();
+  }, [loadPlace]);
+
+  useEffect(() => {
+    if (formData.governateId) {
+      loadWilayahs(formData.governateId);
+    }
+  }, [formData.governateId]);
 
   const loadCategories = async () => {
     try {
@@ -734,7 +806,7 @@ export default function PlaceEdit() {
     }
   };
 
-  const loadWilayahs = async (governateId) => {
+  const loadWilayahs = async (governateId: string) => {
     try {
       const response = await metaService.getWilayahs(governateId);
       if (response.success) {
@@ -745,14 +817,14 @@ export default function PlaceEdit() {
     }
   };
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const handleCategoryChange = (categoryId, checked) => {
+  const handleCategoryChange = (categoryId: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
       categoryIds: checked 
@@ -1266,7 +1338,7 @@ export default function PlaceEdit() {
               <h3 className="text-lg font-medium mb-4">Auto-Save</h3>
               <div className="text-sm text-gray-600">
                 <p className="mb-2">
-                  Changes are saved manually. Don't forget to save your progress!
+                  Changes are saved manually. Don&apos;t forget to save your progress!
                 </p>
                 <button
                   onClick={handleSave}
