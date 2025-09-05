@@ -31,6 +31,14 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
+
+# Google Maps API Configuration
+GOOGLE_MAPS_API_KEY=your-google-maps-api-key-here
+
+# Supabase Configuration
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key-here
+SUPABASE_STORAGE_BUCKET=your-storage-bucket-name
 ```
 
 ## Frontend Environment Variables
@@ -63,6 +71,18 @@ NEXT_PUBLIC_APP_VERSION=1.0.0
    - `http://localhost:9000/api/v1/auth/google/callback` (for development)
    - `https://yourdomain.com/api/v1/auth/google/callback` (for production)
 8. Copy the Client ID and Client Secret
+
+## Getting Supabase Credentials
+
+1. Go to the [Supabase Dashboard](https://supabase.com/dashboard)
+2. Create a new project or select an existing one
+3. Go to "Settings" → "API"
+4. Copy the following values:
+   - **Project URL** (use as `SUPABASE_URL`)
+   - **Service Role Key** (use as `SUPABASE_SERVICE_ROLE_KEY`)
+5. Go to "Storage" → "Buckets"
+6. Create a new bucket or use an existing one
+7. Copy the bucket name (use as `SUPABASE_STORAGE_BUCKET`)
 
 ## Security Best Practices
 
