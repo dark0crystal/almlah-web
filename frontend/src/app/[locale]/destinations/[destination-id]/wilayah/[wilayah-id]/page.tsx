@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { MapPin, ArrowLeft, Share2, Building } from 'lucide-react';
@@ -7,7 +7,7 @@ import Image from 'next/image';
 import PostCardsWrapper from "@/components/cards/postCards/PostCardWrapper";
 import Footer from '@/components/Footer';
 import { fetchWilayahById, fetchWilayahImages, WilayahWithImages } from '@/services/governateApi';
-import { WilayahDetailsProps } from '../../types';
+import { WilayahDetailsProps } from '../../../types';
 
 export default function WilayahDetailsPage({ params }: WilayahDetailsProps) {
   const [wilayah, setWilayah] = useState<WilayahWithImages | null>(null);
@@ -29,8 +29,8 @@ export default function WilayahDetailsPage({ params }: WilayahDetailsProps) {
   
   console.log('WilayahDetails - governateId:', governateId, 'wilayahId:', wilayahId);
 
-  // Load wilayah function
-  const loadWilayah = async () => {
+  // Load wilayah function - wrapped in useCallback to prevent unnecessary re-renders
+  const loadWilayah = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -73,7 +73,7 @@ export default function WilayahDetailsPage({ params }: WilayahDetailsProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [wilayahId, t]);
 
   // Load wilayah data when component mounts
   useEffect(() => {

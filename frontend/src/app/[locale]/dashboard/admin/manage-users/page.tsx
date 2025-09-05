@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { 
   Users, 
   Search, 
@@ -10,14 +11,10 @@ import {
   Mail, 
   Check, 
   X, 
-  Eye, 
   Lock, 
   Unlock,
-  Crown,
   Calendar,
-  Filter,
-  MoreVertical,
-  ChevronDown
+  MoreVertical
 } from 'lucide-react';
 
 // API Configuration
@@ -44,7 +41,7 @@ const apiCall = async (endpoint, options = {}) => {
       try {
         const error = await response.json();
         errorMessage = error.message || error.error || errorMessage;
-      } catch (e) {
+      } catch {
         errorMessage = response.statusText || `HTTP ${response.status}`;
       }
       throw new Error(errorMessage);
@@ -682,7 +679,6 @@ const UserManagement = () => {
                     <UserRow
                       key={user.id}
                       user={user}
-                      roles={roles}
                       isSelected={selectedUsers.has(user.id)}
                       onSelect={() => handleSelectUser(user.id)}
                       onEdit={(user) => {
@@ -695,8 +691,6 @@ const UserManagement = () => {
                         setSelectedUser(user);
                         setShowRoleModal(true);
                       }}
-                      onAssignRole={handleAssignRole}
-                      onRemoveRole={handleRemoveRole}
                     />
                   ))}
                 </tbody>
@@ -756,22 +750,19 @@ const UserManagement = () => {
 // User Row Component
 const UserRow = ({ 
   user, 
-  roles, 
   isSelected, 
   onSelect, 
   onEdit, 
   onDelete, 
   onToggleStatus, 
-  onManageRoles,
-  onAssignRole,
-  onRemoveRole 
+  onManageRoles
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
 
   const formatDate = (dateString) => {
     try {
       return new Date(dateString).toLocaleDateString();
-    } catch (e) {
+    } catch {
       return 'N/A';
     }
   };
@@ -790,12 +781,13 @@ const UserRow = ({
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center">
-          <div className="flex-shrink-0 h-10 w-10">
+          <div className="flex-shrink-0 h-10 w-10 relative">
             {safeUser.profile_picture ? (
-              <img
-                className="h-10 w-10 rounded-full"
+              <Image
+                className="rounded-full"
                 src={safeUser.profile_picture}
                 alt={safeUser.username || 'User'}
+                fill
               />
             ) : (
               <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">

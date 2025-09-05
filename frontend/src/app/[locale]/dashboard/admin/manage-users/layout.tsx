@@ -14,7 +14,7 @@ export default async function ManageUsersLayout({
   
   try {
     // Require user management permission
-    const auth = await requirePermission('can_manage_user', currentPath);
+    await requirePermission('can_manage_user', currentPath);
     
     return (
       <div className="manage-users-layout">

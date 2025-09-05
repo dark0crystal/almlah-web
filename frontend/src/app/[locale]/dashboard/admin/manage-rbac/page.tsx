@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit, Trash2, Settings, Save, X, AlertTriangle, Users, Shield, Key, Search, Filter } from 'lucide-react';
 
 // Type definitions
@@ -352,7 +352,7 @@ const LoginModal = ({ isOpen, onClose, onLogin }: { isOpen: boolean, onClose: ()
       } else {
         setError('Invalid username or password');
       }
-    } catch (err) {
+    } catch {
       setError('Login failed. Please try again.');
     } finally {
       setLoading(false);
@@ -909,7 +909,7 @@ const DeleteConfirmModal = ({ isOpen, onClose, item, itemType, onConfirm, loadin
         
         <div className="mb-6">
           <p className="text-gray-600 mb-3">
-            Are you sure you want to delete <strong>"{item.display_name || item.name}"</strong>?
+            Are you sure you want to delete <strong>&quot;{item.display_name || item.name}&quot;</strong>?
           </p>
           
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
@@ -1020,7 +1020,7 @@ const RolePermissionsModal = ({ isOpen, onClose, role, permissions, onSave }: {
       <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">
-            Manage Permissions for "{role.display_name}"
+            Manage Permissions for &quot;{role.display_name}&quot;
           </h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <X size={20} />
@@ -1181,7 +1181,7 @@ export default function RBACManagement() {
       setIsAuthenticated(true);
       loadData();
     }
-  }, []);
+  }, [loadData]);
 
   const handleAuthError = (error: unknown) => {
     if (error.message.includes('401') || error.message.includes('403') || error.message.includes('Unauthorized')) {
@@ -1191,7 +1191,7 @@ export default function RBACManagement() {
     }
   };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError('');
     
@@ -1205,11 +1205,11 @@ export default function RBACManagement() {
       setPermissions(Array.isArray(permissionsData) ? permissionsData : []);
     } catch (err: unknown) {
       handleAuthError(err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleLogin = (token: string) => {
     setIsAuthenticated(true);

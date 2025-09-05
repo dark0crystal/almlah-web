@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { Edit2, Trash2, MapPin, ImageIcon } from 'lucide-react';
 
 interface Wilayah {
@@ -26,10 +27,11 @@ const WilayahCard: React.FC<WilayahCardProps> = ({
       {/* Image Gallery Preview */}
       {wilayah.images && wilayah.images.length > 0 && (
         <div className="relative h-48 bg-gray-200">
-          <img
+          <Image
             src={wilayah.images.find(img => img.is_primary)?.url || wilayah.images[0]?.url}
             alt={wilayah.name_en}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
           />
           {wilayah.images.length > 1 && (
             <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">

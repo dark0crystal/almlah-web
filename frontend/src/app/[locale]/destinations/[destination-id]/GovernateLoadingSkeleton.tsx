@@ -1,15 +1,9 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-
-interface GovernateLoadingSkeletonProps {
-  language?: 'ar' | 'en';
-  showProgress?: boolean;
-  loadingText?: string;
-}
+import { GovernateLoadingSkeletonProps } from '../types';
 
 export default function GovernateLoadingSkeleton({ 
-  language = 'ar', 
   showProgress = true,
   loadingText 
 }: GovernateLoadingSkeletonProps) {

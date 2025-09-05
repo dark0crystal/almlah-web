@@ -14,7 +14,7 @@ export default async function ManageRbacLayout({
   
   try {
     // Require role or permission management permissions
-    const auth = await requireAnyPermission([
+    await requireAnyPermission([
       'can_manage_role', 
       'can_manage_permission'
     ], currentPath);
