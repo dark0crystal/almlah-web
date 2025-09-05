@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { usePlaceStore, PlaceImage } from '../../../stores/usePlaceStore';
 import { 
   ChevronLeftIcon, 
@@ -36,7 +37,7 @@ export const ImagesStep: React.FC = () => {
     if (formData.images && formData.images.length > 0) {
       setLocalImages(formData.images);
     }
-  }, []);
+  }, [formData.images]);
 
   const validateFile = (file: File): string | null => {
     if (file.size > maxFileSize) {
@@ -197,13 +198,6 @@ export const ImagesStep: React.FC = () => {
   };
 
   const remainingSlots = maxFiles - localImages.length;
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
 
   return (
     <div className="space-y-8">
@@ -435,10 +429,11 @@ const ImageCard: React.FC<ImageCardProps> = ({
     <div className="relative group bg-white border border-gray-200 rounded-lg overflow-hidden">
       {/* Image */}
       <div className="aspect-video relative">
-        <img
-          src={image.preview || image.url}
-          alt={image.alt_text}
-          className="w-full h-full object-cover"
+        <Image
+          src={image.preview || image.url || ''}
+          alt={image.alt_text || ''}
+          fill
+          className="object-cover"
         />
         
         {/* Primary Badge */}

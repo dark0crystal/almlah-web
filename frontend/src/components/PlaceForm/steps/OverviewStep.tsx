@@ -1,5 +1,6 @@
 "use client"
 import React from 'react';
+import Image from 'next/image';
 import { usePlaceStore } from '../../../stores/usePlaceStore';
 import { ChevronLeftIcon, ChevronRightIcon, MapPinIcon, PhotoIcon, TagIcon } from '@heroicons/react/24/outline';
 import { SECTION_TYPES } from '../../../schemas/placeSchemas';
@@ -170,10 +171,11 @@ export const OverviewStep: React.FC = () => {
           <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
             {formData.images.slice(0, 8).map((image, index) => (
               <div key={index} className="aspect-square rounded-lg overflow-hidden bg-gray-100 relative">
-                <img
-                  src={image.preview || image.url}
-                  alt={image.alt_text}
-                  className="w-full h-full object-cover"
+                <Image
+                  src={image.preview || image.url || ''}
+                  alt={image.alt_text || ''}
+                  fill
+                  className="object-cover"
                 />
                 {image.is_primary && (
                   <div className="absolute top-1 left-1">

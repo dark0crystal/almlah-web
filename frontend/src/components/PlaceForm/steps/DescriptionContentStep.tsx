@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import Image from 'next/image';
 import { usePlaceStore } from '../../../stores/usePlaceStore';
 import { descriptionContentSchema, DescriptionContentFormData, ContentSection, SECTION_TYPES } from '../../../schemas/placeSchemas';
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, XMarkIcon, PhotoIcon } from '@heroicons/react/24/outline';
@@ -19,7 +20,7 @@ export const DescriptionContentStep: React.FC = () => {
     clearErrors
   } = usePlaceStore();
 
-  const [showAddSection, setShowAddSection] = useState(false);
+  // const [showAddSection] = useState(false);
   const [editingSectionIndex, setEditingSectionIndex] = useState<number | null>(null);
 
   const {
@@ -50,7 +51,7 @@ export const DescriptionContentStep: React.FC = () => {
     nextStep();
   };
 
-  const onError = (formErrors: any) => {
+  const onError = (formErrors: Record<string, { message: string }>) => {
     const errorMessages: Record<string, string> = {};
     Object.keys(formErrors).forEach(key => {
       errorMessages[key] = formErrors[key].message;
@@ -92,7 +93,7 @@ export const DescriptionContentStep: React.FC = () => {
     index: number; 
     onSave: (section: Partial<ContentSection>) => void;
     onCancel: () => void;
-  }> = ({ section, index, onSave, onCancel }) => {
+  }> = ({ section, onSave, onCancel }) => {
     const [localSection, setLocalSection] = useState(section);
 
     const updateLocalSection = (updates: Partial<ContentSection>) => {
@@ -236,10 +237,12 @@ export const DescriptionContentStep: React.FC = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {localSection.images.map((image, imageIndex) => (
                   <div key={imageIndex} className="relative group">
-                    <img
+                    <Image
                       src={image.image_url}
                       alt={image.alt_text_en || 'Section image'}
                       className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                      width={96}
+                      height={96}
                     />
                     <button
                       type="button"

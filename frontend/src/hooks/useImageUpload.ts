@@ -5,13 +5,11 @@ import { ImageFile, ExistingImage, ImageUploadConfig } from '../types/image';
 
 interface UseImageUploadProps {
   config: ImageUploadConfig;
-  onImagesChange: (images: ExistingImage[]) => void;
   onUploadProgress?: (progress: number) => void;
 }
 
 export const useImageUpload = ({
   config,
-  onImagesChange,
   onUploadProgress
 }: UseImageUploadProps) => {
   const [pendingFiles, setPendingFiles] = useState<ImageFile[]>([]);

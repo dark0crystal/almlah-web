@@ -23,7 +23,7 @@ export const LocationStep: React.FC = () => {
   } = usePlaceStore();
 
   const [selectedGovernate, setSelectedGovernate] = useState<string>(formData.governate_id || '');
-  const [mapCoordinates, setMapCoordinates] = useState<{lat: number; lng: number} | null>(
+  const [mapCoordinates] = useState<{lat: number; lng: number} | null>(
     formData.latitude && formData.longitude 
       ? { lat: formData.latitude, lng: formData.longitude }
       : null
@@ -68,7 +68,7 @@ export const LocationStep: React.FC = () => {
     nextStep();
   };
 
-  const onError = (formErrors: any) => {
+  const onError = (formErrors: Record<string, { message: string }>) => {
     const errorMessages: Record<string, string> = {};
     Object.keys(formErrors).forEach(key => {
       errorMessages[key] = formErrors[key].message;
