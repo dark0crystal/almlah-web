@@ -5,16 +5,7 @@ import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 
-interface PostCardProps {
-  title: string;
-  description?: string;
-  image?: string;
-  author?: string;
-  date?: string;
-  category?: string;
-  isNew?: boolean;
-  placeId?: string;
-}
+import { PostCardProps } from './types';
 
 export default function PostCard({
   title,
@@ -87,9 +78,28 @@ export default function PostCard({
         )}
 
         {/* Title */}
-        <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 leading-tight truncate">
+        <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 leading-tight line-clamp-2 mb-2">
           {title}
         </h3>
+
+        {/* Description */}
+        {description && (
+          <p className="text-gray-600 text-sm sm:text-base line-clamp-2 mb-3">
+            {description}
+          </p>
+        )}
+
+        {/* Author and Date */}
+        {(author || date) && (
+          <div className="flex items-center justify-between text-xs sm:text-sm text-gray-500">
+            {author && (
+              <span className="truncate flex-1">{author}</span>
+            )}
+            {date && (
+              <span className="ml-2 flex-shrink-0">{date}</span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

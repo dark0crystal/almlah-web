@@ -1,43 +1,18 @@
 // PostCardsWrapper.tsx - Updated with horizontal scrolling
 "use client"
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import PostCard from './PostCard';
 import { fetchRecentPlaces, transformRecentPlacesToPlaces, formatRelativeTime, fetchTourismPlaces, fetchPlacesByWilayah } from '../../../services/placesApi';
 import { Place } from '@/types';
 
-// Enhanced interface for our post data with API integration
-interface PostData {
-  id: string;
-  title: string;
-  description?: string;
-  image?: string;
-  author?: string;
-  date?: string;
-  category?: string;
-  isNew?: boolean;
-  slug?: string;
-  place?: Place; // Store the original place data
-}
-
-interface PostCardsWrapperProps {
-  title?: string;
-  initialLimit?: number;
-  language?: 'ar' | 'en';
-  categoryId?: string;
-  governateId?: string;
-  wilayahId?: string;
-  type?: 'recent' | 'category' | 'location';
-}
+import { PostData, PostCardsWrapperProps, DragState } from './types';
 
 export default function PostCardsWrapper({
   title,
-  initialLimit = 6,
   language,
-  categoryId,
   governateId,
-  wilayahId,
-  type = 'recent'
+  wilayahId
 }: PostCardsWrapperProps) {
   
   const locale = useLocale();
@@ -48,13 +23,13 @@ export default function PostCardsWrapper({
   const [posts, setPosts] = useState<PostData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [newPlacesCount, setNewPlacesCount] = useState(0);
-  const [hasFallback, setHasFallback] = useState(false);
+  // const [newPlacesCount, setNewPlacesCount] = useState(0);
+  // const [hasFallback, setHasFallback] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, scrollLeft: 0 });
-  const [lastScrollLeft, setLastScrollLeft] = useState(0);
+  const [dragStart, setDragStart] = useState<DragState>({ x: 0, scrollLeft: 0 });
+  // const [lastScrollLeft, setLastScrollLeft] = useState(0);
   const [isMouseDown, setIsMouseDown] = useState(false);
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -62,7 +37,7 @@ export default function PostCardsWrapper({
   /**
    * Convert Place data to PostData format
    */
-  const convertPlaceToPost = (place: Place & { isNew?: boolean }): PostData => {
+  const convertPlaceToPost = useCallback((place: Place & { isNew?: boolean }): PostData => {
     const isNew = place.isNew ?? false;
     const relativeDate = place.created_at ? formatRelativeTime(place.created_at, currentLanguage) : '';
     
@@ -88,12 +63,12 @@ export default function PostCardsWrapper({
       slug: `place-${place.id}`,
       place: place
     };
-  };
+  }, [currentLanguage]);
 
   /**
    * Fetch places from API - either recent places or governate-specific places
    */
-  const fetchPlaces = async () => {
+  const fetchPlaces = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -113,8 +88,8 @@ export default function PostCardsWrapper({
         
         const convertedPosts = places.map(convertPlaceToPost);
         setPosts(convertedPosts);
-        setNewPlacesCount(places.filter(p => p.isNew).length);
-        setHasFallback(false);
+        // setNewPlacesCount(places.filter(p => p.isNew).length);
+        // setHasFallback(false);
       } else if (governateId) {
         // Fetch places for specific governate using tourism places API
         places = await fetchTourismPlaces(governateId);
@@ -128,8 +103,8 @@ export default function PostCardsWrapper({
         
         const convertedPosts = places.map(convertPlaceToPost);
         setPosts(convertedPosts);
-        setNewPlacesCount(places.filter(p => p.isNew).length);
-        setHasFallback(false);
+        // setNewPlacesCount(places.filter(p => p.isNew).length);
+        // setHasFallback(false);
       } else {
         // Use the optimized recent places endpoint for general display
         const response = await fetchRecentPlaces(
@@ -144,8 +119,8 @@ export default function PostCardsWrapper({
         const convertedPosts = transformedPlaces.map(convertPlaceToPost);
         
         setPosts(convertedPosts);
-        setNewPlacesCount(response.new_count);
-        setHasFallback(response.has_fallback);
+        // setNewPlacesCount(response.new_count);
+        // setHasFallback(response.has_fallback);
       }
 
     } catch (err) {
@@ -153,7 +128,7 @@ export default function PostCardsWrapper({
     } finally {
       setLoading(false);
     }
-  };
+  }, [governateId, wilayahId, convertPlaceToPost, t]);
 
   /**
    * Check scroll position and update button states
@@ -218,7 +193,7 @@ export default function PostCardsWrapper({
     container.style.userSelect = 'none';
   };
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     if (isDragging || isMouseDown) {
       setIsDragging(false);
       setIsMouseDown(false);
@@ -228,7 +203,7 @@ export default function PostCardsWrapper({
         container.style.userSelect = 'auto';
       }
     }
-  };
+  }, [isDragging, isMouseDown]);
 
   const handleMouseUp = () => {
     setIsDragging(false);
@@ -264,7 +239,7 @@ export default function PostCardsWrapper({
   // Fetch data on component mount
   useEffect(() => {
     fetchPlaces();
-  }, [categoryId, governateId, wilayahId, currentLanguage]);
+  }, [fetchPlaces]);
 
   // Set up scroll event listener and mouse events
   useEffect(() => {
@@ -287,7 +262,7 @@ export default function PostCardsWrapper({
       document.removeEventListener('mouseup', handleMouseUp);
       document.removeEventListener('mouseleave', handleMouseLeave);
     };
-  }, [posts, isDragging]);
+  }, [posts, isDragging, handleMouseLeave]);
 
 
   const handleRetry = () => {

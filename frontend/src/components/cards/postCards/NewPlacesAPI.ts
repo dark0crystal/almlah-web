@@ -1,62 +1,8 @@
 // services/placesApi.ts
+import { PlaceCategory, ApiResponse, PlaceWithNewStatus } from './types';
+import { Place } from '@/types';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000';
-
-export interface PlaceImage {
-  id: string;
-  url: string;
-  alt_text: string;
-  is_primary: boolean;
-  display_order: number;
-}
-
-export interface PlaceCategory {
-  id: string;
-  name_ar: string;
-  name_en: string;
-  slug: string;
-  icon?: string;
-  type: string;
-}
-
-export interface PlaceGovernate {
-  id: string;
-  name_ar: string;
-  name_en: string;
-  slug: string;
-}
-
-export interface PlaceWilayah {
-  id: string;
-  name_ar: string;
-  name_en: string;
-  slug: string;
-}
-
-export interface Place {
-  id: string;
-  name_ar: string;
-  name_en: string;
-  description_ar: string;
-  description_en: string;
-  subtitle_ar: string;
-  subtitle_en: string;
-  latitude: number;
-  longitude: number;
-  rating?: number;
-  review_count?: number;
-  categories: PlaceCategory[];
-  primary_image?: PlaceImage;
-  governate?: PlaceGovernate;
-  wilayah?: PlaceWilayah;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
 
 class PlacesApiService {
   private async makeRequest<T>(
@@ -171,7 +117,7 @@ class PlacesApiService {
   /**
    * Get places with "new" status based on creation date
    */
-  async getPlacesWithNewStatus(limit: number = 6): Promise<(Place & { isNew: boolean })[]> {
+  async getPlacesWithNewStatus(limit: number = 6): Promise<PlaceWithNewStatus[]> {
     const recentPlaces = await this.getRecentPlaces(limit);
     
     return recentPlaces.map(place => ({
