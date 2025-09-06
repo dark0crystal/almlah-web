@@ -216,7 +216,7 @@ class UploadService {
   ): Promise<UploadResult> {
     // For now, we'll use the single upload method
     // In the future, this could be enhanced with actual progress tracking using XMLHttpRequest
-    return this.uploadSingle(file, bucket, onProgress);
+    return this.uploadSingle(file, bucket);
   }
 
   // Utility method to create a pending upload object
@@ -255,10 +255,7 @@ class UploadService {
         upload.status = 'uploading';
         upload.progress = 0;
 
-        const result = await this.uploadSingle(upload.file, upload.bucket, (progress) => {
-          upload.progress = progress.percentage;
-          onProgress?.(upload.id, progress.percentage);
-        });
+        const result = await this.uploadSingle(upload.file, upload.bucket);
 
         upload.status = result.success ? 'completed' : 'failed';
         upload.result = result;
@@ -304,5 +301,4 @@ class UploadService {
 // Export singleton instance
 export const uploadService = new UploadService();
 
-// Export types for use in components
-export type { UploadProgress, UploadResult, BatchUploadResult, PendingUpload };
+// Types are already exported above - no need to re-export

@@ -116,7 +116,7 @@ export const fetchCategoryById = async (
     
     const data: ApiResponse<LocalizedCategoryResponse> = await response.json();
     
-    if (data.success) {
+    if (data.success && data.data) {
       return data.data;
     }
     

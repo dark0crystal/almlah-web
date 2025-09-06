@@ -10,7 +10,7 @@ export const RESTAURANT_CATEGORY_ID = "9a5c3331-e22e-4e8e-bb3a-d0ce3c799018";
  */
 export const fetchRestaurants = async (governateId?: string | null): Promise<Place[]> => {
   try {
-    const places = await fetchPlaces(governateId);
+    const places = await fetchPlaces(RESTAURANT_CATEGORY_ID, governateId);
     
     // Filter for restaurants based on category
     const restaurants = places.filter(place => 
@@ -104,7 +104,7 @@ export const searchRestaurants = (restaurants: Place[], query: string, language:
     const description = language === 'ar' ? restaurant.description_ar : restaurant.description_en;
     
     return name.toLowerCase().includes(searchTerm) ||
-           description.toLowerCase().includes(searchTerm);
+           (description && description.toLowerCase().includes(searchTerm));
   });
 };
 
@@ -138,9 +138,10 @@ export const findNearbyRestaurants = (
   radiusKm: number = 10
 ): (Place & { distance: number })[] => {
   return restaurants
+    .filter(restaurant => restaurant.lat != null && restaurant.lng != null)
     .map(restaurant => ({
       ...restaurant,
-      distance: calculateDistance(userLat, userLng, restaurant.lat, restaurant.lng)
+      distance: calculateDistance(userLat, userLng, restaurant.lat!, restaurant.lng!)
     }))
     .filter(restaurant => restaurant.distance <= radiusKm)
     .sort((a, b) => a.distance - b.distance);
@@ -199,8 +200,8 @@ export const formatRestaurantHours = (hours: string | undefined, language: 'ar' 
  */
 export const getRestaurantCuisine = (restaurant: Place, language: 'ar' | 'en' = 'en'): string => {
   if (restaurant.categories && restaurant.categories.length > 0) {
-    // Get the first non-primary category (assuming first category is "Restaurants" and second is cuisine type)
-    const cuisineCategory = restaurant.categories.find(cat => cat.type !== 'primary') || restaurant.categories[0];
+    // Get the second category if available (assuming first is "Restaurants" and second is cuisine type), otherwise first
+    const cuisineCategory = restaurant.categories.length > 1 ? restaurant.categories[1] : restaurant.categories[0];
     return language === 'ar' ? cuisineCategory.name_ar : cuisineCategory.name_en;
   }
   
