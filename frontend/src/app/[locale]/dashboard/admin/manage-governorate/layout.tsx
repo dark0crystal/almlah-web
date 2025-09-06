@@ -14,7 +14,7 @@ export default async function ManageGovernorateLayout({
   
   try {
     // Require admin or super_admin role for governorate management
-    const auth = await requireAnyRole(['admin', 'super_admin'], currentPath);
+    await requireAnyRole(['admin', 'super_admin'], currentPath);
     
     return (
       <div className="manage-governorate-layout">

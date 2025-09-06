@@ -1,4 +1,4 @@
-// Enhanced Manage Places Component with Proper Image Fetching
+//// Enhanced Manage Places Component with Proper Image Fetching
 
 "use client"
 import React, { useState, useEffect, useCallback } from 'react';
@@ -646,7 +646,6 @@ export default function ManagePlaces() {
   const [lastUpdateTime, setLastUpdateTime] = useState(new Date());
   const [newPlacesCount, setNewPlacesCount] = useState(0);
 
-  // Load initial data
   // Load places (images will be fetched separately by each PlaceCard)
   const loadPlaces = useCallback(async (params = {}) => {
     try {
@@ -688,7 +687,7 @@ export default function ManagePlaces() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [places.length]); // Added missing dependency: places.length
 
   useEffect(() => {
     loadPlaces();

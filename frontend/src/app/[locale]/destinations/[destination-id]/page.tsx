@@ -19,18 +19,24 @@ export default function GovernateDetailsPage({ params }: GovernateDetailsProps) 
   const [wilayahs, setWilayahs] = useState<SimpleWilayah[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [governateId, setGovernateId] = useState<string>('');
   
   // Get current locale and translations
   const locale = useLocale() as 'ar' | 'en';
   const t = useTranslations('governate');
   const tNav = useTranslations('navigation');
   
-  // Get governate ID from params or URL
-  const urlParams = useParams();
+  // Get router
   const router = useRouter();
   
-  // Extract governate ID - handle both cases
-  const governateId = params?.['destination-id'] || urlParams?.['destination-id'] as string;
+  // Extract governate ID from params
+  useEffect(() => {
+    const getParams = async () => {
+      const resolvedParams = await params;
+      setGovernateId(resolvedParams['destination-id']);
+    };
+    getParams();
+  }, [params]);
   
   console.log('GovernateDetails - governateId:', governateId);
   console.log('GovernateDetails - locale:', locale);
@@ -75,9 +81,7 @@ export default function GovernateDetailsPage({ params }: GovernateDetailsProps) 
   // Load governate data when component mounts
   useEffect(() => {
     if (!governateId) {
-      console.error('No governate ID found in params');
-      setError(t('error.idNotFound'));
-      setLoading(false);
+      // Don't show error immediately, wait for params to resolve
       return;
     }
 

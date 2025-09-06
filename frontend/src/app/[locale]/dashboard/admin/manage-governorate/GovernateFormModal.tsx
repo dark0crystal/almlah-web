@@ -5,11 +5,45 @@ import SimpleImageSelector from '@/components/SimpleImageSelector';
 import { SupabaseStorageService } from '@/services/supabaseStorage';
 import { ExistingImage } from '@/types/image';
 
+interface ApiImage {
+  id?: string;
+  image_url?: string;
+  alt_text?: string;
+  is_primary?: boolean;
+  display_order?: number;
+}
+
+interface Governate {
+  id?: string;
+  name_ar?: string;
+  name_en?: string;
+  description_ar?: string;
+  description_en?: string;
+  slug?: string;
+  latitude?: number | string;
+  longitude?: number | string;
+  sort_order?: number | string;
+  images?: ApiImage[];
+  gallery_images?: string;
+}
+
+interface GovernateFormData {
+  name_ar: string;
+  name_en: string;
+  description_ar: string;
+  description_en: string;
+  slug: string;
+  latitude: number | string;
+  longitude: number | string;
+  sort_order: number | string;
+  gallery_images?: string;
+}
+
 interface GovernateFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  governate: any;
-  onSave: (id: string | null, data: any) => Promise<any>;
+  governate: Governate | null;
+  onSave: (id: string | null, data: GovernateFormData) => Promise<unknown>;
   currentLang: string;
 }
 
@@ -24,10 +58,10 @@ const generateSlug = (name: string): string => {
 };
 
 // Helper function to parse gallery images from the API response
-const parseApiImages = (apiImages: any[]): ExistingImage[] => {
+const parseApiImages = (apiImages: ApiImage[]): ExistingImage[] => {
   if (!Array.isArray(apiImages)) return [];
   
-  return apiImages.map((img: any, index: number) => ({
+  return apiImages.map((img: ApiImage, index: number) => ({
     id: img.id || `existing-${index}`,
     path: img.image_url ? img.image_url.replace(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_STORAGE_BUCKET}/`, '') : '',
     alt_text: img.alt_text || '',
@@ -44,14 +78,14 @@ const parseGalleryImages = (galleryImagesJson: string | null): ExistingImage[] =
   
   try {
     const parsed = JSON.parse(galleryImagesJson);
-    return Array.isArray(parsed) ? parsed.map((img: any, index: number) => ({
-      id: img.id || `existing-${index}`,
-      path: img.path,
-      alt_text: img.alt_text || '',
-      caption: img.caption || '',
-      is_primary: img.is_primary || false,
-      display_order: img.display_order || index,
-      url: img.url
+    return Array.isArray(parsed) ? parsed.map((img: Record<string, unknown>, index: number) => ({
+      id: String(img.id || `existing-${index}`),
+      path: String(img.path || ''),
+      alt_text: String(img.alt_text || ''),
+      caption: String(img.caption || ''),
+      is_primary: Boolean(img.is_primary || false),
+      display_order: Number(img.display_order || index),
+      url: String(img.url || '')
     })) : [];
   } catch (error) {
     console.error('Error parsing gallery images:', error);
@@ -63,8 +97,7 @@ export const GovernateFormModal: React.FC<GovernateFormModalProps> = ({
   isOpen, 
   onClose, 
   governate, 
-  onSave, 
-  currentLang 
+  onSave 
 }) => {
   const [formData, setFormData] = useState({
     name_ar: '',
@@ -175,7 +208,7 @@ export const GovernateFormModal: React.FC<GovernateFormModalProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const uploadImagesToSupabase = async (governateId: string): Promise<any[]> => {
+  const uploadImagesToSupabase = async (governateId: string): Promise<ExistingImage[]> => {
     if (pendingFiles.length === 0) return [];
 
     const imagesToUpload = pendingFiles.map((file, index) => {
@@ -237,9 +270,9 @@ export const GovernateFormModal: React.FC<GovernateFormModalProps> = ({
       const submitData = { ...formData };
       
       // Convert numeric fields
-      if (submitData.latitude) submitData.latitude = parseFloat(submitData.latitude as any);
-      if (submitData.longitude) submitData.longitude = parseFloat(submitData.longitude as any);
-      if (submitData.sort_order) submitData.sort_order = parseInt(submitData.sort_order as any) || 0;
+      if (submitData.latitude) submitData.latitude = parseFloat(String(submitData.latitude));
+      if (submitData.longitude) submitData.longitude = parseFloat(String(submitData.longitude));
+      if (submitData.sort_order) submitData.sort_order = parseInt(String(submitData.sort_order)) || 0;
 
       // Save the governate first
       const savedGovernate = await onSave(governate?.id || null, submitData);

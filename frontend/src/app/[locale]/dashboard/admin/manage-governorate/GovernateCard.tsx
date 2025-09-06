@@ -1,5 +1,6 @@
 // components/GovernateCard.tsx
 import React from 'react';
+import Image from 'next/image';
 import { Edit, Trash2, MapPin, Eye, Image as ImageIcon } from 'lucide-react';
 
 interface Governate {
@@ -93,10 +94,11 @@ export const GovernateCard: React.FC<GovernateCardProps> = ({
       {/* Image Header */}
       {primaryImage && (
         <div className="relative h-48 bg-gray-100">
-          <img
+          <Image
             src={primaryImage.url || `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_STORAGE_BUCKET}/${primaryImage.path}`}
             alt={primaryImage.alt_text || getDisplayName(governate, currentLang)}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
           />
           {galleryImages.length > 1 && (
             <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">

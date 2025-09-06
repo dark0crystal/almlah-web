@@ -3,6 +3,7 @@ import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { Place } from '@/types';
 import sepcamel from "../../../../../public/seperators/sepcamel.png"
+
 interface AboutAndLocationProps {
   place: Place;
   language?: 'ar' | 'en';
@@ -153,10 +154,11 @@ export default function AboutAndLocation({ place, language = 'ar' }: AboutAndLoc
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
                       {section.images.map(img => (
                         <div key={img.id} className="relative h-32 rounded-lg overflow-hidden">
-                          <img
-                            src={img.image_url}
-                            alt={language === 'ar' ? img.alt_text_ar : img.alt_text_en}
-                            className="w-full h-full object-cover"
+                          <Image
+                            src={img.image_url || ''}
+                            alt={(language === 'ar' ? img.alt_text_ar : img.alt_text_en) || 'Section image'}
+                            fill
+                            className="object-cover"
                           />
                         </div>
                       ))}
