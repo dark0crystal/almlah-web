@@ -301,7 +301,7 @@ const PlaceImageManager = ({ placeId, onImageCountChange }: { placeId: string; o
 
   const updateImageMetadata = async (imageId: string, updates: ImageMetadata) => {
     try {
-      const response = await placeService.updateImage(placeId, imageId, updates);
+      const response = await placeService.updateImage(placeId, imageId, updates as Record<string, unknown>);
       if (response.success) {
         await loadImages();
       }

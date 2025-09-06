@@ -23,6 +23,102 @@ import {
 // API Configuration
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:9000/api/v1';
 
+// Core type definitions
+interface Category {
+  id: string;
+  name_en: string;
+  name_ar: string;
+  description_en?: string;
+  description_ar?: string;
+  slug: string;
+  is_active: boolean;
+}
+
+interface Governate {
+  id: string;
+  name_en: string;
+  name_ar: string;
+  slug: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Wilayah {
+  id: string;
+  name_en: string;
+  name_ar: string;
+  slug: string;
+  governate_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface PlaceImage {
+  id: string;
+  image_url: string;
+  alt_text?: string;
+  is_primary: boolean;
+  display_order: number;
+  upload_date: string;
+}
+
+interface ContentSection {
+  id: string;
+  section_type: string;
+  title_ar?: string;
+  title_en?: string;
+  content_ar: string;
+  content_en: string;
+  sort_order: number;
+}
+
+interface Place {
+  id: string;
+  name_ar: string;
+  name_en: string;
+  description_ar: string;
+  description_en: string;
+  subtitle_ar?: string;
+  subtitle_en?: string;
+  governate_id: string | null;
+  wilayah_id: string | null;
+  latitude: number;
+  longitude: number;
+  phone?: string;
+  email?: string;
+  website?: string;
+  created_at: string;
+  updated_at: string;
+  categories?: Category[];
+  content_sections?: ContentSection[];
+  images?: PlaceImage[];
+  governate?: Governate;
+  wilayah?: Wilayah;
+}
+
+interface ImageUploadData {
+  altText?: string;
+  isPrimary?: boolean;
+  displayOrder?: number;
+  altTextAr?: string;
+  altTextEn?: string;
+}
+
+interface ImageUpdateData {
+  alt_text?: string;
+  is_primary?: boolean;
+  display_order?: number;
+  [key: string]: unknown;
+}
+
+interface ContentSectionImageData {
+  altTextAr?: string;
+  altTextEn?: string;
+  captionAr?: string;
+  captionEn?: string;
+  sortOrder?: number;
+}
+
 // Interface for API query parameters
 interface PlaceQueryParams {
   search?: string;
@@ -33,20 +129,20 @@ interface PlaceQueryParams {
 // Component prop interfaces
 interface ImageManagerProps {
   placeId: string;
-  images: any[];
-  onImagesChange: (images: any[]) => void;
+  images: PlaceImage[];
+  onImagesChange: (images: PlaceImage[]) => void;
   loading: boolean;
 }
 
 interface PlaceCardProps {
-  place: any;
+  place: Place;
   onEdit: (placeId: string) => void;
   onDelete: (placeId: string) => void;
   onView: (placeId: string) => void;
 }
 
 interface DeleteConfirmationModalProps {
-  place: any;
+  place: Place;
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (placeId: string) => void;
@@ -113,11 +209,11 @@ const placeService = {
   },
 
   // Upload new images
-  uploadImages: async (placeId: string, imageFiles: File[], imageData: any[]) => {
+  uploadImages: async (placeId: string, imageFiles: File[], imageData: ImageUploadData[]) => {
     const formData = new FormData();
     
     // Prepare image metadata
-    const imageMetadata = imageData.map((data: any, index: number) => ({
+    const imageMetadata = imageData.map((data: ImageUploadData, index: number) => ({
       image_url: '', // Will be set by backend after upload
       alt_text: data.altText || '',
       is_primary: data.isPrimary || false,
@@ -148,7 +244,7 @@ const placeService = {
   },
 
   // Update image metadata
-  updateImage: async (placeId: string, imageId: string, imageData: any) => {
+  updateImage: async (placeId: string, imageId: string, imageData: ImageUpdateData) => {
     const response = await fetch(`${API_BASE_URL}/places/${placeId}/images/${imageId}`, {
       method: 'PUT',
       headers: {
@@ -183,7 +279,7 @@ const placeService = {
   },
 
   // Update place
-  updatePlace: async (placeId: string, data: any) => {
+  updatePlace: async (placeId: string, data: Partial<Place>) => {
     const response = await fetch(`${API_BASE_URL}/places/${placeId}`, {
       method: 'PUT',
       headers: {
@@ -233,10 +329,10 @@ const placeService = {
     return response.json();
   },
 
-  uploadContentSectionImages: async (sectionId: string, imageFiles: File[], imageData: any[]) => {
+  uploadContentSectionImages: async (sectionId: string, imageFiles: File[], imageData: ContentSectionImageData[]) => {
     const formData = new FormData();
     
-    const imageMetadata = imageData.map((data: any, index: number) => ({
+    const imageMetadata = imageData.map((data: ContentSectionImageData, index: number) => ({
       image_url: '',
       alt_text_ar: data.altTextAr || '',
       alt_text_en: data.altTextEn || '',
@@ -351,7 +447,7 @@ const ImageManager = ({ placeId, images, onImagesChange, loading }: ImageManager
     handleFileUpload(files);
   };
 
-  const updateImageMetadata = async (imageId: string, updates: any) => {
+  const updateImageMetadata = async (imageId: string, updates: ImageUpdateData) => {
     try {
       const response = await placeService.updateImage(placeId, imageId, updates);
       if (response.success) {
@@ -573,7 +669,7 @@ const PlaceCard = ({ place, onEdit, onDelete, onView }: PlaceCardProps) => {
   const [showActions, setShowActions] = useState(false);
   
   // Handle image URL properly from backend
-  const primaryImage = place.images?.find((img: any) => img.is_primary) || place.images?.[0];
+  const primaryImage = place.images?.find((img: PlaceImage) => img.is_primary) || place.images?.[0];
   const imageCount = place.images?.length || 0;
   const sectionCount = place.content_sections?.length || 0;
 
@@ -620,7 +716,7 @@ const PlaceCard = ({ place, onEdit, onDelete, onView }: PlaceCardProps) => {
               <div className="absolute right-0 top-10 bg-white rounded-lg shadow-lg border py-1 min-w-32 z-10">
                 <button
                   onClick={() => {
-                    onView(place);
+                    onView(place.id);
                     setShowActions(false);
                   }}
                   className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
@@ -630,7 +726,7 @@ const PlaceCard = ({ place, onEdit, onDelete, onView }: PlaceCardProps) => {
                 </button>
                 <button
                   onClick={() => {
-                    onEdit(place);
+                    onEdit(place.id);
                     setShowActions(false);
                   }}
                   className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
@@ -640,7 +736,7 @@ const PlaceCard = ({ place, onEdit, onDelete, onView }: PlaceCardProps) => {
                 </button>
                 <button
                   onClick={() => {
-                    onDelete(place);
+                    onDelete(place.id);
                     setShowActions(false);
                   }}
                   className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
@@ -682,7 +778,7 @@ const PlaceCard = ({ place, onEdit, onDelete, onView }: PlaceCardProps) => {
         {/* Categories */}
         {place.categories && place.categories.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
-            {place.categories.slice(0, 2).map((category: any) => (
+            {place.categories.slice(0, 2).map((category: Category) => (
               <span 
                 key={category.id}
                 className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
