@@ -1,17 +1,17 @@
 {
   "functions": {
-    "api/*.go": {
-      "runtime": "vercel-go@3.0.0"
+    "api/index.go": {
+      "runtime": "@vercel/go"
     }
   },
   "rewrites": [
     {
       "source": "/api/v1/(.*)",
-      "destination": "/api/$1"
+      "destination": "/api/index"
     },
     {
       "source": "/(.*)",
-      "destination": "/api/$1"
+      "destination": "/api/index"
     }
   ],
   "headers": [

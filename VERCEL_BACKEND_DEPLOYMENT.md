@@ -13,8 +13,9 @@
 ## 📁 Files Created for Vercel
 
 ### 1. **vercel.json** - Configuration
-- Defines Go runtime for API functions
-- Sets up URL rewrites for `/api/v1/*` routes
+- Uses `@vercel/go` runtime (latest official runtime)
+- Defines single serverless function at `api/index.go`
+- Sets up URL rewrites to route all requests to main handler
 - Configures CORS headers
 
 ### 2. **api/index.go** - Serverless Entry Point
