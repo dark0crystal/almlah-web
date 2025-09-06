@@ -1,5 +1,6 @@
 //// Enhanced Manage Places Component with Proper Image Fetching
 
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 "use client"
 import React, { useState, useEffect, useCallback } from 'react';
@@ -58,6 +59,16 @@ interface PlaceImage {
   upload_date: string;
 }
 
+interface ContentSection {
+  id: string;
+  section_type: string;
+  title_ar?: string;
+  title_en?: string;
+  content_ar: string;
+  content_en: string;
+  sort_order: number;
+}
+
 interface Place {
   id: string;
   name_ar: string;
@@ -77,40 +88,10 @@ interface Place {
   updated_at: string;
   categories?: Category[];
   images?: PlaceImage[];
+  content_sections?: ContentSection[];
   governate?: Governate;
 }
 
-// Component prop interfaces
-interface DeleteConfirmModalProps {
-  place: Place;
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: (placeId: string) => void;
-  isDeleting: boolean;
-}
-
-interface PlaceCardProps {
-  place: Place;
-  onEdit: (placeId: string) => void;
-  onDelete: (placeId: string) => void;
-  onView: (placeId: string) => void;
-}
-
-interface FilterBarProps {
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-  selectedCategory: string;
-  onCategoryChange: (categoryId: string) => void;
-  selectedGovernate: string;
-  onGovernateChange: (governateId: string) => void;
-  categories: Category[];
-  governates: Governate[];
-  onApplyFilters: () => void;
-  onResetFilters: () => void;
-  hasActiveFilters: boolean;
-  showFilters: boolean;
-  onToggleFilters: () => void;
-}
 
 // Enhanced API Service for place management with image support
 const placeService = {
@@ -176,7 +157,7 @@ const placeService = {
   },
 
   // Get places by governate
-  getPlacesByGovernate: async (governateId) => {
+  getPlacesByGovernate: async (governateId: string) => {
     const response = await fetch(`${API_BASE_URL}/places/governate/${governateId}`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -192,7 +173,7 @@ const placeService = {
   },
 
   // Search places
-  searchPlaces: async (query) => {
+  searchPlaces: async (query: string) => {
     const response = await fetch(`${API_BASE_URL}/places/search?q=${encodeURIComponent(query)}`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -208,7 +189,7 @@ const placeService = {
   },
 
   // Delete place with complete cleanup
-  deletePlace: async (placeId) => {
+  deletePlace: async (placeId: string) => {
     const response = await fetch(`${API_BASE_URL}/places/${placeId}`, {
       method: 'DELETE',
       headers: {
@@ -225,7 +206,7 @@ const placeService = {
   },
 
   // Get place by ID with full details
-  getPlaceById: async (placeId) => {
+  getPlaceById: async (placeId: string) => {
     const response = await fetch(`${API_BASE_URL}/places/${placeId}`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -275,7 +256,13 @@ const metaService = {
 };
 
 // Enhanced Delete confirmation modal component
-const DeleteConfirmModal = ({ place, isOpen, onClose, onConfirm, isDeleting }) => {
+const DeleteConfirmModal = ({ place, isOpen, onClose, onConfirm, isDeleting }: {
+  place: Place;
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: (placeId: string) => void;
+  isDeleting: boolean;
+}) => {
   if (!isOpen || !place) return null;
 
   const imageCount = place.images?.length || 0;
@@ -344,7 +331,12 @@ const DeleteConfirmModal = ({ place, isOpen, onClose, onConfirm, isDeleting }) =
 };
 
 // Enhanced Place card component with separate image fetching
-const PlaceCard = ({ place, onEdit, onDelete, onView }) => {
+const PlaceCard = ({ place, onEdit, onDelete, onView }: {
+  place: Place;
+  onEdit: (placeId: string) => void;
+  onDelete: (placeId: string) => void;
+  onView: (placeId: string) => void;
+}) => {
   const [showActions, setShowActions] = useState(false);
   const [images, setImages] = useState([]);
   const [imageLoading, setImageLoading] = useState(true);

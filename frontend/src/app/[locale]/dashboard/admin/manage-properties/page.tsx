@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 "use client"
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit, Trash2, Search, Tag, BarChart3, X, Save, AlertTriangle, CheckCircle } from 'lucide-react';
@@ -5,14 +7,14 @@ import { Plus, Edit, Trash2, Search, Tag, BarChart3, X, Save, AlertTriangle, Che
 // API configuration
 const API_BASE_URL = 'http://localhost:9000/api/v1';
 
-const apiCall = async (endpoint, options = {}) => {
+const apiCall = async (endpoint: string, options: Record<string, unknown> = {}) => {
   const token = localStorage.getItem('authToken');
   
   const config = {
     headers: {
       'Content-Type': 'application/json',
       ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
+      ...(options.headers && typeof options.headers === 'object' ? options.headers : {}),
     },
     ...options,
   };

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 "use client"
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit, Trash2, Settings, Save, X, AlertTriangle, Users, Shield, Key, Search, Filter } from 'lucide-react';

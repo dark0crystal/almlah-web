@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 "use client"
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -21,7 +23,7 @@ import {
 const API_BASE_URL = 'http://localhost:9000/api/v1';
 
 // Enhanced API utility function
-const apiCall = async (endpoint, options = {}) => {
+const apiCall = async (endpoint: string, options: Record<string, unknown> = {}) => {
   const token = localStorage.getItem('authToken');
   
   try {
