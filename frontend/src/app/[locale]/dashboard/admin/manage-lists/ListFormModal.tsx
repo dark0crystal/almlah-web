@@ -41,7 +41,7 @@ export default function ListFormModal({ isOpen, onClose, onSuccess, mode, list }
         description_ar: list.description_ar,
         description_en: list.description_en,
         featured_image: list.featured_image,
-        status: list.status as any,
+        status: list.status as 'draft' | 'published' | 'archived',
       });
     } else {
       setFormData({
@@ -85,7 +85,7 @@ export default function ListFormModal({ isOpen, onClose, onSuccess, mode, list }
     setError(null);
 
     try {
-      let finalFormData = { ...formData };
+      const finalFormData = { ...formData };
 
       // Upload pending image if exists
       if (pendingImageUpload) {
@@ -102,16 +102,16 @@ export default function ListFormModal({ isOpen, onClose, onSuccess, mode, list }
       // Clean up pending uploads
       setPendingImageUpload(null);
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || 'Failed to save list');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to save list');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleImageUpload = (imageUrl: string) => {
-    setFormData(prev => ({ ...prev, featured_image: imageUrl }));
-  };
+  // const handleImageUpload = (imageUrl: string) => {
+  //   setFormData(prev => ({ ...prev, featured_image: imageUrl }));
+  // };
 
   const handleFileSelect = (pendingUpload: PendingImageUpload | null) => {
     setPendingImageUpload(pendingUpload);
@@ -194,7 +194,7 @@ export default function ListFormModal({ isOpen, onClose, onSuccess, mode, list }
               onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
               placeholder="best-restaurants-muscat"
-              pattern="[a-z0-9-]+"
+              pattern="[a-z0-9\-]+"
             />
             <p className="text-xs text-gray-500 mt-1">
               Only lowercase letters, numbers, and hyphens
@@ -250,7 +250,7 @@ export default function ListFormModal({ isOpen, onClose, onSuccess, mode, list }
             </label>
             <select
               value={formData.status}
-              onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
+              onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as 'draft' | 'published' | 'archived' }))}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="draft">{locale === 'ar' ? 'مسودة' : 'Draft'}</option>

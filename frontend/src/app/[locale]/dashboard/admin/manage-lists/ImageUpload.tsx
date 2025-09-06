@@ -36,7 +36,7 @@ export default function ImageUpload({
     try {
       new URL(string);
       return true;
-    } catch (_) {
+    } catch {
       return false;
     }
   };
@@ -132,8 +132,8 @@ export default function ImageUpload({
         } else {
           throw new Error(data.error || 'Upload failed');
         }
-      } catch (err: any) {
-        setError(err.message || (locale === 'ar' ? 'فشل في رفع الصورة' : 'Failed to upload image'));
+      } catch (err) {
+        setError((err as Error).message || (locale === 'ar' ? 'فشل في رفع الصورة' : 'Failed to upload image'));
       } finally {
         setUploading(false);
       }

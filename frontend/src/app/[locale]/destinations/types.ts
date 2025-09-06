@@ -3,16 +3,18 @@ export type Locale = 'ar' | 'en';
 
 // Core destination/governate interfaces
 export interface GovernateDetailsProps {
-  params?: {
+  params: Promise<{
     'destination-id': string;
-  };
+    locale: string;
+  }>;
 }
 
 export interface WilayahDetailsProps {
-  params?: {
+  params: Promise<{
     'destination-id': string;
     'wilayah-id': string;
-  };
+    locale: string;
+  }>;
 }
 
 // Component prop interfaces

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { ListSummary, listsApi } from '@/services/listsApi';
 import ListFormModal from './ListFormModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
@@ -139,7 +139,7 @@ function SortableListItem({ list, locale, onEdit, onDelete }: SortableListItemPr
 }
 
 export default function ManageListsPage() {
-  const t = useTranslations('AdminDashboard');
+  // const t = useTranslations('AdminDashboard');
   const locale = useLocale() as 'ar' | 'en';
   
   const [lists, setLists] = useState<ListSummary[]>([]);
