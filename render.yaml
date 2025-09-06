@@ -34,4 +34,3 @@ services:
         sync: false # You'll set this manually
       - key: SUPABASE_STORAGE_BUCKET
         value: media-bucket
-    healthCheckPath: /api/v1/health # Add health check endpoint if needed
