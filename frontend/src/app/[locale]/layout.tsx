@@ -36,7 +36,7 @@ export default async function RootLayout({
     <html lang={locale} dir={dir}>
       <body className="antialiased font-handicrafts bg-[#f3f3eb]">
         <NextIntlClientProvider messages={messages}>
-          <ClientLayoutWrapper navbar={<Navbar style="" />}>
+          <ClientLayoutWrapper navbar={<Navbar />}>
             {children}
           </ClientLayoutWrapper>
         </NextIntlClientProvider>

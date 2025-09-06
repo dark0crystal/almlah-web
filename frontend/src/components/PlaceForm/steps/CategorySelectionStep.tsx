@@ -1,6 +1,6 @@
 "use client"
 import React, { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { usePlaceStore } from '../../../stores/usePlaceStore';
 import { categorySelectionSchema, CategorySelectionFormData } from '../../../schemas/placeSchemas';
@@ -58,10 +58,13 @@ export const CategorySelectionStep: React.FC = () => {
     nextStep();
   };
 
-  const onError = (formErrors: Record<string, { message: string }>) => {
+  const onError = (formErrors: FieldErrors<CategorySelectionFormData>) => {
     const errorMessages: Record<string, string> = {};
     Object.keys(formErrors).forEach(key => {
-      errorMessages[key] = formErrors[key].message;
+      const error = formErrors[key as keyof CategorySelectionFormData];
+      if (error?.message) {
+        errorMessages[key] = error.message;
+      }
     });
     setErrors(errorMessages);
   };

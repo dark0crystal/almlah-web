@@ -1,6 +1,6 @@
 "use client"
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { usePlaceStore } from '../../../stores/usePlaceStore';
 import { basicInfoSchema, BasicInfoFormData } from '../../../schemas/placeSchemas';
@@ -40,10 +40,13 @@ export const BasicInfoStep: React.FC = () => {
     nextStep();
   };
 
-  const onError = (formErrors: Record<string, { message: string }>) => {
+  const onError = (formErrors: FieldErrors<BasicInfoFormData>) => {
     const errorMessages: Record<string, string> = {};
     Object.keys(formErrors).forEach(key => {
-      errorMessages[key] = formErrors[key].message;
+      const error = formErrors[key as keyof BasicInfoFormData];
+      if (error?.message) {
+        errorMessages[key] = error.message;
+      }
     });
     setErrors(errorMessages);
   };

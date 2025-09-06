@@ -163,8 +163,8 @@ class PlacesApiService {
    * Get the primary image URL or return a default placeholder
    */
   getPlaceImageUrl(place: Place): string {
-    if (place.primary_image?.url) {
-      return place.primary_image.url;
+    if (place.primary_image) {
+      return place.primary_image;
     }
 
     // If no primary image, check if there are any images in the categories
@@ -183,7 +183,7 @@ class PlacesApiService {
    * Get place description based on language preference
    */
   getPlaceDescription(place: Place, language: 'ar' | 'en' = 'ar'): string {
-    return language === 'ar' ? place.description_ar : place.description_en;
+    return language === 'ar' ? (place.description_ar || '') : (place.description_en || '');
   }
 
   /**

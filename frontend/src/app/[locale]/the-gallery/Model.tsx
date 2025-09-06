@@ -8,7 +8,7 @@ import { useTexture } from '@react-three/drei';
 import useMouse from './useMouse'
 import useDimension from './useDimension'
 import { projects } from './data'
-// import { Mesh, PlaneGeometry, ShaderMaterial } from 'three'
+import { Mesh, ShaderMaterial } from 'three'
 
 interface ModelProps {
   activeMenu: number | null;
@@ -17,7 +17,7 @@ interface ModelProps {
 const lerp = (x: number, y: number, a: number) => x * (1 - a) + y * a
 
 const Model: React.FC<ModelProps> = ({ activeMenu }) => {
-  const plane = useRef<THREE.Mesh>(null);
+  const plane = useRef<Mesh>(null);
   const { viewport } = useThree();
   const dimension = useDimension();
   const mouse = useMouse();
@@ -53,11 +53,22 @@ const Model: React.FC<ModelProps> = ({ activeMenu }) => {
   }   
 
   useEffect(() => {
-    if(activeMenu !== null) {
-      plane.current.material.uniforms.uTexture.value = textures[activeMenu]
-      animate(opacity, 1, { duration: 0.2, onUpdate: latest => plane.current.material.uniforms.uAlpha.value = latest })
+    if(activeMenu !== null && plane.current) {
+      const material = plane.current.material as ShaderMaterial;
+      material.uniforms.uTexture.value = textures[activeMenu]
+      animate(opacity, 1, { duration: 0.2, onUpdate: latest => {
+        if (plane.current) {
+          const mat = plane.current.material as ShaderMaterial;
+          mat.uniforms.uAlpha.value = latest;
+        }
+      }})
     } else {
-      animate(opacity, 0, { duration: 0.2, onUpdate: latest => plane.current.material.uniforms.uAlpha.value = latest })
+      animate(opacity, 0, { duration: 0.2, onUpdate: latest => {
+        if (plane.current) {
+          const mat = plane.current.material as ShaderMaterial;
+          mat.uniforms.uAlpha.value = latest;
+        }
+      }})
     }
   }, [activeMenu, textures, opacity])
 
@@ -69,6 +80,8 @@ const Model: React.FC<ModelProps> = ({ activeMenu }) => {
   })
 
   useFrame(() => {
+    if (!plane.current) return;
+    
     const { x, y } = mouse
     const smoothX = smoothMouse.x.get();
     const smoothY = smoothMouse.y.get();
@@ -76,7 +89,8 @@ const Model: React.FC<ModelProps> = ({ activeMenu }) => {
     if (Math.abs(x - smoothX) > 1) {
       smoothMouse.x.set(lerp(smoothX, x, 0.1))
       smoothMouse.y.set(lerp(smoothY, y, 0.1))
-      plane.current.material.uniforms.uDelta.value = {
+      const material = plane.current.material as ShaderMaterial;
+      material.uniforms.uDelta.value = {
         x: x - smoothX,
         y: -1 * (y - smoothY)
       }

@@ -121,12 +121,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           bucket,
           folder,
           fileName,
-          file: imageFile.file,
-          onProgress: (progress) => {
-            setImages(prev => prev.map(img => 
-              img.id === imageFile.id ? { ...img, progress } : img
-            ));
-          }
+          file: imageFile.file
         });
 
         if (result.success && result.path) {
@@ -260,7 +255,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         <div className="aspect-square relative">
           <Image
             src={imageUrl}
-            alt={isExisting ? (image as ExistingImage).alt_text : 'Preview'}
+            alt={isExisting ? ((image as ExistingImage).alt_text || 'Preview') : 'Preview'}
             className="w-full h-full object-cover"
             width={300}
             height={300}

@@ -1,6 +1,6 @@
 "use client"
 import React, { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { usePlaceStore } from '../../../stores/usePlaceStore';
 import { locationSchema, LocationFormData } from '../../../schemas/placeSchemas';
@@ -68,10 +68,13 @@ export const LocationStep: React.FC = () => {
     nextStep();
   };
 
-  const onError = (formErrors: Record<string, { message: string }>) => {
+  const onError = (formErrors: FieldErrors<LocationFormData>) => {
     const errorMessages: Record<string, string> = {};
     Object.keys(formErrors).forEach(key => {
-      errorMessages[key] = formErrors[key].message;
+      const error = formErrors[key as keyof LocationFormData];
+      if (error?.message) {
+        errorMessages[key] = error.message;
+      }
     });
     setErrors(errorMessages);
   };

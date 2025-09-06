@@ -3,13 +3,52 @@
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { PlaceImage } from '../../stores/usePlaceStore';
-import { 
-  processMultipleImageFiles, 
-  setPrimaryImage, 
-  reorderImages, 
-  updatePlaceImageMetadata,
-  formatFileSize
-} from '../../utils/imageUploadUtils';
+// Utility functions - TODO: move to separate utils file
+const processMultipleImageFiles = async (files: FileList, startOrder: number, makePrimary: boolean) => {
+  const images: PlaceImage[] = [];
+  const errors: string[] = [];
+  
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    try {
+      images.push({
+        id: `temp_${Date.now()}_${i}`,
+        file,
+        url: URL.createObjectURL(file),
+        alt_text: '',
+        is_primary: makePrimary && i === 0,
+        display_order: startOrder + i
+      });
+    } catch {
+      errors.push(`Failed to process ${file.name}`);
+    }
+  }
+  
+  return { images, errors };
+};
+
+const setPrimaryImage = (images: PlaceImage[], index: number): PlaceImage[] => {
+  return images.map((img, i) => ({ ...img, is_primary: i === index }));
+};
+
+const reorderImages = (images: PlaceImage[], fromIndex: number, toIndex: number): PlaceImage[] => {
+  const result = [...images];
+  const [moved] = result.splice(fromIndex, 1);
+  result.splice(toIndex, 0, moved);
+  return result.map((img, i) => ({ ...img, display_order: i }));
+};
+
+const updatePlaceImageMetadata = (image: PlaceImage, updates: { altText?: string }) => {
+  return { ...image, alt_text: updates.altText || image.alt_text };
+};
+
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 import { 
   CloudArrowUpIcon, 
   PhotoIcon, 
@@ -300,8 +339,8 @@ const ImageCard: React.FC<ImageCardProps> = ({
       {/* Image */}
       <div className="aspect-video relative">
         <Image
-          src={image.preview || image.url}
-          alt={image.alt_text}
+          src={image.preview || image.url || '/placeholder-image.jpg'}
+          alt={image.alt_text || 'Image preview'}
           fill
           className="object-cover"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

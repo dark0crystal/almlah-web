@@ -1,4 +1,4 @@
-export { default as Destination } from './Destination';
+export { default as DestinationComponent } from './Destination';
 export { default as DestinationCard } from './DestinationCard';
 export { default as DestinationCardsWrapper } from './DestinationCardsWrapper';
 export { default as DestinationsHeader } from './DestinationsHeader';

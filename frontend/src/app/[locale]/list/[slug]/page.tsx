@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import Image from 'next/image';
-import { ListDetail, listsApi } from '@/services/listsApi';
+import { ListDetail, ListItem, listsApi } from '@/services/listsApi';
 
 export default function ListPage() {
   const params = useParams();
@@ -35,7 +35,7 @@ export default function ListPage() {
   }, [slug]);
 
   // Helper function to render list items
-  const renderListItem = (item: { id: string; item_type: string; images?: Array<{ id: string; image_url: string; alt_text_ar?: string; alt_text_en?: string }>; [key: string]: unknown }) => {
+  const renderListItem = (item: ListItem) => {
     // Handle different item types
     if (item.item_type === 'separator') {
       return (
@@ -45,7 +45,7 @@ export default function ListPage() {
             <div className="relative w-full max-w-md h-16">
               <Image
                 src={item.images[0].image_url}
-                alt={locale === 'ar' ? item.images[0].alt_text_ar : item.images[0].alt_text_en}
+                alt={locale === 'ar' ? (item.images[0].alt_text_ar || '') : (item.images[0].alt_text_en || '')}
                 fill
                 className="object-contain"
               />
@@ -64,11 +64,11 @@ export default function ListPage() {
         <div key={item.id} className="py-6 sm:py-8">
           <div className={`max-w-4xl mx-auto ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
             <div className="prose prose-lg max-w-none text-gray-800 leading-relaxed">
-              {content.split('\n').map((paragraph, pIndex) => (
+              {typeof content === 'string' ? content.split('\n').map((paragraph, pIndex) => (
                 <p key={pIndex} className="mb-4 sm:mb-6 text-base sm:text-lg">
                   {paragraph}
                 </p>
-              ))}
+              )) : null}
             </div>
           </div>
           
@@ -79,7 +79,7 @@ export default function ListPage() {
                 <div key={image.id} className="relative w-full h-[180px] sm:h-[220px] lg:h-[280px] rounded-2xl overflow-hidden shadow-lg">
                   <Image
                     src={image.image_url}
-                    alt={locale === 'ar' ? image.alt_text_ar : image.alt_text_en}
+                    alt={locale === 'ar' ? (image.alt_text_ar || '') : (image.alt_text_en || '')}
                     fill
                     className="object-cover"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
@@ -94,9 +94,10 @@ export default function ListPage() {
 
     // Place item
     if (item.item_type === 'place' && item.place) {
-      const placeName = locale === 'ar' ? item.place.name_ar : item.place.name_en;
-      const placeDescription = locale === 'ar' ? item.place.description_ar : item.place.description_en;
-      const placeSubtitle = locale === 'ar' ? item.place.subtitle_ar : item.place.subtitle_en;
+      const place = item.place;
+      const placeName = locale === 'ar' ? place.name_ar : place.name_en;
+      const placeDescription = locale === 'ar' ? place.description_ar : place.description_en;
+      const placeSubtitle = locale === 'ar' ? place.subtitle_ar : place.subtitle_en;
       const customContent = locale === 'ar' ? item.content_ar : item.content_en;
 
       return (
@@ -115,13 +116,13 @@ export default function ListPage() {
           </div>
 
           {/* Place Images */}
-          {item.place.images && item.place.images.length > 0 && (
+          {place.images && place.images.length > 0 && (
             <div className="mb-6 sm:mb-8">
-              {item.place.images.length === 1 ? (
+              {place.images.length === 1 ? (
                 <div className="relative w-full h-[180px] sm:h-[220px] lg:h-[280px] rounded-2xl overflow-hidden shadow-lg">
                   <Image
-                    src={item.place.images[0]}
-                    alt={placeName}
+                    src={place.images[0]}
+                    alt={placeName || ''}
                     fill
                     className="object-cover"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
@@ -129,11 +130,11 @@ export default function ListPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  {item.place.images.slice(0, 4).map((image, imgIndex) => (
+                  {place.images.slice(0, 4).map((image, imgIndex) => (
                     <div key={imgIndex} className="relative h-[150px] sm:h-[180px] rounded-xl overflow-hidden shadow-md">
                       <Image
                         src={image}
-                        alt={`${placeName} ${imgIndex + 1}`}
+                        alt={`${placeName || ''} ${imgIndex + 1}`}
                         fill
                         className="object-cover"
                         sizes="(max-width: 640px) 100vw, 50vw"
@@ -147,7 +148,7 @@ export default function ListPage() {
 
           {/* Content */}
           <div className="max-w-4xl mx-auto">
-            {customContent && (
+            {customContent && typeof customContent === 'string' ? (
               <div className={`mb-6 sm:mb-8 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
                 {customContent.split('\n').map((paragraph, pIndex) => (
                   <p key={pIndex} className="mb-4 text-base sm:text-lg leading-relaxed text-gray-800">
@@ -155,9 +156,9 @@ export default function ListPage() {
                   </p>
                 ))}
               </div>
-            )}
+            ) : null}
             
-            {placeDescription && (
+            {placeDescription && typeof placeDescription === 'string' ? (
               <div className={`${locale === 'ar' ? 'text-right' : 'text-left'}`}>
                 {placeDescription.split('\n').map((paragraph, pIndex) => (
                   <p key={pIndex} className="mb-4 text-base sm:text-lg leading-relaxed text-gray-700">
@@ -165,7 +166,7 @@ export default function ListPage() {
                   </p>
                 ))}
               </div>
-            )}
+            ) : null}
           </div>
 
           {/* Item Images */}
@@ -175,7 +176,7 @@ export default function ListPage() {
                 <div key={image.id} className="relative w-full h-[180px] sm:h-[220px] lg:h-[280px] rounded-2xl overflow-hidden shadow-lg">
                   <Image
                     src={image.image_url}
-                    alt={locale === 'ar' ? image.alt_text_ar : image.alt_text_en}
+                    alt={locale === 'ar' ? (image.alt_text_ar || '') : (image.alt_text_en || '')}
                     fill
                     className="object-cover"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
@@ -286,7 +287,7 @@ export default function ListPage() {
                             <div className="relative w-full h-[180px] sm:h-[220px] lg:h-[280px] rounded-2xl overflow-hidden shadow-lg">
                               <Image
                                 src={section.images[0].image_url}
-                                alt={locale === 'ar' ? section.images[0].alt_text_ar : section.images[0].alt_text_en}
+                                alt={locale === 'ar' ? (section.images[0].alt_text_ar || '') : (section.images[0].alt_text_en || '')}
                                 fill
                                 className="object-cover"
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
@@ -298,7 +299,7 @@ export default function ListPage() {
                                 <div key={image.id} className="relative h-[150px] sm:h-[180px] lg:h-[200px] rounded-xl overflow-hidden shadow-md">
                                   <Image
                                     src={image.image_url}
-                                    alt={locale === 'ar' ? image.alt_text_ar : image.alt_text_en}
+                                    alt={locale === 'ar' ? (image.alt_text_ar || '') : (image.alt_text_en || '')}
                                     fill
                                     className="object-cover"
                                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

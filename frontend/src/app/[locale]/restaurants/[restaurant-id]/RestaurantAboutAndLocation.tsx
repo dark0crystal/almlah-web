@@ -147,11 +147,11 @@ export default function RestaurantAboutAndLocation({ restaurant, language = 'ar'
                   {/* Section images */}
                   {section.images && section.images.length > 0 && (
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-                      {section.images.map(img => (
+                      {section.images.filter(img => img.image_url).map(img => (
                         <div key={img.id} className="relative h-32 rounded-lg overflow-hidden">
                           <Image
-                            src={img.image_url}
-                            alt={language === 'ar' ? img.alt_text_ar : img.alt_text_en}
+                            src={img.image_url!}
+                            alt={language === 'ar' ? (img.alt_text_ar || '') : (img.alt_text_en || '')}
                             fill
                             className="object-cover"
                           />

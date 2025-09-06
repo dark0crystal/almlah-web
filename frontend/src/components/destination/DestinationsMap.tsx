@@ -72,8 +72,8 @@ export default function DestinationsMap({ destinations = [], language = 'ar', on
                 const bounds = new google.maps.LatLngBounds();
                 validDestinations.forEach(destination => {
                     bounds.extend({
-                        lat: destination.governorateData.latitude,
-                        lng: destination.governorateData.longitude
+                        lat: destination.governorateData.latitude!,
+                        lng: destination.governorateData.longitude!
                     });
                 });
                 map.fitBounds(bounds, { top: 50, bottom: 50, left: 50, right: 50 });

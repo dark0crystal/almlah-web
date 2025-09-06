@@ -65,12 +65,8 @@ export default function Restaurants() {
 
   const getRestaurantsText = () => {
     switch (categoryType) {
-      case 'TOURISM':
-        return categoryTranslations('tourism');
       case 'FOOD_BEVERAGES':
         return categoryTranslations('foodBeverages');
-      case 'ENTERTAINMENT':
-        return categoryTranslations('entertainment');
       default:
         return t('title');
     }

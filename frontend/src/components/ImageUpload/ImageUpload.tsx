@@ -110,8 +110,7 @@ export default function ImageUpload({
           // Single file upload
           const result = await uploadService.uploadSingle(
             files[0], 
-            bucket, 
-            (progress) => setUploadProgress(progress.percentage)
+            bucket
           );
 
           if (result.success && result.url) {

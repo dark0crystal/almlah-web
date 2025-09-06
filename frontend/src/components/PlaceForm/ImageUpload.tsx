@@ -40,11 +40,6 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     // hasPendingUploads // Currently unused
   } = useImageUpload({
     config,
-    onImagesChange: (newImages) => {
-      const updatedImages = [...currentImages, ...newImages];
-      setCurrentImages(updatedImages);
-      onImagesChange(updatedImages);
-    },
     onUploadProgress
   });
 
@@ -75,7 +70,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     const imageToRemove = currentImages.find(img => img.id === imageId);
     if (imageToRemove?.path) {
       try {
-        await import('../services/supabaseStorage').then(({ SupabaseStorageService }) => 
+        await import('../../services/supabaseStorage').then(({ SupabaseStorageService }) => 
           SupabaseStorageService.deleteFile(config.bucket, imageToRemove.path)
         );
       } catch (error) {
@@ -376,7 +371,7 @@ const ExistingImageCard: React.FC<ExistingImageCardProps> = ({
     <div className="relative group">
       <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
         <Image
-          src={image.url}
+          src={image.url || '/placeholder-image.jpg'}
           alt={image.alt_text || 'Uploaded image'}
           className="w-full h-full object-cover"
           width={300}

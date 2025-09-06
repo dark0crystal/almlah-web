@@ -28,7 +28,7 @@ const DishesSplashScreen: React.FC<DishesSplashScreenProps> = ({ onComplete }) =
   const generateImageProps = () => {
     const positions: number[] = [];
     return images.map((img, index) => {
-      let left;
+      let left: number;
       let attempts = 0;
       
       // Ensure minimum 15% gap between images

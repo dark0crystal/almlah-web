@@ -1,6 +1,21 @@
 // Types for destination components
 import { Place } from '@/types';
 
+// First, import and re-export types from services
+import type { 
+  GovernateDetails, 
+  SimpleWilayah, 
+  WilayahWithImages, 
+  GovernateImage 
+} from '@/services/governateApi';
+
+export type { 
+  GovernateDetails, 
+  SimpleWilayah, 
+  WilayahWithImages, 
+  GovernateImage 
+};
+
 export type Locale = 'ar' | 'en';
 
 // Core destination/governate interfaces
@@ -31,23 +46,9 @@ export interface DestinationPlacesWrapperProps {
 }
 
 export interface WilayahCardProps {
-  wilayah: {
-    id: string;
-    name_ar: string;
-    name_en: string;
-    slug: string;
-    image_url?: string;
-    place_count?: number;
-  };
+  wilayah: WilayahWithImages;
   locale: 'ar' | 'en';
-  onClick?: (wilayah: { 
-    id: string; 
-    name_ar: string; 
-    name_en: string; 
-    slug: string; 
-    image_url?: string; 
-    place_count?: number 
-  }) => void;
+  onClick?: (wilayah: WilayahWithImages) => void;
 }
 
 export interface WilayahCardsWrapperProps {
@@ -93,12 +94,3 @@ export interface GovernateInfoSidebarProps {
   language?: 'ar' | 'en';
   onGetDirections?: () => void;
 }
-
-// Re-export types from services that are used in destinations
-export type { 
-  Place, 
-  GovernateDetails, 
-  SimpleWilayah, 
-  WilayahWithImages, 
-  GovernateImage 
-} from '@/services/governateApi';

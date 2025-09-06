@@ -29,7 +29,7 @@ export const FirstVisitModal: React.FC<FirstVisitModalProps> = ({ isOpen, onClos
 
   const extractDominantColor = (imageSrc: string): Promise<string> => {
     return new Promise((resolve) => {
-      const img = new Image();
+      const img = document.createElement('img');
       img.crossOrigin = 'anonymous';
       img.onload = () => {
         const canvas = document.createElement('canvas');

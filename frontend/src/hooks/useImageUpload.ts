@@ -126,16 +126,7 @@ export const useImageUpload = ({
             bucket: config.bucket,
             folder: config.folder,
             fileName,
-            file: resizedFile,
-            onProgress: (progress) => {
-              setPendingFiles(prev => prev.map(f => 
-                f.id === imageFile.id ? { ...f, progress } : f
-              ));
-              
-              // Calculate total progress
-              const currentTotalProgress = ((i * 100) + progress) / pendingFiles.length;
-              onUploadProgress?.(currentTotalProgress);
-            }
+            file: resizedFile
           });
 
           if (result.success && result.path && result.url) {

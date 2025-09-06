@@ -10,7 +10,7 @@ import Brand from "./Brand";
 //   style: string;
 // };
 
-export default async function NavBar(): Promise<JSX.Element> {
+export default async function NavBar() {
   const locale = (await getLocale()).substring(0, 2); // This will give you "ar" or "en"
   const direction = locale === 'ar' ? 'rtl' : 'ltr'; // Determine direction programmatically
   const t = await getTranslations("navbar");

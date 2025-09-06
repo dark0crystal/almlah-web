@@ -68,10 +68,6 @@ export default function Places() {
     switch (categoryType) {
       case 'TOURISM':
         return categoryTranslations('tourism'); // "Tourism Places"
-      case 'FOOD_BEVERAGES':
-        return categoryTranslations('foodBeverages'); // "Food & Beverages" 
-      case 'ENTERTAINMENT':
-        return categoryTranslations('entertainment'); // "Entertainment"
       default:
         return t('title'); // "Places to Visit"
     }

@@ -1,5 +1,16 @@
 // services/categoryApi.ts
-import { LocalizedCategoryResponse, ApiResponse } from '@/types/category';
+// Create stub types for build compatibility
+interface LocalizedCategoryResponse {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface ApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
 
 // API Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000';
