@@ -1160,10 +1160,3 @@ func ensureParentCategoriesIncluded(categoryIDs []uuid.UUID) ([]uuid.UUID, error
 
 	return result, nil
 }
-
-
-
-
-
-
-

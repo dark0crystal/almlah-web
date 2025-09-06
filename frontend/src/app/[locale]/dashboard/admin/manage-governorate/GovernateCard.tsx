@@ -86,7 +86,7 @@ export const GovernateCard: React.FC<GovernateCardProps> = ({
   onViewWilayahs, 
   currentLang 
 }) => {
-  const galleryImages = parseGalleryImages(governate.gallery_images);
+  const galleryImages = parseGalleryImages(governate.gallery_images ?? null);
   const primaryImage = galleryImages.find(img => img.is_primary) || galleryImages[0];
 
   return (

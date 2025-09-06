@@ -1,18 +1,19 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
-import Header from "@/components/Header";
+// import Header from "@/components/Header";
 import ImagesContainer from "./ImagesContainer";
 import AboutAndLocation from "./AboutAndLocation";
 import { fetchPlaceById } from '@/services/placesApi';
 import { Place } from '@/types';
 import Footer from '@/components/Footer';
+import React from 'react';
 
 interface PlaceDetailsProps {
-  params?: {
+  params?: Promise<{
     'place-id': string; // Match your file structure
-  };
+  }>;
 }
 
 export default function PlaceDetails({ params }: PlaceDetailsProps) {
@@ -29,12 +30,13 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
   const urlParams = useParams();
   const router = useRouter();
   
-  // Extract place ID - handle both cases
-  const placeId = params?.['place-id'] || urlParams?.['place-id'] as string;
+  // Extract place ID - handle both cases with proper unwrapping
+  const unwrappedParams = params ? React.use(params) : null;
+  const placeId = unwrappedParams?.['place-id'] || urlParams?.['place-id'] as string;
   
 
   // Updated loadPlace function - now fetches complete data in both languages
-  const loadPlace = async () => {
+  const loadPlace = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -55,7 +57,7 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [placeId, t]); // Added dependencies
 
   // Updated useEffect - removed language dependency since we get both languages
   useEffect(() => {
@@ -66,7 +68,7 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
     }
 
     loadPlace();
-  }, [placeId]);
+  }, [placeId, loadPlace, t]); // Added dependencies
 
   // Update page title
   useEffect(() => {
@@ -194,8 +196,8 @@ export default function PlaceDetails({ params }: PlaceDetailsProps) {
 
   // Now we have complete place data with both languages
   const placeName = language === 'ar' ? place.name_ar : place.name_en;
-  const placeDescription = language === 'ar' ? place.description_ar : place.description_en;
-  const placeSubtitle = language === 'ar' ? place.subtitle_ar : place.subtitle_en;
+  // const placeDescription = language === 'ar' ? place.description_ar : place.description_en;
+  // const placeSubtitle = language === 'ar' ? place.subtitle_ar : place.subtitle_en;
 
 
   return (

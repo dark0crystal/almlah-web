@@ -14,6 +14,7 @@
     "places": "Places",
     "restaurants": "Restaurants", 
     "destinations": "Destinations",
+    "gallery": "Gallery",
     "aboutUs": "About Us",
     "zatar": "Zatar",
     "dashboard": "Dashboard",
@@ -64,6 +65,7 @@
   },
   "governate": {
     "title": "Governorates",
+    "separatorText": "Will Take a Break",
     "loading": {
       "governateData": "Loading governate data...",
       "images": "Loading images...",
@@ -133,6 +135,7 @@
     }
   },
   "wilayah": {
+    "title": "Wilayah",
     "wilayahsIn": "Wilayahs in {{governate}}",
     "exploreDistricts": "Explore {{count}} districts in this governorate",
     "noWilayahsFound": "No wilayahs available for this governorate",
@@ -153,6 +156,20 @@
     "appName": "الملاح",
     "skip": "Skip"
   },
+  "destinations": {
+    "header": {
+      "title": "Discover Destinations", 
+      "subtitle": "Explore amazing places across the region"
+    },
+    "title": "Destinations",
+    "subtitle": "Discover the best destinations",
+    "loading": "Loading destinations...",
+    "errors": {
+      "title": "Error Loading Data",
+      "loadFailed": "Failed to load destinations. Please try again.",
+      "retry": "Try Again"
+    }
+  },
   "navigation": {
     "destinations": "Destinations",
     "goBack": "Go back"
@@ -167,10 +184,12 @@
     "error": "Error",
     "errorLoadingPlaces": "Error loading places",
     "errorLoadingMap": "Error loading map",
+    "errorLoading": "Error loading places",
     "tryAgain": "Try Again",
     "retry": "Try Again",
     "noPlaces": "No places found",
     "noResults": "No places found",
+    "noPlacesAvailable": "No places available in this governorate",
     "placesCount": "{count} places on map",
     "coordinates": "Coordinates",
     "close": "Close",
@@ -181,7 +200,15 @@
     "featured": "F",
     "sultanateOfOman": "Sultanate of Oman",
     "sultanateOman": "Sultanate of Oman",
-    "placesToVisit": "Places to Visit"
+    "placesToVisit": "Places to Visit",
+    "viewAllPlaces": "View All Places",
+    "viewPlaces": "View Places",
+    "previous": "Previous",
+    "next": "Next",
+    "foodBeverages": "Food & Beverages",
+    "entertainment": "Entertainment", 
+    "tourism": "Tourism Places",
+    "filterAndSearch": "Filter & Search"
   },
   "categories": {
     "tourism": "Tourism Places",
@@ -266,7 +293,8 @@
       "share": {
         "button": "Share",
         "linkCopied": "Link copied!"
-      }
+      },
+      "separatorText": "Take a Break"
     },
     "images": {
       "noImages": "No images available",
@@ -283,7 +311,6 @@
     "welcome": "Welcome to Almlah!",
     "subtitle": "Choose your preferred vehicle for exploring Oman",
     "selectedVehicle": "Selected Vehicle",
-    "skipForNow": "Skip for now",
     "continue": "Continue"
   },
   "footer": {
@@ -304,6 +331,292 @@
     "rightsReserved": "All rights reserved."
   },
   "gallery": {
-    "title": "Photo Gallery"
+    "title": "Photo Gallery",
+    "footer": "Almlah | The Gallery 2025"
+  },
+  "restaurantsModal": {
+    "title": "Restaurants",
+    "loading": "Loading restaurants...",
+    "error": "Error loading restaurants",
+    "tryAgain": "Try Again",
+    "noRestaurants": "No restaurants found",
+    "close": "Close",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "invalidCategory": "Invalid restaurant category"
+  },
+  "postCards": {
+    "title": "Latest Articles",
+    "loading": "Loading places...",
+    "error": {
+      "title": "Error loading data",
+      "message": "Error loading data",
+      "tryAgain": "Try Again"
+    },
+    "empty": {
+      "title": "No places available",
+      "message": "No places found matching the specified criteria"
+    },
+    "stats": {
+      "newPlacesThisWeek": "{{count}} new places added this week",
+      "additionalPlacesShown": "Additional places shown to complete the list",
+      "placesAvailable": "{{count}} places available"
+    },
+    "navigation": {
+      "scrollLeft": "Scroll left",
+      "scrollRight": "Scroll right",
+      "swipeToBrowse": "Swipe to browse"
+    }
+  },
+  "destinationDetails": {
+    "pageTitle": "Destination Details",
+    "loading": "Loading destination details...",
+    "error": {
+      "notFound": "Destination not found",
+      "connectionProblem": "Connection Problem",
+      "general": "An Error Occurred", 
+      "loadFailure": "Sorry, we could not load the destination data",
+      "idNotFound": "Destination ID not found"
+    },
+    "actions": {
+      "tryAgain": "Try Again",
+      "goBack": "Go Back",
+      "share": "Share",
+      "directions": "Directions", 
+      "getDirections": "Get Directions",
+      "contactUs": "Contact Us"
+    },
+    "about": "About the Destination",
+    "quickInfo": "Quick Info",
+    "additionalInfo": "Additional Info",
+    "needHelp": "Need Help?",
+    "helpMessage": "Have questions about this destination? We're here to help",
+    "coordinates": "Coordinates",
+    "added": "Added",
+    "updated": "Updated", 
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "online": "Online",
+    "offline": "Offline"
+  },
+  "destinationCard": {
+    "featured": "Featured",
+    "new": "NEW",
+    "clickToExplore": "Click to explore",
+    "viewDetails": "View Details"
+  },
+  "destinationPlaces": {
+    "title": "Places to Visit",
+    "loading": "Loading places...",
+    "error": "Error loading places",
+    "errorLoading": "Error loading places", 
+    "noPlacesAvailable": "No places available in this area",
+    "placesToVisit": "Places to Visit",
+    "viewAllPlaces": "View All Places",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "zatar": {
+    "title": "Zatar - Restaurant Finder",
+    "step": "Step {{step}} of 4",
+    "welcome": {
+      "title": "Welcome to Zatar!",
+      "description": "Zatar is your smart assistant for discovering the best restaurants and cafes in Oman. Simply tell us your location and food preference, and we'll suggest something amazing!",
+      "tagline": "🎯 Personalized random discoveries"
+    },
+    "stepOne": {
+      "title": "Where do you want to eat?",
+      "subtitle": "Enter the area or city name",
+      "placeholder": "Example: Salalah"
+    },
+    "stepTwo": {
+      "title": "What type of food do you prefer?",
+      "subtitle": "Choose the cuisine type you're craving"
+    },
+    "foodTypes": {
+      "arabic": "Arabic Cuisine",
+      "seafood": "Seafood",
+      "grilled": "Grilled Food",
+      "desserts": "Desserts & Sweets",
+      "coffee": "Coffee & Beverages",
+      "fastfood": "Fast Food"
+    },
+    "loading": {
+      "title": "🎲 Finding your match...",
+      "subtitle": "Searching for the best options for you"
+    },
+    "error": {
+      "title": "Oops! Something went wrong",
+      "tryAgain": "Try Again"
+    },
+    "result": {
+      "title": "🎉 We found you something!",
+      "rollAgain": "Roll Again",
+      "open": "Open",
+      "closed": "Closed",
+      "getDirections": "Get Directions",
+      "call": "Call",
+      "website": "Website",
+      "rating": "{{rating}}/5 Rating",
+      "noImage": "No Image Available",
+      "description": "Enjoy a wonderful experience at {{name}} with great atmosphere and excellent service."
+    },
+    "navigation": {
+      "back": "Back",
+      "next": "Next"
+    },
+    "summary": {
+      "title": "Your choices:"
+    },
+    "stats": {
+      "title": "Game Stats",
+      "totalRolls": "Total Rolls",
+      "players": "Players",
+      "mostPopular": "Most Popular: "
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Don't have an account?",
+      "signupLink": "Sign up",
+      "continueWithGoogle": "Continue with Google",
+      "orContinueWith": "Or continue with email",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "Enter your email",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "forgotPassword": "Forgot your password?",
+      "signIn": "Sign In",
+      "signingIn": "Signing in...",
+      "loginSuccess": "Login successful! Redirecting...",
+      "googleLoginSuccess": "Google login successful! Redirecting...",
+      "checkingAuth": "Checking authentication...",
+      "alreadyLoggedIn": "Already logged in! Redirecting...",
+      "errors": {
+        "emailRequired": "Email is required",
+        "emailInvalid": "Email is invalid",
+        "passwordRequired": "Password is required",
+        "googleLoadFailed": "Failed to load Google Sign-In. Please refresh the page.",
+        "googleNotConfigured": "Google Sign-In not configured. Please contact support.",
+        "googleNotLoaded": "Google Sign-In not loaded. Please refresh the page."
+      }
+    }
+  },
+  "restaurants": {
+    "card": {
+      "featured": "F",
+      "defaultCuisine": "Food & Beverages",
+      "defaultLocation": "Sultanate of Oman"
+    },
+    "details": {
+      "title": "Restaurant Guide",
+      "separatorText": "Will Take a Break",
+      "breadcrumbs": {
+        "restaurants": "Restaurants"
+      },
+      "loading": {
+        "title": "Loading Omani Restaurants",
+        "message": "Please wait while we fetch restaurant information..."
+      },
+      "error": {
+        "title": "Sorry, we could not load the restaurant data",
+        "notFound": "Restaurant not found",
+        "notFoundMessage": "The requested restaurant was not found or may be currently unavailable",
+        "loadFailed": "Error loading restaurant data",
+        "tryAgain": "Try Again",
+        "goBack": "Go Back"
+      },
+      "about": {
+        "defaultTitle": "About the Restaurant",
+        "noInfo": "No detailed information is currently available for this restaurant."
+      },
+      "info": {
+        "title": "Restaurant Information",
+        "cuisineType": "Cuisine Type:",
+        "region": "Region:",
+        "wilayah": "Wilayah:",
+        "rating": "Rating:",
+        "serviceType": "Service Type:",
+        "serviceTypeValue": "Dine-in, Delivery",
+        "defaultCuisine": "Restaurant"
+      },
+      "contact": {
+        "title": "Contact Information",
+        "website": "Website"
+      },
+      "suitableFor": {
+        "title": "Suitable for"
+      },
+      "location": {
+        "viewOnMap": "View on Map",
+        "notAvailable": "Location not available"
+      },
+      "share": {
+        "text": "Share",
+        "linkCopied": "Link copied!"
+      }
+    }
+  },
+  "recommendations": {
+    "title": "Our Curated Recommendations",
+    "subtitle": "Discover the finest handpicked places for an exceptional experience in the Sultanate of Oman",
+    "heroTitle": "A Journey of Discovery",
+    "heroSubtitle": "From breakfast to dinner, from tourism to entertainment",
+    "recommendedPlaces": "Recommended Places:",
+    "comingSoon": "Coming Soon",
+    "viewMore": "View More",
+    "notifyWhenAdded": "Notify me when added",
+    "discoverMore": "Discover More",
+    "discoverSubtitle": "Explore all the amazing places and experiences waiting for you in Oman",
+    "allPlaces": "All Places",
+    "restaurants": "Restaurants",
+    "loading": "Loading recommendations...",
+    "error": {
+      "title": "Something went wrong",
+      "loadingRecommendations": "Error Loading Recommendations",
+      "tryAgain": "Try Again"
+    },
+    "categories": {
+      "exploreTitle": "Explore Categories",
+      "exploreSubtitle": "Choose from our carefully curated categories to discover the best places for every experience",
+      "cantFind": "Can't find what you're looking for?",
+      "browseAllText": "Browse all available places and restaurants or use our search to find your perfect experience",
+      "explore": "Explore",
+      "breakfast": {
+        "title": "Best Breakfast Places in Oman",
+        "description": "Start your day right with these amazing breakfast spots that serve everything from traditional Omani breakfast to international favorites."
+      },
+      "lunch": {
+        "title": "Top Lunch Destinations",
+        "description": "Discover the finest restaurants and eateries perfect for a memorable lunch experience with family and friends."
+      },
+      "dinner": {
+        "title": "Exquisite Dinner Experiences",
+        "description": "End your day with these exceptional dining establishments that offer unforgettable dinner experiences and ambiance."
+      },
+      "cafe": {
+        "title": "Cozy Cafes & Coffee Culture",
+        "description": "Relax and unwind at these charming cafes that serve exceptional coffee and create perfect atmospheres for socializing."
+      },
+      "tourism": {
+        "title": "Must-Visit Tourist Attractions",
+        "description": "Explore the most beautiful and culturally significant places that showcase the rich heritage and natural beauty of Oman."
+      }
+    },
+    "tabs": {
+      "featured": "Featured",
+      "topRated": "Top Rated",
+      "recent": "Recently Added"
+    },
+    "noRecommendations": "No recommendations available",
+    "noRecommendationsMessage": "We're working on adding amazing recommendations for {{category}}. Check back soon!",
+    "viewAllRecommendations": "View All Recommendations",
+    "browsePlaces": "Browse Places",
+    "breadcrumb": {
+      "home": "Home",
+      "recommendations": "Recommendations"
+    }
   }
 }

@@ -28,10 +28,22 @@ type SupabaseService struct {
 
 // NewSupabaseService creates a new Supabase service instance
 func NewSupabaseService() *SupabaseService {
+	baseURL := os.Getenv("SUPABASE_URL")
+	apiKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+	bucketName := os.Getenv("SUPABASE_STORAGE_BUCKET")
+	
+	fmt.Printf("🔧 Supabase Config Debug:\n")
+	fmt.Printf("   - URL: %s\n", baseURL)
+	fmt.Printf("   - API Key: %s...%s (length: %d)\n", 
+		func() string { if len(apiKey) > 8 { return apiKey[:8] } else { return apiKey } }(),
+		func() string { if len(apiKey) > 8 { return apiKey[len(apiKey)-8:] } else { return "" } }(),
+		len(apiKey))
+	fmt.Printf("   - Bucket: %s\n", bucketName)
+	
 	return &SupabaseService{
-		baseURL:    os.Getenv("SUPABASE_URL"),
-		apiKey:     os.Getenv("SUPABASE_SERVICE_ROLE_KEY"), // Use service role key for backend operations
-		bucketName: os.Getenv("SUPABASE_STORAGE_BUCKET"),
+		baseURL:    baseURL,
+		apiKey:     apiKey, // Use service role key for backend operations
+		bucketName: bucketName,
 		httpClient: &http.Client{Timeout: 30 * time.Second},
 	}
 }
@@ -98,6 +110,7 @@ func (s *SupabaseService) UploadFile(file interface{}, filePath string, contentT
 	}
 
 	url := fmt.Sprintf("%s/storage/v1/object/%s/%s", s.baseURL, s.bucketName, filePath)
+	fmt.Printf("📤 Uploading to Supabase: bucket=%s, path=%s, url=%s\n", s.bucketName, filePath, url)
 	
 	req, err := http.NewRequest("POST", url, fileReader)
 	if err != nil {

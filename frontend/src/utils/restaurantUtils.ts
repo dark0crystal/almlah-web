@@ -230,7 +230,7 @@ export const getRestaurantPriceLevel = (restaurant: Place): number => {
   return 1;
 };
 
-export default {
+const restaurantUtils = {
   RESTAURANT_CATEGORY_ID,
   fetchRestaurants,
   fetchRestaurantById,
@@ -248,3 +248,5 @@ export default {
   isRestaurantOpen,
   getRestaurantPriceLevel
 };
+
+export default restaurantUtils;

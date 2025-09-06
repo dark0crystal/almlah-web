@@ -2,13 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useLocale } from 'next-intl';
+import Image from 'next/image';
 import { ListSection, listsApi } from '@/services/listsApi';
 import ImageUpload from '@/components/ImageUpload/ImageUpload';
 import { 
   PendingUpload, 
-  UploadResult, 
   processPendingUploads,
-  createPendingUpload,
   cleanupPendingUpload 
 } from '@/app/[locale]/dashboard/admin/manage-lists/uploadUtils';
 
@@ -77,7 +76,7 @@ export default function EnhancedSectionFormModal({
     setError(null);
 
     try {
-      let finalFormData = { ...formData };
+      const finalFormData = { ...formData };
 
       // Upload pending images if any
       if (pendingUploads.length > 0) {
@@ -286,7 +285,7 @@ export default function EnhancedSectionFormModal({
               
               <ImageUpload 
                 onFileSelect={handleFileSelect}
-                bucket="lists/sections"
+                bucket="lists"
                 locale={locale}
                 multiple={true}
                 maxFiles={10}
@@ -317,10 +316,12 @@ export default function EnhancedSectionFormModal({
                   {formData.images.map((image, index) => (
                     <div key={index} className="border rounded-lg p-4">
                       <div className="relative mb-3">
-                        <img 
+                        <Image 
                           src={image.image_url} 
                           alt={locale === 'ar' ? image.alt_text_ar : image.alt_text_en}
                           className="w-full h-24 object-cover rounded"
+                          width={200}
+                          height={96}
                         />
                         <button
                           type="button"
@@ -358,10 +359,12 @@ export default function EnhancedSectionFormModal({
                     return (
                       <div key={`pending-${upload.id}`} className="border rounded-lg p-4 bg-blue-50">
                         <div className="relative mb-3">
-                          <img 
+                          <Image 
                             src={upload.previewUrl} 
                             alt="Preview"
                             className="w-full h-24 object-cover rounded"
+                            width={200}
+                            height={96}
                           />
                           <button
                             type="button"

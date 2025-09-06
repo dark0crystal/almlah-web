@@ -73,6 +73,21 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disable
   const [googleLoaded, setGoogleLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const handleCredentialResponse = useCallback(async (response: GoogleCredentialResponse) => {
+    console.log('Google credential response received:', response);
+    setLoading(true);
+    try {
+      const result = await authAPI.googleAuth(response.credential);
+      console.log('Google auth successful:', result);
+      onSuccess(result);
+    } catch (error) {
+      console.error('Google auth failed:', error);
+      onError((error as Error).message || 'Google authentication failed');
+    } finally {
+      setLoading(false);
+    }
+  }, [onSuccess, onError]);
+
   const initializeGoogleSignIn = useCallback(() => {
     if (typeof window !== 'undefined' && window.google?.accounts) {
       console.log('Initializing Google Sign-In...');
@@ -108,21 +123,6 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disable
       console.error('Google Identity Services not available');
     }
   }, [onError, handleCredentialResponse]);
-
-  const handleCredentialResponse = useCallback(async (response: GoogleCredentialResponse) => {
-    console.log('Google credential response received:', response);
-    setLoading(true);
-    try {
-      const result = await authAPI.googleAuth(response.credential);
-      console.log('Google auth successful:', result);
-      onSuccess(result);
-    } catch (error) {
-      console.error('Google auth failed:', error);
-      onError((error as Error).message || 'Google authentication failed');
-    } finally {
-      setLoading(false);
-    }
-  }, [onSuccess, onError]);
 
   React.useEffect(() => {
     // Load Google Identity Services

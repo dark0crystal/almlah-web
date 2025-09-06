@@ -2,23 +2,32 @@
 import React from 'react';
 import { AlertTriangle, Trash2 } from 'lucide-react';
 
+interface Governate {
+  id: string;
+  name_ar: string;
+  name_en: string;
+  wilayah_count?: number;
+  place_count?: number;
+  gallery_images?: string | null;
+}
+
 interface DeleteConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
-  governate: any;
+  governate: Governate;
   onConfirm: () => void;
   loading: boolean;
   currentLang: string;
 }
 
 // Helper function to get display name based on current language
-const getDisplayName = (item: any, currentLang: string): string => {
+const getDisplayName = (item: Governate | null, currentLang: string): string => {
   if (!item) return '';
   return currentLang === 'ar' ? item.name_ar : item.name_en;
 };
 
 // Helper function to parse gallery images
-const parseGalleryImages = (galleryImagesJson: string | null): any[] => {
+const parseGalleryImages = (galleryImagesJson: string | null): unknown[] => {
   if (!galleryImagesJson) return [];
   
   try {
@@ -50,14 +59,14 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
         
         <div className="mb-6">
           <p className="text-gray-600 mb-3">
-            Are you sure you want to delete <strong>"{getDisplayName(governate, currentLang)}"</strong>?
+            Are you sure you want to delete <strong>&ldquo;{getDisplayName(governate, currentLang)}&rdquo;</strong>?
           </p>
           
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-3">
             <p className="text-yellow-800 text-sm font-medium">⚠️ This action cannot be undone.</p>
           </div>
 
-          {governate.wilayah_count > 0 && (
+          {governate.wilayah_count && governate.wilayah_count > 0 && (
             <div className="bg-red-50 border border-red-200 rounded-md p-3">
               <p className="text-red-700 text-sm font-medium">
                 🏘️ This governate has {governate.wilayah_count} wilayahs that will also be deleted.
@@ -65,7 +74,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
             </div>
           )}
 
-          {governate.place_count > 0 && (
+          {governate.place_count && governate.place_count > 0 && (
             <div className="bg-orange-50 border border-orange-200 rounded-md p-3 mt-3">
               <p className="text-orange-700 text-sm">
                 📍 This governate is associated with {governate.place_count} places.

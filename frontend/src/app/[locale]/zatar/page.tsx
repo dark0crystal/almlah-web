@@ -2,9 +2,8 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from 'next-intl';
-import { ArrowRight, ArrowLeft, MapPin, Utensils, Dice6, Star, Clock, Phone, Globe, Navigation } from "lucide-react";
+import { ArrowRight, ArrowLeft, MapPin, Utensils, Star, Clock, Phone, Globe, Navigation } from "lucide-react";
 import { zatarApi, type ZatarRecommendation } from './zatarApi';
-import AnimatedEmoji from './AnimatedEmoji';
 import ImageCarousel from './ImageCarousel';
 import ZatarSplashScreen from './ZatarSplashScreen';
 

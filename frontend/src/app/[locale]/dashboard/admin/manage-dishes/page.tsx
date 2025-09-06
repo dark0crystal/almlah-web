@@ -1,6 +1,7 @@
 "use client"
-import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Edit, Trash2, Image, MapPin, Clock, Users } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
+import { Plus, Search, Filter, Edit, Trash2, Image as ImageIcon, MapPin, Clock, Users } from 'lucide-react';
 import DishFormModal from './DishFormModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
 
@@ -199,7 +200,7 @@ export default function ManageDishesPage() {
   const [filterActive, setFilterActive] = useState<boolean | undefined>(undefined);
 
   // Load data
-  const loadDishes = async () => {
+  const loadDishes = useCallback(async () => {
     try {
       setLoading(true);
       const params = {
@@ -224,7 +225,7 @@ export default function ManageDishesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchTerm, selectedGovernate, selectedDifficulty, filterTraditional, filterFeatured, filterActive]);
 
   const loadGovernorates = async () => {
     try {
@@ -237,7 +238,7 @@ export default function ManageDishesPage() {
 
   useEffect(() => {
     loadDishes();
-  }, [currentPage, searchTerm, selectedGovernate, selectedDifficulty, filterTraditional, filterFeatured, filterActive]);
+  }, [loadDishes]);
 
   useEffect(() => {
     loadGovernorates();
@@ -470,17 +471,20 @@ export default function ManageDishesPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         {dish.images.find(img => img.is_primary)?.image_url ? (
-                          <img
-                            src={dish.images.find(img => img.is_primary)?.image_url}
-                            alt={dish.name_en}
-                            className="h-10 w-10 rounded-lg object-cover"
-                            onError={(e) => {
-                              e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMiAxNEgyOFYyNkgxMlYxNFoiIGZpbGw9IiM5Q0E0QUYiLz4KPC9zdmc+';
-                            }}
-                          />
+                          <div className="relative h-10 w-10 rounded-lg overflow-hidden">
+                            <Image
+                              src={dish.images.find(img => img.is_primary)?.image_url || ''}
+                              alt={dish.name_en}
+                              fill
+                              className="object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMiAxNEgyOFYyNkgxMlYxNFoiIGZpbGw9IiM5Q0E0QUYiLz4KPC9zdmc+';
+                              }}
+                            />
+                          </div>
                         ) : (
                           <div className="h-10 w-10 rounded-lg bg-gray-200 flex items-center justify-center">
-                            <Image className="w-5 h-5 text-gray-400" />
+                            <ImageIcon className="w-5 h-5 text-gray-400" />
                           </div>
                         )}
                         <div className="ml-4">

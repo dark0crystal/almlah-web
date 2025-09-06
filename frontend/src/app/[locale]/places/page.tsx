@@ -8,16 +8,13 @@ import PlacesMap from "./PlacesMap";
 import BottomSheet, { SheetState } from "./BottomSheet";
 import { CATEGORY_IDS, type CategoryType } from "@/services/placesApi";
 
-interface PlacesProps {
-  categoryType?: CategoryType; // NEW: Optional category type prop
-}
-
 /**
  * Main Places component that renders the tourism places discovery page
  * Features responsive layout with full-screen map on mobile and split view on desktop
  * Now includes governate filtering, proper localization, and category support
  */
-export default function Places({ categoryType = "TOURISM" }: PlacesProps) {
+export default function Places() {
+  const categoryType: CategoryType = "TOURISM"; // Default category type
   const params = useParams();
   const locale = (params?.locale as string) || 'en';
   const t = useTranslations('places');

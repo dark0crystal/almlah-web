@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { useLocale } from 'next-intl';
 import { MapMarkerProps } from './types';
 
@@ -56,10 +57,11 @@ export default function MapMarker({ destination, isActive = false, onClick }: Ma
           isActive ? 'scale-125 border-blue-500' : 'hover:scale-110'
         }`}>
           {getImageSrc() && !imageError ? (
-            <img 
-              src={getImageSrc() || undefined}
+            <Image 
+              src={getImageSrc() || ''}
               alt={getDisplayName()}
-              className="w-full h-full rounded-full object-cover"
+              fill
+              className="rounded-full object-cover"
               onError={() => setImageError(true)}
             />
           ) : (

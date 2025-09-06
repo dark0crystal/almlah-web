@@ -15,6 +15,7 @@ import (
 
 // CreateDish creates a new dish
 func CreateDish(req dto.CreateDishRequest, userID uuid.UUID) (*dto.DishResponse, error) {
+	fmt.Printf("🍽️ CreateDish service called with %d images\n", len(req.Images))
 	// Convert string ID to UUID using helper method
 	governateID, err := req.GetGovernateUUID()
 	if err != nil {
@@ -52,8 +53,8 @@ func CreateDish(req dto.CreateDishRequest, userID uuid.UUID) (*dto.DishResponse,
 		Difficulty:             req.Difficulty,
 		IsTraditional:          req.IsTraditional,
 		IsFeatured:             req.IsFeatured,
+		IsActive:               req.IsActive,
 		SortOrder:              req.SortOrder,
-		IsActive:               true,
 		CreatedBy:              userID,
 	}
 
@@ -72,14 +73,16 @@ func CreateDish(req dto.CreateDishRequest, userID uuid.UUID) (*dto.DishResponse,
 	}
 
 	// Create dish images if provided
+	fmt.Printf("🖼️ Creating %d dish images\n", len(req.Images))
 	for i, imgReq := range req.Images {
+		fmt.Printf("   - Creating image %d: %s (primary: %t)\n", i+1, imgReq.ImageURL, imgReq.IsPrimary)
 		dishImage := domain.DishImage{
 			DishID:       dish.ID,
 			ImageURL:     imgReq.ImageURL,
 			AltTextAr:    imgReq.AltTextAr,
 			AltTextEn:    imgReq.AltTextEn,
-			CaptionAr:    imgReq.CaptionAr,
-			CaptionEn:    imgReq.CaptionEn,
+			CaptionAr:    "", // Caption fields not provided from frontend for now
+			CaptionEn:    "", // Caption fields not provided from frontend for now
 			IsPrimary:    imgReq.IsPrimary,
 			DisplayOrder: imgReq.DisplayOrder,
 			CreatedBy:    userID,
@@ -338,8 +341,8 @@ func AddDishImage(dishID string, req dto.CreateDishImageRequest, userID uuid.UUI
 		ImageURL:     req.ImageURL,
 		AltTextAr:    req.AltTextAr,
 		AltTextEn:    req.AltTextEn,
-		CaptionAr:    req.CaptionAr,
-		CaptionEn:    req.CaptionEn,
+		CaptionAr:    "", // Caption fields not supported in CreateDishImageRequest
+		CaptionEn:    "", // Caption fields not supported in CreateDishImageRequest
 		IsPrimary:    req.IsPrimary,
 		DisplayOrder: req.DisplayOrder,
 		CreatedBy:    userID,

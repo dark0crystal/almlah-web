@@ -92,7 +92,7 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
     images: []
   });
 
-  const [errors, setErrors] = useState<Partial<DishFormData>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof DishFormData, string>>>({});
   const [loading, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [newImage, setNewImage] = useState({
@@ -171,7 +171,7 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
   }, [formData.name_en, dish]);
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<DishFormData> = {};
+    const newErrors: Partial<Record<keyof DishFormData, string>> = {};
 
     if (!formData.name_ar.trim()) newErrors.name_ar = 'Arabic name is required';
     if (!formData.name_en.trim()) newErrors.name_en = 'English name is required';
@@ -179,8 +179,8 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
     if (!formData.description_en.trim()) newErrors.description_en = 'English description is required';
     if (!formData.slug.trim()) newErrors.slug = 'Slug is required';
     if (!formData.governate_id) newErrors.governate_id = 'Governorate is required';
-    if (formData.preparation_time_minutes <= 0) newErrors.preparation_time_minutes = 'Preparation time must be positive';
-    if (formData.serving_size <= 0) newErrors.serving_size = 'Serving size must be positive';
+    if (!formData.preparation_time_minutes || formData.preparation_time_minutes <= 0) newErrors.preparation_time_minutes = 'Preparation time must be positive';
+    if (!formData.serving_size || formData.serving_size <= 0) newErrors.serving_size = 'Serving size must be positive';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -387,7 +387,7 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
       
     } catch (error) {
       console.error('❌ Error in uploadAndAddImage:', error);
-      alert(`Failed to upload image: ${error.message}`);
+      alert(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setUploadingImage(false);
     }

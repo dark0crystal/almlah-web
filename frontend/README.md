@@ -1,3 +1,8 @@
+claude rules:
+
+i am using next-intl so update the pages translation for static data and give me the ar.json and en.json
+
+
 How to start the frontend:
  - cd frontend
  - npm run dev

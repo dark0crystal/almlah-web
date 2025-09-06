@@ -1,3 +1,4 @@
+
 package config
 
 import (
@@ -53,6 +54,11 @@ func MigrateDB() {
 		&domain.GovernateImage{},
 		&domain.Dish{},
 		&domain.DishImage{},
+		&domain.List{},
+		&domain.ListSection{},
+		&domain.ListSectionImage{},
+		&domain.ListItem{},
+		&domain.ListItemImage{},
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)

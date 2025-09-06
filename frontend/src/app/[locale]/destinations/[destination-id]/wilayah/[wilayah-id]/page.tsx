@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { MapPin, ArrowLeft, Share2, Building } from 'lucide-react';
 import Image from 'next/image';
@@ -13,19 +13,26 @@ export default function WilayahDetailsPage({ params }: WilayahDetailsProps) {
   const [wilayah, setWilayah] = useState<WilayahWithImages | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [governateId, setGovernateId] = useState<string>('');
+  const [wilayahId, setWilayahId] = useState<string>('');
   
   // Get current locale and translations
   const locale = useLocale() as 'ar' | 'en';
   const t = useTranslations('wilayah');
   const tNav = useTranslations('navigation');
   
-  // Get params from URL
-  const urlParams = useParams();
+  // Get router
   const router = useRouter();
   
-  // Extract IDs
-  const governateId = params?.['destination-id'] || urlParams?.['destination-id'] as string;
-  const wilayahId = params?.['wilayah-id'] || urlParams?.['wilayah-id'] as string;
+  // Extract IDs from params
+  useEffect(() => {
+    const getParams = async () => {
+      const resolvedParams = await params;
+      setGovernateId(resolvedParams['destination-id']);
+      setWilayahId(resolvedParams['wilayah-id']);
+    };
+    getParams();
+  }, [params]);
   
   console.log('WilayahDetails - governateId:', governateId, 'wilayahId:', wilayahId);
 
@@ -78,9 +85,7 @@ export default function WilayahDetailsPage({ params }: WilayahDetailsProps) {
   // Load wilayah data when component mounts
   useEffect(() => {
     if (!wilayahId) {
-      console.error('No wilayah ID found in params');
-      setError('Wilayah ID not found');
-      setLoading(false);
+      // Don't show error immediately, wait for params to resolve
       return;
     }
 

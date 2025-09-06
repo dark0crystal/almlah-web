@@ -16,14 +16,6 @@ interface User {
   roles: UserRole[];
   permissions: string[];
 }
-
-interface Role {
-  id: string;
-  name: string;
-  displayName: string;
-  isActive: boolean;
-}
-
 interface UserRole {
   id: string;
   assigned_at: string;

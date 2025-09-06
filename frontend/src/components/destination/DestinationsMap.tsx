@@ -16,7 +16,7 @@ const mapContainerStyle = {
 const OMAN_CENTER = { lat: 23.5859, lng: 58.4059 }; // Muscat coordinates
 
 export default function DestinationsMap({ destinations = [], language = 'ar', onMarkerClick }: DestinationsMapProps) {
-    const [activeDestination, setActiveDestination] = useState<number | null>(null);
+    const [, setActiveDestination] = useState<number | null>(null);
     const [selectedMarker, setSelectedMarker] = useState<Destination | null>(null);
     const [markerIcons, setMarkerIcons] = useState<Record<number, string>>({});
 

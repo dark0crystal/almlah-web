@@ -7,16 +7,13 @@ import RestaurantsMap from "./RestaurantsMap";
 import RestaurantBottomSheet, { SheetState } from "./RestaurantBottomSheet";
 import { CATEGORY_IDS, type CategoryType } from "@/services/placesApi";
 
-interface RestaurantsProps {
-  categoryType?: CategoryType;
-}
-
 /**
  * Main Restaurants component that renders the restaurants discovery page
  * Features responsive layout with full-screen map on mobile and split view on desktop
  * Includes filtering and matches the places page structure
  */
-export default function Restaurants({ categoryType = "FOOD_BEVERAGES" }: RestaurantsProps) {
+export default function Restaurants() {
+  const categoryType: CategoryType = "FOOD_BEVERAGES"; // Default category type
   const params = useParams();
   const locale = (params?.locale as string) || 'en';
   const t = useTranslations('places');

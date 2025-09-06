@@ -1,4 +1,3 @@
-import { Search, ChevronDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import alsahwah from '../../public/pngs/alsahwah.png';
@@ -87,35 +86,3 @@ export default function Header({
   );
 }
 
-// Example usage component to demonstrate different configurations
-function HeaderDemo() {
-  const handleLearnMore = () => {
-    alert('Learn more clicked!');
-  };
-
-  return (
-    <div className="space-y-8">
-      {/* Default Header */}
-      <Header onLearnMore={handleLearnMore} />
-      
-      {/* Custom Header with different content */}
-      <Header 
-        title="مؤتمر التقنية العربي"
-        subtitle="للابتكار والتطوير"
-        date="2025.9.15"
-        linkText="سجل الآن"
-        onLearnMore={handleLearnMore}
-      />
-      
-      {/* Header with background image */}
-      <Header 
-        title="معرض الفنون التشكيلية"
-        subtitle="في الرياض"
-        backgroundImage="https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=1200&h=400&fit=crop&crop=center"
-        date="2025.10.1"
-        linkText="احجز تذكرة"
-        onLearnMore={handleLearnMore}
-      />
-    </div>
-  );
-}

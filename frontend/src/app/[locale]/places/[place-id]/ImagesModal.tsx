@@ -142,7 +142,7 @@ export default function ImagesModal({
       </button>
 
       {/* Header with place name */}
-      <div className="absolute top-0 left-0 right-0 md:left-auto md:right-auto md:top-6 md:left-6 text-white z-10">
+      <div className="absolute top-0 left-0 right-0 md:left-auto md:right-auto md:top-6 text-white z-10">
         <div className="mx-auto w-full md:w-auto flex items-center justify-center pt-3 md:pt-0">
           <div className="h-1 w-12 rounded-full bg-white/40 md:hidden" />
         </div>
@@ -244,7 +244,7 @@ export default function ImagesModal({
         <>
           <button
             onClick={goToPrevious}
-            className="hidden md:block absolute left-4 lg:left-8 top-1/2 transform -translate-y-1/2 text-white bg-black/30 hover:bg-black/50 rounded-full w-12 h-12 flex items-center justify-center transition-all duration-200 backdrop-blur-sm"
+            className="hidden md:flex absolute left-4 lg:left-8 top-1/2 transform -translate-y-1/2 text-white bg-black/30 hover:bg-black/50 rounded-full w-12 h-12 items-center justify-center transition-all duration-200 backdrop-blur-sm"
             aria-label={t('previousImage')}
           >
             ←
@@ -252,7 +252,7 @@ export default function ImagesModal({
               
           <button
             onClick={goToNext}
-            className="hidden md:block absolute right-4 lg:right-8 top-1/2 transform -translate-y-1/2 text-white bg-black/30 hover:bg-black/50 rounded-full w-12 h-12 flex items-center justify-center transition-all duration-200 backdrop-blur-sm"
+            className="hidden md:flex absolute right-4 lg:right-8 top-1/2 transform -translate-y-1/2 text-white bg-black/30 hover:bg-black/50 rounded-full w-12 h-12 items-center justify-center transition-all duration-200 backdrop-blur-sm"
             aria-label={t('nextImage')}
           >
             →

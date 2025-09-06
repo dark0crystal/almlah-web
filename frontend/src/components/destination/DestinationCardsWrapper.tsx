@@ -1,12 +1,10 @@
 "use client"
 
 import React, { useRef, useEffect } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
 import DestinationCard from './DestinationCard';
 import { DestinationCardWrapperProps } from './types';
 
 export default function DestinationCardWrapper({ destinations, highlightedDestination, onDestinationHighlight }: DestinationCardWrapperProps) {
-  const locale = useLocale();
   const desktopScrollRef = useRef<HTMLDivElement>(null);
   const mobileScrollRef = useRef<HTMLDivElement>(null);
 
