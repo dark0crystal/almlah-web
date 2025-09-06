@@ -14,7 +14,7 @@ export default async function ManageCategoriesLayout({
   
   try {
     // Require category management permissions
-    const auth = await requireAnyPermission([
+    await requireAnyPermission([
       'can_view_category', 
       'can_create_category', 
       'can_manage_category'

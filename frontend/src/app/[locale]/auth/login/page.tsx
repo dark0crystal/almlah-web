@@ -1,6 +1,6 @@
 // app/auth/login/page.tsx - Updated to work with new auth store
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Eye, EyeOff, Mail, Lock, User, AlertTriangle, CheckCircle, Loader } from 'lucide-react';
 import { env, validateEnv } from '@/config/env';
 import Link from 'next/link';
@@ -75,7 +75,44 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disable
   const [loading, setLoading] = useState(false);
   const t = useTranslations('auth.login');
 
-  React.useEffect(() => {
+  const handleCredentialResponse = useCallback(async (response: GoogleCredentialResponse) => {
+    console.log('Google credential response received:', response);
+    setLoading(true);
+    try {
+      const result = await authAPI.googleAuth(response.credential);
+      console.log('Google auth successful:', result);
+      onSuccess(result);
+    } catch (error) {
+      console.error('Google auth failed:', error);
+      onError((error as Error).message || 'Google authentication failed');
+    } finally {
+      setLoading(false);
+    }
+  }, [onSuccess, onError]);
+
+  const initializeGoogleSignIn = useCallback(() => {
+    if (typeof window !== 'undefined' && window.google?.accounts) {
+      console.log('Initializing Google Sign-In...');
+      
+      if (!env.GOOGLE_CLIENT_ID) {
+        console.error('Google Client ID not configured');
+        onError(t('errors.googleNotConfigured'));
+        return;
+      }
+      
+      window.google.accounts.id.initialize({
+        client_id: env.GOOGLE_CLIENT_ID,
+        callback: handleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
+      console.log('Google Sign-In initialized');
+    } else {
+      console.error('Google Identity Services not available');
+    }
+  }, [onError, t, handleCredentialResponse]);
+
+  useEffect(() => {
     // Load Google Identity Services
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
@@ -99,44 +136,7 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disable
         existingScript.remove();
       }
     };
-  }, [onError, t]);
-
-  const initializeGoogleSignIn = () => {
-    if (typeof window !== 'undefined' && window.google?.accounts) {
-      console.log('Initializing Google Sign-In...');
-      
-      if (!env.GOOGLE_CLIENT_ID) {
-        console.error('Google Client ID not configured');
-        onError(t('errors.googleNotConfigured'));
-        return;
-      }
-      
-      window.google.accounts.id.initialize({
-        client_id: env.GOOGLE_CLIENT_ID,
-        callback: handleCredentialResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
-      console.log('Google Sign-In initialized');
-    } else {
-      console.error('Google Identity Services not available');
-    }
-  };
-
-  const handleCredentialResponse = async (response: GoogleCredentialResponse) => {
-    console.log('Google credential response received:', response);
-    setLoading(true);
-    try {
-      const result = await authAPI.googleAuth(response.credential);
-      console.log('Google auth successful:', result);
-      onSuccess(result);
-    } catch (error) {
-      console.error('Google auth failed:', error);
-      onError((error as Error).message || 'Google authentication failed');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [onError, t, initializeGoogleSignIn]);
 
   const handleGoogleSignIn = () => {
     if (googleLoaded && typeof window !== 'undefined' && window.google?.accounts) {

@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, AlertTriangle, Settings, Search, Globe, X } from 'lucide-react';
 import { LoginModal } from './LoginModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
@@ -42,7 +42,7 @@ interface GovernateFormData {
   latitude?: string;
   longitude?: string;
   sort_order: number;
-  gallery_images: any[];
+  gallery_images: unknown[];
 }
 
 // API service functions
@@ -77,7 +77,7 @@ const governateAPI = {
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch (e) {
+        } catch {
           // If response is not JSON, use status text
         }
         throw new Error(errorMessage);
@@ -127,7 +127,7 @@ const governateAPI = {
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch (e) {
+        } catch {
           // If response is not JSON, use status text
         }
         throw new Error(errorMessage);
@@ -157,7 +157,7 @@ const governateAPI = {
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch (e) {
+        } catch {
           // If response is not JSON, use status text
         }
         throw new Error(errorMessage);
@@ -184,7 +184,7 @@ const governateAPI = {
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch (e) {
+        } catch {
           // If response is not JSON, use status text
         }
         throw new Error(errorMessage);
@@ -241,9 +241,9 @@ export default function ManageGovernorate() {
     if (token) {
       setIsAuthenticated(true);
     }
-  }, []);
+  }, [testApiConnection]);
 
-  const testApiConnection = async () => {
+  const testApiConnection = useCallback(async () => {
     try {
       setApiStatus('testing');
       const response = await fetch(`${API_HOST}/api/v1/governates`, { 
@@ -271,7 +271,7 @@ export default function ManageGovernorate() {
       setError(`Cannot connect to API: ${(err as Error).message}`);
       setLoading(false);
     }
-  };
+  }, [loadGovernorates]);
 
   useEffect(() => {
     // Filter governorates based on search term
@@ -289,7 +289,7 @@ export default function ManageGovernorate() {
     }
   }, [searchTerm, governorates]);
 
-  const loadGovernorates = async () => {
+  const loadGovernorates = useCallback(async () => {
     try {
       setLoading(true);
       setError(''); // Clear previous errors
@@ -307,7 +307,7 @@ export default function ManageGovernorate() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleLogin = (token: string) => {
     setIsAuthenticated(true);
@@ -588,7 +588,7 @@ export default function ManageGovernorate() {
           {searchTerm ? (
             <div className="text-gray-500">
               <Search size={48} className="mx-auto mb-4 text-gray-300" />
-              <p>No governorates found matching "{searchTerm}"</p>
+              <p>No governorates found matching &quot;{searchTerm}&quot;</p>
               <button
                 onClick={() => setSearchTerm('')}
                 className="mt-2 text-blue-600 hover:text-blue-800"

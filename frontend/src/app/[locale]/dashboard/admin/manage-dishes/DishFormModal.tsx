@@ -1,6 +1,7 @@
 "use client"
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Upload, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import Image from 'next/image';
 import { SupabaseStorageService } from '@/services/supabaseStorage';
 
 interface Dish {
@@ -222,44 +223,44 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
   };
 
   // Check if user is authenticated
-  const checkAuthToken = () => {
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      console.error('❌ No auth token found in localStorage');
-      throw new Error('Authentication required. Please log in again.');
-    }
-    
-    try {
-      // Basic JWT validation (check if it has 3 parts)
-      const parts = token.split('.');
-      if (parts.length !== 3) {
-        console.error('❌ Invalid token format');
-        throw new Error('Invalid authentication token. Please log in again.');
-      }
-      
-      // Decode the payload to check expiration
-      const payload = JSON.parse(atob(parts[1]));
-      const now = Math.floor(Date.now() / 1000);
-      
-      if (payload.exp && payload.exp < now) {
-        console.error('❌ Token expired');
-        throw new Error('Authentication token expired. Please log in again.');
-      }
-      
-      console.log('✅ Auth token validated:', { 
-        userId: payload.user_id || payload.sub,
-        expiresAt: new Date(payload.exp * 1000).toLocaleString()
-      });
-      
-      return token;
-    } catch (error) {
-      if (error.message.includes('Authentication')) {
-        throw error;
-      }
-      console.error('❌ Error validating token:', error);
-      throw new Error('Invalid authentication token. Please log in again.');
-    }
-  };
+  // const checkAuthToken = () => {
+  //   const token = localStorage.getItem('authToken');
+  //   if (!token) {
+  //     console.error('❌ No auth token found in localStorage');
+  //     throw new Error('Authentication required. Please log in again.');
+  //   }
+  //   
+  //   try {
+  //     // Basic JWT validation (check if it has 3 parts)
+  //     const parts = token.split('.');
+  //     if (parts.length !== 3) {
+  //       console.error('❌ Invalid token format');
+  //       throw new Error('Invalid authentication token. Please log in again.');
+  //     }
+  //     
+  //     // Decode the payload to check expiration
+  //     const payload = JSON.parse(atob(parts[1]));
+  //     const now = Math.floor(Date.now() / 1000);
+  //     
+  //     if (payload.exp && payload.exp < now) {
+  //       console.error('❌ Token expired');
+  //       throw new Error('Authentication token expired. Please log in again.');
+  //     }
+  //     
+  //     console.log('✅ Auth token validated:', { 
+  //       userId: payload.user_id || payload.sub,
+  //       expiresAt: new Date(payload.exp * 1000).toLocaleString()
+  //     });
+  //     
+  //     return token;
+  //   } catch (error) {
+  //     if (error.message.includes('Authentication')) {
+  //       throw error;
+  //     }
+  //     console.error('❌ Error validating token:', error);
+  //     throw new Error('Invalid authentication token. Please log in again.');
+  //   }
+  // };
 
   // Upload image to storage
   const uploadImageToStorage = async (file: File): Promise<string> => {
@@ -701,10 +702,12 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
                     <div key={index} className="relative border rounded-lg p-3">
                       <div className="aspect-video bg-gray-100 rounded-md mb-2 overflow-hidden">
                         {image.image_url ? (
-                          <img
+                          <Image
                             src={image.image_url}
                             alt={image.alt_text_en}
                             className="w-full h-full object-cover"
+                            width={400}
+                            height={300}
                             onError={(e) => {
                               e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0zMCAzNEg3MFY2NkgzMFYzNFoiIGZpbGw9IiM5Q0E0QUYiLz4KPC9zdmc+';
                             }}
@@ -819,10 +822,12 @@ export default function DishFormModal({ isOpen, onClose, onSave, dish, governate
                     {previewUrl && (
                       <div className="mt-3">
                         <div className="w-32 h-32 border rounded-lg overflow-hidden">
-                          <img
+                          <Image
                             src={previewUrl}
                             alt="Preview"
                             className="w-full h-full object-cover"
+                            width={128}
+                            height={128}
                           />
                         </div>
                       </div>
