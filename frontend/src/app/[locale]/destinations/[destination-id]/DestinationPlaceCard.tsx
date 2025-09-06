@@ -27,7 +27,7 @@ export default function DestinationPlaceCard({ place, locale }: DestinationPlace
     }
     // Then try images array
     else if (place.images && place.images.length > 0) {
-      const primaryImage = place.images.find(img => img.is_primary) || place.images[0];
+      const primaryImage = place.images.find((img: { is_primary: boolean; image_url: string }) => img.is_primary) || place.images[0];
       imageUrl = primaryImage.image_url;
     }
     
