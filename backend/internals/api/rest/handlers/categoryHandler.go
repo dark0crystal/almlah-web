@@ -2,7 +2,6 @@
 package handlers
 
 import (
-	"almlah/internals/api/rest"
 	"almlah/internals/cache" 
 	"almlah/internals/dto"
 	"almlah/internals/middleware"
@@ -17,8 +16,7 @@ import (
 
 type CategoryHandler struct{}
 
-func SetupCategoryRoutes(rh *rest.RestHandler) {
-	app := rh.App
+func SetupCategoryRoutes(app *fiber.App) {
 	handler := CategoryHandler{}
 
 	// Admin routes for category management

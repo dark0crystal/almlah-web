@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"almlah/internals/api/rest"
 	"almlah/internals/dto"
 	"almlah/internals/middleware"
 	"almlah/internals/services"
@@ -16,8 +15,7 @@ import (
 )
 
 // SetupGovernateImageRoutes - Enhanced with caching
-func SetupGovernateImageRoutes(rh *rest.RestHandler) {
-	app := rh.App
+func SetupGovernateImageRoutes(app *fiber.App) {
 	handler := ImageHandler{}
 
 	// Governate image routes

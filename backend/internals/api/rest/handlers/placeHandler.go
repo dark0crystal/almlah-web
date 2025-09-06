@@ -2,7 +2,6 @@
 package handlers
 
 import (
-	"almlah/internals/api/rest"
 	"almlah/internals/cache"
 	"almlah/internals/dto"
 	"almlah/internals/middleware"
@@ -19,8 +18,7 @@ import (
 
 type PlaceHandler struct{}
 
-func SetupPlaceRoutes(rh *rest.RestHandler) {
-	app := rh.App
+func SetupPlaceRoutes(app *fiber.App) {
 	handler := PlaceHandler{}
 
 	// Place routes

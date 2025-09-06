@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"almlah/internals/api/rest"
 	"almlah/internals/cache"
 	"almlah/internals/dto"
 	"almlah/internals/middleware"
@@ -16,8 +15,7 @@ import (
 
 type GovernateHandler struct{}
 
-func SetupGovernateRoutes(rh *rest.RestHandler) {
-	app := rh.App
+func SetupGovernateRoutes(app *fiber.App) {
 	handler := GovernateHandler{}
 
 	// Governate routes

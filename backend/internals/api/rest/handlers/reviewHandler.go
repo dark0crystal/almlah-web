@@ -2,7 +2,6 @@
 package handlers
 
 import (
-	"almlah/internals/api/rest"
 	"almlah/internals/cache"
 	"almlah/internals/dto"
 	"almlah/internals/middleware"
@@ -17,8 +16,7 @@ import (
 
 type ReviewHandler struct{}
 
-func SetupReviewRoutes(rh *rest.RestHandler) {
-	app := rh.App
+func SetupReviewRoutes(app *fiber.App) {
 	handler := ReviewHandler{}
 
 	// Review routes

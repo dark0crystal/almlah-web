@@ -2,7 +2,6 @@
 package handlers
 
 import (
-	"almlah/internals/api/rest"
 	"almlah/internals/cache"
 	"almlah/internals/dto"
 	"almlah/internals/middleware"
@@ -17,8 +16,7 @@ import (
 
 type WilayahHandler struct{}
 
-func SetupWilayahRoutes(rh *rest.RestHandler) {
-	app := rh.App
+func SetupWilayahRoutes(app *fiber.App) {
 	handler := WilayahHandler{}
 
 	// Wilayah routes

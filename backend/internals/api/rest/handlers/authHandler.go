@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"almlah/internals/api/rest"
 	"almlah/internals/dto"
 	"almlah/internals/middleware"
 	"almlah/internals/services"
@@ -14,9 +13,9 @@ import (
 )
 
 // SetupAuthRoutes sets up authentication routes
-func SetupAuthRoutes(rh *rest.RestHandler) {
+func SetupAuthRoutes(app *fiber.App) {
 	// Auth routes
-	auth := rh.App.Group("/api/v1/auth")
+	auth := app.Group("/api/v1/auth")
 
 	// Public routes (no authentication required)
 	auth.Post("/register", registerHandler)

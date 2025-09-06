@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"almlah/internals/api/rest"
 	"almlah/internals/dto"
 	"almlah/internals/middleware"
 	"almlah/internals/services"
@@ -18,8 +17,7 @@ type ListHandler struct {
 	listSectionService *services.ListSectionService
 }
 
-func SetupListRoutes(rh *rest.RestHandler) {
-	app := rh.App
+func SetupListRoutes(app *fiber.App) {
 	handler := &ListHandler{
 		listService:        services.NewListService(),
 		listSectionService: services.NewListSectionService(),

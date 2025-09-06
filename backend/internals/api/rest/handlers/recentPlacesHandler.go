@@ -2,7 +2,6 @@
 package handlers
 
 import (
-	"almlah/internals/api/rest"
 	"almlah/internals/cache"
 	"almlah/internals/dto"
 	"almlah/internals/services"
@@ -16,8 +15,7 @@ import (
 
 type RecentPlacesHandler struct{}
 
-func SetupRecentPlacesRoutes(rh *rest.RestHandler) {
-	app := rh.App
+func SetupRecentPlacesRoutes(app *fiber.App) {
 	handler := RecentPlacesHandler{}
 
 	// Recent places routes

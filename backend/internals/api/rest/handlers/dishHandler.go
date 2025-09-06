@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"almlah/internals/api/rest"
 	"almlah/internals/dto"
 	"almlah/internals/middleware"
 	"almlah/internals/services"
@@ -16,8 +15,7 @@ import (
 
 type DishHandler struct{}
 
-func SetupDishRoutes(rh *rest.RestHandler) {
-	app := rh.App
+func SetupDishRoutes(app *fiber.App) {
 	handler := DishHandler{}
 
 	// Dish routes

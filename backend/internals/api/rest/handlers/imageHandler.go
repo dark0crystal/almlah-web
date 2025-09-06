@@ -2,7 +2,6 @@
 package handlers
 
 import (
-	"almlah/internals/api/rest"
 	"almlah/internals/cache"
 	"almlah/internals/dto"
 	"almlah/internals/middleware"
@@ -20,8 +19,7 @@ import (
 
 type ImageHandler struct{}
 
-func SetupImageRoutes(rh *rest.RestHandler) {
-	app := rh.App
+func SetupImageRoutes(app *fiber.App) {
 	handler := ImageHandler{}
 
 	// Image routes with authentication

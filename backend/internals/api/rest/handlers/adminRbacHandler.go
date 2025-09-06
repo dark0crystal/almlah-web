@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"almlah/internals/api/rest"
 	"almlah/internals/dto"
 	"almlah/internals/middleware"
 	"almlah/internals/services"
@@ -15,8 +14,7 @@ import (
 
 // SetupAdminRBACRoutes sets up admin-specific RBAC routes
 // These are simpler routes specifically for admin frontend management
-func SetupAdminRBACRoutes(rh *rest.RestHandler) {
-	app := rh.App
+func SetupAdminRBACRoutes(app *fiber.App) {
 
 	// Admin routes group - requires admin privileges
 	admin := app.Group("/api/v1/admin", middleware.AuthRequiredWithRBAC, middleware.AdminOnly())//, middleware.AuthRequiredWithRBAC, middleware.AdminOnly()

@@ -2,7 +2,6 @@ package api
 
 import (
 	"almlah/config"
-	"almlah/internals/api/rest"
 	"almlah/internals/api/rest/handlers"
 	"almlah/internals/services"
 	"log"
@@ -44,22 +43,17 @@ func StartServer(cfg config.AppConfig) {
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 	}))
 
-	// Create rest handler
-	rh := &rest.RestHandler{
-		App: app,
-	}
-
 	// Setup routes
-	setupRoutes(rh)
+	setupRoutes(app)
 
 	// Start server
 	log.Printf("Server starting on port %s", cfg.ServerPort)
 	log.Fatal(app.Listen(cfg.ServerPort))
 }
 
-func setupRoutes(rh *rest.RestHandler) {
+func setupRoutes(app *fiber.App) {
 	// API prefix
-	api := rh.App.Group("/api/v1")
+	api := app.Group("/api/v1")
 
 	// Health check
 	api.Get("/health", func(c *fiber.Ctx) error {
@@ -70,22 +64,23 @@ func setupRoutes(rh *rest.RestHandler) {
 	})
 
 	// Setup route handlers
-	handlers.SetupAuthRoutes(rh) 
-	handlers.SetupPlaceRoutes(rh)
-	handlers.SetupCategoryRoutes(rh)
-	handlers.SetupGovernateRoutes(rh)
-	handlers.SetupRecipeRoutes(rh)
-	handlers.SetupWilayahRoutes(rh)
-	handlers.SetupRBACRoutes(rh)
-	handlers.SetupReviewRoutes(rh)
-	handlers.SetupAdminRBACRoutes(rh)
-	handlers.SetupPropertyRoutes(rh)
-	handlers.SetupUserManagementRoutes(rh) 
-	handlers.SetupImageRoutes(rh) 
-	handlers.SetupGovernateImageRoutes(rh)
-	handlers.SetupUploadRoutes(rh)
-	handlers.SetupRecentPlacesRoutes(rh)
-	handlers.SetupZatarRoutes(rh)
-	handlers.SetupDishRoutes(rh)
-	handlers.SetupListRoutes(rh)
+	handlers.SetupAuthRoutes(app) 
+	handlers.SetupPlaceRoutes(app)
+	handlers.SetupCategoryRoutes(app)
+	handlers.SetupGovernateRoutes(app)
+	handlers.SetupRecipeRoutes(app)
+	handlers.SetupWilayahRoutes(app)
+	handlers.SetupRBACRoutes(app)
+	handlers.SetupReviewRoutes(app)
+	handlers.SetupAdminRBACRoutes(app)
+	handlers.SetupPropertyRoutes(app)
+	handlers.SetupUserManagementRoutes(app) 
+	handlers.SetupImageRoutes(app) 
+	handlers.SetupGovernateImageRoutes(app)
+	handlers.SetupUploadRoutes(app)
+	handlers.SetupRecentPlacesRoutes(app)
+	handlers.SetupZatarRoutes(app)
+	handlers.SetupDishRoutes(app)
+	handlers.SetupListRoutes(app)
+	handlers.SetupWilayahImageRoutes(app)
 }

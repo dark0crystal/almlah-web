@@ -89,6 +89,28 @@ interface FormData {
   categoryIds: string[];
 }
 
+interface Place {
+  id: string;
+  name_ar: string;
+  name_en: string;
+  description_ar: string;
+  description_en: string;
+  subtitle_ar: string;
+  subtitle_en: string;
+  governate_id: string;
+  wilayah_id: string;
+  latitude: number;
+  longitude: number;
+  phone?: string;
+  email?: string;
+  website?: string;
+  created_at: string;
+  updated_at: string;
+  categories: Category[];
+  content_sections: ContentSection[];
+  images: PlaceImage[];
+}
+
 interface PlaceImage {
   id: string;
   image_url: string;
@@ -683,7 +705,7 @@ const ContentSectionEditor = ({ placeId, sections, onSectionsChange }: { placeId
 
 // Main Edit Component
 export default function PlaceEdit() {
-  const [place, setPlace] = useState<any>(null);
+  const [place, setPlace] = useState<Place | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);

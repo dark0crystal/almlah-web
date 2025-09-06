@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"almlah/config"
-	"almlah/internals/api/rest"
 	"almlah/internals/dto"
 	"almlah/internals/services"
 	"almlah/internals/utils"
@@ -13,9 +12,9 @@ import (
 )
 
 // SetupZatarRoutes sets up Zatar game routes
-func SetupZatarRoutes(rh *rest.RestHandler) {
+func SetupZatarRoutes(app *fiber.App) {
 	// Zatar routes
-	zatar := rh.App.Group("/api/v1/zatar")
+	zatar := app.Group("/api/v1/zatar")
 
 	// Public routes (no authentication required)
 	zatar.Post("/recommend", getRandomRecommendationHandler)

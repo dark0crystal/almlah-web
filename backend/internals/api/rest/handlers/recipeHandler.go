@@ -2,7 +2,6 @@
 package handlers
 
 import (
-	"almlah/internals/api/rest"
 	"almlah/internals/cache"
 	"almlah/internals/dto"
 	"almlah/internals/middleware"
@@ -17,8 +16,7 @@ import (
 
 type RecipeHandler struct{}
 
-func SetupRecipeRoutes(rh *rest.RestHandler) {
-	app := rh.App
+func SetupRecipeRoutes(app *fiber.App) {
 	handler := RecipeHandler{}
 
 	// Recipe routes

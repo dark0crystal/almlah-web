@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"almlah/internals/api/rest"
 	"almlah/internals/middleware"
 	"almlah/internals/services"
 	"almlah/internals/utils"
@@ -19,8 +18,7 @@ type UploadHandler struct {
 	imageService *services.SupabaseService
 }
 
-func SetupUploadRoutes(rh *rest.RestHandler) {
-	app := rh.App
+func SetupUploadRoutes(app *fiber.App) {
 	handler := &UploadHandler{
 		imageService: services.NewSupabaseService(),
 	}

@@ -2,7 +2,6 @@
 package handlers
 
 import (
-	"almlah/internals/api/rest"
 	"almlah/internals/dto"
 	"almlah/internals/middleware"
 	"almlah/internals/services"
@@ -13,8 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func SetupRBACRoutes(rh *rest.RestHandler) {
-	app := rh.App
+func SetupRBACRoutes(app *fiber.App) {
 
 	// RBAC routes
 	rbac := app.Group("/api/v1/rbac")

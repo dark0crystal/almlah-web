@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"almlah/internals/api/rest"
 	"almlah/internals/dto"
 	"almlah/internals/middleware"
 	"almlah/internals/services"
@@ -17,8 +16,7 @@ import (
 )
 
 // SetupWilayahImageRoutes - Enhanced with caching
-func SetupWilayahImageRoutes(rh *rest.RestHandler) {
-	app := rh.App
+func SetupWilayahImageRoutes(app *fiber.App) {
 	handler := ImageHandler{}
 
 	// Wilayah image routes

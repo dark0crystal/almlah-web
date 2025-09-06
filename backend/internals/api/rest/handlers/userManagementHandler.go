@@ -2,7 +2,6 @@
 package handlers
 
 import (
-	"almlah/internals/api/rest"
 	"almlah/internals/dto"
 	"almlah/internals/middleware"
 	"almlah/internals/services"
@@ -39,8 +38,7 @@ func handleError(ctx *fiber.Ctx, err error, defaultStatus int, defaultMessage st
 }
 
 // SetupUserManagementRoutes sets up user management routes for admins
-func SetupUserManagementRoutes(rh *rest.RestHandler) {
-	app := rh.App
+func SetupUserManagementRoutes(app *fiber.App) {
 
 	// Admin user management routes
 	admin := app.Group("/api/v1/admin", middleware.AuthRequiredWithRBAC, middleware.AdminOnly())

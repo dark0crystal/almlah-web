@@ -2,7 +2,6 @@
 package handlers
 
 import (
-	"almlah/internals/api/rest"
 	"almlah/internals/cache"
 	"almlah/internals/dto"
 	"almlah/internals/middleware"
@@ -18,8 +17,7 @@ import (
 
 type PropertyHandler struct{}
 
-func SetupPropertyRoutes(rh *rest.RestHandler) {
-	app := rh.App
+func SetupPropertyRoutes(app *fiber.App) {
 	handler := PropertyHandler{}
 
 	// Property routes
