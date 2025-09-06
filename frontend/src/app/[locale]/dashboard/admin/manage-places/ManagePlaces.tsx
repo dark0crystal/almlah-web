@@ -30,6 +30,29 @@ interface PlaceQueryParams {
   governateId?: string;
 }
 
+// Component prop interfaces
+interface ImageManagerProps {
+  placeId: string;
+  images: any[];
+  onImagesChange: (images: any[]) => void;
+  loading: boolean;
+}
+
+interface PlaceCardProps {
+  place: any;
+  onEdit: (placeId: string) => void;
+  onDelete: (placeId: string) => void;
+  onView: (placeId: string) => void;
+}
+
+interface DeleteConfirmationModalProps {
+  place: any;
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: (placeId: string) => void;
+  isDeleting: boolean;
+}
+
 // Enhanced API Service for place management with image support
 const placeService = {
   // Get all places with images
@@ -58,7 +81,7 @@ const placeService = {
   },
 
   // Get place by ID with full image data
-  getPlaceById: async (placeId) => {
+  getPlaceById: async (placeId: string) => {
     const response = await fetch(`${API_BASE_URL}/places/${placeId}`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -74,7 +97,7 @@ const placeService = {
   },
 
   // Get place images separately
-  getPlaceImages: async (placeId) => {
+  getPlaceImages: async (placeId: string) => {
     const response = await fetch(`${API_BASE_URL}/places/${placeId}/images`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -90,11 +113,11 @@ const placeService = {
   },
 
   // Upload new images
-  uploadImages: async (placeId, imageFiles, imageData) => {
+  uploadImages: async (placeId: string, imageFiles: File[], imageData: any[]) => {
     const formData = new FormData();
     
     // Prepare image metadata
-    const imageMetadata = imageData.map((data, index) => ({
+    const imageMetadata = imageData.map((data: any, index: number) => ({
       image_url: '', // Will be set by backend after upload
       alt_text: data.altText || '',
       is_primary: data.isPrimary || false,
@@ -105,7 +128,7 @@ const placeService = {
     formData.append('data', JSON.stringify({ images: imageMetadata }));
     
     // Add image files
-    imageFiles.forEach((file) => {
+    imageFiles.forEach((file: File) => {
       formData.append('images', file);
     });
 
@@ -125,7 +148,7 @@ const placeService = {
   },
 
   // Update image metadata
-  updateImage: async (placeId, imageId, imageData) => {
+  updateImage: async (placeId: string, imageId: string, imageData: any) => {
     const response = await fetch(`${API_BASE_URL}/places/${placeId}/images/${imageId}`, {
       method: 'PUT',
       headers: {
@@ -143,7 +166,7 @@ const placeService = {
   },
 
   // Delete image
-  deleteImage: async (placeId, imageId) => {
+  deleteImage: async (placeId: string, imageId: string) => {
     const response = await fetch(`${API_BASE_URL}/places/${placeId}/images/${imageId}`, {
       method: 'DELETE',
       headers: {
@@ -160,7 +183,7 @@ const placeService = {
   },
 
   // Update place
-  updatePlace: async (placeId, data) => {
+  updatePlace: async (placeId: string, data: any) => {
     const response = await fetch(`${API_BASE_URL}/places/${placeId}`, {
       method: 'PUT',
       headers: {
@@ -178,7 +201,7 @@ const placeService = {
   },
 
   // Delete place with cleanup
-  deletePlace: async (placeId) => {
+  deletePlace: async (placeId: string) => {
     const response = await fetch(`${API_BASE_URL}/places/${placeId}`, {
       method: 'DELETE',
       headers: {
@@ -195,7 +218,7 @@ const placeService = {
   },
 
   // Content Section Images
-  getContentSectionImages: async (sectionId) => {
+  getContentSectionImages: async (sectionId: string) => {
     const response = await fetch(`${API_BASE_URL}/content-sections/${sectionId}/images`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -210,10 +233,10 @@ const placeService = {
     return response.json();
   },
 
-  uploadContentSectionImages: async (sectionId, imageFiles, imageData) => {
+  uploadContentSectionImages: async (sectionId: string, imageFiles: File[], imageData: any[]) => {
     const formData = new FormData();
     
-    const imageMetadata = imageData.map((data, index) => ({
+    const imageMetadata = imageData.map((data: any, index: number) => ({
       image_url: '',
       alt_text_ar: data.altTextAr || '',
       alt_text_en: data.altTextEn || '',
@@ -224,7 +247,7 @@ const placeService = {
 
     formData.append('data', JSON.stringify({ images: imageMetadata }));
     
-    imageFiles.forEach((file) => {
+    imageFiles.forEach((file: File) => {
       formData.append('images', file);
     });
 
@@ -243,7 +266,7 @@ const placeService = {
     return response.json();
   },
 
-  deleteContentSectionImage: async (sectionId, imageId) => {
+  deleteContentSectionImage: async (sectionId: string, imageId: string) => {
     const response = await fetch(`${API_BASE_URL}/content-sections/${sectionId}/images/${imageId}`, {
       method: 'DELETE',
       headers: {
@@ -261,7 +284,7 @@ const placeService = {
 };
 
 // Enhanced Image Manager Component
-const ImageManager = ({ placeId, images, onImagesChange, loading }) => {
+const ImageManager = ({ placeId, images, onImagesChange, loading }: ImageManagerProps) => {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -277,7 +300,7 @@ const ImageManager = ({ placeId, images, onImagesChange, loading }) => {
     }
   };
 
-  const handleFileUpload = async (files) => {
+  const handleFileUpload = async (files: FileList | File[]) => {
     if (!files || files.length === 0) return;
 
     try {
@@ -315,20 +338,20 @@ const ImageManager = ({ placeId, images, onImagesChange, loading }) => {
       }
     } catch (err) {
       console.error('Error uploading images:', err);
-      alert(`Failed to upload images: ${err.message}`);
+      alert(`Failed to upload images: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setUploading(false);
     }
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragOver(false);
     const files = e.dataTransfer.files;
     handleFileUpload(files);
   };
 
-  const updateImageMetadata = async (imageId, updates) => {
+  const updateImageMetadata = async (imageId: string, updates: any) => {
     try {
       const response = await placeService.updateImage(placeId, imageId, updates);
       if (response.success) {
@@ -336,11 +359,11 @@ const ImageManager = ({ placeId, images, onImagesChange, loading }) => {
       }
     } catch (err) {
       console.error('Error updating image:', err);
-      alert(`Failed to update image: ${err.message}`);
+      alert(`Failed to update image: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
-  const deleteImage = async (imageId) => {
+  const deleteImage = async (imageId: string) => {
     try {
       const response = await placeService.deleteImage(placeId, imageId);
       if (response.success) {
@@ -348,11 +371,11 @@ const ImageManager = ({ placeId, images, onImagesChange, loading }) => {
       }
     } catch (err) {
       console.error('Error deleting image:', err);
-      alert(`Failed to delete image: ${err.message}`);
+      alert(`Failed to delete image: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
-  const setPrimaryImage = async (imageId) => {
+  const setPrimaryImage = async (imageId: string) => {
     try {
       const response = await placeService.updateImage(placeId, imageId, { is_primary: true });
       if (response.success) {
@@ -360,7 +383,7 @@ const ImageManager = ({ placeId, images, onImagesChange, loading }) => {
       }
     } catch (err) {
       console.error('Error setting primary image:', err);
-      alert(`Failed to set primary image: ${err.message}`);
+      alert(`Failed to set primary image: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
@@ -385,7 +408,7 @@ const ImageManager = ({ placeId, images, onImagesChange, loading }) => {
               multiple
               accept="image/*"
               className="hidden"
-              onChange={(e) => handleFileUpload(e.target.files)}
+              onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
               disabled={uploading}
             />
           </label>
@@ -430,7 +453,7 @@ const ImageManager = ({ placeId, images, onImagesChange, loading }) => {
               multiple
               accept="image/*"
               className="hidden"
-              onChange={(e) => handleFileUpload(e.target.files)}
+              onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
               disabled={uploading}
             />
           </label>
@@ -461,7 +484,7 @@ const ImageManager = ({ placeId, images, onImagesChange, loading }) => {
                   height={128}
                   className="w-full h-32 object-cover"
                   onError={(e) => {
-                    e.target.src = '/placeholder-image.jpg'; // Add a placeholder image
+                    (e.target as HTMLImageElement).src = '/placeholder-image.jpg'; // Add a placeholder image
                   }}
                 />
                 
@@ -536,7 +559,7 @@ const ImageManager = ({ placeId, images, onImagesChange, loading }) => {
               multiple
               accept="image/*"
               className="hidden"
-              onChange={(e) => handleFileUpload(e.target.files)}
+              onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
             />
           </label>
         </div>
@@ -546,11 +569,11 @@ const ImageManager = ({ placeId, images, onImagesChange, loading }) => {
 };
 
 // Enhanced Place Card Component with proper image handling
-const PlaceCard = ({ place, onEdit, onDelete, onView }) => {
+const PlaceCard = ({ place, onEdit, onDelete, onView }: PlaceCardProps) => {
   const [showActions, setShowActions] = useState(false);
   
   // Handle image URL properly from backend
-  const primaryImage = place.images?.find(img => img.is_primary) || place.images?.[0];
+  const primaryImage = place.images?.find((img: any) => img.is_primary) || place.images?.[0];
   const imageCount = place.images?.length || 0;
   const sectionCount = place.content_sections?.length || 0;
 
@@ -565,7 +588,7 @@ const PlaceCard = ({ place, onEdit, onDelete, onView }) => {
             fill
             className="object-cover"
             onError={(e) => {
-              e.target.src = '/placeholder-image.jpg';
+              (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
             }}
           />
         ) : (
@@ -659,7 +682,7 @@ const PlaceCard = ({ place, onEdit, onDelete, onView }) => {
         {/* Categories */}
         {place.categories && place.categories.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
-            {place.categories.slice(0, 2).map((category) => (
+            {place.categories.slice(0, 2).map((category: any) => (
               <span 
                 key={category.id}
                 className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
@@ -698,7 +721,7 @@ const PlaceCard = ({ place, onEdit, onDelete, onView }) => {
 };
 
 // Delete confirmation modal component (unchanged)
-const DeleteConfirmModal = ({ place, isOpen, onClose, onConfirm, isDeleting }) => {
+const DeleteConfirmModal = ({ place, isOpen, onClose, onConfirm, isDeleting }: DeleteConfirmationModalProps) => {
   if (!isOpen || !place) return null;
 
   return (
