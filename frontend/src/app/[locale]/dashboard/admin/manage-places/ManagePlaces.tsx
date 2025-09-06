@@ -23,10 +23,17 @@ import {
 // API Configuration
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:9000/api/v1';
 
+// Interface for API query parameters
+interface PlaceQueryParams {
+  search?: string;
+  categoryId?: string;
+  governateId?: string;
+}
+
 // Enhanced API Service for place management with image support
 const placeService = {
   // Get all places with images
-  getAllPlaces: async (params = {}) => {
+  getAllPlaces: async (params: PlaceQueryParams = {}) => {
     const queryParams = new URLSearchParams();
     if (params.search) queryParams.append('q', params.search);
     if (params.categoryId) queryParams.append('categoryId', params.categoryId);

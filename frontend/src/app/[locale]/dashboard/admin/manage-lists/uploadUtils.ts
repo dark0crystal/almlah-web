@@ -44,7 +44,7 @@ export async function uploadMultiplePendingImages(pendingUploads: PendingImageUp
 export async function uploadSingleFile(
   file: File, 
   bucket: string, 
-  _onProgress?: (progress: number) => void
+  // _onProgress?: (progress: number) => void
 ): Promise<UploadResult> {
   // Note: Current uploadService.uploadSingle doesn't support progress callbacks
   // The _onProgress parameter is kept for API compatibility but not used
