@@ -1,4 +1,6 @@
 // Types for destination components
+import { Place } from '@/types';
+
 export type Locale = 'ar' | 'en';
 
 // Core destination/governate interfaces
