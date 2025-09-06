@@ -16,8 +16,8 @@ interface Governate {
   slug: string;
   description_ar?: string;
   description_en?: string;
-  latitude?: string;
-  longitude?: string;
+  latitude?: number;
+  longitude?: number;
   sort_order: number;
   images?: GovernateImage[];
   gallery_images?: string;
@@ -39,10 +39,10 @@ interface GovernateFormData {
   slug: string;
   description_ar?: string;
   description_en?: string;
-  latitude?: string;
-  longitude?: string;
-  sort_order: number;
-  gallery_images: unknown[];
+  latitude?: number | string;
+  longitude?: number | string;
+  sort_order: number | string;
+  gallery_images?: string;
 }
 
 // API service functions
@@ -233,15 +233,25 @@ export default function ManageGovernorate() {
   const [apiStatus, setApiStatus] = useState('testing'); // 'testing', 'connected', 'error'
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Test API connection on component mount
-  useEffect(() => {
-    testApiConnection();
-    // Check if user is already authenticated
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      setIsAuthenticated(true);
+  const loadGovernorates = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(''); // Clear previous errors
+      
+      const data = await governateAPI.getAll();
+      console.log('Loaded governorates:', data);
+      setGovernorates(data || []);
+      setFilteredGovernorates(data || []);
+    } catch (err) {
+      const errorMessage = (err as Error).message || 'Unknown error occurred';
+      setError(errorMessage);
+      console.error('Error loading governorates:', err);
+      setGovernorates([]);
+      setFilteredGovernorates([]);
+    } finally {
+      setLoading(false);
     }
-  }, [testApiConnection]);
+  }, []);
 
   const testApiConnection = useCallback(async () => {
     try {
@@ -273,6 +283,16 @@ export default function ManageGovernorate() {
     }
   }, [loadGovernorates]);
 
+  // Test API connection on component mount
+  useEffect(() => {
+    testApiConnection();
+    // Check if user is already authenticated
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      setIsAuthenticated(true);
+    }
+  }, [testApiConnection]);
+
   useEffect(() => {
     // Filter governorates based on search term
     if (searchTerm.trim()) {
@@ -288,26 +308,6 @@ export default function ManageGovernorate() {
       setFilteredGovernorates(governorates);
     }
   }, [searchTerm, governorates]);
-
-  const loadGovernorates = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(''); // Clear previous errors
-      
-      const data = await governateAPI.getAll();
-      console.log('Loaded governorates:', data);
-      setGovernorates(data || []);
-      setFilteredGovernorates(data || []);
-    } catch (err) {
-      const errorMessage = (err as Error).message || 'Unknown error occurred';
-      setError(errorMessage);
-      console.error('Error loading governorates:', err);
-      setGovernorates([]);
-      setFilteredGovernorates([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   const handleLogin = (token: string) => {
     setIsAuthenticated(true);
@@ -631,17 +631,19 @@ export default function ManageGovernorate() {
         currentLang={currentLang}
       />
 
-      <DeleteConfirmModal
-        isOpen={showDeleteModal}
-        onClose={() => {
-          setShowDeleteModal(false);
-          setSelectedGovernate(null);
-        }}
-        governate={selectedGovernate}
-        onConfirm={handleDeleteGovernate}
-        loading={loading}
-        currentLang={currentLang}
-      />
+      {selectedGovernate && (
+        <DeleteConfirmModal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setSelectedGovernate(null);
+          }}
+          governate={selectedGovernate}
+          onConfirm={handleDeleteGovernate}
+          loading={loading}
+          currentLang={currentLang}
+        />
+      )}
     </div>
   );
 }

@@ -264,13 +264,13 @@ const PlaceImageManager = ({ placeId, onImageCountChange }: { placeId: string; o
       }
     } catch (err) {
       console.error('Error uploading images:', err);
-      alert(`Failed to upload images: ${err.message}`);
+      alert(`Failed to upload images: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setUploading(false);
     }
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragOver(false);
     const files = e.dataTransfer.files;
@@ -285,7 +285,7 @@ const PlaceImageManager = ({ placeId, onImageCountChange }: { placeId: string; o
       }
     } catch (err) {
       console.error('Error updating image:', err);
-      alert(`Failed to update image: ${err.message}`);
+      alert(`Failed to update image: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
@@ -299,7 +299,7 @@ const PlaceImageManager = ({ placeId, onImageCountChange }: { placeId: string; o
       }
     } catch (err) {
       console.error('Error deleting image:', err);
-      alert(`Failed to delete image: ${err.message}`);
+      alert(`Failed to delete image: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
@@ -311,7 +311,7 @@ const PlaceImageManager = ({ placeId, onImageCountChange }: { placeId: string; o
       }
     } catch (err) {
       console.error('Error setting primary image:', err);
-      alert(`Failed to set primary image: ${err.message}`);
+      alert(`Failed to set primary image: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
@@ -412,7 +412,7 @@ const PlaceImageManager = ({ placeId, onImageCountChange }: { placeId: string; o
                   height={128}
                   className="w-full h-32 object-cover"
                   onError={(e) => {
-                    e.target.src = '/placeholder-image.jpg';
+                    (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
                   }}
                 />
                 
@@ -543,7 +543,7 @@ const ContentSectionEditor = ({ placeId, sections, onSectionsChange }: { placeId
       onSectionsChange(updatedSections);
     } catch (err) {
       console.error('Error deleting section:', err);
-      alert(`Failed to delete section: ${err.message}`);
+      alert(`Failed to delete section: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setSaving(false);
     }
@@ -683,10 +683,10 @@ const ContentSectionEditor = ({ placeId, sections, onSectionsChange }: { placeId
 
 // Main Edit Component
 export default function PlaceEdit() {
-  const [place, setPlace] = useState(null);
+  const [place, setPlace] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [imageCount, setImageCount] = useState(0);
   
@@ -766,7 +766,7 @@ export default function PlaceEdit() {
       }
     } catch (err) {
       console.error('Error loading place:', err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
@@ -884,7 +884,7 @@ export default function PlaceEdit() {
       await loadPlace();
     } catch (err) {
       console.error('Error saving place:', err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setSaving(false);
     }

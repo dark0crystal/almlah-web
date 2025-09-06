@@ -17,6 +17,8 @@ interface Governate {
   id?: string;
   name_ar?: string;
   name_en?: string;
+  subtitle_ar?: string;
+  subtitle_en?: string;
   description_ar?: string;
   description_en?: string;
   slug?: string;
@@ -30,6 +32,8 @@ interface Governate {
 interface GovernateFormData {
   name_ar: string;
   name_en: string;
+  subtitle_ar: string;
+  subtitle_en: string;
   description_ar: string;
   description_en: string;
   slug: string;
@@ -109,7 +113,7 @@ export const GovernateFormModal: React.FC<GovernateFormModalProps> = ({
     description_en: '',
     latitude: '',
     longitude: '',
-    sort_order: 0
+    sort_order: '0'
   });
   const [galleryImages, setGalleryImages] = useState<ExistingImage[]>([]);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -127,9 +131,9 @@ export const GovernateFormModal: React.FC<GovernateFormModalProps> = ({
         slug: governate.slug || '',
         description_ar: governate.description_ar || '',
         description_en: governate.description_en || '',
-        latitude: governate.latitude || '',
-        longitude: governate.longitude || '',
-        sort_order: governate.sort_order || 0
+        latitude: governate.latitude?.toString() || '',
+        longitude: governate.longitude?.toString() || '',
+        sort_order: governate.sort_order?.toString() || '0'
       });
       
       // Parse images from API response (preferred) or legacy JSON field
@@ -151,7 +155,7 @@ export const GovernateFormModal: React.FC<GovernateFormModalProps> = ({
         description_en: '',
         latitude: '',
         longitude: '',
-        sort_order: 0
+        sort_order: '0'
       });
       setGalleryImages([]);
     }
@@ -267,16 +271,17 @@ export const GovernateFormModal: React.FC<GovernateFormModalProps> = ({
 
     setLoading(true);
     try {
-      const submitData = { ...formData };
-      
-      // Convert numeric fields
-      if (submitData.latitude) submitData.latitude = parseFloat(String(submitData.latitude));
-      if (submitData.longitude) submitData.longitude = parseFloat(String(submitData.longitude));
-      if (submitData.sort_order) submitData.sort_order = parseInt(String(submitData.sort_order)) || 0;
+      const submitData: GovernateFormData = { 
+        ...formData,
+        // Convert numeric fields
+        latitude: formData.latitude ? parseFloat(String(formData.latitude)) : '',
+        longitude: formData.longitude ? parseFloat(String(formData.longitude)) : '',
+        sort_order: formData.sort_order ? parseInt(String(formData.sort_order)) || 0 : 0
+      };
 
       // Save the governate first
-      const savedGovernate = await onSave(governate?.id || null, submitData);
-      const governateId = savedGovernate?.id || governate?.id;
+      await onSave(governate?.id || null, submitData);
+      const governateId = governate?.id || null;
 
       // Upload new images if any
       if (pendingFiles.length > 0 && governateId) {

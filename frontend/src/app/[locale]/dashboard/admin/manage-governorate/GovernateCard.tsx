@@ -3,6 +3,14 @@ import React from 'react';
 import Image from 'next/image';
 import { Edit, Trash2, MapPin, Eye, Image as ImageIcon } from 'lucide-react';
 
+interface GovernateImage {
+  id: string;
+  image_url: string;
+  alt_text: string;
+  is_primary: boolean;
+  display_order: number;
+}
+
 interface Governate {
   id: string;
   name_ar: string;
@@ -18,7 +26,7 @@ interface Governate {
   is_active?: boolean;
   wilayah_count?: number;
   place_count?: number;
-  images?: unknown[];
+  images?: GovernateImage[];
   gallery_images?: string;
 }
 
