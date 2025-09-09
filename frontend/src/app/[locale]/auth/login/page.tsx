@@ -74,18 +74,10 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disable
   const [googleLoaded, setGoogleLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [prompting, setPrompting] = useState(false);
-  const [failureTimer, setFailureTimer] = useState<NodeJS.Timeout | null>(null);
   const t = useTranslations('auth.login');
 
   const handleCredentialResponse = useCallback(async (response: GoogleCredentialResponse) => {
     console.log('Google credential response received:', response);
-    
-    // Clear the failure timer since we got a response
-    if (failureTimer) {
-      clearTimeout(failureTimer);
-      setFailureTimer(null);
-    }
-    
     setLoading(true);
     setPrompting(false);
     try {
@@ -98,36 +90,29 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disable
     } finally {
       setLoading(false);
     }
-  }, [onSuccess, onError, failureTimer]);
+  }, [onSuccess, onError]);
 
   const initializeGoogleSignIn = useCallback(() => {
     if (typeof window !== 'undefined' && window.google?.accounts) {
       console.log('Initializing Google Sign-In...');
-      console.log('Current domain:', window.location.origin);
-      console.log('Google Client ID:', env.GOOGLE_CLIENT_ID);
       
       if (!env.GOOGLE_CLIENT_ID) {
         console.error('Google Client ID not configured');
-        onError('Google Sign-In is not configured properly. Please contact support.');
+        onError(t('errors.googleNotConfigured'));
         return;
       }
       
-      try {
-        window.google.accounts.id.initialize({
-          client_id: env.GOOGLE_CLIENT_ID,
-          callback: handleCredentialResponse,
-          auto_select: false,
-          cancel_on_tap_outside: true,
-        });
-        console.log('Google Sign-In initialized successfully');
-      } catch (error) {
-        console.error('Failed to initialize Google Sign-In:', error);
-        onError('Failed to initialize Google Sign-In. The domain may not be authorized.');
-      }
+      window.google.accounts.id.initialize({
+        client_id: env.GOOGLE_CLIENT_ID,
+        callback: handleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
+      console.log('Google Sign-In initialized');
     } else {
       console.error('Google Identity Services not available');
     }
-  }, [onError, handleCredentialResponse]);
+  }, [onError, t, handleCredentialResponse]);
 
   useEffect(() => {
     // Check if script already exists
@@ -169,46 +154,14 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disable
 
     if (googleLoaded && typeof window !== 'undefined' && window.google?.accounts) {
       console.log('Prompting Google Sign-In...');
-      console.log('Current domain:', window.location.origin);
-      console.log('Google Client ID:', env.GOOGLE_CLIENT_ID);
       setPrompting(true);
-      
-      // Set a timer to detect if Google Sign-In fails
-      const timer = setTimeout(() => {
-        console.log('Google Identity Services prompt failed, trying redirect fallback...');
-        setPrompting(false);
-        setFailureTimer(null);
-        
-        // Use traditional OAuth 2.0 redirect
-        const redirectUri = encodeURIComponent(`${window.location.origin}/auth/login`);
-        const scope = encodeURIComponent('openid email profile');
-        const state = encodeURIComponent(JSON.stringify({ redirect: '/dashboard' }));
-        const oauthUrl = `https://accounts.google.com/oauth/authorize?` +
-          `client_id=${env.GOOGLE_CLIENT_ID}&` +
-          `redirect_uri=${redirectUri}&` +
-          `scope=${scope}&` +
-          `response_type=code&` +
-          `state=${state}&` +
-          `access_type=offline&` +
-          `prompt=select_account`;
-        
-        console.log('Redirecting to OAuth URL:', oauthUrl);
-        window.open(oauthUrl, '_self');
-      }, 3000); // Give Google Identity Services 3 seconds to work
-      
-      setFailureTimer(timer);
-      
       try {
-        // Try the Google Identity Services prompt
         window.google.accounts.id.prompt();
-        
-        // Clear the failure timer if prompt succeeds (callback will handle success)
-        // The timer will be cleared in handleCredentialResponse if successful
+        // Set a timeout to reset prompting state in case prompt doesn't trigger callback
+        setTimeout(() => {
+          setPrompting(false);
+        }, 3000);
       } catch (error) {
-        if (timer) {
-          clearTimeout(timer);
-          setFailureTimer(null);
-        }
         setPrompting(false);
         console.error('Failed to show Google prompt:', error);
         onError('Google Sign-In failed. Please try again or contact support.');
