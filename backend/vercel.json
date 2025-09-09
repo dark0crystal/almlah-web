@@ -24,6 +24,14 @@
         {
           "key": "Access-Control-Allow-Headers",
           "value": "X-Requested-With, Content-Type, Authorization"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
+        },
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "unsafe-none"
         }
       ]
     }
