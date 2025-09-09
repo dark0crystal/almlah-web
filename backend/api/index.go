@@ -62,6 +62,13 @@ func init() {
 			AllowMethods: "GET,POST,PUT,DELETE,PATCH,OPTIONS",
 			AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 		}))
+		
+		// Add COOP headers to all responses
+		app.Use(func(c *fiber.Ctx) error {
+			c.Set("Cross-Origin-Opener-Policy", "same-origin-allow-popups")
+			c.Set("Cross-Origin-Embedder-Policy", "unsafe-none")
+			return c.Next()
+		})
 
 		// Setup routes
 		setupRoutes(app)
@@ -104,19 +111,7 @@ func setupRoutes(app *fiber.App) {
 
 // Handler is the Vercel serverless function entry point
 func Handler(w http.ResponseWriter, r *http.Request) {
-	// Set CORS and COOP headers
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
-	w.Header().Set("Cross-Origin-Opener-Policy", "same-origin-allow-popups")
-	w.Header().Set("Cross-Origin-Embedder-Policy", "unsafe-none")
-
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
-	// Forward to the Fiber app using adaptor
+	// Forward to the Fiber app using adaptor (CORS and COOP headers handled by Fiber middleware)
 	handler := adaptor.FiberApp(app)
 	handler(w, r)
 }
