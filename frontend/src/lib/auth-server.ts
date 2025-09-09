@@ -2,7 +2,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST || 'http://localhost:9000/api/v1';
 
 // Types matching the client-side auth store
 interface UserRole {

@@ -2,7 +2,7 @@
 import { PlaceCategory, ApiResponse, PlaceWithNewStatus } from './types';
 import { Place } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST || 'http://localhost:9000';
 
 class PlacesApiService {
   private async makeRequest<T>(

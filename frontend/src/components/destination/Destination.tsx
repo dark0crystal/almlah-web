@@ -7,7 +7,7 @@ import DestinationsMap from './DestinationsMap';
 import type { Destination, GovernorateData, GovernorateImage } from './types';
 
 // API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST || 'http://localhost:9000';
 
 // API function to fetch governorates
 const fetchGovernoratesFromAPI = async () => {

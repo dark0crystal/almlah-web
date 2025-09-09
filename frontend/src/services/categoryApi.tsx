@@ -13,7 +13,7 @@ interface ApiResponse<T = unknown> {
 }
 
 // API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST || 'http://localhost:9000';
 
 /**
  * Fetch primary categories from API with localization support
