@@ -95,24 +95,31 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disable
   const initializeGoogleSignIn = useCallback(() => {
     if (typeof window !== 'undefined' && window.google?.accounts) {
       console.log('Initializing Google Sign-In...');
+      console.log('Current domain:', window.location.origin);
+      console.log('Google Client ID:', env.GOOGLE_CLIENT_ID);
       
       if (!env.GOOGLE_CLIENT_ID) {
         console.error('Google Client ID not configured');
-        onError(t('errors.googleNotConfigured'));
+        onError('Google Sign-In is not configured properly. Please contact support.');
         return;
       }
       
-      window.google.accounts.id.initialize({
-        client_id: env.GOOGLE_CLIENT_ID,
-        callback: handleCredentialResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
-      console.log('Google Sign-In initialized');
+      try {
+        window.google.accounts.id.initialize({
+          client_id: env.GOOGLE_CLIENT_ID,
+          callback: handleCredentialResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+        console.log('Google Sign-In initialized successfully');
+      } catch (error) {
+        console.error('Failed to initialize Google Sign-In:', error);
+        onError('Failed to initialize Google Sign-In. The domain may not be authorized.');
+      }
     } else {
       console.error('Google Identity Services not available');
     }
-  }, [onError, t, handleCredentialResponse]);
+  }, [onError, handleCredentialResponse]);
 
   useEffect(() => {
     // Check if script already exists
@@ -156,21 +163,37 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disable
       console.log('Prompting Google Sign-In...');
       setPrompting(true);
       try {
+        // First try the prompt method
         window.google.accounts.id.prompt();
-        // Set a timeout to reset prompting state in case prompt doesn't trigger callback
+        
+        // Fallback timeout
         setTimeout(() => {
           setPrompting(false);
-        }, 3000);
+        }, 5000);
       } catch (error) {
         setPrompting(false);
         console.error('Failed to show Google prompt:', error);
-        onError(t('errors.googlePromptFailed'));
+        console.log('Trying OAuth 2.0 redirect fallback...');
+        
+        // Fallback to traditional OAuth 2.0 flow
+        const redirectUri = encodeURIComponent(`${window.location.origin}/auth/login`);
+        const scope = encodeURIComponent('openid email profile');
+        const oauthUrl = `https://accounts.google.com/oauth/authorize?` +
+          `client_id=${env.GOOGLE_CLIENT_ID}&` +
+          `redirect_uri=${redirectUri}&` +
+          `scope=${scope}&` +
+          `response_type=code&` +
+          `access_type=offline&` +
+          `prompt=consent`;
+        
+        console.log('Redirecting to:', oauthUrl);
+        window.location.href = oauthUrl;
       }
     } else {
       console.error('Google Sign-In not loaded');
-      onError(t('errors.googleNotLoaded'));
+      onError('Google Sign-In not loaded. Please refresh the page.');
     }
-  }, [googleLoaded, prompting, loading, onError, t]);
+  }, [googleLoaded, prompting, loading, onError]);
 
   return (
     <button
