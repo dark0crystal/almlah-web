@@ -106,11 +106,23 @@ const setTokenInStorage = (token: string): void => {
   console.log('🔐 SETTING token in localStorage:', token.substring(0, 20) + '...');
   localStorage.setItem('authToken', token);
   // Also set as cookie for server-side access
-  // Remove 'secure' flag for localhost development, add it for production
-  const isProduction = window.location.protocol === 'https:';
-  const secureFlag = isProduction ? '; secure' : '';
-  document.cookie = `authToken=${token}; path=/; max-age=${7 * 24 * 60 * 60}${secureFlag}; samesite=strict`;
+  // Use simple cookie setting for development
+  const maxAge = 7 * 24 * 60 * 60; // 7 days in seconds
+  document.cookie = `authToken=${token}; path=/; max-age=${maxAge}; samesite=lax`;
   console.log('🍪 SETTING token in cookie for server-side access');
+  
+  // Verify cookie was set
+  setTimeout(() => {
+    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+      const [key, value] = cookie.trim().split('=');
+      acc[key] = value;
+      return acc;
+    }, {} as Record<string, string>);
+    console.log('🍪 Cookie verification - authToken present:', !!cookies.authToken);
+    if (cookies.authToken) {
+      console.log('🍪 Cookie value preview:', cookies.authToken.substring(0, 20) + '...');
+    }
+  }, 100);
 };
 
 const removeTokenFromStorage = (): void => {
@@ -120,7 +132,7 @@ const removeTokenFromStorage = (): void => {
   // Also remove old format if it exists
   localStorage.removeItem('auth-storage');
   // Clear the cookie
-  document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; samesite=strict';
+  document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; samesite=lax';
   console.log('🍪 REMOVING token from cookie');
 };
 

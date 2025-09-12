@@ -2,7 +2,8 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST || 'http://localhost:9000/api/v1';
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_HOST || 'http://localhost:9000'}/api/v1`;
+console.log('🌐 Server-side API_BASE_URL:', API_BASE_URL);
 
 // Types matching the client-side auth store
 interface UserRole {
@@ -57,7 +58,9 @@ interface AuthResult {
 // Get auth token from cookies
 export async function getAuthToken(): Promise<string | null> {
   const cookieStore = await cookies();
-  return cookieStore.get('authToken')?.value || null;
+  const token = cookieStore.get('authToken')?.value || null;
+  console.log('🍪 Server-side token from cookies:', token ? token.substring(0, 20) + '...' : 'null');
+  return token;
 }
 
 // Verify token and get user data
@@ -66,8 +69,11 @@ export async function verifyAuth(): Promise<AuthResult> {
     const token = await getAuthToken();
     
     if (!token) {
+      console.log('❌ Server-side auth failed: No token found in cookies');
       return { isAuthenticated: false, user: null, token: null };
     }
+
+    console.log('🔍 Server-side verifying token with API...');
 
     // Fetch user data from API
     const [profileResponse, permissionsResponse, rolesResponse] = await Promise.all([
@@ -86,8 +92,11 @@ export async function verifyAuth(): Promise<AuthResult> {
     ]);
 
     if (!profileResponse.ok) {
+      console.log('❌ Server-side auth failed: Profile API returned', profileResponse.status, profileResponse.statusText);
       return { isAuthenticated: false, user: null, token: null };
     }
+
+    console.log('✅ Server-side auth successful: Profile API responded OK');
 
     const profileData = await profileResponse.json();
     const permissionsData = permissionsResponse.ok ? await permissionsResponse.json() : { data: [] };
@@ -101,7 +110,7 @@ export async function verifyAuth(): Promise<AuthResult> {
 
     return { isAuthenticated: true, user, token };
   } catch (error) {
-    console.error('Server auth verification failed:', error);
+    console.error('❌ Server auth verification failed with error:', error);
     return { isAuthenticated: false, user: null, token: null };
   }
 }
