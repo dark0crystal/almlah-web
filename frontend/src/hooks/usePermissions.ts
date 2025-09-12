@@ -3,13 +3,20 @@ import { useAuthStore } from '@/stores/authStore';
 
 // Custom hook for easier permission checking with Zustand
 export const usePermissions = () => {
-  const { 
-    user, 
-    hasRole, 
-    hasAnyRole, 
-    hasPermission, 
-    hasAnyPermission 
-  } = useAuthStore();
+  const { user, hasPermission } = useAuthStore();
+
+  // Helper functions
+  const hasRole = (roleName: string): boolean => {
+    return user?.roles?.includes(roleName) || false;
+  };
+
+  const hasAnyRole = (roleNames: string[]): boolean => {
+    return roleNames.some(roleName => hasRole(roleName));
+  };
+
+  const hasAnyPermission = (permissions: string[]): boolean => {
+    return permissions.some(permission => hasPermission(permission));
+  };
   
   return {
     // User info
@@ -66,7 +73,7 @@ export const useAuth = () => {
     isAuthenticated,
     login,
     logout,
-    refreshUserData
+    checkAuth
   } = useAuthStore();
 
   return {
@@ -76,7 +83,7 @@ export const useAuth = () => {
     isAuthenticated: isAuthenticated(),
     login,
     logout,
-    refreshUserData
+    checkAuth
   };
 };
 

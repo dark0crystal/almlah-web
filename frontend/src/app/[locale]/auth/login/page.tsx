@@ -1,429 +1,117 @@
-// app/auth/login/page.tsx - Updated to work with new auth store
-"use client"
-import React, { useState, useEffect, useCallback } from 'react';
-import { Eye, EyeOff, Mail, Lock, User, AlertTriangle, CheckCircle, Loader } from 'lucide-react';
-import { env, validateEnv } from '@/config/env';
-import Link from 'next/link';
+// Simple Login Page
+'use client';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
-import { useTranslations } from 'next-intl';
-import {
-  LoginAuthAPI,
-  GoogleCredentialResponse,
-  GoogleSignInProps,
-  LoginCredentials,
-  AuthResult,
-  LoginFormData,
-  InputChangeHandler,
-  FormSubmitHandler
-} from '../types';
+// import { useTranslations } from 'next-intl'; // Removed unused import
+import { Eye, EyeOff, Mail, Lock, AlertTriangle } from 'lucide-react';
 
-// Validate environment variables on component mount
-if (typeof window !== 'undefined') {
-  validateEnv();
-}
-
-// API Service
-const authAPI: LoginAuthAPI = {
-  login: async (credentials: LoginCredentials): Promise<AuthResult> => {
-    const response = await fetch(`${env.API_HOST}/api/v1/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(credentials)
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    if (!data.success) {
-      throw new Error(data.error || 'Authentication failed');
-    }
-    
-    return data.data;
-  },
-
-  googleAuth: async (token: string): Promise<AuthResult> => {
-    console.log('Sending Google auth request with token:', token.substring(0, 50) + '...');
-    const response = await fetch(`${env.API_HOST}/api/v1/auth/google`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token })
-    });
-    
-    console.log('Google auth response status:', response.status);
-    const data = await response.json();
-    console.log('Google auth response data:', data);
-    
-    if (!response.ok) {
-      throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    if (!data.success) {
-      throw new Error(data.error || 'Authentication failed');
-    }
-    
-    return data.data;
-  },
-};
-
-// Google Sign-In Component
-const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disabled }) => {
-  const [googleLoaded, setGoogleLoaded] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [prompting, setPrompting] = useState(false);
-  const t = useTranslations('auth.login');
-
-  const handleCredentialResponse = useCallback(async (response: GoogleCredentialResponse) => {
-    console.log('Google credential response received:', response);
-    setLoading(true);
-    setPrompting(false);
-    try {
-      const result = await authAPI.googleAuth(response.credential);
-      console.log('Google auth successful:', result);
-      onSuccess(result);
-    } catch (error) {
-      console.error('Google auth failed:', error);
-      const errorMessage = (error as Error).message || 'Google authentication failed';
-      // Check if it's a FedCM error and provide specific guidance
-      if (errorMessage.includes('FedCM') || errorMessage.includes('NetworkError')) {
-        onError('Google Sign-In temporarily unavailable. Please use email/password login.');
-      } else {
-        onError(errorMessage);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [onSuccess, onError]);
-
-  const initializeGoogleSignIn = useCallback(() => {
-    if (typeof window !== 'undefined' && window.google?.accounts) {
-      console.log('Initializing Google Sign-In...');
-      
-      if (!env.GOOGLE_CLIENT_ID) {
-        console.error('Google Client ID not configured');
-        onError(t('errors.googleNotConfigured'));
-        return;
-      }
-      
-      try {
-        window.google.accounts.id.initialize({
-          client_id: env.GOOGLE_CLIENT_ID,
-          callback: handleCredentialResponse,
-          auto_select: false,
-          cancel_on_tap_outside: true,
-          use_fedcm_for_prompt: false // Disable FedCM to avoid conflicts
-        });
-        console.log('Google Sign-In initialized successfully');
-        setGoogleLoaded(true); // Explicitly set loaded state
-      } catch (error) {
-        console.error('Failed to initialize Google Sign-In:', error);
-        // Try without FedCM-specific settings as fallback
-        try {
-          window.google.accounts.id.initialize({
-            client_id: env.GOOGLE_CLIENT_ID,
-            callback: handleCredentialResponse,
-            auto_select: false,
-            cancel_on_tap_outside: true
-          });
-          console.log('Google Sign-In initialized successfully (fallback)');
-          setGoogleLoaded(true);
-        } catch (fallbackError) {
-          console.error('Google Sign-In fallback initialization failed:', fallbackError);
-        }
-      }
-    } else {
-      console.log('Google Identity Services not yet available, will retry...');
-    }
-  }, [onError, t, handleCredentialResponse]);
+// Simple Google Sign-In Component
+const GoogleSignIn = ({ onSuccess, disabled }: { 
+  onSuccess: (token: string) => void; 
+  disabled: boolean; 
+}) => {
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Suppress FedCM console errors by intercepting them
-    const originalConsoleError = console.error;
-    const suppressedConsole = (...args: unknown[]) => {
-      const message = args.join(' ');
-      // Suppress specific FedCM and Google Sign-In related errors
-      if (message.includes('FedCM get() rejects with NetworkError') ||
-          message.includes('GSI_LOGGER') ||
-          message.includes('Error retrieving a token')) {
-        return; // Don't log these errors
-      }
-      originalConsoleError.apply(console, args);
-    };
-    console.error = suppressedConsole;
-
-    // Check if script already exists
-    const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
-    if (existingScript) {
-      if (window.google?.accounts) {
-        console.log('Google Identity Services already available, initializing...');
-        initializeGoogleSignIn();
-      } else {
-        console.log('Script exists but Google services not ready, waiting...');
-        // Wait for the script to be ready
-        const checkGoogle = setInterval(() => {
-          if (window.google?.accounts) {
-            clearInterval(checkGoogle);
-            initializeGoogleSignIn();
-          }
-        }, 100);
-        
-        // Clear interval after 10 seconds to avoid infinite checking
-        setTimeout(() => {
-          clearInterval(checkGoogle);
-          if (!window.google?.accounts) {
-            console.error('Google Identity Services failed to load within timeout');
-            onError('Google Sign-In failed to load. Please refresh the page.');
-          }
-        }, 10000);
-      }
-      return () => {
-        console.error = originalConsoleError; // Restore original console.error
-      };
-    }
-
     // Load Google Identity Services
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
-    script.defer = true;
     script.onload = () => {
-      console.log('Google Identity Services script loaded');
-      // Wait a bit for the services to be ready
-      setTimeout(() => {
-        if (window.google?.accounts) {
-          initializeGoogleSignIn();
-        } else {
-          console.error('Google services not ready after script load');
-          onError('Google Sign-In initialization failed. Please refresh the page.');
-        }
-      }, 500);
-    };
-    script.onerror = (error) => {
-      console.error('Failed to load Google Identity Services:', error);
-      onError(t('errors.googleLoadFailed'));
+      if (window.google?.accounts) {
+        window.google.accounts.id.initialize({
+          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
+          callback: (response: { credential: string }) => {
+            setIsLoading(true);
+            onSuccess(response.credential);
+          },
+        });
+      }
     };
     document.head.appendChild(script);
-
+    
     return () => {
-      // Don't remove script on cleanup as it's shared
-      // Restore original console.error
-      console.error = originalConsoleError;
+      script.remove();
     };
-  }, [onError, t, initializeGoogleSignIn]);
+  }, [onSuccess]);
 
-  const handleGoogleSignIn = useCallback(() => {
-    if (prompting || loading) {
-      console.log('Google Sign-In already in progress, ignoring click');
-      return;
+  const handleClick = () => {
+    if (window.google?.accounts) {
+      setIsLoading(true);
+      window.google.accounts.id.prompt();
     }
-
-    if (googleLoaded && typeof window !== 'undefined' && window.google?.accounts) {
-      console.log('Prompting Google Sign-In...');
-      setPrompting(true);
-      try {
-        // Try to use the prompt method, but catch FedCM errors gracefully
-        window.google.accounts.id.prompt();
-        
-        // Set a timeout to reset prompting state in case prompt doesn't trigger callback
-        setTimeout(() => {
-          setPrompting(false);
-        }, 5000);
-      } catch (error) {
-        setPrompting(false);
-        console.error('Failed to show Google prompt:', error);
-        const errorStr = String(error);
-        if (errorStr.includes('FedCM') || errorStr.includes('NetworkError')) {
-          onError('Google Sign-In temporarily unavailable. Please use email/password login instead.');
-        } else {
-          onError('Google Sign-In failed. Please try again or use email/password login.');
-        }
-      }
-    } else {
-      console.error('Google Sign-In not loaded');
-      onError('Google Sign-In not loaded. Please refresh the page and try again.');
-    }
-  }, [googleLoaded, prompting, loading, onError]);
-
-  // Debug logging for button state
-  useEffect(() => {
-    console.log('Google Sign-In button state:', {
-      disabled,
-      googleLoaded,
-      loading,
-      prompting,
-      buttonDisabled: disabled || !googleLoaded || loading || prompting
-    });
-  }, [disabled, googleLoaded, loading, prompting]);
+  };
 
   return (
     <button
       type="button"
-      onClick={handleGoogleSignIn}
-      disabled={disabled || !googleLoaded || loading || prompting}
-      className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+      onClick={handleClick}
+      disabled={disabled || isLoading}
+      className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
     >
-      {(loading || prompting) ? (
-        <Loader className="animate-spin mr-2" size={16} />
-      ) : (
-        <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-        </svg>
-      )}
-      {loading 
-        ? t('signingIn') 
-        : prompting 
-          ? 'Opening Google...' 
-          : t('continueWithGoogle')
-      }
+      <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      {isLoading ? 'Signing in...' : 'Continue with Google'}
     </button>
   );
 };
 
-// Login Form Component
-const LoginForm = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState<LoginFormData>({
-    email: '',
-    password: ''
-  });
-
-  // Zustand store hooks
-  const { login } = useAuthStore();
+  const [error, setError] = useState('');
+  
+  const { login, googleLogin, isLoading, isAuthenticated, checkAuth } = useAuthStore();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const t = useTranslations('auth.login');
-
-  // Get redirect path from URL params (set by PageGuard)
+  // const t = useTranslations('auth.login'); // Removed unused variable
+  
   const redirectTo = searchParams?.get('redirect') || '/dashboard';
 
-  const handleInputChange: InputChangeHandler = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (error) setError('');
-  };
+  // Check authentication on mount
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
-  const validateForm = () => {
-    if (!formData.email.trim()) return t('errors.emailRequired');
-    if (!/\S+@\S+\.\S+/.test(formData.email)) return t('errors.emailInvalid');
-    if (!formData.password.trim()) return t('errors.passwordRequired');
-    return null;
-  };
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated()) {
+      router.push(redirectTo);
+    }
+  }, [isAuthenticated, router, redirectTo]);
 
-  const handleSubmit: FormSubmitHandler = async (e) => {
+  // Handle email/password login
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     
-    const validationError = validateForm();
-    if (validationError) {
-      setError(validationError);
+    if (!email || !password) {
+      setError('Email and password are required');
       return;
     }
 
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
     try {
-      // Call your API
-      const result = await authAPI.login({
-        email: formData.email,
-        password: formData.password
-      });
-      
-      console.log('Login successful:', result);
-      
-      // Explicitly store token in localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('authToken', result.token);
-        console.log('Token stored in localStorage:', result.token.substring(0, 20) + '...');
-        
-        // Verify storage
-        const storedToken = localStorage.getItem('authToken');
-        console.log('Verification - Token retrieved from localStorage:', storedToken ? storedToken.substring(0, 20) + '...' : 'null');
-      }
-      
-      // Use Zustand store to handle authentication
-      try {
-        await login(result.token);
-        setSuccess(t('loginSuccess'));
-      } catch (error) {
-        console.warn('Zustand login failed, but token is stored:', error);
-        setSuccess(t('loginSuccess') + ' (Token stored)');
-      }
-      
-      // Ensure token stays in localStorage (double-check after a delay)
-      setTimeout(() => {
-        const finalCheck = localStorage.getItem('authToken');
-        if (!finalCheck && result.token) {
-          console.warn('Token was cleared, restoring it');
-          localStorage.setItem('authToken', result.token);
-        }
-      }, 500);
-      
-      // Redirect to original page or dashboard
-      setTimeout(() => {
-        router.push(redirectTo);
-      }, 1000);
-      
-    } catch (error) {
-      console.error('Login error:', error);
-      setError((error as Error).message);
-    } finally {
-      setLoading(false);
+      await login(email, password);
+      router.push(redirectTo);
+    } catch (err) {
+      setError((err as Error).message);
     }
   };
 
-  const handleGoogleSuccess = async (result: AuthResult) => {
+  // Handle Google login
+  const handleGoogleLogin = async (googleToken: string) => {
     try {
-      setLoading(true);
       setError('');
-      
-      // Explicitly store token in localStorage for Google auth too
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('authToken', result.token);
-        console.log('Google token stored in localStorage:', result.token.substring(0, 20) + '...');
-        
-        // Verify storage
-        const storedToken = localStorage.getItem('authToken');
-        console.log('Verification - Google token retrieved from localStorage:', storedToken ? storedToken.substring(0, 20) + '...' : 'null');
-      }
-      
-      // Use Zustand store for Google auth too
-      try {
-        await login(result.token);
-        setSuccess(t('googleLoginSuccess'));
-      } catch (error) {
-        console.warn('Zustand Google login failed, but token is stored:', error);
-        setSuccess(t('googleLoginSuccess') + ' (Token stored)');
-      }
-      
-      // Ensure token stays in localStorage (double-check after a delay)
-      setTimeout(() => {
-        const finalCheck = localStorage.getItem('authToken');
-        if (!finalCheck && result.token) {
-          console.warn('Token was cleared, restoring it');
-          localStorage.setItem('authToken', result.token);
-        }
-      }, 500);
-      
-      // Redirect to original page or dashboard
-      setTimeout(() => {
-        router.push(redirectTo);
-      }, 1000);
-      
-    } catch (error) {
-      console.error('Google auth error:', error);
-      setError((error as Error).message);
-    } finally {
-      setLoading(false);
+      await googleLogin(googleToken);
+      router.push(redirectTo);
+    } catch (err) {
+      setError((err as Error).message);
     }
   };
 
@@ -431,25 +119,13 @@ const LoginForm = () => {
     <div className="min-h-screen flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 bg-blue-600 rounded-full flex items-center justify-center mb-4">
-            <User className="h-6 w-6 text-white" />
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900">
-            {t('title')}
-          </h2>
+          <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
           <p className="mt-2 text-sm text-gray-600">
-            {t('subtitle')}{' '}
-            <Link
-              href="/auth/signup"
-              className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
-            >
-              {t('signupLink')}
-            </Link>
+            Sign in to your account
           </p>
         </div>
 
-        <div className="bg-white py-8 px-6 shadow-xl rounded-lg border border-gray-100">
-          {/* Messages */}
+        <div className="bg-white py-8 px-6 shadow-xl rounded-lg border">
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
               <div className="flex items-center">
@@ -459,155 +135,71 @@ const LoginForm = () => {
             </div>
           )}
 
-          {success && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
-              <div className="flex items-center">
-                <CheckCircle className="text-green-500 mr-2 flex-shrink-0" size={16} />
-                <span className="text-green-700 text-sm">{success}</span>
-              </div>
-            </div>
-          )}
-
           {/* Google Sign-In */}
-          <div className="mb-6">
-            <GoogleSignIn 
-              disabled={loading} 
-              onSuccess={handleGoogleSuccess}
-              onError={(error) => setError(error)}
-            />
-            
-            <div className="mt-4 relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">{t('orContinueWith')}</span>
-              </div>
+          <GoogleSignIn onSuccess={handleGoogleLogin} disabled={isLoading} />
+          
+          <div className="my-6 relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Or continue with email</span>
             </div>
           </div>
 
-          {/* Login Form */}
+          {/* Email/Password Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('emailLabel')}
+                Email Address
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                 <input
                   type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder={t('emailPlaceholder')}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter your email"
                   required
                 />
               </div>
             </div>
 
-            {/* Password */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('passwordLabel')}
+                Password
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                 <input
                   type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className="pl-10 pr-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder={t('passwordPlaceholder')}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10 pr-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter your password"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
-            {/* Forgot Password Link */}
-            <div className="text-right">
-              <Link
-                href="/auth/forgot-password"
-                className="text-sm text-blue-600 hover:text-blue-500 transition-colors"
-              >
-                {t('forgotPassword')}
-              </Link>
-            </div>
-
-            {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+              disabled={isLoading}
+              className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              {loading ? (
-                <Loader className="animate-spin" size={16} />
-              ) : (
-                t('signIn')
-              )}
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
         </div>
       </div>
     </div>
   );
-};
-
-// Main Login Page Component
-const LoginPage = () => {
-  const { isAuthenticated, isLoading, isInitialized } = useAuthStore();
-  const router = useRouter();
-  const t = useTranslations('auth.login');
-
-  // Initialize the auth store on first load
-  useEffect(() => {
-    if (!isInitialized) {
-      useAuthStore.getState().initialize();
-    }
-  }, [isInitialized]);
-
-  // Check if user is already authenticated
-  useEffect(() => {
-    if (isInitialized && !isLoading && isAuthenticated()) {
-      // User is already logged in, redirect to dashboard
-      router.push('/dashboard');
-    }
-  }, [isAuthenticated, isLoading, isInitialized, router]);
-
-  // Show loading while checking auth status
-  if (!isInitialized || isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader className="animate-spin text-blue-600 mx-auto mb-4" size={32} />
-          <p className="text-gray-600">{t('checkingAuth')}</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Don't render login form if user is already authenticated
-  if (isAuthenticated()) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <CheckCircle className="text-green-500 mx-auto mb-4" size={32} />
-          <p className="text-gray-600">{t('alreadyLoggedIn')}</p>
-        </div>
-      </div>
-    );
-  }
-
-  return <LoginForm />;
-};
-
-export default LoginPage;
+}

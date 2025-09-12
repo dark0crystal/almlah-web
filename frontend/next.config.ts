@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     domains: [
       'pehoskkfpodrfzmqohii.supabase.co',
       'lh3.googleusercontent.com',
+      'maps.googleapis.com',
       'images.unsplash.com',
       'localhost',
       '127.0.0.1'

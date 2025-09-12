@@ -1,198 +1,127 @@
-// lib/auth-server.ts - Server-side authentication utilities
+// Simple Server-Side Authentication
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_HOST || 'http://localhost:9000'}/api/v1`;
-console.log('🌐 Server-side API_BASE_URL:', API_BASE_URL);
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST || 'http://localhost:9000';
 
-// Types matching the client-side auth store
-interface UserRole {
-  id: string;
-  assigned_at: string;
-  assigned_by: {
-    id: string;
-    username: string;
-    email: string;
-    first_name: string;
-    last_name: string;
-  };
-  expires_at: string | null;
-  is_active: boolean;
-  role: {
-    id: string;
-    name: string;
-    display_name: string;
-    is_active: boolean;
-  };
-  user: {
-    id: string;
-    username: string;
-    email: string;
-    first_name: string;
-    last_name: string;
-    full_name: string;
-  };
-}
-
-interface ServerUser {
-  id: string;
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  fullName: string;
-  profilePicture: string;
-  userType: string;
-  provider: string;
-  isVerified: boolean;
-  roles: UserRole[];
-  permissions: string[];
-}
-
-interface AuthResult {
-  isAuthenticated: boolean;
-  user: ServerUser | null;
-  token: string | null;
-}
-
-// Get auth token from cookies
-export async function getAuthToken(): Promise<string | null> {
+// Get token from cookies
+export async function getServerAuthToken(): Promise<string | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get('authToken')?.value || null;
-  console.log('🍪 Server-side token from cookies:', token ? token.substring(0, 20) + '...' : 'null');
+  console.log('🍪 Server token:', token ? 'Found' : 'Not found');
   return token;
 }
 
-// Verify token and get user data
-export async function verifyAuth(): Promise<AuthResult> {
+// Verify token with backend
+export async function verifyToken(token: string): Promise<boolean> {
   try {
-    const token = await getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+      cache: 'no-store',
+    });
     
-    if (!token) {
-      console.log('❌ Server-side auth failed: No token found in cookies');
-      return { isAuthenticated: false, user: null, token: null };
-    }
+    console.log('🔍 Token verification:', response.ok ? 'Valid' : 'Invalid');
+    return response.ok;
+  } catch (error) {
+    console.error('❌ Token verification failed:', error);
+    return false;
+  }
+}
 
-    console.log('🔍 Server-side verifying token with API...');
-
-    // Fetch user data from API
-    const [profileResponse, permissionsResponse, rolesResponse] = await Promise.all([
-      fetch(`${API_BASE_URL}/auth/me`, {
+// Get user data from token
+export async function getUserFromToken(token: string) {
+  try {
+    const [profileRes, permissionsRes, rolesRes] = await Promise.all([
+      fetch(`${API_BASE_URL}/api/v1/auth/me`, {
         headers: { 'Authorization': `Bearer ${token}` },
-        cache: 'no-store' // Ensure fresh data
+        cache: 'no-store',
       }),
-      fetch(`${API_BASE_URL}/rbac/my-permissions`, {
+      fetch(`${API_BASE_URL}/api/v1/rbac/my-permissions`, {
         headers: { 'Authorization': `Bearer ${token}` },
-        cache: 'no-store'
+        cache: 'no-store',
       }),
-      fetch(`${API_BASE_URL}/rbac/my-roles`, {
+      fetch(`${API_BASE_URL}/api/v1/rbac/my-roles`, {
         headers: { 'Authorization': `Bearer ${token}` },
-        cache: 'no-store'
-      })
+        cache: 'no-store',
+      }),
     ]);
 
-    if (!profileResponse.ok) {
-      console.log('❌ Server-side auth failed: Profile API returned', profileResponse.status, profileResponse.statusText);
-      return { isAuthenticated: false, user: null, token: null };
-    }
+    if (!profileRes.ok) return null;
 
-    console.log('✅ Server-side auth successful: Profile API responded OK');
+    const profileData = await profileRes.json();
+    const permissionsData = permissionsRes.ok ? await permissionsRes.json() : { data: [] };
+    const rolesData = rolesRes.ok ? await rolesRes.json() : { data: [] };
 
-    const profileData = await profileResponse.json();
-    const permissionsData = permissionsResponse.ok ? await permissionsResponse.json() : { data: [] };
-    const rolesData = rolesResponse.ok ? await rolesResponse.json() : { data: [] };
-
-    const user: ServerUser = {
+    return {
       ...profileData.data.user,
-      permissions: permissionsData.data.map((p: { name: string }) => p.name),
-      roles: rolesData.data
+      permissions: permissionsData.data?.map((p: { name: string }) => p.name) || [],
+      roles: rolesRes.ok ? rolesData.data?.map((r: { role?: { name: string }; name?: string }) => r.role?.name || r.name) || [] : [],
     };
-
-    return { isAuthenticated: true, user, token };
-  } catch (error) {
-    console.error('❌ Server auth verification failed with error:', error);
-    return { isAuthenticated: false, user: null, token: null };
+  } catch {
+    return null;
   }
 }
 
-// Check if user has specific role
-export function hasRole(user: ServerUser | null, roleName: string): boolean {
-  if (!user?.roles) return false;
-  return user.roles.some(userRole => 
-    userRole.role?.name === roleName && userRole.role?.is_active && userRole.is_active
-  );
-}
-
-// Check if user has any of the specified roles
-export function hasAnyRole(user: ServerUser | null, roleNames: string[]): boolean {
-  return roleNames.some(roleName => hasRole(user, roleName));
-}
-
-// Check if user has specific permission
-export function hasPermission(user: ServerUser | null, permission: string): boolean {
-  if (!user?.permissions) return false;
-  // Super admin has all permissions
-  if (hasRole(user, 'super_admin')) return true;
-  return user.permissions.includes(permission);
-}
-
-// Check if user has any of the specified permissions
-export function hasAnyPermission(user: ServerUser | null, permissions: string[]): boolean {
-  return permissions.some(permission => hasPermission(user, permission));
-}
-
-// Require authentication - redirect to login if not authenticated
-export async function requireAuth(redirectTo?: string): Promise<AuthResult> {
-  const auth = await verifyAuth();
+// Check if user is authenticated (for dashboard access)
+export async function requireAuth(redirectPath?: string): Promise<void> {
+  const token = await getServerAuthToken();
   
-  if (!auth.isAuthenticated) {
-    const loginUrl = redirectTo ? `/auth/login?redirect=${encodeURIComponent(redirectTo)}` : '/auth/login';
+  if (!token) {
+    console.log('❌ No token found, redirecting to login');
+    const loginUrl = redirectPath ? `/auth/login?redirect=${encodeURIComponent(redirectPath)}` : '/auth/login';
     redirect(loginUrl);
   }
+
+  const isValid = await verifyToken(token);
   
-  return auth;
+  if (!isValid) {
+    console.log('❌ Invalid token, redirecting to login');
+    const loginUrl = redirectPath ? `/auth/login?redirect=${encodeURIComponent(redirectPath)}` : '/auth/login';
+    redirect(loginUrl);
+  }
+
+  console.log('✅ Authentication successful');
 }
 
-// Require specific role - redirect if user doesn't have role
-export async function requireRole(roleName: string, redirectTo?: string): Promise<AuthResult> {
-  const auth = await requireAuth(redirectTo);
+// Permission-based access control
+export async function requirePermission(permission: string, redirectPath?: string): Promise<void> {
+  const token = await getServerAuthToken();
   
-  if (!hasRole(auth.user, roleName)) {
+  if (!token) {
+    redirect('/auth/login');
+  }
+
+  const user = await getUserFromToken(token);
+  
+  if (!user || (!user.roles.includes('super_admin') && !user.permissions.includes(permission))) {
     redirect('/dashboard?error=insufficient_permissions');
   }
-  
-  return auth;
 }
 
-// Require any of the specified roles
-export async function requireAnyRole(roleNames: string[], redirectTo?: string): Promise<AuthResult> {
-  const auth = await requireAuth(redirectTo);
+export async function requireAnyPermission(permissions: string[], redirectPath?: string): Promise<void> {
+  const token = await getServerAuthToken();
   
-  if (!hasAnyRole(auth.user, roleNames)) {
+  if (!token) {
+    redirect('/auth/login');
+  }
+
+  const user = await getUserFromToken(token);
+  
+  if (!user || (!user.roles.includes('super_admin') && !permissions.some(p => user.permissions.includes(p)))) {
     redirect('/dashboard?error=insufficient_permissions');
   }
-  
-  return auth;
 }
 
-// Require specific permission
-export async function requirePermission(permission: string, redirectTo?: string): Promise<AuthResult> {
-  const auth = await requireAuth(redirectTo);
+export async function requireAnyRole(roles: string[], redirectPath?: string): Promise<void> {
+  const token = await getServerAuthToken();
   
-  if (!hasPermission(auth.user, permission)) {
-    redirect('/dashboard?error=insufficient_permissions');
+  if (!token) {
+    redirect('/auth/login');
   }
-  
-  return auth;
-}
 
-// Require any of the specified permissions
-export async function requireAnyPermission(permissions: string[], redirectTo?: string): Promise<AuthResult> {
-  const auth = await requireAuth(redirectTo);
+  const user = await getUserFromToken(token);
   
-  if (!hasAnyPermission(auth.user, permissions)) {
+  if (!user || !roles.some(role => user.roles.includes(role))) {
     redirect('/dashboard?error=insufficient_permissions');
   }
-  
-  return auth;
 }

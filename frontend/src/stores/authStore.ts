@@ -1,4 +1,4 @@
-// stores/authStore.ts - Updated to store token as 'authToken' in localStorage
+// Simple Authentication Store
 import { create } from 'zustand';
 
 // Types
@@ -13,35 +13,8 @@ interface User {
   userType: string;
   provider: string;
   isVerified: boolean;
-  roles: UserRole[];
+  roles: string[];
   permissions: string[];
-}
-interface UserRole {
-  id: string;
-  assigned_at: string;
-  assigned_by: {
-    id: string;
-    username: string;
-    email: string;
-    first_name: string;
-    last_name: string;
-  };
-  expires_at: string | null;
-  is_active: boolean;
-  role: {
-    id: string;
-    name: string;
-    display_name: string;
-    is_active: boolean;
-  };
-  user: {
-    id: string;
-    username: string;
-    email: string;
-    first_name: string;
-    last_name: string;
-    full_name: string;
-  };
 }
 
 interface AuthState {
@@ -49,260 +22,234 @@ interface AuthState {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  isInitialized: boolean;
 
   // Actions
-  login: (token: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  googleLogin: (googleToken: string) => Promise<void>;
   logout: () => void;
-  refreshUserData: () => Promise<void>;
-  initialize: () => Promise<void>;
-  loadUserData: (authToken: string) => Promise<void>;
-
-  // Computed getters
+  checkAuth: () => Promise<void>;
+  
+  // Getters
   isAuthenticated: () => boolean;
-  hasRole: (roleName: string) => boolean;
-  hasAnyRole: (roleNames: string[]) => boolean;
   hasPermission: (permission: string) => boolean;
-  hasAnyPermission: (permissions: string[]) => boolean;
 }
 
-// API Service
-const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_HOST || 'http://localhost:9000'}/api/v1`;
+// API Configuration
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST || 'http://localhost:9000';
 
-class AuthAPI {
-  static async getUserProfile(token: string) {
-    const response = await fetch(`${API_BASE_URL}/auth/me`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-    });
-    if (!response.ok) throw new Error('Failed to fetch profile');
-    return response.json();
-  }
+// Token Storage Helpers
+const setToken = (token: string) => {
+  // Store in localStorage
+  localStorage.setItem('authToken', token);
+  
+  // Store in cookie for server-side access
+  const maxAge = 7 * 24 * 60 * 60; // 7 days
+  document.cookie = `authToken=${token}; path=/; max-age=${maxAge}; samesite=lax`;
+  
+  console.log('✅ Token stored in localStorage and cookie');
+};
 
-  static async getUserPermissions(token: string) {
-    const response = await fetch(`${API_BASE_URL}/rbac/my-permissions`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-    });
-    if (!response.ok) throw new Error('Failed to fetch permissions');
-    return response.json();
-  }
+const removeToken = () => {
+  localStorage.removeItem('authToken');
+  document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+  console.log('🗑️ Token removed from localStorage and cookie');
+};
 
-  static async getUserRoles(token: string) {
-    const response = await fetch(`${API_BASE_URL}/rbac/my-roles`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-    });
-    if (!response.ok) throw new Error('Failed to fetch roles');
-    return response.json();
-  }
-}
-
-// Helper functions for localStorage token management
-const getTokenFromStorage = (): string | null => {
-  if (typeof window === 'undefined') return null;
+const getToken = (): string | null => {
   return localStorage.getItem('authToken');
 };
 
-const setTokenInStorage = (token: string): void => {
-  if (typeof window === 'undefined') return;
-  console.log('🔐 SETTING token in localStorage:', token.substring(0, 20) + '...');
-  localStorage.setItem('authToken', token);
-  // Also set as cookie for server-side access
-  // Use simple cookie setting for development
-  const maxAge = 7 * 24 * 60 * 60; // 7 days in seconds
-  document.cookie = `authToken=${token}; path=/; max-age=${maxAge}; samesite=lax`;
-  console.log('🍪 SETTING token in cookie for server-side access');
+// API Calls
+const apiCall = async (endpoint: string, options: RequestInit = {}) => {
+  const response = await fetch(`${API_BASE_URL}/api/v1${endpoint}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Request failed' }));
+    throw new Error(error.message || `HTTP ${response.status}`);
+  }
+
+  return response.json();
+};
+
+const loginWithCredentials = async (email: string, password: string) => {
+  const data = await apiCall('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
   
-  // Verify cookie was set
-  setTimeout(() => {
-    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-      const [key, value] = cookie.trim().split('=');
-      acc[key] = value;
-      return acc;
-    }, {} as Record<string, string>);
-    console.log('🍪 Cookie verification - authToken present:', !!cookies.authToken);
-    if (cookies.authToken) {
-      console.log('🍪 Cookie value preview:', cookies.authToken.substring(0, 20) + '...');
-    }
-  }, 100);
+  if (!data.success || !data.data.token) {
+    throw new Error('Invalid response from server');
+  }
+  
+  return data.data;
 };
 
-const removeTokenFromStorage = (): void => {
-  if (typeof window === 'undefined') return;
-  console.log('🗑️ REMOVING token from localStorage');
-  localStorage.removeItem('authToken');
-  // Also remove old format if it exists
-  localStorage.removeItem('auth-storage');
-  // Clear the cookie
-  document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; samesite=lax';
-  console.log('🍪 REMOVING token from cookie');
+const loginWithGoogle = async (googleToken: string) => {
+  const data = await apiCall('/auth/google', {
+    method: 'POST',
+    body: JSON.stringify({ token: googleToken }),
+  });
+  
+  if (!data.success || !data.data.token) {
+    throw new Error('Invalid response from server');
+  }
+  
+  return data.data;
 };
 
-// Create Zustand store (without persist middleware)
+const fetchUserData = async (token: string) => {
+  const [profileRes, permissionsRes, rolesRes] = await Promise.all([
+    apiCall('/auth/me', {
+      headers: { 'Authorization': `Bearer ${token}` },
+    }),
+    apiCall('/rbac/my-permissions', {
+      headers: { 'Authorization': `Bearer ${token}` },
+    }),
+    apiCall('/rbac/my-roles', {
+      headers: { 'Authorization': `Bearer ${token}` },
+    }),
+  ]);
+
+  return {
+    ...profileRes.data.user,
+    permissions: permissionsRes.data?.map((p: { name: string }) => p.name) || [],
+    roles: rolesRes.data?.map((r: { role?: { name: string }; name?: string }) => r.role?.name || r.name) || [],
+  };
+};
+
+// Create Auth Store
 export const useAuthStore = create<AuthState>()((set, get) => ({
   // Initial state
   user: null,
   token: null,
   isLoading: false,
-  isInitialized: false,
 
-  // Initialize auth from localStorage
-  initialize: async () => {
-    const state = get();
-    if (state.isInitialized) return;
-
-    set({ isLoading: true });
-
+  // Login with email/password
+  login: async (email: string, password: string) => {
     try {
-      // Get token from localStorage
-      const token = getTokenFromStorage();
+      set({ isLoading: true });
       
-      if (token) {
-        set({ token });
-        await get().loadUserData(token);
-      }
-    } catch (error) {
-      console.error('Auth initialization error:', error);
-      console.warn('Keeping token despite initialization error');
-      // Don't clear token during initialization - let it persist
-      // removeTokenFromStorage(); // COMMENTED OUT
-      // set({ user: null, token: null }); // COMMENTED OUT
-    } finally {
-      set({ isLoading: false, isInitialized: true });
-    }
-  },
-
-  // Load user data from API
-  loadUserData: async (authToken: string) => {
-    try {
-      // First store the token immediately, regardless of user data loading
-      set({ token: authToken, isLoading: false });
-      setTokenInStorage(authToken);
-
-      const [profileResponse, permissionsResponse, rolesResponse] = await Promise.all([
-        AuthAPI.getUserProfile(authToken),
-        AuthAPI.getUserPermissions(authToken),
-        AuthAPI.getUserRoles(authToken)
-      ]);
-
-      const userData: User = {
-        ...profileResponse.data.user,
-        permissions: permissionsResponse.data.map((p: { name: string }) => p.name),
-        roles: rolesResponse.data
-      };
-
-      set({ 
-        user: userData, 
-        token: authToken,
-        isLoading: false 
-      });
-
-    } catch (error) {
-      console.error('Failed to load user data:', error);
-      console.warn('Token preserved despite user data loading failure');
+      // Call backend login API
+      const authData = await loginWithCredentials(email, password);
       
-      // IMPORTANT: Don't clear the token if user data loading fails
-      // The token is still valid, we just couldn't load additional user info
-      // removeTokenFromStorage(); // COMMENTED OUT to preserve token
+      // Store token
+      setToken(authData.token);
       
-      // Keep the token but clear user data
-      set({ 
-        user: null, 
-        token: authToken, // Keep the token
-        isLoading: false 
+      // Fetch user data
+      const userData = await fetchUserData(authData.token);
+      
+      // Update state
+      set({
+        user: userData,
+        token: authData.token,
+        isLoading: false,
       });
       
-      // Don't throw error to prevent login page from showing error
-      // throw error; // COMMENTED OUT
-    }
-  },
-
-  // Login function
-  login: async (authToken: string) => {
-    set({ isLoading: true });
-    try {
-      await get().loadUserData(authToken);
+      console.log('✅ Login successful');
     } catch (error) {
       set({ isLoading: false });
+      console.error('❌ Login failed:', error);
       throw error;
     }
   },
 
-  // Logout function
-  logout: () => {
-    removeTokenFromStorage();
-    set({ 
-      user: null, 
-      token: null, 
-      isLoading: false 
-    });
+  // Google Login
+  googleLogin: async (googleToken: string) => {
+    try {
+      set({ isLoading: true });
+      
+      // Call backend Google auth API
+      const authData = await loginWithGoogle(googleToken);
+      
+      // Store token
+      setToken(authData.token);
+      
+      // Fetch user data
+      const userData = await fetchUserData(authData.token);
+      
+      // Update state
+      set({
+        user: userData,
+        token: authData.token,
+        isLoading: false,
+      });
+      
+      console.log('✅ Google login successful');
+    } catch (error) {
+      set({ isLoading: false });
+      console.error('❌ Google login failed:', error);
+      throw error;
+    }
   },
 
-  // Refresh user data
-  refreshUserData: async () => {
-    const { token } = get();
-    if (!token) {
-      // Try to get token from localStorage
-      const storedToken = getTokenFromStorage();
-      if (storedToken) {
-        set({ token: storedToken });
-        await get().loadUserData(storedToken);
+  // Logout
+  logout: () => {
+    removeToken();
+    set({
+      user: null,
+      token: null,
+      isLoading: false,
+    });
+    console.log('✅ Logged out');
+  },
+
+  // Check authentication (on app load)
+  checkAuth: async () => {
+    try {
+      const token = getToken();
+      
+      if (!token) {
+        set({ user: null, token: null, isLoading: false });
         return;
       }
-      return;
-    }
 
-    try {
-      await get().loadUserData(token);
+      set({ isLoading: true });
+      
+      // Verify token and get user data
+      const userData = await fetchUserData(token);
+      
+      set({
+        user: userData,
+        token: token,
+        isLoading: false,
+      });
+      
+      console.log('✅ Auth check successful');
     } catch (error) {
-      console.error('Failed to refresh user data:', error);
-      get().logout();
+      console.error('❌ Auth check failed:', error);
+      removeToken();
+      set({
+        user: null,
+        token: null,
+        isLoading: false,
+      });
     }
   },
 
-  // Computed getters
+  // Check if user is authenticated
   isAuthenticated: () => {
     const { user, token } = get();
     return !!user && !!token;
   },
 
-  hasRole: (roleName: string) => {
-    const { user } = get();
-    if (!user?.roles) return false;
-    return user.roles.some(userRole => 
-      userRole.role?.name === roleName && userRole.role?.is_active && userRole.is_active
-    );
-  },
-
-  hasAnyRole: (roleNames: string[]) => {
-    const { hasRole } = get();
-    return roleNames.some(roleName => hasRole(roleName));
-  },
-
+  // Check if user has permission
   hasPermission: (permission: string) => {
-    const { user, hasRole } = get();
-    if (!user?.permissions) return false;
+    const { user } = get();
+    if (!user) return false;
+    
     // Super admin has all permissions
-    if (hasRole('super_admin')) return true;
+    if (user.roles.includes('super_admin')) return true;
+    
     return user.permissions.includes(permission);
-  },
-
-  hasAnyPermission: (permissions: string[]) => {
-    const { hasPermission } = get();
-    return permissions.some(permission => hasPermission(permission));
   },
 }));
 
-// Initialize auth on app start (call this once in your app)
-export const initializeAuth = async () => {
-  await useAuthStore.getState().initialize();
-};
-
-// Helper function to get current token (useful for API calls)
-export const getAuthToken = (): string | null => {
-  const state = useAuthStore.getState();
-  return state.token || getTokenFromStorage();
-};
-
-// Helper function to check if user is authenticated (useful for API calls)
-export const isAuthenticated = (): boolean => {
-  return useAuthStore.getState().isAuthenticated();
-};
+// Export helper functions
+export const getAuthToken = () => getToken();
+export const isAuthenticated = () => useAuthStore.getState().isAuthenticated();
