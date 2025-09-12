@@ -113,15 +113,29 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disable
           client_id: env.GOOGLE_CLIENT_ID,
           callback: handleCredentialResponse,
           auto_select: false,
-          cancel_on_tap_outside: true
+          cancel_on_tap_outside: true,
+          use_fedcm_for_prompt: false // Disable FedCM to avoid conflicts
         });
         console.log('Google Sign-In initialized successfully');
+        setGoogleLoaded(true); // Explicitly set loaded state
       } catch (error) {
         console.error('Failed to initialize Google Sign-In:', error);
-        // Don't show error to user during initialization, just log it
+        // Try without FedCM-specific settings as fallback
+        try {
+          window.google.accounts.id.initialize({
+            client_id: env.GOOGLE_CLIENT_ID,
+            callback: handleCredentialResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true
+          });
+          console.log('Google Sign-In initialized successfully (fallback)');
+          setGoogleLoaded(true);
+        } catch (fallbackError) {
+          console.error('Google Sign-In fallback initialization failed:', fallbackError);
+        }
       }
     } else {
-      console.error('Google Identity Services not available');
+      console.log('Google Identity Services not yet available, will retry...');
     }
   }, [onError, t, handleCredentialResponse]);
 
@@ -144,8 +158,26 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disable
     const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
     if (existingScript) {
       if (window.google?.accounts) {
-        setGoogleLoaded(true);
+        console.log('Google Identity Services already available, initializing...');
         initializeGoogleSignIn();
+      } else {
+        console.log('Script exists but Google services not ready, waiting...');
+        // Wait for the script to be ready
+        const checkGoogle = setInterval(() => {
+          if (window.google?.accounts) {
+            clearInterval(checkGoogle);
+            initializeGoogleSignIn();
+          }
+        }, 100);
+        
+        // Clear interval after 10 seconds to avoid infinite checking
+        setTimeout(() => {
+          clearInterval(checkGoogle);
+          if (!window.google?.accounts) {
+            console.error('Google Identity Services failed to load within timeout');
+            onError('Google Sign-In failed to load. Please refresh the page.');
+          }
+        }, 10000);
       }
       return () => {
         console.error = originalConsoleError; // Restore original console.error
@@ -158,9 +190,16 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disable
     script.async = true;
     script.defer = true;
     script.onload = () => {
-      console.log('Google Identity Services loaded');
-      setGoogleLoaded(true);
-      initializeGoogleSignIn();
+      console.log('Google Identity Services script loaded');
+      // Wait a bit for the services to be ready
+      setTimeout(() => {
+        if (window.google?.accounts) {
+          initializeGoogleSignIn();
+        } else {
+          console.error('Google services not ready after script load');
+          onError('Google Sign-In initialization failed. Please refresh the page.');
+        }
+      }, 500);
     };
     script.onerror = (error) => {
       console.error('Failed to load Google Identity Services:', error);
@@ -207,6 +246,17 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disable
       onError('Google Sign-In not loaded. Please refresh the page and try again.');
     }
   }, [googleLoaded, prompting, loading, onError]);
+
+  // Debug logging for button state
+  useEffect(() => {
+    console.log('Google Sign-In button state:', {
+      disabled,
+      googleLoaded,
+      loading,
+      prompting,
+      buttonDisabled: disabled || !googleLoaded || loading || prompting
+    });
+  }, [disabled, googleLoaded, loading, prompting]);
 
   return (
     <button
