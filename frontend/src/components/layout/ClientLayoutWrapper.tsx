@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import SplashScreen from '@/components/splash/SplashScreen';
 import { FirstVisitModal } from '@/components/modals/FirstVisitModal';
 import { useFirstVisit } from '@/hooks/useFirstVisit';
+import { AuthInitializer } from '@/components/auth/AuthInitializer';
 import { Car } from '@/types';
 
 interface ClientLayoutWrapperProps {
@@ -54,7 +55,7 @@ export default function ClientLayoutWrapper({ children, navbar }: ClientLayoutWr
   console.log('Rendering layout - showModal:', showModal, 'isFirstVisit:', isFirstVisit, 'isLoading:', isLoading);
   
   return (
-    <>
+    <AuthInitializer>
       {navbar}
       {children}
       
@@ -64,6 +65,6 @@ export default function ClientLayoutWrapper({ children, navbar }: ClientLayoutWr
         onClose={handleModalClose}
         onCarSelect={handleCarSelect}
       />
-    </>
+    </AuthInitializer>
   );
 }
