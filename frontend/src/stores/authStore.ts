@@ -25,13 +25,23 @@ interface AuthState {
 
   // Actions
   login: (email: string, password: string) => Promise<void>;
+  signup: (userData: SignupData) => Promise<void>;
   googleLogin: (googleToken: string) => Promise<void>;
+  googleSignup: (googleToken: string) => Promise<void>;
   logout: () => void;
   checkAuth: () => Promise<void>;
   
   // Getters
   isAuthenticated: () => boolean;
   hasPermission: (permission: string) => boolean;
+}
+
+interface SignupData {
+  username: string;
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
 }
 
 // API Configuration
@@ -91,6 +101,40 @@ const loginWithCredentials = async (email: string, password: string) => {
 };
 
 const loginWithGoogle = async (googleToken: string) => {
+  const data = await apiCall('/auth/google', {
+    method: 'POST',
+    body: JSON.stringify({ token: googleToken }),
+  });
+  
+  if (!data.success || !data.data.token) {
+    throw new Error('Invalid response from server');
+  }
+  
+  return data.data;
+};
+
+const signupWithCredentials = async (userData: SignupData) => {
+  const data = await apiCall('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({
+      username: userData.username,
+      email: userData.email,
+      password: userData.password,
+      first_name: userData.firstName,
+      last_name: userData.lastName
+    }),
+  });
+  
+  if (!data.success || !data.data.token) {
+    throw new Error('Invalid response from server');
+  }
+  
+  return data.data;
+};
+
+const signupWithGoogle = async (googleToken: string) => {
+  // For signup, we can use the same Google auth endpoint
+  // The backend will handle creating new users automatically
   const data = await apiCall('/auth/google', {
     method: 'POST',
     body: JSON.stringify({ token: googleToken }),
@@ -184,6 +228,64 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     } catch (error) {
       set({ isLoading: false });
       console.error('❌ Google login failed:', error);
+      throw error;
+    }
+  },
+
+  // Signup with email/password
+  signup: async (userData: SignupData) => {
+    try {
+      set({ isLoading: true });
+      
+      // Call backend signup API
+      const authData = await signupWithCredentials(userData);
+      
+      // Store token
+      setToken(authData.token);
+      
+      // Fetch user data
+      const userProfile = await fetchUserData(authData.token);
+      
+      // Update state
+      set({
+        user: userProfile,
+        token: authData.token,
+        isLoading: false,
+      });
+      
+      console.log('✅ Signup successful');
+    } catch (error) {
+      set({ isLoading: false });
+      console.error('❌ Signup failed:', error);
+      throw error;
+    }
+  },
+
+  // Google Signup
+  googleSignup: async (googleToken: string) => {
+    try {
+      set({ isLoading: true });
+      
+      // Call backend Google auth API (handles both login and signup)
+      const authData = await signupWithGoogle(googleToken);
+      
+      // Store token
+      setToken(authData.token);
+      
+      // Fetch user data
+      const userData = await fetchUserData(authData.token);
+      
+      // Update state
+      set({
+        user: userData,
+        token: authData.token,
+        isLoading: false,
+      });
+      
+      console.log('✅ Google signup successful');
+    } catch (error) {
+      set({ isLoading: false });
+      console.error('❌ Google signup failed:', error);
       throw error;
     }
   },
