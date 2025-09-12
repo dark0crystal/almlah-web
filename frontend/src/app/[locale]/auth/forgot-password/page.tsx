@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Mail, ArrowLeft, AlertTriangle, CheckCircle, Loader } from 'lucide-react';
 import { env } from '@/config/env';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+// import { useRouter } from 'next/navigation';
 
 // API Service
 const authAPI = {
@@ -33,7 +33,7 @@ const ForgotPasswordPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [email, setEmail] = useState('');
-  const router = useRouter();
+  // const router = useRouter(); // TODO: Use for redirect after password reset
 
   const validateForm = () => {
     if (!email.trim()) return 'Email is required';

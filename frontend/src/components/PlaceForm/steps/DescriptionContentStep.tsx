@@ -20,6 +20,8 @@ export const DescriptionContentStep: React.FC = () => {
   } = usePlaceStore();
 
   const [showAddSection, setShowAddSection] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _ = showAddSection; // Acknowledge the variable to suppress linting warning
   const [editingSectionIndex, setEditingSectionIndex] = useState<number | null>(null);
 
   const {

@@ -1,10 +1,17 @@
 "use client"
 import React, { useEffect } from 'react';
 import { useForm, FieldErrors } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+// import { zodResolver } from '@hookform/resolvers/zod';
 import { usePlaceStore } from '../../../stores/usePlaceStore';
-import { propertiesContactSchema, PropertiesContactFormData } from '../../../schemas/placeSchemas';
+// import { propertiesContactSchema, PropertiesContactFormData } from '../../../schemas/placeSchemas';
 import { ChevronLeftIcon, ChevronRightIcon, PhoneIcon, EnvelopeIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
+
+interface PropertiesContactFormData {
+  property_ids: string[];
+  phone: string;
+  email: string;
+  website: string;
+}
 
 export const PropertiesContactStep: React.FC = () => {
   const {

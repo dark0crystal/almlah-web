@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { NextIntlClientProvider, hasLocale } from 'next-intl';
+import { NextIntlClientProvider } from 'next-intl';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
 import { getMessages } from 'next-intl/server';
@@ -21,7 +21,7 @@ export default async function RootLayout({
 }>) {
   // Ensure that the incoming `locale` is valid
   const {locale} = await params;
-  if (!hasLocale(routing.locales, locale)) {
+  if (!routing.locales.includes(locale as 'ar' | 'en')) {
     notFound();
   }
 

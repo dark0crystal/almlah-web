@@ -86,7 +86,13 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disable
       onSuccess(result);
     } catch (error) {
       console.error('Google auth failed:', error);
-      onError((error as Error).message || 'Google authentication failed');
+      const errorMessage = (error as Error).message || 'Google authentication failed';
+      // Check if it's a FedCM error and provide specific guidance
+      if (errorMessage.includes('FedCM') || errorMessage.includes('NetworkError')) {
+        onError('Google Sign-In temporarily unavailable. Please use email/password login.');
+      } else {
+        onError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -102,19 +108,38 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disable
         return;
       }
       
-      window.google.accounts.id.initialize({
-        client_id: env.GOOGLE_CLIENT_ID,
-        callback: handleCredentialResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
-      console.log('Google Sign-In initialized');
+      try {
+        window.google.accounts.id.initialize({
+          client_id: env.GOOGLE_CLIENT_ID,
+          callback: handleCredentialResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true
+        });
+        console.log('Google Sign-In initialized successfully');
+      } catch (error) {
+        console.error('Failed to initialize Google Sign-In:', error);
+        // Don't show error to user during initialization, just log it
+      }
     } else {
       console.error('Google Identity Services not available');
     }
   }, [onError, t, handleCredentialResponse]);
 
   useEffect(() => {
+    // Suppress FedCM console errors by intercepting them
+    const originalConsoleError = console.error;
+    const suppressedConsole = (...args: unknown[]) => {
+      const message = args.join(' ');
+      // Suppress specific FedCM and Google Sign-In related errors
+      if (message.includes('FedCM get() rejects with NetworkError') ||
+          message.includes('GSI_LOGGER') ||
+          message.includes('Error retrieving a token')) {
+        return; // Don't log these errors
+      }
+      originalConsoleError.apply(console, args);
+    };
+    console.error = suppressedConsole;
+
     // Check if script already exists
     const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
     if (existingScript) {
@@ -122,7 +147,9 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disable
         setGoogleLoaded(true);
         initializeGoogleSignIn();
       }
-      return;
+      return () => {
+        console.error = originalConsoleError; // Restore original console.error
+      };
     }
 
     // Load Google Identity Services
@@ -143,6 +170,8 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disable
 
     return () => {
       // Don't remove script on cleanup as it's shared
+      // Restore original console.error
+      console.error = originalConsoleError;
     };
   }, [onError, t, initializeGoogleSignIn]);
 
@@ -156,19 +185,26 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError, disable
       console.log('Prompting Google Sign-In...');
       setPrompting(true);
       try {
+        // Try to use the prompt method, but catch FedCM errors gracefully
         window.google.accounts.id.prompt();
+        
         // Set a timeout to reset prompting state in case prompt doesn't trigger callback
         setTimeout(() => {
           setPrompting(false);
-        }, 3000);
+        }, 5000);
       } catch (error) {
         setPrompting(false);
         console.error('Failed to show Google prompt:', error);
-        onError('Google Sign-In failed. Please try again or contact support.');
+        const errorStr = String(error);
+        if (errorStr.includes('FedCM') || errorStr.includes('NetworkError')) {
+          onError('Google Sign-In temporarily unavailable. Please use email/password login instead.');
+        } else {
+          onError('Google Sign-In failed. Please try again or use email/password login.');
+        }
       }
     } else {
       console.error('Google Sign-In not loaded');
-      onError('Google Sign-In not loaded. Please refresh the page.');
+      onError('Google Sign-In not loaded. Please refresh the page and try again.');
     }
   }, [googleLoaded, prompting, loading, onError]);
 

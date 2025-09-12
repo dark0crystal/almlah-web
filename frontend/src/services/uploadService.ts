@@ -216,6 +216,8 @@ class UploadService {
   ): Promise<UploadResult> {
     // For now, we'll use the single upload method
     // In the future, this could be enhanced with actual progress tracking using XMLHttpRequest
+    // TODO: Use onProgress parameter for actual progress tracking
+    void onProgress; // Acknowledge the parameter to suppress linting warning
     return this.uploadSingle(file, bucket);
   }
 
