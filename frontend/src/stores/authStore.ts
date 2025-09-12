@@ -66,7 +66,30 @@ const removeToken = () => {
 };
 
 const getToken = (): string | null => {
-  return localStorage.getItem('authToken');
+  if (typeof window === 'undefined') return null;
+  
+  // Check localStorage first
+  const localToken = localStorage.getItem('authToken');
+  if (localToken) {
+    console.log('💾 Token found in localStorage');
+    return localToken;
+  }
+  
+  // Check cookies as fallback
+  const cookieToken = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('authToken='))
+    ?.split('=')[1];
+    
+  if (cookieToken) {
+    console.log('🍪 Token found in cookies');
+    // If found in cookies but not localStorage, sync it
+    localStorage.setItem('authToken', cookieToken);
+    return cookieToken;
+  }
+  
+  console.log('❌ No token found in localStorage or cookies');
+  return null;
 };
 
 // API Calls

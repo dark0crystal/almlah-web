@@ -4,12 +4,38 @@ import { redirect } from 'next/navigation';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST || 'http://localhost:9000';
 
-// Get token from cookies
+// Get token from cookies (server-side)
 export async function getServerAuthToken(): Promise<string | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get('authToken')?.value || null;
   console.log('🍪 Server token:', token ? 'Found' : 'Not found');
   return token;
+}
+
+// Client-side token helper (for components)
+export function getClientAuthToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  
+  // Check localStorage first
+  const localToken = localStorage.getItem('authToken');
+  if (localToken) {
+    console.log('💾 Client localStorage token: Found');
+    return localToken;
+  }
+  
+  // Check cookies as fallback
+  const cookieToken = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('authToken='))
+    ?.split('=')[1];
+    
+  if (cookieToken) {
+    console.log('🍪 Client cookie token: Found');
+    return cookieToken;
+  }
+  
+  console.log('❌ No client token found');
+  return null;
 }
 
 // Verify token with backend

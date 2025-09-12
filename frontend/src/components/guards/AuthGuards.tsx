@@ -70,13 +70,28 @@ export const PageGuard = ({
   requireAny?: boolean;
   redirectTo?: string;
 }) => {
-  const { user, isLoading, checkAuth } = useAuthStore();
+  const { user, isLoading, checkAuth, isAuthenticated } = useAuthStore();
   const router = useRouter();
 
-  // Check auth on mount
+  // Check auth on mount and verify token exists in storage
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    const checkTokenAndAuth = async () => {
+      // First check if we have any token in storage
+      const hasLocalToken = typeof window !== 'undefined' && localStorage.getItem('authToken');
+      const hasCookieToken = typeof window !== 'undefined' && document.cookie.includes('authToken=');
+      
+      if (!hasLocalToken && !hasCookieToken) {
+        console.log('❌ No authToken found in localStorage or cookies');
+        router.push(redirectTo);
+        return;
+      }
+      
+      console.log('✅ authToken found, checking authentication');
+      await checkAuth();
+    };
+    
+    checkTokenAndAuth();
+  }, [checkAuth, router, redirectTo]);
 
   // Redirect if not authenticated or authorized
   useEffect(() => {

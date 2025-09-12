@@ -5,6 +5,16 @@ import samhah from "../../../public/samhah.png"
 export function WideCard() {
   return (
     <div className="relative w-full h-32 md:h-40 lg:h-48 bg-[#FFC00A] rounded-3xl overflow-hidden">
+      {/* Grain texture overlay */}
+      <div 
+        className="absolute inset-0 z-[1] opacity-25"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+          backgroundSize: '180px 180px',
+          mixBlendMode: 'multiply'
+        }}
+      />
+
       {/* Yellow geometric shapes */}
       <div className="absolute inset-0">
         <div className="absolute top-8 right-12 z-10 transform scale-[4] rotate-12">
@@ -40,6 +50,16 @@ export function WideCard() {
 export function SmallCard1() {
   return (
     <div className="relative w-full h-32 md:h-40 lg:h-48 bg-[#F5E6A8] rounded-3xl overflow-hidden">
+      {/* Grain texture overlay */}
+      <div 
+        className="absolute inset-0 z-[1] opacity-30"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter2'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter2)'/%3E%3C/svg%3E")`,
+          backgroundSize: '160px 160px',
+          mixBlendMode: 'multiply'
+        }}
+      />
+
       {/* Main text - at the top */}
       <div className="absolute top-2 md:top-4 lg:top-6 left-0 right-0 flex justify-center">
         <h3 className="text-3xl md:text-5xl lg:text-6xl font-black text-black z-40">
@@ -94,7 +114,15 @@ export function SmallCard1() {
 export function SmallCard2() {
   return (
     <div className="relative w-full h-32 md:h-40 lg:h-48 bg-white rounded-3xl overflow-hidden">
-      
+      {/* Grain texture overlay */}
+      <div 
+        className="absolute inset-0 z-[1] opacity-20"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter3'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.0' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter3)'/%3E%3C/svg%3E")`,
+          backgroundSize: '200px 200px',
+          mixBlendMode: 'darken'
+        }}
+      />
 
       {/* Image at bottom */}
       <div className="absolute bottom-0 right-4 z-20">
@@ -106,7 +134,6 @@ export function SmallCard2() {
           className="object-cover rounded-t-xl"
         />
       </div>
-
 
       {/* Speaker icon */}
       <div className="absolute bottom-6 md:bottom-8 lg:bottom-12 left-4 z-20">
