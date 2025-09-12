@@ -105,8 +105,12 @@ const setTokenInStorage = (token: string): void => {
   if (typeof window === 'undefined') return;
   console.log('🔐 SETTING token in localStorage:', token.substring(0, 20) + '...');
   localStorage.setItem('authToken', token);
-  // Also set as httpOnly cookie for server-side access
-  document.cookie = `authToken=${token}; path=/; max-age=${7 * 24 * 60 * 60}; secure; samesite=strict`;
+  // Also set as cookie for server-side access
+  // Remove 'secure' flag for localhost development, add it for production
+  const isProduction = window.location.protocol === 'https:';
+  const secureFlag = isProduction ? '; secure' : '';
+  document.cookie = `authToken=${token}; path=/; max-age=${7 * 24 * 60 * 60}${secureFlag}; samesite=strict`;
+  console.log('🍪 SETTING token in cookie for server-side access');
 };
 
 const removeTokenFromStorage = (): void => {
@@ -116,7 +120,8 @@ const removeTokenFromStorage = (): void => {
   // Also remove old format if it exists
   localStorage.removeItem('auth-storage');
   // Clear the cookie
-  document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+  document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; samesite=strict';
+  console.log('🍪 REMOVING token from cookie');
 };
 
 // Create Zustand store (without persist middleware)
