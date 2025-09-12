@@ -290,6 +290,16 @@ const LoginForm = () => {
       
       console.log('Login successful:', result);
       
+      // Explicitly store token in localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('authToken', result.token);
+        console.log('Token stored in localStorage:', result.token.substring(0, 20) + '...');
+        
+        // Verify storage
+        const storedToken = localStorage.getItem('authToken');
+        console.log('Verification - Token retrieved from localStorage:', storedToken ? storedToken.substring(0, 20) + '...' : 'null');
+      }
+      
       // Use Zustand store to handle authentication
       await login(result.token);
       
@@ -312,6 +322,16 @@ const LoginForm = () => {
     try {
       setLoading(true);
       setError('');
+      
+      // Explicitly store token in localStorage for Google auth too
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('authToken', result.token);
+        console.log('Google token stored in localStorage:', result.token.substring(0, 20) + '...');
+        
+        // Verify storage
+        const storedToken = localStorage.getItem('authToken');
+        console.log('Verification - Google token retrieved from localStorage:', storedToken ? storedToken.substring(0, 20) + '...' : 'null');
+      }
       
       // Use Zustand store for Google auth too
       await login(result.token);
