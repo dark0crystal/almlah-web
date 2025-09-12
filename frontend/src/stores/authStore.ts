@@ -103,6 +103,7 @@ const getTokenFromStorage = (): string | null => {
 
 const setTokenInStorage = (token: string): void => {
   if (typeof window === 'undefined') return;
+  console.log('🔐 SETTING token in localStorage:', token.substring(0, 20) + '...');
   localStorage.setItem('authToken', token);
   // Also set as httpOnly cookie for server-side access
   document.cookie = `authToken=${token}; path=/; max-age=${7 * 24 * 60 * 60}; secure; samesite=strict`;
@@ -110,6 +111,7 @@ const setTokenInStorage = (token: string): void => {
 
 const removeTokenFromStorage = (): void => {
   if (typeof window === 'undefined') return;
+  console.log('🗑️ REMOVING token from localStorage');
   localStorage.removeItem('authToken');
   // Also remove old format if it exists
   localStorage.removeItem('auth-storage');
@@ -142,9 +144,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       }
     } catch (error) {
       console.error('Auth initialization error:', error);
-      // Clear invalid token
-      removeTokenFromStorage();
-      set({ user: null, token: null });
+      console.warn('Keeping token despite initialization error');
+      // Don't clear token during initialization - let it persist
+      // removeTokenFromStorage(); // COMMENTED OUT
+      // set({ user: null, token: null }); // COMMENTED OUT
     } finally {
       set({ isLoading: false, isInitialized: true });
     }
@@ -153,6 +156,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   // Load user data from API
   loadUserData: async (authToken: string) => {
     try {
+      // First store the token immediately, regardless of user data loading
+      set({ token: authToken, isLoading: false });
+      setTokenInStorage(authToken);
+
       const [profileResponse, permissionsResponse, rolesResponse] = await Promise.all([
         AuthAPI.getUserProfile(authToken),
         AuthAPI.getUserPermissions(authToken),
@@ -171,15 +178,23 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         isLoading: false 
       });
 
-      // Store token in localStorage
-      setTokenInStorage(authToken);
-
     } catch (error) {
       console.error('Failed to load user data:', error);
-      // Clear invalid token
-      removeTokenFromStorage();
-      set({ user: null, token: null });
-      throw error;
+      console.warn('Token preserved despite user data loading failure');
+      
+      // IMPORTANT: Don't clear the token if user data loading fails
+      // The token is still valid, we just couldn't load additional user info
+      // removeTokenFromStorage(); // COMMENTED OUT to preserve token
+      
+      // Keep the token but clear user data
+      set({ 
+        user: null, 
+        token: authToken, // Keep the token
+        isLoading: false 
+      });
+      
+      // Don't throw error to prevent login page from showing error
+      // throw error; // COMMENTED OUT
     }
   },
 

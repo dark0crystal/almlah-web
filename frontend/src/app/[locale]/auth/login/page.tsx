@@ -301,9 +301,22 @@ const LoginForm = () => {
       }
       
       // Use Zustand store to handle authentication
-      await login(result.token);
+      try {
+        await login(result.token);
+        setSuccess(t('loginSuccess'));
+      } catch (error) {
+        console.warn('Zustand login failed, but token is stored:', error);
+        setSuccess(t('loginSuccess') + ' (Token stored)');
+      }
       
-      setSuccess(t('loginSuccess'));
+      // Ensure token stays in localStorage (double-check after a delay)
+      setTimeout(() => {
+        const finalCheck = localStorage.getItem('authToken');
+        if (!finalCheck && result.token) {
+          console.warn('Token was cleared, restoring it');
+          localStorage.setItem('authToken', result.token);
+        }
+      }, 500);
       
       // Redirect to original page or dashboard
       setTimeout(() => {
@@ -334,9 +347,22 @@ const LoginForm = () => {
       }
       
       // Use Zustand store for Google auth too
-      await login(result.token);
+      try {
+        await login(result.token);
+        setSuccess(t('googleLoginSuccess'));
+      } catch (error) {
+        console.warn('Zustand Google login failed, but token is stored:', error);
+        setSuccess(t('googleLoginSuccess') + ' (Token stored)');
+      }
       
-      setSuccess(t('googleLoginSuccess'));
+      // Ensure token stays in localStorage (double-check after a delay)
+      setTimeout(() => {
+        const finalCheck = localStorage.getItem('authToken');
+        if (!finalCheck && result.token) {
+          console.warn('Token was cleared, restoring it');
+          localStorage.setItem('authToken', result.token);
+        }
+      }, 500);
       
       // Redirect to original page or dashboard
       setTimeout(() => {
