@@ -78,7 +78,7 @@ export const CategorySelectionStep: React.FC = () => {
     setValue('category_ids', newIds);
   };
 
-  if (isLoadingCategories && parentCategories.length === 0) {
+  if (isLoadingCategories && (parentCategories || []).length === 0) {
     return (
       <div className="flex justify-center items-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -103,7 +103,7 @@ export const CategorySelectionStep: React.FC = () => {
         <h3 className="text-lg font-semibold text-gray-900">Choose Main Category</h3>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {parentCategories.map((category) => (
+          {(parentCategories || []).map((category) => (
             <label key={category.id} className="cursor-pointer">
               <input
                 {...register('parent_category_id')}
@@ -151,7 +151,7 @@ export const CategorySelectionStep: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {childCategories.map((category) => {
+              {(childCategories || []).map((category) => {
                 const isSelected = watchedCategoryIds?.includes(category.id) || false;
                 
                 return (
@@ -193,7 +193,7 @@ export const CategorySelectionStep: React.FC = () => {
             <p className="text-red-500 text-sm mt-2">{errors.category_ids.message}</p>
           )}
 
-          {childCategories.length === 0 && !isLoadingCategories && (
+          {(childCategories || []).length === 0 && !isLoadingCategories && (
             <div className="text-center py-8 text-gray-500">
               <p>No specific types available for this category.</p>
               <p className="text-sm mt-1">You can proceed to the next step.</p>

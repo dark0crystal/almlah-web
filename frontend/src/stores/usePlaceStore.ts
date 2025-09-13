@@ -277,10 +277,11 @@ export const usePlaceStore = create<PlaceStore>()(
           const response = await fetch(`${API_BASE_URL}/api/v1/categories/primary`);
           const result = await response.json();
           if (result.success) {
-            set({ parentCategories: result.data });
+            set({ parentCategories: result.data || [] });
           }
         } catch (error) {
           console.error('Failed to fetch parent categories:', error);
+          set({ parentCategories: [] });
         } finally {
           set({ isLoadingCategories: false });
         }
@@ -292,10 +293,11 @@ export const usePlaceStore = create<PlaceStore>()(
           const response = await fetch(`${API_BASE_URL}/api/v1/categories/secondary/${parentId}`);
           const result = await response.json();
           if (result.success) {
-            set({ childCategories: result.data });
+            set({ childCategories: result.data || [] });
           }
         } catch (error) {
           console.error('Failed to fetch child categories:', error);
+          set({ childCategories: [] });
         } finally {
           set({ isLoadingCategories: false });
         }
