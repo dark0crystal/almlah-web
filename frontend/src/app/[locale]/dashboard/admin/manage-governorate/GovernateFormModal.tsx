@@ -227,7 +227,11 @@ export const GovernateFormModal: React.FC<GovernateFormModalProps> = ({
 
     try {
       setUploadProgress(25);
+      console.log(`📤 Starting Supabase upload for governate ${governateId}:`, imagesToUpload.length, 'images');
+      console.log(`📦 Storage bucket: ${process.env.NEXT_PUBLIC_STORAGE_BUCKET}`);
+      
       const uploadedImages = await SupabaseStorageService.uploadGovernateImages(governateId, imagesToUpload);
+      console.log(`✅ Supabase upload completed:`, uploadedImages);
       setUploadProgress(75);
 
       // Convert to API format for governate image upload
@@ -280,11 +284,12 @@ export const GovernateFormModal: React.FC<GovernateFormModalProps> = ({
       };
 
       // Save the governate first
-      await onSave(governate?.id || null, submitData);
-      const governateId = governate?.id || null;
+      const savedGovernate = await onSave(governate?.id || null, submitData);
+      const governateId = governate?.id || savedGovernate?.id;
 
       // Upload new images if any
       if (pendingFiles.length > 0 && governateId) {
+        console.log(`🚀 Uploading ${pendingFiles.length} images to governates/${governateId}/`);
         await uploadImagesToSupabase(governateId);
       }
 

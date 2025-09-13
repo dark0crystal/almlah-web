@@ -5,6 +5,12 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ Missing Supabase environment variables');
+  console.log('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing');
+  console.log('NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Set' : 'Missing');
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export interface UploadOptions {
@@ -106,6 +112,27 @@ export class SupabaseStorageService {
     displayOrder: number;
   }>> {
     console.log('🚀 SupabaseStorageService.uploadGovernateImages called:', { governateId, imageCount: images.length });
+    console.log('🔧 Supabase config:', { 
+      url: supabaseUrl ? 'Set' : 'Missing',
+      key: supabaseAnonKey ? 'Set' : 'Missing',
+      bucket: process.env.NEXT_PUBLIC_STORAGE_BUCKET
+    });
+    
+    // Check if bucket exists
+    const bucket = process.env.NEXT_PUBLIC_STORAGE_BUCKET || 'media-bucket';
+    console.log(`📦 Using storage bucket: ${bucket}`);
+    
+    const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
+    if (bucketError) {
+      console.error('❌ Error listing buckets:', bucketError);
+    } else {
+      console.log('📦 Available buckets:', buckets.map(b => b.name));
+      const bucketExists = buckets.some(b => b.name === bucket);
+      if (!bucketExists) {
+        console.error(`❌ Bucket '${bucket}' not found! Available buckets:`, buckets.map(b => b.name));
+        throw new Error(`Storage bucket '${bucket}' does not exist`);
+      }
+    }
     
     const results = [];
     let galleryIndex = 0;

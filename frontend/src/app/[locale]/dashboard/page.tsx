@@ -85,7 +85,7 @@ const ProtectedDashboard = () => {
       label: 'إدارة المحافظات',
       labelEn: 'Manage Governates',
       icon: '🗺️',
-      route: '/dashboard/admin/manage-governorates',
+      route: '/dashboard/admin/manage-governorate',
       requiredRoles: ['admin', 'super_admin'],
       requireAny: true
     },
