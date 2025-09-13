@@ -81,13 +81,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const initAuth = async () => {
       try {
-        const savedToken = localStorage.getItem('auth_token');
+        const savedToken = localStorage.getItem('authToken');
         if (savedToken) {
           await loadUserData(savedToken);
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
-        localStorage.removeItem('auth_token');
+        localStorage.removeItem('authToken');
       } finally {
         setIsLoading(false);
       }
@@ -113,7 +113,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       setUser(userData);
       setToken(authToken);
-      localStorage.setItem('auth_token', authToken);
+      localStorage.setItem('authToken', authToken);
     } catch (error) {
       console.error('Failed to load user data:', error);
       throw error;
@@ -135,7 +135,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Logout function
   const logout = () => {
-    localStorage.removeItem('auth_token');
+    localStorage.removeItem('authToken');
     setUser(null);
     setToken(null);
     // Redirect to login will be handled by route guards

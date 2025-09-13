@@ -284,7 +284,7 @@ export const GovernateFormModal: React.FC<GovernateFormModalProps> = ({
       };
 
       // Save the governate first
-      const savedGovernate = await onSave(governate?.id || null, submitData);
+      const savedGovernate = await onSave(governate?.id || null, submitData) as { id: string } | undefined;
       const governateId = governate?.id || savedGovernate?.id;
 
       // Upload new images if any

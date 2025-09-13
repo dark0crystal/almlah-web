@@ -170,7 +170,20 @@ const signupWithGoogle = async (googleToken: string) => {
   return data.data;
 };
 
-const fetchUserData = async (token: string) => {
+// Cache user data to reduce API calls
+let userDataCache: { token: string; data: User; timestamp: number } | null = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+const fetchUserData = async (token: string, forceRefresh = false) => {
+  // Check cache first
+  if (!forceRefresh && userDataCache && 
+      userDataCache.token === token && 
+      Date.now() - userDataCache.timestamp < CACHE_DURATION) {
+    console.log('📦 Using cached user data');
+    return userDataCache.data;
+  }
+
+  console.log('🔄 Fetching fresh user data');
   const [profileRes, permissionsRes, rolesRes] = await Promise.all([
     apiCall('/auth/me', {
       headers: { 'Authorization': `Bearer ${token}` },
@@ -183,11 +196,20 @@ const fetchUserData = async (token: string) => {
     }),
   ]);
 
-  return {
+  const userData = {
     ...profileRes.data.user,
     permissions: permissionsRes.data?.map((p: { name: string }) => p.name) || [],
     roles: rolesRes.data?.map((r: { role?: { name: string }; name?: string }) => r.role?.name || r.name) || [],
   };
+
+  // Cache the data
+  userDataCache = {
+    token,
+    data: userData,
+    timestamp: Date.now()
+  };
+
+  return userData;
 };
 
 // Create Auth Store
@@ -316,6 +338,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   // Logout
   logout: () => {
     removeToken();
+    // Clear cache
+    userDataCache = null;
     set({
       user: null,
       token: null,
@@ -349,6 +373,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     } catch (error) {
       console.error('❌ Auth check failed:', error);
       removeToken();
+      // Clear cache on auth failure
+      userDataCache = null;
       set({
         user: null,
         token: null,

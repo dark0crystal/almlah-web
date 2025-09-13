@@ -73,9 +73,15 @@ export const PageGuard = ({
   const { user, isLoading, checkAuth, isAuthenticated } = useAuthStore();
   const router = useRouter();
 
-  // Check auth on mount and verify token exists in storage
+  // Check auth on mount (only if not already authenticated)
   useEffect(() => {
     const checkTokenAndAuth = async () => {
+      // Skip if already authenticated
+      if (isAuthenticated()) {
+        console.log('🔐 Already authenticated, skipping check');
+        return;
+      }
+
       // First check if we have any token in storage
       const hasLocalToken = typeof window !== 'undefined' && localStorage.getItem('authToken');
       const hasCookieToken = typeof window !== 'undefined' && document.cookie.includes('authToken=');
@@ -91,7 +97,7 @@ export const PageGuard = ({
     };
     
     checkTokenAndAuth();
-  }, [checkAuth, router, redirectTo]);
+  }, [checkAuth, router, redirectTo, isAuthenticated]);
 
   // Redirect if not authenticated or authorized
   useEffect(() => {
