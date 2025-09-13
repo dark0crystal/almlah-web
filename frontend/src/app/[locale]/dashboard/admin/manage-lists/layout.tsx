@@ -10,5 +10,9 @@ export default function ManageListsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <div style={{backgroundColor: '#f3f3eb'}}>
+      {children}
+    </div>
+  );
 }

@@ -17,7 +17,7 @@ export default async function ManageGovernorateLayout({
     await requireAnyRole(['admin', 'super_admin'], currentPath);
     
     return (
-      <div className="manage-governorate-layout">
+      <div className="manage-governorate-layout" style={{backgroundColor: '#f3f3eb'}}>
         {children}
       </div>
     );

@@ -20,7 +20,7 @@ export default async function ManageRbacLayout({
     ], currentPath);
     
     return (
-      <div className="manage-rbac-layout">
+      <div className="manage-rbac-layout" style={{backgroundColor: '#f3f3eb'}}>
         {children}
       </div>
     );

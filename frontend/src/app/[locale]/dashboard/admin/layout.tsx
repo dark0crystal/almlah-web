@@ -17,7 +17,7 @@ export default async function AdminLayout({
     await requireAnyRole(['admin', 'super_admin'], currentPath);
     
     return (
-      <div className="admin-layout">
+      <div className="admin-layout" style={{backgroundColor: '#f3f3eb'}}>
         {children}
       </div>
     );

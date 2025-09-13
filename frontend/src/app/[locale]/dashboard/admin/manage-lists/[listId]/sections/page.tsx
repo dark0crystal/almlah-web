@@ -130,7 +130,7 @@ export default function ListSectionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen p-6" style={{backgroundColor: '#f3f3eb'}}>
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse space-y-6">
             <div className="h-8 bg-gray-200 rounded w-1/4" />
@@ -147,7 +147,7 @@ export default function ListSectionsPage() {
 
   if (!list) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: '#f3f3eb'}}>
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">
             {locale === 'ar' ? 'القائمة غير موجودة' : 'List Not Found'}

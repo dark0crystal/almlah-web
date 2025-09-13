@@ -1,6 +1,6 @@
 export default function EditPlace(){
     return(
-        <div>
+        <div style={{backgroundColor: '#f3f3eb'}}>
             
         </div>
     )

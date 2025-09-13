@@ -217,9 +217,9 @@ export default function ManageDishesPage() {
       };
 
       const response = await dishService.getAll(params);
-      setDishes(response.dishes);
-      setTotalItems(response.total);
-      setTotalPages(response.total_pages);
+      setDishes(response.dishes || []);
+      setTotalItems(response.total || 0);
+      setTotalPages(response.total_pages || 1);
     } catch (error) {
       console.error('Error loading dishes:', error);
     } finally {
@@ -230,9 +230,10 @@ export default function ManageDishesPage() {
   const loadGovernorates = async () => {
     try {
       const response = await governateService.getAll();
-      setGovernorates(response);
+      setGovernorates(response || []);
     } catch (error) {
       console.error('Error loading governorates:', error);
+      setGovernorates([]);
     }
   };
 
@@ -319,7 +320,7 @@ export default function ManageDishesPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6" style={{backgroundColor: '#f3f3eb'}}>
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -368,7 +369,7 @@ export default function ManageDishesPage() {
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Governorates</option>
-            {governates.map(gov => (
+            {(governates || []).map(gov => (
               <option key={gov.id} value={gov.id}>{gov.name_en}</option>
             ))}
           </select>
@@ -466,14 +467,14 @@ export default function ManageDishesPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {dishes.map((dish) => (
+                {(dishes || []).map((dish) => (
                   <tr key={dish.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        {dish.images.find(img => img.is_primary)?.image_url ? (
+                        {(dish.images || []).find(img => img.is_primary)?.image_url ? (
                           <div className="relative h-10 w-10 rounded-lg overflow-hidden">
                             <Image
-                              src={dish.images.find(img => img.is_primary)?.image_url || ''}
+                              src={(dish.images || []).find(img => img.is_primary)?.image_url || ''}
                               alt={dish.name_en}
                               fill
                               className="object-cover"

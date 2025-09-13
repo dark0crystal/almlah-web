@@ -1177,16 +1177,9 @@ export default function RBACManagement() {
   const [showRolePermissionsModal, setShowRolePermissionsModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Role | Permission | null>(null);
 
-  useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      setIsAuthenticated(true);
-      loadData();
-    }
-  }, [loadData]);
-
   const handleAuthError = (error: unknown) => {
-    if (error.message.includes('401') || error.message.includes('403') || error.message.includes('Unauthorized')) {
+    const errorMessage = error instanceof Error ? error.message : '';
+    if (errorMessage.includes('401') || errorMessage.includes('403') || errorMessage.includes('Unauthorized')) {
       setIsAuthenticated(false);
       localStorage.removeItem('authToken');
       setShowLoginModal(true);
@@ -1212,6 +1205,14 @@ export default function RBACManagement() {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      setIsAuthenticated(true);
+      loadData();
+    }
+  }, [loadData]);
 
   const handleLogin = (token: string) => {
     setIsAuthenticated(true);
@@ -1253,7 +1254,7 @@ export default function RBACManagement() {
       setSelectedItem(null);
     } catch (err: unknown) {
       handleAuthError(err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
@@ -1285,7 +1286,7 @@ export default function RBACManagement() {
       setSelectedItem(null);
     } catch (err: unknown) {
       handleAuthError(err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }

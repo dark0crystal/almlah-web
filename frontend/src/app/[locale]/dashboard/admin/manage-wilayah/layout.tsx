@@ -17,7 +17,7 @@ export default async function ManageWilayahLayout({
     await requireAnyRole(['admin', 'super_admin'], currentPath);
     
     return (
-      <div className="manage-wilayah-layout">
+      <div className="manage-wilayah-layout" style={{backgroundColor: '#f3f3eb'}}>
         {children}
       </div>
     );

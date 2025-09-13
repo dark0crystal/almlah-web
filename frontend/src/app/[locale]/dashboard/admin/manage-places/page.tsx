@@ -522,7 +522,7 @@ const PlaceCard = ({ place, onEdit, onDelete, onView }: {
         {/* Categories */}
         {place.categories && place.categories.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
-            {place.categories.slice(0, 2).map((category) => (
+            {(place.categories || []).slice(0, 2).map((category) => (
               <span 
                 key={category.id}
                 className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
@@ -566,7 +566,7 @@ const PlaceCard = ({ place, onEdit, onDelete, onView }: {
         {images.length > 1 && (
           <div className="mt-3 pt-3 border-t">
             <div className="flex gap-1 overflow-x-auto">
-              {images.slice(0, 4).map((image, index) => (
+              {(images || []).slice(0, 4).map((image, index) => (
                 <div key={image.id} className="relative flex-shrink-0">
                   <Image
                     src={image.image_url}
@@ -657,7 +657,7 @@ const FilterSection = ({
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">All Categories</option>
-                {categories.map((category) => (
+                {(categories || []).map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name_en} ({category.name_ar})
                   </option>
@@ -673,7 +673,7 @@ const FilterSection = ({
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">All Governates</option>
-                {governates.map((governate) => (
+                {(governates || []).map((governate) => (
                   <option key={governate.id} value={governate.id}>
                     {governate.name_en} ({governate.name_ar})
                   </option>
@@ -765,6 +765,17 @@ export default function ManagePlaces() {
     }
   }, [places.length]); // Added missing dependency: places.length
 
+  // Refresh data
+  const refreshData = useCallback(async () => {
+    setRefreshing(true);
+    await loadPlaces({ 
+      search: searchQuery, 
+      categoryId: selectedCategory, 
+      governateId: selectedGovernate 
+    });
+    setRefreshing(false);
+  }, [loadPlaces, searchQuery, selectedCategory, selectedGovernate]);
+
   useEffect(() => {
     loadPlaces();
     loadCategories();
@@ -844,17 +855,6 @@ export default function ManagePlaces() {
     setSelectedGovernate('');
     await loadPlaces();
   };
-
-  // Refresh data
-  const refreshData = useCallback(async () => {
-    setRefreshing(true);
-    await loadPlaces({ 
-      search: searchQuery, 
-      categoryId: selectedCategory, 
-      governateId: selectedGovernate 
-    });
-    setRefreshing(false);
-  }, [loadPlaces, searchQuery, selectedCategory, selectedGovernate]);
 
   // Handle place deletion
   const handleDeletePlace = async (placeId) => {
@@ -1050,7 +1050,7 @@ export default function ManagePlaces() {
         {/* Places Grid */}
         {!loading && !error && places.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {places.map((place) => (
+            {(places || []).map((place) => (
               <PlaceCard
                 key={place.id}
                 place={place}

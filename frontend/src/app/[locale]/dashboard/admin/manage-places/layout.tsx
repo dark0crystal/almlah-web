@@ -21,7 +21,7 @@ export default async function ManagePlacesLayout({
     ], currentPath);
     
     return (
-      <div className="manage-places-layout">
+      <div className="manage-places-layout" style={{backgroundColor: '#f3f3eb'}}>
         {children}
       </div>
     );

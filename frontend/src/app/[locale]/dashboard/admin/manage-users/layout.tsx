@@ -17,7 +17,7 @@ export default async function ManageUsersLayout({
     await requirePermission('can_manage_user', currentPath);
     
     return (
-      <div className="manage-users-layout">
+      <div className="manage-users-layout" style={{backgroundColor: '#f3f3eb'}}>
         {children}
       </div>
     );

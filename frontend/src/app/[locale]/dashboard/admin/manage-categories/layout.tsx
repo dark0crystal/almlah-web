@@ -21,7 +21,7 @@ export default async function ManageCategoriesLayout({
     ], currentPath);
     
     return (
-      <div className="manage-categories-layout">
+      <div className="manage-categories-layout" style={{backgroundColor: '#f3f3eb'}}>
         {children}
       </div>
     );
