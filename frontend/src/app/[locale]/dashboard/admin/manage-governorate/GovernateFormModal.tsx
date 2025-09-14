@@ -245,6 +245,9 @@ export const GovernateFormModal: React.FC<GovernateFormModalProps> = ({
       setUploadProgress(90);
 
       // Call API to save image records to database
+      console.log('📨 Saving image records to database:', imageRequests);
+      console.log('🌐 API endpoint:', `${process.env.NEXT_PUBLIC_API_HOST}/api/v1/governates/${governateId}/images`);
+      
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_HOST}/api/v1/governates/${governateId}/images`, {
         method: 'POST',
         headers: {
@@ -254,11 +257,16 @@ export const GovernateFormModal: React.FC<GovernateFormModalProps> = ({
         body: JSON.stringify({ images: imageRequests })
       });
 
+      console.log('📊 Database save response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to save image records to database');
+        const errorText = await response.text();
+        console.error('❌ Database save failed:', errorText);
+        throw new Error(`Failed to save image records to database: ${response.status} ${errorText}`);
       }
 
       const result = await response.json();
+      console.log('✅ Database save result:', result);
       setUploadProgress(100);
       
       return result.data?.governate_images || [];
