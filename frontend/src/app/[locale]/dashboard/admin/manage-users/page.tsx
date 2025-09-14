@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 // API Configuration
-const API_BASE_URL = 'http://localhost:9000/api/v1';
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_HOST || 'http://localhost:9000'}/api/v1`;
 
 // Enhanced API utility function
 const apiCall = async (endpoint: string, options: Record<string, unknown> = {}) => {

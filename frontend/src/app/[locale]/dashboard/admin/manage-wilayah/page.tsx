@@ -10,7 +10,7 @@ import { SupabaseStorageService } from '@/services/supabaseStorage';
 import { ExistingImage } from '@/types/image';
 
 // API Configuration
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:9000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST || 'http://localhost:9000';
 
 // Utility function to get auth token
 const getAuthToken = () => {

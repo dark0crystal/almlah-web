@@ -4,7 +4,7 @@ import { devtools } from 'zustand/middleware';
 import { SupabaseStorageService } from '../services/supabaseStorage';
 
 // API Configuration
-const API_BASE_URL = 'http://127.0.0.1:9000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST || 'http://127.0.0.1:9000';
 
 export interface ContentSection {
   id?: string;

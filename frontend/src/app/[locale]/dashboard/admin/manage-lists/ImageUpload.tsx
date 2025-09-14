@@ -113,7 +113,7 @@ export default function ImageUpload({
         formData.append('folder', bucket);
 
         const token = localStorage.getItem('authToken');
-        const response = await fetch('http://localhost:9000/api/v1/upload', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_HOST || 'http://localhost:9000'}/api/v1/upload`, {
           method: 'POST',
           headers: {
             ...(token && { 'Authorization': `Bearer ${token}` }),

@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit, Trash2, Search, Tag, BarChart3, X, Save, AlertTriangle, CheckCircle } from 'lucide-react';
 
 // API configuration
-const API_BASE_URL = 'http://localhost:9000/api/v1';
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_HOST || 'http://localhost:9000'}/api/v1`;
 
 const apiCall = async (endpoint: string, options: Record<string, unknown> = {}) => {
   const token = localStorage.getItem('authToken');

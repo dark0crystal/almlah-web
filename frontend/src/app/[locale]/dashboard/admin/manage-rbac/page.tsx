@@ -45,7 +45,7 @@ interface PermissionFormData {
 }
 
 // API Configuration
-const API_HOST = 'http://localhost:9000';
+const API_HOST = process.env.NEXT_PUBLIC_API_HOST || 'http://localhost:9000';
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
