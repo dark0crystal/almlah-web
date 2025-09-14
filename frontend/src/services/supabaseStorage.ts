@@ -118,21 +118,12 @@ export class SupabaseStorageService {
       bucket: process.env.NEXT_PUBLIC_STORAGE_BUCKET
     });
     
-    // Check if bucket exists
+    // Setup bucket name
     const bucket = process.env.NEXT_PUBLIC_STORAGE_BUCKET || 'media-bucket';
     console.log(`📦 Using storage bucket: ${bucket}`);
     
-    const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
-    if (bucketError) {
-      console.error('❌ Error listing buckets:', bucketError);
-    } else {
-      console.log('📦 Available buckets:', buckets.map(b => b.name));
-      const bucketExists = buckets.some(b => b.name === bucket);
-      if (!bucketExists) {
-        console.error(`❌ Bucket '${bucket}' not found! Available buckets:`, buckets.map(b => b.name));
-        throw new Error(`Storage bucket '${bucket}' does not exist`);
-      }
-    }
+    // Skip bucket existence check and proceed with upload
+    // Note: listBuckets() may fail due to RLS policies even if bucket exists
     
     const results = [];
     let galleryIndex = 0;

@@ -88,7 +88,7 @@ export default function ImagesModal({
     
     // If it's a relative path starting with /, construct full URL
     if (imageUrl.startsWith('/')) {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000";
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST || "http://127.0.0.1:9000";
       const fullUrl = `${API_BASE_URL}${imageUrl}`;
       console.log('Modal constructed full URL from relative path:', fullUrl);
       return fullUrl;
@@ -183,7 +183,7 @@ export default function ImagesModal({
                   handleImageError(selectedIndex);
                 }}
                 onLoad={() => console.log('Modal image loaded successfully:', selectedIndex, currentImageUrl)}
-                unoptimized={currentImageUrl.startsWith('http://localhost:9000')} // Disable optimization for local development
+                unoptimized={currentImageUrl.startsWith('http://127.0.0.1:9000')} // Disable optimization for local development
               />
             )}
           </div>
@@ -229,7 +229,7 @@ export default function ImagesModal({
                         console.error('Thumbnail failed to load:', thumbnailUrl);
                         handleImageError(i);
                       }}
-                      unoptimized={thumbnailUrl.startsWith('http://localhost:9000')} // Disable optimization for local development
+                      unoptimized={thumbnailUrl.startsWith('http://127.0.0.1:9000')} // Disable optimization for local development
                     />
                   )}
                 </button>

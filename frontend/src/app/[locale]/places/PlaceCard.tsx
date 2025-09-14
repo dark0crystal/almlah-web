@@ -60,7 +60,7 @@ export default function PlaceCard({ place, locale, isSelected = false, onPlaceCl
     }
     
     // If it's a relative path, add API base URL
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000";
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST || "http://127.0.0.1:9000";
     if (imageUrl.startsWith('/')) {
       return `${API_BASE_URL}${imageUrl}`;
     }

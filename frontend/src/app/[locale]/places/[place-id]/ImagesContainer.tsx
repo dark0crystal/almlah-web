@@ -84,14 +84,14 @@ export default function PlaceImagesContainer({
     
     // If it's a relative path starting with /, construct full URL
     if (imageUrl.startsWith('/')) {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000";
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST || "http://127.0.0.1:9000";
       const fullUrl = `${API_BASE_URL}${imageUrl}`;
       console.log('Constructed full URL from relative path:', fullUrl);
       return fullUrl;
     }
     
     // If it's a relative path without /, add API base URL
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000";
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST || "http://127.0.0.1:9000";
     const fullUrl = `${API_BASE_URL}/${imageUrl}`;
     console.log('Constructed full URL from relative path:', fullUrl);
     return fullUrl;
@@ -133,7 +133,7 @@ export default function PlaceImagesContainer({
           onLoad={() => console.log('Image loaded successfully:', img.id, imageUrl)}
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           priority={img.is_primary}
-          unoptimized={imageUrl.startsWith('http://localhost:9000')} // Disable optimization for local development
+          unoptimized={imageUrl.startsWith('http://127.0.0.1:9000')} // Disable optimization for local development
         />
       </div>
     );
