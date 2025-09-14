@@ -245,7 +245,7 @@ export const GovernateFormModal: React.FC<GovernateFormModalProps> = ({
       setUploadProgress(90);
 
       // Call API to save image records to database
-      const response = await fetch(`http://localhost:9000/api/v1/governates/${governateId}/images`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_HOST}/api/v1/governates/${governateId}/images`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -299,7 +299,7 @@ export const GovernateFormModal: React.FC<GovernateFormModalProps> = ({
         for (const img of galleryImages) {
           if (img.id && !img.id.startsWith('pending-')) {
             try {
-              await fetch(`http://localhost:9000/api/v1/governates/${governateId}/images/${img.id}`, {
+              await fetch(`${process.env.NEXT_PUBLIC_API_HOST}/api/v1/governates/${governateId}/images/${img.id}`, {
                 method: 'PUT',
                 headers: {
                   'Content-Type': 'application/json',
