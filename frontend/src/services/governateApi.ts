@@ -5,7 +5,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST ? `${process.env.NEXT_PUBL
 export interface GovernateImage {
   id: string;
   governate_id?: string;
-  url: string;
+  image_url: string;
   alt_text: string;
   is_primary: boolean;
   display_order: number;
@@ -200,7 +200,7 @@ export const fetchGovernateImages = async (governateId: string): Promise<Governa
 export interface WilayahImage {
   id: string;
   wilayah_id: string;
-  url: string;
+  image_url: string;
   alt_text: string;
   is_primary: boolean;
   display_order: number;
@@ -321,7 +321,7 @@ export const getPrimaryImage = (images: GovernateImage[]): string => {
   
   // Find primary image or use first image
   const primaryImage = images.find(img => img.is_primary) || images[0];
-  return getGovernateImageUrl(primaryImage.url);
+  return getGovernateImageUrl(primaryImage.image_url);
 };
 
 export const getSortedImages = (images: GovernateImage[]): GovernateImage[] => {
@@ -359,7 +359,7 @@ export const getPrimaryWilayahImage = (images: WilayahImage[]): string => {
   
   // Find primary image or use first image
   const primaryImage = images.find(img => img.is_primary) || images[0];
-  return getWilayahImageUrl(primaryImage.url);
+  return getWilayahImageUrl(primaryImage.image_url);
 };
 
 export const getSortedWilayahImages = (images: WilayahImage[]): WilayahImage[] => {

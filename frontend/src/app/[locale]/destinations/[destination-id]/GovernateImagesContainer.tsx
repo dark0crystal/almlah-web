@@ -51,7 +51,7 @@ export default function GovernateImagesContainer({
 
   // Function to render image with error handling
   const renderImage = (img: GovernateImage, className: string, onClick?: () => void) => {
-    const imageUrl = getGovernateImageUrl(img.url);
+    const imageUrl = getGovernateImageUrl(img.image_url);
     const altText = img.alt_text || `${t('imageOf')} ${governateName}`;
     const hasError = imageErrors[img.id];
 
@@ -101,7 +101,7 @@ export default function GovernateImagesContainer({
     <div className="mt-6">
       {showModal && (
         <GovernateImagesModal 
-          images={sortedImages.map(img => getGovernateImageUrl(img.url))}
+          images={sortedImages.map(img => getGovernateImageUrl(img.image_url))}
           governateName={governateName}
           language={language}
           onClose={() => setShowModal(false)} 

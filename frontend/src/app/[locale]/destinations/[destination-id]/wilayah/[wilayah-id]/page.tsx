@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
-import { MapPin, ArrowLeft, Share2, Building } from 'lucide-react';
+import { ArrowLeft, Share2 } from 'lucide-react';
 import ImagesContainer from "./ImagesContainer";
 import PostCardsWrapper from "@/components/cards/postCards/PostCardWrapper";
 import Footer from '@/components/Footer';
@@ -58,7 +58,7 @@ export default function WilayahDetailsPage({ params }: WilayahDetailsProps) {
         const wilayahWithImages: WilayahWithImages = {
           ...wilayahData,
           images: images || [],
-          image_url: images && images.length > 0 ? images.find(img => img.is_primary)?.url || images[0]?.url : undefined,
+          image_url: images && images.length > 0 ? images.find(img => img.is_primary)?.image_url || images[0]?.image_url : undefined,
           place_count: Math.floor(Math.random() * 25) + 5 // Placeholder until backend provides this
         };
         
