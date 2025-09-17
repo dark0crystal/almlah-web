@@ -259,27 +259,6 @@ export default function WilayahDetailsPage({ params }: WilayahDetailsProps) {
             </p>
           )}
           
-          {/* Statistics */}
-          <div className="flex flex-wrap items-center gap-6 mt-6 text-sm text-gray-600">
-            {wilayah.place_count && wilayah.place_count > 0 && (
-              <div className="flex items-center gap-2">
-                <MapPin className="w-5 h-5" />
-                <span>
-                  {wilayah.place_count} {wilayah.place_count === 1 ? 
-                    (locale === 'ar' ? 'مكان' : 'place') : 
-                    (locale === 'ar' ? 'أماكن' : 'places')
-                  }
-                </span>
-              </div>
-            )}
-            
-            <div className="flex items-center gap-2">
-              <Building className="w-5 h-5" />
-              <span>
-                {locale === 'ar' ? 'ولاية في عُمان' : 'Wilayah in Oman'}
-              </span>
-            </div>
-          </div>
         </div>
 
         {/* Main Content */}

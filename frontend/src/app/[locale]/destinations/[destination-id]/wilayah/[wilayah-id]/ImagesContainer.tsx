@@ -6,7 +6,7 @@ import ImagesModal from "./ImagesModal";
 
 interface WilayahImage {
   id: string;
-  url: string;
+  image_url: string;
   alt_text?: string;
   is_primary: boolean;
   display_order: number;
@@ -95,11 +95,11 @@ export default function WilayahImagesContainer({
 
   // Function to render image with error handling
   const renderImage = (img: WilayahImage, className: string, onClick?: () => void) => {
-    const imageUrl = getImageUrl(img.url);
+    const imageUrl = getImageUrl(img.image_url);
     const altText = img.alt_text || t('imageOf', { wilayahName });
     const hasError = imageErrors[img.id];
 
-    console.log(`Rendering image ${img.id}:`, { originalUrl: img.url, processedUrl: imageUrl, altText });
+    console.log(`Rendering image ${img.id}:`, { originalUrl: img.image_url, processedUrl: imageUrl, altText });
 
     if (hasError) {
       return (
@@ -138,7 +138,7 @@ export default function WilayahImagesContainer({
     <div className="mt-6 mb-12">
       {showModal && (
         <ImagesModal 
-          images={sortedImages.map(img => getImageUrl(img.url))}
+          images={sortedImages.map(img => getImageUrl(img.image_url))}
           wilayahName={wilayahName}
           onClose={() => setShowModal(false)} 
         />
