@@ -32,7 +32,7 @@ export default function ListPage() {
     if (slug) {
       fetchList();
     }
-  }, [slug]);
+  }, [slug]); // Removed locale from dependency array - only fetch once per slug
 
   // Helper function to render list items
   const renderListItem = (item: ListItem) => {
@@ -237,11 +237,6 @@ export default function ListPage() {
             <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-gray-900 mb-4 sm:mb-6 tracking-tight">
               {title}
             </h1>
-            {description && (
-              <p className={`text-lg sm:text-xl lg:text-2xl text-gray-600 leading-relaxed max-w-4xl mx-auto ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
-                {description}
-              </p>
-            )}
           </div>
           
           {list.featured_image && (
@@ -253,6 +248,14 @@ export default function ListPage() {
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
               />
+            </div>
+          )}
+          
+          {description && (
+            <div className="mb-8 sm:mb-12">
+              <p className={`text-lg sm:text-xl lg:text-2xl text-gray-600 leading-relaxed max-w-4xl mx-auto ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
+                {description}
+              </p>
             </div>
           )}
         </div>
@@ -274,11 +277,6 @@ export default function ListPage() {
                       <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 sm:mb-6 tracking-tight">
                         {sectionTitle}
                       </h2>
-                      {sectionDescription && (
-                        <p className={`text-base sm:text-lg lg:text-xl text-gray-600 leading-relaxed max-w-3xl mx-auto mb-6 sm:mb-8 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
-                          {sectionDescription}
-                        </p>
-                      )}
                       
                       {/* Section Images */}
                       {section.images && section.images.length > 0 && (
@@ -309,6 +307,12 @@ export default function ListPage() {
                             </div>
                           )}
                         </div>
+                      )}
+                      
+                      {sectionDescription && (
+                        <p className={`text-base sm:text-lg lg:text-xl text-gray-600 leading-relaxed max-w-3xl mx-auto mb-6 sm:mb-8 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
+                          {sectionDescription}
+                        </p>
                       )}
                     </div>
 
