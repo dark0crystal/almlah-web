@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { MapPin, ArrowLeft, Share2, Building } from 'lucide-react';
-import Image from 'next/image';
+import ImagesContainer from "./ImagesContainer";
 import PostCardsWrapper from "@/components/cards/postCards/PostCardWrapper";
 import Footer from '@/components/Footer';
 import { fetchWilayahById, fetchWilayahImages, WilayahWithImages } from '@/services/governateApi';
@@ -284,20 +284,11 @@ export default function WilayahDetailsPage({ params }: WilayahDetailsProps) {
 
         {/* Main Content */}
         <div className="w-full">
-          {/* Hero Image */}
-          {wilayah.image_url && (
-            <div className="mb-12">
-              <div className="relative h-64 md:h-96 rounded-2xl overflow-hidden">
-                <Image
-                  src={wilayah.image_url}
-                  alt={wilayahName}
-                  fill
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-              </div>
-            </div>
-          )}
+          {/* Image Gallery */}
+          <ImagesContainer 
+            images={wilayah.images || []} 
+            wilayahName={wilayahName}
+          />
           
           {/* About Section */}
           <div className="mt-12">
