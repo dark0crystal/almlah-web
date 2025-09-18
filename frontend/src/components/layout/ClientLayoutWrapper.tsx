@@ -16,6 +16,7 @@ interface ClientLayoutWrapperProps {
 export default function ClientLayoutWrapper({ children, navbar }: ClientLayoutWrapperProps) {
   const pathname = usePathname();
   const isMainPage = pathname === '/ar' || pathname === '/en' || pathname === '/';
+  const isDashboardPage = pathname.includes('/dashboard');
   const [showSplash, setShowSplash] = useState(isMainPage);
   const { isFirstVisit, isLoading, markAsVisited } = useFirstVisit();
 
@@ -56,7 +57,7 @@ export default function ClientLayoutWrapper({ children, navbar }: ClientLayoutWr
   
   return (
     <AuthInitializer>
-      {navbar}
+      {!isDashboardPage && navbar}
       {children}
       
       {/* First visit modal */}

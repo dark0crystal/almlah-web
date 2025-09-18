@@ -1,26 +1,103 @@
-export default function Heading() {
-  return (
-    <div className="relative w-[88vw] h-[50vh] mt-8 mx-16 mb-0 rounded-3xl overflow-hidden bg-[#fce7a1] flex items-center justify-center">
-      
-      {/* Grain texture overlay */}
-      <div 
-        className="absolute inset-0 z-[1] opacity-30"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-          backgroundSize: '200px 200px',
-          mixBlendMode: 'multiply'
-        }}
-      />
+'use client';
 
-       {/* Background shape (like the football curve) */}
-      <div className="absolute inset-0 z-5">
-        {/* You can add your football curve shape here */}
+import Star from './Star';
+import { useState } from 'react';
+import { useLocale } from 'next-intl';
+import Image from 'next/image';
+
+export default function Heading() {
+  const [starRotation, setStarRotation] = useState(0);
+  const locale = useLocale();
+
+  // Images that change based on star rotation
+  const rotationImages = [
+    '/G63.png',
+    '/landcruiser.png', 
+    '/rb3.png',
+    '/minicober.png',
+    '/chai.png',
+    '/khayma.png',
+    '/samhah.png',
+    '/alryam.png'
+  ];
+
+  // Calculate which image to show based on rotation
+  const getImageIndex = (rotation: number) => {
+    const normalizedRotation = ((rotation % 360) + 360) % 360; // Ensure positive
+    return Math.floor(normalizedRotation / 45) % rotationImages.length;
+  };
+
+  const handleStarRotation = (rotation: number) => {
+    setStarRotation(rotation);
+  };
+
+  const currentImageIndex = getImageIndex(starRotation);
+
+  return (
+    <div className="relative w-[88vw] h-[50vh] mt-8 mx-auto mb-0 flex flex-col items-center justify-center">
+      {/* Curved Text */}
+      <div className="w-full h-1/2 flex items-center justify-center relative">
+        <svg viewBox="0 0 1000 200" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <path 
+              id="curve" 
+              d="M 50,150 Q 500,30 950,150" 
+              fill="none" 
+              stroke="none"
+            />
+          </defs>
+          
+          {/* Text based on locale */}
+          <text 
+            className="fill-black font-extrabold text-5xl lg:text-5xl md:text-4xl sm:text-3xl"
+            style={{
+              fontFamily: 'inherit',
+              fontWeight: '800'
+            }}
+          >
+            <textPath href="#curve" startOffset="50%" textAnchor="middle">
+              {locale === 'ar' ? (
+                <>
+                   الـمـلاح 
+                  <span className="inline-block mx-2 align-middle">
+                    <div className="w-12 h-8 overflow-hidden rounded-lg bg-gray-200 inline-block">
+                      <Image 
+                        src={rotationImages[currentImageIndex]} 
+                        alt="Dynamic content"
+                        width={48}
+                        height={32}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </span>
+                  رفــيقـك إلي يــعرف كــل مـــكـان
+                </>
+              ) : (
+                <>
+                  Almlah 
+                  <span className="inline-block mx-2 align-middle">
+                    <div className="w-12 h-8 overflow-hidden rounded-lg bg-gray-200 inline-block">
+                      <Image 
+                        src={rotationImages[currentImageIndex]} 
+                        alt="Dynamic content"
+                        width={48}
+                        height={32}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </span>
+                  your companion who knows every place
+                </>
+              )}
+            </textPath>
+          </text>
+        </svg>
       </div>
-                          
-      {/* Text */}
-      <h1 className="relative z-10 text-black font-extrabold text-4xl md:text-6xl text-center leading-relaxed px-4">
-        رفـــيـقــك إلــي يـعـرف كـل مــــكـــان
-      </h1>
+      
+      {/* Star Component */}
+      <div className="w-full h-1/2 flex items-center justify-center">
+        <Star onRotationChange={handleStarRotation} />
+      </div>
     </div>
   );
 }

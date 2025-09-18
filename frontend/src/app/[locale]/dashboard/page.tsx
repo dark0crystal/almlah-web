@@ -1,658 +1,350 @@
-// components/Layout/ProtectedDashboard.tsx
-"use client"
+"use client";
+
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
-// import { usePermissions } from '@/hooks/usePermissions'; // Removed unused import
 import { ComponentGuard, PageGuard } from '@/components/guards/AuthGuards';
+import { 
+  TrendingUp, 
+  Users, 
+  MapPin, 
+  Tags, 
+  Activity, 
+  Calendar, 
+  BarChart3, 
+  PieChart, 
+  Plus,
+  ArrowUpRight,
+  ArrowDownRight,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  Zap
+} from 'lucide-react';
 
-interface MenuItem {
-  id: string;
-  label: string;
-  labelEn: string;
-  icon: string;
-  route: string;
-  requiredPermissions?: string[];
-  requiredRoles?: string[];
-  requireAny?: boolean;
+interface StatsCardProps {
+  title: string;
+  value: string | number;
+  change: string;
+  trend: 'up' | 'down' | 'neutral';
+  icon: React.ReactNode;
+  color: string;
 }
 
-const ProtectedDashboard = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeItem, setActiveItem] = useState('dashboard');
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
-  const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
+const StatsCard: React.FC<StatsCardProps> = ({ title, value, change, trend, icon, color }) => {
+  const trendIcon = trend === 'up' ? <ArrowUpRight size={16} /> : trend === 'down' ? <ArrowDownRight size={16} /> : null;
+  const trendColor = trend === 'up' ? 'text-emerald-600' : trend === 'down' ? 'text-red-600' : 'text-slate-600';
+
+  return (
+    <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-slate-200/50 shadow-lg hover:shadow-xl transition-all duration-300 group">
+      <div className="flex items-center justify-between mb-4">
+        <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+          {icon}
+        </div>
+        <div className={`flex items-center gap-1 text-sm font-medium ${trendColor}`}>
+          {trendIcon}
+          {change}
+        </div>
+      </div>
+      <div>
+        <h3 className="text-2xl font-bold text-slate-900 mb-1">{value}</h3>
+        <p className="text-slate-600 text-sm">{title}</p>
+      </div>
+    </div>
+  );
+};
+
+interface QuickActionProps {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  color: string;
+  onClick: () => void;
+}
+
+const QuickAction: React.FC<QuickActionProps> = ({ title, description, icon, color, onClick }) => {
+  return (
+    <button
+      onClick={onClick}
+      className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-slate-200/50 shadow-lg hover:shadow-xl transition-all duration-300 group text-left w-full"
+    >
+      <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 mb-4`}>
+        {icon}
+      </div>
+      <h3 className="text-lg font-semibold text-slate-900 mb-2">{title}</h3>
+      <p className="text-slate-600 text-sm">{description}</p>
+    </button>
+  );
+};
+
+export default function DashboardPage() {
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  
-  // Zustand store hooks
-  const { user, logout, hasPermission } = useAuthStore();
-  
-  // Check if user has role
+  const { user, hasPermission } = useAuthStore();
+
   const hasRole = (roleName: string) => {
     return user?.roles?.includes(roleName) || false;
   };
 
-  // Dashboard menu items with role/permission-based filtering
-  const menuItems: MenuItem[] = [
-    {
-      id: 'dashboard',
-      label: 'لوحة التحكم',
-      labelEn: 'Dashboard',
-      icon: '📊',
-      route: '/dashboard',
-      requiredPermissions: [], // Everyone can see dashboard
-    },
-    {
-      id: 'places',
-      label: 'إدارة الأماكن',
-      labelEn: 'Manage Places',
-      icon: '🏛️',
-      route: '/dashboard/admin/manage-places',
-      requiredPermissions: ['can_view_place', 'can_create_place', 'can_manage_place'],
-      requireAny: true
-    },
-    {
-      id: 'categories',
-      label: 'إدارة الفئات',
-      labelEn: 'Manage Categories',
-      icon: '🏷️',
-      route: '/dashboard/admin/manage-categories',
-      requiredPermissions: ['can_view_category', 'can_create_category', 'can_manage_category'],
-      requireAny: true
-    },
-    {
-      id: 'dishes',
-      label: 'إدارة الأطباق',
-      labelEn: 'Manage Dishes',
-      icon: '🍽️',
-      route: '/dashboard/admin/manage-dishes',
-      requiredPermissions: ['can_view_dish', 'can_create_dish', 'can_manage_dish'],
-      requireAny: true
-    },
-    {
-      id: 'lists',
-      label: 'إدارة القوائم',
-      labelEn: 'Manage Lists',
-      icon: '📝',
-      route: '/dashboard/admin/manage-lists',
-      requiredPermissions: ['can_view_list', 'can_create_list', 'can_manage_list'],
-      requireAny: true
-    },
-    {
-      id: 'governates',
-      label: 'إدارة المحافظات',
-      labelEn: 'Manage Governates',
-      icon: '🗺️',
-      route: '/dashboard/admin/manage-governorate',
-      requiredRoles: ['admin', 'super_admin'],
-      requireAny: true
-    },
-    {
-      id: 'wilayah',
-      label: 'إدارة الولايات',
-      labelEn: 'Manage Wilayah',
-      icon: '📍',
-      route: '/dashboard/admin/manage-wilayah',
-      requiredRoles: ['admin', 'super_admin'],
-      requireAny: true
-    },
-    {
-      id: 'properties',
-      label: 'إدارة الخصائص',
-      labelEn: 'Manage Properties',
-      icon: '⚙️',
-      route: '/dashboard/admin/manage-properties',
-      requiredPermissions: ['can_view_property', 'can_create_property', 'can_manage_property'],
-      requireAny: true
-    },
-    {
-      id: 'users',
-      label: 'إدارة المستخدمين',
-      labelEn: 'Manage Users',
-      icon: '👥',
-      route: '/dashboard/admin/manage-users',
-      requiredPermissions: ['can_manage_user'],
-    },
-    {
-      id: 'rbac',
-      label: 'إدارة الصلاحيات',
-      labelEn: 'Manage RBAC',
-      icon: '🔐',
-      route: '/dashboard/admin/manage-rbac',
-      requiredPermissions: ['can_manage_role', 'can_manage_permission'],
-      requireAny: true
-    }
-  ];
-
-  // Filter menu items based on user permissions
-  const filteredMenuItems = user ? menuItems.filter(item => {
-    // If no requirements, show to everyone
-    if (!item.requiredRoles && !item.requiredPermissions) {
-      return true;
-    }
-
-    // Check role requirements
-    if (item.requiredRoles) {
-      const hasRequiredRole = item.requireAny 
-        ? item.requiredRoles.some(role => hasRole(role))
-        : item.requiredRoles.every(role => hasRole(role));
-      
-      if (hasRequiredRole) return true;
-    }
-
-    // Check permission requirements
-    if (item.requiredPermissions) {
-      const hasRequiredPermission = item.requireAny
-        ? item.requiredPermissions.some(permission => hasPermission(permission))
-        : item.requiredPermissions.every(permission => hasPermission(permission));
-      
-      if (hasRequiredPermission) return true;
-    }
-
-    return false;
-  }) : [];
-
-  // Handle navigation with loading state
-  const handleNavigation = async (item: MenuItem) => {
-    if (isNavigating) return; // Prevent multiple clicks during navigation
-    
-    setIsNavigating(true);
-    setNavigatingTo(item.id);
-    setActiveItem(item.id);
-    
-    try {
-      await router.push(item.route);
-    } catch (error) {
-      console.error('Navigation error:', error);
-      // Reset state on error
-      setIsNavigating(false);
-      setNavigatingTo(null);
-    }
-  };
-
-  // Toggle sidebar
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  // Handle logout
-  const handleLogout = () => {
-    logout();
-    router.push('/auth/login');
-  };
-
-  // Close sidebar on mobile when clicking outside
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 1024) {
-        setSidebarOpen(true);
-      } else {
-        setSidebarOpen(false);
-      }
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Clear loading state after navigation completes
-  useEffect(() => {
-    const clearLoadingState = () => {
-      setIsNavigating(false);
-      setNavigatingTo(null);
-    };
-
-    // Clear loading state when component mounts (after navigation)
+    // Simulate loading
     const timer = setTimeout(() => {
-      clearLoadingState();
-    }, 100);
+      setIsLoading(false);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, []);
 
+  if (isLoading) {
+    return (
+      <PageGuard>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-8 shadow-xl border border-slate-200/50">
+            <div className="flex items-center gap-4">
+              <div className="animate-spin w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full"></div>
+              <div>
+                <div className="font-semibold text-lg text-slate-900">جاري التحميل...</div>
+                <div className="text-sm text-slate-600">Loading Dashboard...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </PageGuard>
+    );
+  }
+
   return (
     <PageGuard>
-      <div className="min-h-screen rtl" dir="rtl">
-      {/* Navigation Loading Overlay */}
-      {isNavigating && (
-        <div className="fixed inset-0 bg-black bg-opacity-20 z-50 flex items-center justify-center backdrop-blur-sm">
-          <div className="bg-white rounded-xl p-6 shadow-2xl border border-gray-200 flex items-center gap-4">
-            <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-            <div className="text-gray-900">
-              <div className="font-semibold text-lg">جاري التحميل...</div>
-              <div className="text-sm text-gray-600">Loading page...</div>
+      <div className="space-y-8">
+        
+        {/* Welcome Section */}
+        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-3xl p-8 text-white shadow-2xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">
+                مرحباً {user?.firstName || user?.username} 👋
+              </h1>
+              <p className="text-blue-100 text-lg">
+                إليك نظرة عامة على نشاط النظام اليوم
+              </p>
+              <div className="flex items-center gap-4 mt-4">
+                <div className="flex items-center gap-2 text-blue-100">
+                  <Calendar size={16} />
+                  <span className="text-sm">{new Date().toLocaleDateString('ar-OM')}</span>
+                </div>
+                <div className="flex items-center gap-2 text-blue-100">
+                  <Clock size={16} />
+                  <span className="text-sm">{new Date().toLocaleTimeString('ar-OM', { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              </div>
+            </div>
+            <div className="hidden md:block">
+              <div className="w-24 h-24 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center">
+                <Activity size={48} className="text-white/80" />
+              </div>
             </div>
           </div>
         </div>
-      )}
 
-      {/* Mobile backdrop */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <div className={`
-        fixed top-[8vh] right-0 h-[calc(100vh-8vh)] bg-white shadow-lg z-50 transition-all duration-300 ease-in-out
-        ${sidebarOpen ? 'w-72' : 'w-20'}
-        ${sidebarOpen ? 'translate-x-0' : 'translate-x-0'}
-      `}>
-        
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <div className={`flex items-center gap-3 ${!sidebarOpen && 'justify-center'}`}>
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">🏛️</span>
-            </div>
-            {sidebarOpen && (
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">لوحة التحكم</h1>
-                <p className="text-sm text-gray-500">نظام إدارة الأماكن</p>
-              </div>
-            )}
-          </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           
-          <button
-            onClick={toggleSidebar}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                d={sidebarOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
-            </svg>
-          </button>
-        </div>
-
-        {/* Navigation */}
-        <nav className="p-4 space-y-2">
-          {filteredMenuItems.map((item) => {
-            const isItemLoading = navigatingTo === item.id && isNavigating;
-            
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleNavigation(item)}
-                disabled={isNavigating}
-                className={`
-                  w-full flex items-center gap-3 px-3 py-3 rounded-lg text-right transition-all duration-200
-                  ${activeItem === item.id 
-                    ? 'bg-blue-50 text-blue-700 border border-blue-200' 
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                  }
-                  ${!sidebarOpen && 'justify-center px-2'}
-                  ${isNavigating && !isItemLoading ? 'opacity-50 cursor-not-allowed' : ''}
-                  ${isItemLoading ? 'bg-blue-100 border-blue-300' : ''}
-                `}
-              >
-                <span className="text-xl flex-shrink-0">
-                  {isItemLoading ? (
-                    <div className="animate-spin w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-                  ) : (
-                    item.icon
-                  )}
-                </span>
-                {sidebarOpen && (
-                  <div className="flex-1">
-                    <div className="text-sm font-medium">
-                      {isItemLoading ? 'جاري التحميل...' : item.label}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {isItemLoading ? 'Loading...' : item.labelEn}
-                    </div>
-                  </div>
-                )}
-                {sidebarOpen && activeItem === item.id && !isItemLoading && (
-                  <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                )}
-                {sidebarOpen && isItemLoading && (
-                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* User Profile Section */}
-        <div className={`absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white`}>
-          <div className={`flex items-center gap-3 ${!sidebarOpen && 'justify-center'}`}>
-            <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-              {user?.profilePicture ? (
-                <Image src={user.profilePicture} alt="Profile" width={40} height={40} className="w-10 h-10 rounded-full" />
-              ) : (
-                <span className="text-white font-bold">👤</span>
-              )}
-            </div>
-            {sidebarOpen && (
-              <div className="flex-1">
-                <div className="text-sm font-medium text-gray-900">{user?.fullName || user?.username}</div>
-                <div className="text-xs text-gray-500">{user?.email}</div>
-                <div className="text-xs text-blue-600">
-                  {user?.roles?.join(', ')}
-                </div>
-              </div>
-            )}
-            {sidebarOpen && (
-              <div className="relative">
-                <button 
-                  className="p-1 rounded hover:bg-gray-100"
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                >
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                  </svg>
-                </button>
-                {showUserMenu && (
-                  <div className="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2">
-                    <button
-                      onClick={() => router.push('/profile')}
-                      className="w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    >
-                      الملف الشخصي
-                    </button>
-                    <ComponentGuard requiredPermissions={['can_manage_system']}>
-                      <button
-                        onClick={() => router.push('/settings')}
-                        className="w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        الإعدادات
-                      </button>
-                    </ComponentGuard>
-                    <hr className="my-1" />
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      تسجيل الخروج
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className={`transition-all duration-300 pt-[8vh] ${sidebarOpen ? 'mr-72' : 'mr-20'}`}>
-        
-        {/* Top Bar */}
-        <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={toggleSidebar}
-                className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-              
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  مرحباً {user?.firstName || user?.username}
-                </h1>
-                <p className="text-gray-600">إدارة نظام الأماكن السياحية</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              {/* Notifications */}
-              <ComponentGuard requiredPermissions={['can_view_notifications']}>
-                <button className="relative p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5-5 5-5h-5m-6 0H4l5 5-5 5h5m3-10a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
-              </ComponentGuard>
-
-              {/* Settings */}
-              <ComponentGuard requiredRoles={['admin', 'super_admin']} requireAny={true}>
-                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </button>
-              </ComponentGuard>
-            </div>
-          </div>
-        </header>
-
-        {/* Dashboard Content */}
-        <main className="p-6">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            
-            {/* Total Places - Visible to users who can view places */}
-            <ComponentGuard 
-              requiredPermissions={['can_view_place', 'can_manage_place']} 
-              requireAny={true}
-            >
-              <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-600 text-sm">إجمالي الأماكن</p>
-                    <p className="text-3xl font-bold text-gray-900">1,247</p>
-                    <p className="text-green-600 text-sm flex items-center gap-1 mt-2">
-                      <span>↗️</span>
-                      +12% من الشهر الماضي
-                    </p>
-                  </div>
-                  <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
-                    <span className="text-2xl">🏛️</span>
-                  </div>
-                </div>
-              </div>
-            </ComponentGuard>
-
-            {/* Active Users - Admin only */}
-            <ComponentGuard 
-              requiredPermissions={['can_manage_user', 'can_view_user']} 
-              requireAny={true}
-            >
-              <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-600 text-sm">المستخدمين النشطين</p>
-                    <p className="text-3xl font-bold text-gray-900">89</p>
-                    <p className="text-green-600 text-sm flex items-center gap-1 mt-2">
-                      <span>↗️</span>
-                      +5 مستخدمين جدد
-                    </p>
-                  </div>
-                  <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
-                    <span className="text-2xl">👥</span>
-                  </div>
-                </div>
-              </div>
-            </ComponentGuard>
-
-            {/* Categories */}
-            <ComponentGuard 
-              requiredPermissions={['can_view_category', 'can_manage_category']} 
-              requireAny={true}
-            >
-              <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-600 text-sm">الفئات</p>
-                    <p className="text-3xl font-bold text-gray-900">24</p>
-                    <p className="text-blue-600 text-sm flex items-center gap-1 mt-2">
-                      <span>📊</span>
-                      فئة متنوعة
-                    </p>
-                  </div>
-                  <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
-                    <span className="text-2xl">🏷️</span>
-                  </div>
-                </div>
-              </div>
-            </ComponentGuard>
-
-            {/* Governates - Admin only */}
-            <ComponentGuard 
-              requiredRoles={['admin', 'super_admin']} 
-              requireAny={true}
-            >
-              <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-600 text-sm">المحافظات</p>
-                    <p className="text-3xl font-bold text-gray-900">11</p>
-                    <p className="text-orange-600 text-sm flex items-center gap-1 mt-2">
-                      <span>🗺️</span>
-                      جميع المحافظات
-                    </p>
-                  </div>
-                  <div className="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center">
-                    <span className="text-2xl">🗺️</span>
-                  </div>
-                </div>
-              </div>
-            </ComponentGuard>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            
-            {/* Quick Actions Card */}
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">إجراءات سريعة</h3>
-              <div className="grid grid-cols-2 gap-4">
-                
-                <ComponentGuard 
-                  requiredPermissions={['can_create_place']}
-                >
-                  <button 
-                    onClick={() => router.push('/places/new')}
-                    className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-center"
-                  >
-                    <div className="text-2xl mb-2">➕</div>
-                    <div className="text-sm font-medium">إضافة مكان جديد</div>
-                  </button>
-                </ComponentGuard>
-                
-                <ComponentGuard 
-                  requiredPermissions={['can_create_category']}
-                >
-                  <button 
-                    onClick={() => router.push('/dashboard/categories/create')}
-                    className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors text-center"
-                  >
-                    <div className="text-2xl mb-2">🏷️</div>
-                    <div className="text-sm font-medium">إضافة فئة جديدة</div>
-                  </button>
-                </ComponentGuard>
-                
-                <ComponentGuard 
-                  requiredPermissions={['can_create_user']}
-                >
-                  <button 
-                    onClick={() => router.push('/dashboard/users/create')}
-                    className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors text-center"
-                  >
-                    <div className="text-2xl mb-2">👤</div>
-                    <div className="text-sm font-medium">إضافة مستخدم</div>
-                  </button>
-                </ComponentGuard>
-                
-                <ComponentGuard 
-                  requiredRoles={['admin', 'super_admin']}
-                  requireAny={true}
-                >
-                  <button 
-                    onClick={() => router.push('/dashboard/governates')}
-                    className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-colors text-center"
-                  >
-                    <div className="text-2xl mb-2">🗺️</div>
-                    <div className="text-sm font-medium">إدارة المحافظات</div>
-                  </button>
-                </ComponentGuard>
-              </div>
-            </div>
-
-            {/* Recent Activity */}
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">النشاط الأخير</h3>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 text-sm">🏛️</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">تم إضافة مكان جديد</p>
-                    <p className="text-xs text-gray-500">منذ 5 دقائق</p>
-                  </div>
-                </div>
-                
-                <ComponentGuard 
-                  requiredPermissions={['can_view_user']}
-                >
-                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <span className="text-green-600 text-sm">👤</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">مستخدم جديد انضم</p>
-                      <p className="text-xs text-gray-500">منذ ساعة</p>
-                    </div>
-                  </div>
-                </ComponentGuard>
-                
-                <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
-                  <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                    <span className="text-yellow-600 text-sm">🏷️</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">تم تحديث فئة</p>
-                    <p className="text-xs text-gray-500">منذ 3 ساعات</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* System Health - Super Admin only */}
-          <ComponentGuard 
-            requiredRoles={['super_admin']}
-          >
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">حالة النظام</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-sm">قاعدة البيانات</span>
-                  <span className="text-green-600 text-sm font-medium">متصلة</span>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-sm">خدمة التخزين</span>
-                  <span className="text-green-600 text-sm font-medium">تعمل</span>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                  <span className="text-sm">ذاكرة التخزين المؤقت</span>
-                  <span className="text-yellow-600 text-sm font-medium">85%</span>
-                </div>
-              </div>
-            </div>
+          <ComponentGuard requiredPermissions={['can_view_place', 'can_manage_place']} requireAny={true}>
+            <StatsCard
+              title="إجمالي الأماكن"
+              value="1,247"
+              change="+12%"
+              trend="up"
+              icon={<MapPin size={24} className="text-white" />}
+              color="bg-gradient-to-br from-blue-500 to-blue-600"
+            />
           </ComponentGuard>
-        </main>
-      </div>
+
+          <ComponentGuard requiredPermissions={['can_manage_user', 'can_view_user']} requireAny={true}>
+            <StatsCard
+              title="المستخدمين النشطين"
+              value="89"
+              change="+5"
+              trend="up"
+              icon={<Users size={24} className="text-white" />}
+              color="bg-gradient-to-br from-emerald-500 to-emerald-600"
+            />
+          </ComponentGuard>
+
+          <ComponentGuard requiredPermissions={['can_view_category', 'can_manage_category']} requireAny={true}>
+            <StatsCard
+              title="الفئات النشطة"
+              value="24"
+              change="0%"
+              trend="neutral"
+              icon={<Tags size={24} className="text-white" />}
+              color="bg-gradient-to-br from-purple-500 to-purple-600"
+            />
+          </ComponentGuard>
+
+          <ComponentGuard requiredRoles={['admin', 'super_admin']} requireAny={true}>
+            <StatsCard
+              title="المحافظات"
+              value="11"
+              change="+1"
+              trend="up"
+              icon={<BarChart3 size={24} className="text-white" />}
+              color="bg-gradient-to-br from-orange-500 to-orange-600"
+            />
+          </ComponentGuard>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          {/* Quick Actions Grid */}
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+              <Zap size={24} className="text-blue-600" />
+              إجراءات سريعة
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              
+              <ComponentGuard requiredPermissions={['can_create_place']}>
+                <QuickAction
+                  title="إضافة مكان جديد"
+                  description="أضف مكان سياحي جديد إلى النظام"
+                  icon={<Plus size={24} className="text-white" />}
+                  color="bg-gradient-to-br from-blue-500 to-blue-600"
+                  onClick={() => router.push('/dashboard/admin/manage-places/new')}
+                />
+              </ComponentGuard>
+
+              <ComponentGuard requiredPermissions={['can_create_category']}>
+                <QuickAction
+                  title="إضافة فئة جديدة"
+                  description="أنشئ فئة جديدة لتصنيف الأماكن"
+                  icon={<Tags size={24} className="text-white" />}
+                  color="bg-gradient-to-br from-purple-500 to-purple-600"
+                  onClick={() => router.push('/dashboard/admin/manage-categories')}
+                />
+              </ComponentGuard>
+
+              <ComponentGuard requiredPermissions={['can_create_user']}>
+                <QuickAction
+                  title="إضافة مستخدم"
+                  description="أضف مستخدم جديد للنظام"
+                  icon={<Users size={24} className="text-white" />}
+                  color="bg-gradient-to-br from-emerald-500 to-emerald-600"
+                  onClick={() => router.push('/dashboard/admin/manage-users')}
+                />
+              </ComponentGuard>
+
+              <ComponentGuard requiredPermissions={['can_create_list']}>
+                <QuickAction
+                  title="إنشاء قائمة"
+                  description="أنشئ قائمة جديدة من الأماكن"
+                  icon={<PieChart size={24} className="text-white" />}
+                  color="bg-gradient-to-br from-orange-500 to-orange-600"
+                  onClick={() => router.push('/dashboard/admin/manage-lists')}
+                />
+              </ComponentGuard>
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+              <Activity size={24} className="text-blue-600" />
+              النشاط الأخير
+            </h2>
+            <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-slate-200/50 shadow-lg">
+              <div className="space-y-4">
+                
+                <div className="flex items-start gap-4 p-4 bg-blue-50/50 rounded-xl border border-blue-100/50">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <MapPin size={16} className="text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900">تم إضافة مكان جديد</p>
+                    <p className="text-xs text-slate-600 mt-1">قلعة نزوى - منذ 5 دقائق</p>
+                  </div>
+                  <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
+                </div>
+
+                <ComponentGuard requiredPermissions={['can_view_user']}>
+                  <div className="flex items-start gap-4 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100/50">
+                    <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Users size={16} className="text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900">مستخدم جديد انضم</p>
+                      <p className="text-xs text-slate-600 mt-1">أحمد المحرزي - منذ ساعة</p>
+                    </div>
+                    <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
+                  </div>
+                </ComponentGuard>
+
+                <div className="flex items-start gap-4 p-4 bg-purple-50/50 rounded-xl border border-purple-100/50">
+                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Tags size={16} className="text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900">تم تحديث فئة</p>
+                    <p className="text-xs text-slate-600 mt-1">الأماكن التراثية - منذ 3 ساعات</p>
+                  </div>
+                  <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
+                </div>
+
+                <div className="flex items-start gap-4 p-4 bg-orange-50/50 rounded-xl border border-orange-100/50">
+                  <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <AlertCircle size={16} className="text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900">تحديث النظام</p>
+                    <p className="text-xs text-slate-600 mt-1">تحديث إعدادات الأمان - أمس</p>
+                  </div>
+                  <Clock size={16} className="text-orange-500 flex-shrink-0" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* System Status - Super Admin only */}
+        <ComponentGuard requiredRoles={['super_admin']}>
+          <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-slate-200/50 shadow-lg">
+            <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+              <Activity size={24} className="text-blue-600" />
+              حالة النظام
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              
+              <div className="flex items-center gap-4 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100/50">
+                <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-slate-900">قاعدة البيانات</span>
+                  <p className="text-xs text-emerald-600 font-medium">متصلة</p>
+                </div>
+                <CheckCircle2 size={20} className="text-emerald-500" />
+              </div>
+              
+              <div className="flex items-center gap-4 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100/50">
+                <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-slate-900">خدمة التخزين</span>
+                  <p className="text-xs text-emerald-600 font-medium">تعمل</p>
+                </div>
+                <CheckCircle2 size={20} className="text-emerald-500" />
+              </div>
+              
+              <div className="flex items-center gap-4 p-4 bg-orange-50/50 rounded-xl border border-orange-100/50">
+                <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-slate-900">ذاكرة التخزين المؤقت</span>
+                  <p className="text-xs text-orange-600 font-medium">85%</p>
+                </div>
+                <AlertCircle size={20} className="text-orange-500" />
+              </div>
+            </div>
+          </div>
+        </ComponentGuard>
       </div>
     </PageGuard>
   );
-};
-
-export default ProtectedDashboard;
+}
