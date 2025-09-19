@@ -4,8 +4,8 @@ import { useRef, useState, useEffect } from "react";
 import Image, { StaticImageData } from "next/image";
 import { useLocale, useTranslations } from 'next-intl';
 import Picture1 from '../../../../public/gallery-alkhalil/img1.jpg'
-import Picture2 from '../../../../public/gallery-alkhalil/img1.jpg'
-import Picture3 from '../../../../public/gallery-alkhalil/img1.jpg'
+import Picture2 from '../../../../public/gallery-alkhalil/img21.jpeg'
+import Picture3 from '../../../../public/gallery-alkhalil/img22.jpeg'
 
 export default function TitleMotion() {
   const container = useRef<HTMLDivElement | null>(null);

@@ -5,12 +5,12 @@ import { useScroll , useTransform } from 'framer-motion'
 import styles from './globals.module.css'
 import Image from 'next/image'
 import pic1 from '../../../../public/gallery-alkhalil/img1.jpg' 
-import pic2 from '../../../../public/gallery-alkhalil/img1.jpg' 
-import pic3 from '../../../../public/gallery-alkhalil/img1.jpg' 
-import pic4 from '../../../../public/gallery-alkhalil/img1.jpg' 
-import pic5 from '../../../../public/gallery-alkhalil/img1.jpg' 
-import pic6 from '../../../../public/gallery-alkhalil/img1.jpg' 
-import pic7 from '../../../../public/gallery-alkhalil/img1.jpg' 
+import pic2 from '../../../../public/gallery-alkhalil/main1.jpg' 
+import pic3 from '../../../../public/gallery-alkhalil/img16.jpg' 
+import pic4 from '../../../../public/gallery-alkhalil/img11.jpg' 
+import pic5 from '../../../../public/gallery-alkhalil/img21.jpeg' 
+import pic6 from '../../../../public/gallery-alkhalil/img14.jpg' 
+import pic7 from '../../../../public/gallery-alkhalil/img15.jpg' 
 
 
 
