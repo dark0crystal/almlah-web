@@ -9,11 +9,56 @@ interface StarProps {
 
 export default function Star({ onRotationChange }: StarProps) {
   const [rotation, setRotation] = useState(0);
+  const [clickCount, setClickCount] = useState(0);
+  const [showText, setShowText] = useState(false);
+  const [textMessage, setTextMessage] = useState('');
+  const [resetTimeout, setResetTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const handleClick = () => {
     const newRotation = rotation + 45;
     setRotation(newRotation);
     onRotationChange?.(newRotation);
+
+    // Handle rapid clicking detection
+    const newClickCount = clickCount + 1;
+    setClickCount(newClickCount);
+
+    // Clear existing timeout
+    if (resetTimeout) {
+      clearTimeout(resetTimeout);
+    }
+
+    // Check if user clicked more than 7 times
+    if (newClickCount > 7 && newClickCount <= 14) {
+      setTextMessage('استأنست؟');
+      setShowText(true);
+      // Hide text after 2 seconds
+      setTimeout(() => setShowText(false), 2000);
+    } else if (newClickCount > 14 && newClickCount <= 21) {
+      setTextMessage('خلااااص');
+      setShowText(true);
+      // Hide text after 2 seconds
+      setTimeout(() => setShowText(false), 2000);
+    } else if (newClickCount > 21 && newClickCount <= 28) {
+      setTextMessage('يا معود شبيك؟');
+      setShowText(true);
+      // Hide text after 2 seconds
+      setTimeout(() => setShowText(false), 2000);
+    } else if (newClickCount > 28) {
+      setTextMessage('حلوا عن صدورنا');
+      setShowText(true);
+      // Hide text after 3 seconds and reset click count
+      setTimeout(() => {
+        setShowText(false);
+        setClickCount(0);
+      }, 3000);
+    } else {
+      // Set timeout to reset click count after 1 second
+      const timeout = setTimeout(() => {
+        setClickCount(0);
+      }, 1000);
+      setResetTimeout(timeout);
+    }
   };
 
   const handleDrag = (event: MouseEvent | TouchEvent | PointerEvent, info: { delta: { x: number; y: number } }) => {
@@ -25,7 +70,7 @@ export default function Star({ onRotationChange }: StarProps) {
   };
 
   return (
-    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-64 h-64 translate-y-1/2">
+    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-48 h-48 md:w-64 md:h-64 translate-y-1/2">
       <motion.div
         className="w-full h-full cursor-grab active:cursor-grabbing"
         drag
@@ -44,6 +89,13 @@ export default function Star({ onRotationChange }: StarProps) {
           />
         </svg>
       </motion.div>
+      
+      {/* Rapid Click Text */}
+      {showText && (
+        <div className="absolute -top-12 sm:-top-16 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-black px-2 py-1 sm:px-4 sm:py-2 rounded-lg shadow-lg text-xs sm:text-sm font-bold whitespace-nowrap">
+          {textMessage}
+        </div>
+      )}
     </div>
   );
 }

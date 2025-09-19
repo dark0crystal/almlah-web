@@ -13,13 +13,13 @@
     "home": "الرئيسية",
     "places": "الأماكن",
     "restaurants": "المطاعم",
-    "destinations": "الوجهات",
+    "destinations": "الـمحافظات",
     "gallery": "ذا جاليري",
     "aboutUs": "من نحن",
     "zatar": "زعتر",
     "dashboard": "لوحة التحكم",
     "managePlaces": "إدارة الأماكن",
-    "manageGovernorate": "إدارة المحافظات",
+    "manageGovernorate": "إدارة الـمحافظات",
     "manageWilayah": "إدارة الولايات",
     "manageCategories": "إدارة الفئات",
     "manageUsers": "إدارة المستخدمين"
@@ -31,15 +31,15 @@
   
   "destinations": {
     "header": {
-      "title": "اكتشف الوجهات",
+      "title": "اكتشف الـمحافظات",
       "subtitle": "استكشف أماكن مذهلة عبر المنطقة"
     },
-    "title": "استكشف الوجهات",
-    "subtitle": "اكتشف أجمل المحافظات والمدن",
-    "loading": "جاري تحميل المحافظات...",
+    "title": "استكشف الـمحافظات",
+    "subtitle": "اكتشف أجمل الـمحافظات والمدن",
+    "loading": "جاري تحميل الـمحافظات...",
     "errors": {
       "title": "خطأ في تحميل البيانات",
-      "loadFailed": "فشل في تحميل المحافظات. يرجى المحاولة مرة أخرى.",
+      "loadFailed": "فشل في تحميل الـمحافظات. يرجى المحاولة مرة أخرى.",
       "retry": "حاول مرة أخرى"
     }
   },
@@ -78,7 +78,7 @@
     }
   },
   "governate": {
-    "title": "المحافظات",
+    "title": "الـمحافظات",
     "separatorText": "فـاصـل ونواصـل",
     "loading": {
       "governateData": "جاري تحميل بيانات المحافظة...",
@@ -166,17 +166,17 @@
   "splash": {
     "welcome": "أهلاً وسهلاً",
     "discover": "اكتشف عُمان",
-    "explore": "استكشف المحافظات",
+    "explore": "استكشف الـمحافظات",
     "appName": "الملاح",
     "skip": "تخطي"
   },
   "navigation": {
-    "destinations": "المحافظات",
+    "destinations": "الـمحافظات",
     "goBack": "العودة"
   },
   "places": {
     "title": "الأماكن المراد زيارتها",
-    "allGovernates": "جميع المحافظات",
+    "allGovernates": "جميع الـمحافظات",
     "loading": "جاري التحميل...",
     "loadingPlaces": "جاري تحميل الأماكن...",
     "loadingMap": "جاري تحميل الخريطة...",
@@ -320,7 +320,7 @@
     "home": "الرئيسية",
     "places": "الأماكن",
     "restaurants": "المطاعم",
-    "destinations": "الوجهات",
+    "destinations": "الـمحافظات",
     "tourism": "السياحة",
     "hiking": "المشي لمسافات طويلة",
     "recipes": "الوصفات",
@@ -346,7 +346,7 @@
     "invalidCategory": "فئة مطاعم غير صالحة"
   },
   "postCards": {
-    "title": "أحدث المقالات",
+    "title": "الـمضــافة حديثًــا",
     "loading": "جاري تحميل الأماكن...",
     "error": {
       "title": "حدث خطأ في تحميل البيانات",
