@@ -9,7 +9,23 @@
 @font-face {
   font-family: 'TheYearofHandicrafts';
   src: url('/fonts/alfont_com_TheYearofHandicrafts-Regular.otf') format('opentype');
-  font-weight: 200;
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'TheYearofHandicrafts';
+  src: url('/fonts/TheYearofHandicrafts-SemiBold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'TheYearofHandicrafts';
+  src: url('/fonts/alfont_com_TheYearofHandicrafts-Black.otf') format('opentype');
+  font-weight: 800;
   font-style: normal;
   font-display: swap;
 }
