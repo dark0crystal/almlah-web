@@ -47,15 +47,15 @@ export default function GameStats() {
   if (!stats) return null;
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-orange-100 shadow-sm">
-      <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+    <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-orange-100 shadow-sm font-zatar">
+      <h3 className="font-zatar-bold text-gray-800 mb-4 flex items-center gap-2">
         <TrendingUp className="w-5 h-5 text-orange-500" />
         {t('title')}
       </h3>
       
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-3 text-center">
-          <div className="text-2xl font-bold text-orange-600">{stats.total_rolls.toLocaleString()}</div>
+          <div className="text-2xl font-zatar-bold text-orange-600">{stats.total_rolls.toLocaleString()}</div>
           <div className="text-xs text-orange-700 flex items-center justify-center gap-1">
             <Utensils className="w-3 h-3" />
             {t('totalRolls')}
@@ -63,7 +63,7 @@ export default function GameStats() {
         </div>
         
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 text-center">
-          <div className="text-2xl font-bold text-blue-600">{stats.unique_users.toLocaleString()}</div>
+          <div className="text-2xl font-zatar-bold text-blue-600">{stats.unique_users.toLocaleString()}</div>
           <div className="text-xs text-blue-700 flex items-center justify-center gap-1">
             <Users className="w-3 h-3" />
             {t('players')}
@@ -75,7 +75,7 @@ export default function GameStats() {
         <div className="text-xs text-gray-600 flex items-center justify-center gap-1">
           <MapPin className="w-3 h-3" />
           {t('mostPopular')}
-          <span className="font-medium">{stats.popular_location}</span>
+          <span className="font-zatar">{stats.popular_location}</span>
         </div>
       </div>
     </div>

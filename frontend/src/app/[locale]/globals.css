@@ -30,10 +30,44 @@
   font-display: swap;
 }
 
+/* Teshrin Font Family for Zatar */
+@font-face {
+  font-family: 'Teshrin';
+  src: url('/fonts/Teshrin/TeshrinAR+LT-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Teshrin';
+  src: url('/fonts/Teshrin/TeshrinAR+LT-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Teshrin';
+  src: url('/fonts/Teshrin/TeshrinAR+LT-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Teshrin';
+  src: url('/fonts/Teshrin/TeshrinAR+LT-Black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Tailwind v4 CSS Variables for Custom Font */
 @theme {
   --font-family-handicrafts: 'TheYearofHandicrafts', ui-sans-serif, system-ui, sans-serif;
   --font-family-sans: 'TheYearofHandicrafts', ui-sans-serif, system-ui, sans-serif;
+  --font-family-zatar: 'Teshrin', ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Set as default font for the entire application */
@@ -293,4 +327,154 @@ body {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Zatar-specific font styling */
+.font-zatar {
+  font-family: var(--font-family-zatar) !important;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.font-zatar-bold {
+  font-family: var(--font-family-zatar) !important;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.font-zatar-light {
+  font-family: var(--font-family-zatar) !important;
+  font-weight: 400;
+  letter-spacing: 0em;
+}
+
+/* Paper texture effect for recipe cards */
+.paper-texture {
+  position: relative;
+}
+
+.paper-texture::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20px 30px, #f5f5dc 1px, transparent 1px),
+    radial-gradient(circle at 40px 70px, #f5f5dc 1px, transparent 1px),
+    radial-gradient(circle at 90px 40px, #f5f5dc 1px, transparent 1px),
+    radial-gradient(circle at 130px 80px, #f5f5dc 1px, transparent 1px);
+  background-size: 150px 100px;
+  opacity: 0.3;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Cream color utility classes */
+@theme {
+  --color-cream-50: #fefdf8;
+  --color-cream-100: #fefcf0;
+  --color-cream-200: #fef7e0;
+  --color-cream-300: #feecb7;
+  --color-cream-400: #fcd34d;
+  --color-cream-500: #f59e0b;
+  --color-cream-600: #d97706;
+  --color-cream-700: #b45309;
+  --color-cream-800: #92400e;
+  --color-cream-900: #78350f;
+}
+
+/* Paper note with holes and lines */
+.paper-note {
+  position: relative;
+  background: #ffffff;
+  background-image: 
+    /* Horizontal lines with margins */
+    repeating-linear-gradient(
+      transparent,
+      transparent 29px,
+      #e0e0e0 29px,
+      #e0e0e0 30px
+    );
+  background-size: calc(100% - 100px) 30px;
+  background-position: 20px 0;
+  padding-top: 50px;
+  padding-left: 30px;
+  padding-right: 30px;
+  padding-bottom: 30px;
+}
+
+.paper-note::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 15px;
+  width: 24px;
+  height: 24px;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.77256 14.1251C3.1287 14.1251 2.65038 13.9688 2.33777 13.6564C2.02987 13.3486 1.87583 12.8729 1.87583 12.2292V10.7319C1.87583 10.6013 1.83157 10.4917 1.74288 10.4031L0.68604 9.33974C0.228617 8.88741 0 8.44205 0 8.00365C0 7.56525 0.228617 7.11744 0.685851 6.6604L1.74269 5.59706C1.83139 5.5084 1.87564 5.40111 1.87564 5.27518V3.77099C1.87564 3.12271 2.02968 2.64459 2.33758 2.33682C2.65019 2.02906 3.12851 1.87508 3.77237 1.87508H5.27025C5.40094 1.87508 5.51054 1.83085 5.59924 1.74219L6.66304 0.685812C7.12046 0.228777 7.56602 7.12149e-05 7.99991 7.12149e-05C8.4385 -0.00463467 8.88406 0.223883 9.33677 0.685624L10.4006 1.742C10.494 1.83066 10.6058 1.87489 10.7365 1.87489H12.2274C12.876 1.87489 13.3543 2.03113 13.6622 2.3436C13.9701 2.65607 14.1242 3.13193 14.1242 3.7708V5.27499C14.1242 5.40092 14.1709 5.50821 14.2641 5.59687L15.3209 6.66021C15.7735 7.11725 15.9998 7.56506 15.9998 8.00346C16.0045 8.44186 15.7782 8.88722 15.3209 9.33974L14.2641 10.4031C14.1707 10.4917 14.1242 10.6013 14.1242 10.7319V12.2292C14.1242 12.8774 13.9679 13.3556 13.6553 13.6633C13.3474 13.9711 12.8715 14.1251 12.2274 14.1251H10.7365C10.6058 14.1251 10.4938 14.1695 10.4006 14.258L9.33677 15.3213C8.88424 15.7736 8.43868 15.9999 7.99991 15.9999C7.56602 16.0046 7.12028 15.7783 6.66304 15.3213L5.59924 14.258C5.51054 14.1693 5.40094 14.1251 5.27025 14.1251H3.77237H3.77256Z' fill='%23f3f3eb'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  box-shadow: none;
+}
+
+.paper-note::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50px;
+  width: 24px;
+  height: 24px;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.77256 14.1251C3.1287 14.1251 2.65038 13.9688 2.33777 13.6564C2.02987 13.3486 1.87583 12.8729 1.87583 12.2292V10.7319C1.87583 10.6013 1.83157 10.4917 1.74288 10.4031L0.68604 9.33974C0.228617 8.88741 0 8.44205 0 8.00365C0 7.56525 0.228617 7.11744 0.685851 6.6604L1.74269 5.59706C1.83139 5.5084 1.87564 5.40111 1.87564 5.27518V3.77099C1.87564 3.12271 2.02968 2.64459 2.33758 2.33682C2.65019 2.02906 3.12851 1.87508 3.77237 1.87508H5.27025C5.40094 1.87508 5.51054 1.83085 5.59924 1.74219L6.66304 0.685812C7.12046 0.228777 7.56602 7.12149e-05 7.99991 7.12149e-05C8.4385 -0.00463467 8.88406 0.223883 9.33677 0.685624L10.4006 1.742C10.494 1.83066 10.6058 1.87489 10.7365 1.87489H12.2274C12.876 1.87489 13.3543 2.03113 13.6622 2.3436C13.9701 2.65607 14.1242 3.13193 14.1242 3.7708V5.27499C14.1242 5.40092 14.1709 5.50821 14.2641 5.59687L15.3209 6.66021C15.7735 7.11725 15.9998 7.56506 15.9998 8.00346C16.0045 8.44186 15.7782 8.88722 15.3209 9.33974L14.2641 10.4031C14.1707 10.4917 14.1242 10.6013 14.1242 10.7319V12.2292C14.1242 12.8774 13.9679 13.3556 13.6553 13.6633C13.3474 13.9711 12.8715 14.1251 12.2274 14.1251H10.7365C10.6058 14.1251 10.4938 14.1695 10.4006 14.258L9.33677 15.3213C8.88424 15.7736 8.43868 15.9999 7.99991 15.9999C7.56602 16.0046 7.12028 15.7783 6.66304 15.3213L5.59924 14.258C5.51054 14.1693 5.40094 14.1251 5.27025 14.1251H3.77237H3.77256Z' fill='%23f3f3eb'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  box-shadow: none;
+}
+
+.paper-note .third-star {
+  position: absolute;
+  top: 8px;
+  left: 85px;
+  width: 24px;
+  height: 24px;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.77256 14.1251C3.1287 14.1251 2.65038 13.9688 2.33777 13.6564C2.02987 13.3486 1.87583 12.8729 1.87583 12.2292V10.7319C1.87583 10.6013 1.83157 10.4917 1.74288 10.4031L0.68604 9.33974C0.228617 8.88741 0 8.44205 0 8.00365C0 7.56525 0.228617 7.11744 0.685851 6.6604L1.74269 5.59706C1.83139 5.5084 1.87564 5.40111 1.87564 5.27518V3.77099C1.87564 3.12271 2.02968 2.64459 2.33758 2.33682C2.65019 2.02906 3.12851 1.87508 3.77237 1.87508H5.27025C5.40094 1.87508 5.51054 1.83085 5.59924 1.74219L6.66304 0.685812C7.12046 0.228777 7.56602 7.12149e-05 7.99991 7.12149e-05C8.4385 -0.00463467 8.88406 0.223883 9.33677 0.685624L10.4006 1.742C10.494 1.83066 10.6058 1.87489 10.7365 1.87489H12.2274C12.876 1.87489 13.3543 2.03113 13.6622 2.3436C13.9701 2.65607 14.1242 3.13193 14.1242 3.7708V5.27499C14.1242 5.40092 14.1709 5.50821 14.2641 5.59687L15.3209 6.66021C15.7735 7.11725 15.9998 7.56506 15.9998 8.00346C16.0045 8.44186 15.7782 8.88722 15.3209 9.33974L14.2641 10.4031C14.1707 10.4917 14.1242 10.6013 14.1242 10.7319V12.2292C14.1242 12.8774 13.9679 13.3556 13.6553 13.6633C13.3474 13.9711 12.8715 14.1251 12.2274 14.1251H10.7365C10.6058 14.1251 10.4938 14.1695 10.4006 14.258L9.33677 15.3213C8.88424 15.7736 8.43868 15.9999 7.99991 15.9999C7.56602 16.0046 7.12028 15.7783 6.66304 15.3213L5.59924 14.258C5.51054 14.1693 5.40094 14.1251 5.27025 14.1251H3.77237H3.77256Z' fill='%23f3f3eb'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  box-shadow: none;
+}
+
+.paper-note-shadow {
+  box-shadow: 
+    0 1px 3px rgba(0,0,0,0.1),
+    0 2px 8px rgba(0,0,0,0.05),
+    inset 0 0 0 1px rgba(0,0,0,0.1);
+}
+
+/* Handwritten style text */
+.handwritten {
+  font-family: 'Kalam', cursive;
+  line-height: 30px;
+  color: #2c3e50;
+}
+
+/* Paper note form inputs */
+.paper-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #2c3e50;
+  padding: 5px 0;
+  font-family: var(--font-family-zatar);
+  line-height: 30px;
+  color: #2c3e50;
+  outline: none;
+  margin-bottom: 30px;
+}
+
+.paper-input::placeholder {
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+.paper-input:focus {
+  border-bottom: 2px solid #3498db;
 }

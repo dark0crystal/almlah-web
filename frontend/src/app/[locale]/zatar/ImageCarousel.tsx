@@ -25,10 +25,10 @@ export default function ImageCarousel({ images, alt, className = "" }: ImageCaro
 
   if (!images || images.length === 0) {
     return (
-      <div className={`bg-gradient-to-br from-orange-100 to-red-100 flex items-center justify-center ${className}`}>
+      <div className={`bg-gradient-to-br from-orange-100 to-red-100 flex items-center justify-center font-zatar ${className}`}>
         <div className="text-center text-gray-500">
           <div className="text-4xl mb-2">🍽️</div>
-          <p className="text-sm">No Image Available</p>
+          <p className="text-sm font-zatar">No Image Available</p>
         </div>
       </div>
     );
@@ -117,7 +117,7 @@ export default function ImageCarousel({ images, alt, className = "" }: ImageCaro
                 <div className="w-full h-full bg-gradient-to-br from-orange-100 to-red-100 flex items-center justify-center">
                   <div className="text-center text-gray-500">
                     <div className="text-4xl mb-2">🍽️</div>
-                    <p className="text-sm">Image not available</p>
+                    <p className="text-sm font-zatar">Image not available</p>
                   </div>
                 </div>
               ) : (
@@ -160,7 +160,7 @@ export default function ImageCarousel({ images, alt, className = "" }: ImageCaro
 
         {/* Image Counter */}
         {images.length > 1 && (
-          <div className="absolute top-3 right-3 bg-black/70 text-white px-2 py-1 rounded-full text-xs font-medium">
+          <div className="absolute top-3 right-3 bg-black/70 text-white px-2 py-1 rounded-full text-xs font-zatar">
             {currentIndex + 1} / {images.length}
           </div>
         )}
