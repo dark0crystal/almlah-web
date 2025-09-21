@@ -10,11 +10,10 @@ export default async function ManageUsersLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const currentPath = `/dashboard/admin/manage-users`;
   
   try {
     // Require user management permission
-    await requirePermission('can_manage_user', currentPath);
+    await requirePermission('can_manage_user');
     
     return (
       <div className="manage-users-layout" style={{backgroundColor: '#f3f3eb'}}>

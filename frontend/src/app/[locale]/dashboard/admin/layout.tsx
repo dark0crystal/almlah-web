@@ -10,11 +10,10 @@ export default async function AdminLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const currentPath = `/dashboard/admin`;
   
   try {
     // Require admin or super_admin role to access admin section
-    await requireAnyRole(['admin', 'super_admin'], currentPath);
+    await requireAnyRole(['admin', 'super_admin']);
     
     return (
       <div className="admin-layout" style={{backgroundColor: '#f3f3eb'}}>

@@ -10,11 +10,10 @@ export default async function ManageWilayahLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const currentPath = `/dashboard/admin/manage-wilayah`;
   
   try {
     // Require admin or super_admin role for wilayah management
-    await requireAnyRole(['admin', 'super_admin'], currentPath);
+    await requireAnyRole(['admin', 'super_admin']);
     
     return (
       <div className="manage-wilayah-layout" style={{backgroundColor: '#f3f3eb'}}>

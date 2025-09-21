@@ -48,7 +48,7 @@
     "title": "الفئات",
     "loading": "جاري تحميل الفئات...",
     "noCategories": "لا توجد فئات متاحة",
-    "availableCount": "{{count}} فئة متاحة",
+    "availableCount": "{count} فئة متاحة",
     "errors": {
       "title": "خطأ",
       "loadFailed": "فشل في تحميل الفئات. يرجى المحاولة مرة أخرى.",
@@ -150,8 +150,8 @@
   },
   "wilayah": {
     "title": "الولاية",
-    "wilayahsIn": "ولايات {{governate}}",
-    "exploreDistricts": "استكشف {{count}} من الولايات في هذه المحافظة",
+    "wilayahsIn": "ولايات {governate}",
+    "exploreDistricts": "استكشف {count} من الولايات في هذه المحافظة",
     "noWilayahsFound": "لا توجد ولايات متاحة لهذه المحافظة",
     "clickToExplore": "انقر للاستكشاف",
     "arabicName": "الاسم العربي",
@@ -161,7 +161,7 @@
     "swipeToSeeMore": "مرر لرؤية المزيد",
     "exploreDistrict": "استكشف الولاية",
     "explore": "استكشف",
-    "placesToVisit": "{{count}} مكان للزيارة"
+    "placesToVisit": "{count} مكان للزيارة"
   },
   "splash": {
     "welcome": "أهلاً وسهلاً",
@@ -358,9 +358,9 @@
       "message": "لم يتم العثور على أي أماكن تطابق المعايير المحددة"
     },
     "stats": {
-      "newPlacesThisWeek": "{{count}} أماكن جديدة مضافة هذا الأسبوع",
+      "newPlacesThisWeek": "{count} أماكن جديدة مضافة هذا الأسبوع",
       "additionalPlacesShown": "تم عرض أماكن إضافية لإكمال القائمة",
-      "placesAvailable": "{{count}} مكان متاح"
+      "placesAvailable": "{count} مكان متاح"
     },
     "navigation": {
       "scrollLeft": "التمرير يساراً",
@@ -419,7 +419,7 @@
   },
   "zatar": {
     "title": "زعتر - مكتشف المطاعم",
-    "step": "الخطوة {{step}} من 4",
+    "step": "الخطوة {step} من 4",
     "welcome": {
       "title": "مرحباً بك في زعتر!",
       "description": "زعتر هو مساعدك الذكي لاكتشاف أفضل المطاعم والمقاهي في عمان. ببساطة أخبرنا عن المنطقة ونوع الطعام الذي تريده، وسنقترح عليك خياراً رائعاً!",
@@ -458,9 +458,9 @@
       "getDirections": "الاتجاهات",
       "call": "اتصال",
       "website": "موقع الويب",
-      "rating": "{{rating}}/5 تقييم",
+      "rating": "{rating}/5 تقييم",
       "noImage": "لا توجد صورة متاحة",
-      "description": "استمتع بتجربة رائعة في {{name}} مع أجواء مميزة وخدمة متميزة."
+      "description": "استمتع بتجربة رائعة في {name} مع أجواء مميزة وخدمة متميزة."
     },
     "navigation": {
       "back": "السابق",
@@ -606,7 +606,7 @@
       "recent": "مضافة حديثاً"
     },
     "noRecommendations": "لا توجد توصيات حالياً",
-    "noRecommendationsMessage": "نحن نعمل على إضافة توصيات رائعة لفئة {{category}}. تحقق مرة أخرى قريباً!",
+    "noRecommendationsMessage": "نحن نعمل على إضافة توصيات رائعة لفئة {category}. تحقق مرة أخرى قريباً!",
     "viewAllRecommendations": "عرض جميع التوصيات",
     "browsePlaces": "تصفح الأماكن",
     "breadcrumb": {

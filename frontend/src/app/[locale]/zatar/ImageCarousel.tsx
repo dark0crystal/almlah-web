@@ -88,7 +88,7 @@ export default function ImageCarousel({ images, alt, className = "" }: ImageCaro
   };
 
   return (
-    <div className={`relative overflow-hidden rounded-t-2xl ${className}`}>
+    <div className={`relative overflow-hidden rounded-lg ${className}`}>
       {/* Main Image Container */}
       <div 
         className="relative w-full h-full"
@@ -127,8 +127,13 @@ export default function ImageCarousel({ images, alt, className = "" }: ImageCaro
                   fill
                   className="object-cover"
                   onLoad={() => handleImageLoad(index)}
-                  onError={() => handleImageError(index)}
+                  onError={(e) => {
+                    console.error('Image loading error:', image, e);
+                    handleImageError(index);
+                  }}
                   style={{ display: isLoading[index] ? 'none' : 'block' }}
+                  unoptimized={image.includes('maps.googleapis.com')}
+                  priority={index === 0}
                 />
               )}
             </div>

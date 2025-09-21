@@ -10,14 +10,13 @@ export default async function ManageRbacLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const currentPath = `/dashboard/admin/manage-rbac`;
   
   try {
     // Require role or permission management permissions
     await requireAnyPermission([
       'can_manage_role', 
       'can_manage_permission'
-    ], currentPath);
+    ]);
     
     return (
       <div className="manage-rbac-layout" style={{backgroundColor: '#f3f3eb'}}>

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { ComponentGuard, PageGuard } from '@/components/guards/AuthGuards';
 import { 
-  TrendingUp, 
   Users, 
   MapPin, 
   Tags, 
@@ -80,11 +79,7 @@ const QuickAction: React.FC<QuickActionProps> = ({ title, description, icon, col
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const { user, hasPermission } = useAuthStore();
-
-  const hasRole = (roleName: string) => {
-    return user?.roles?.includes(roleName) || false;
-  };
+  const { user } = useAuthStore();
 
   useEffect(() => {
     // Simulate loading

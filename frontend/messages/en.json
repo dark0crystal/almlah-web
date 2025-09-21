@@ -34,7 +34,7 @@
     "title": "Categories",
     "loading": "Loading categories...",
     "noCategories": "No categories available",
-    "availableCount": "{{count}} categories available",
+    "availableCount": "{count} categories available",
     "errors": {
       "title": "Error",
       "loadFailed": "Failed to load categories. Please try again.",
@@ -136,8 +136,8 @@
   },
   "wilayah": {
     "title": "Wilayah",
-    "wilayahsIn": "Wilayahs in {{governate}}",
-    "exploreDistricts": "Explore {{count}} districts in this governorate",
+    "wilayahsIn": "Wilayahs in {governate}",
+    "exploreDistricts": "Explore {count} districts in this governorate",
     "noWilayahsFound": "No wilayahs available for this governorate",
     "clickToExplore": "Click to explore",
     "arabicName": "Arabic name",
@@ -147,7 +147,7 @@
     "swipeToSeeMore": "Swipe to see more",
     "exploreDistrict": "Explore district",
     "explore": "Explore",
-    "placesToVisit": "{{count}} places to visit"
+    "placesToVisit": "{count} places to visit"
   },
   "splash": {
     "welcome": "Welcome",
@@ -358,9 +358,9 @@
       "message": "No places found matching the specified criteria"
     },
     "stats": {
-      "newPlacesThisWeek": "{{count}} new places added this week",
+      "newPlacesThisWeek": "{count} new places added this week",
       "additionalPlacesShown": "Additional places shown to complete the list",
-      "placesAvailable": "{{count}} places available"
+      "placesAvailable": "{count} places available"
     },
     "navigation": {
       "scrollLeft": "Scroll left",
@@ -419,7 +419,7 @@
   },
   "zatar": {
     "title": "Zatar - Restaurant Finder",
-    "step": "Step {{step}} of 4",
+    "step": "Step {step} of 4",
     "welcome": {
       "title": "Welcome to Zatar!",
       "description": "Zatar is your smart assistant for discovering the best restaurants and cafes in Oman. Simply tell us your location and food preference, and we'll suggest something amazing!",
@@ -458,9 +458,9 @@
       "getDirections": "Get Directions",
       "call": "Call",
       "website": "Website",
-      "rating": "{{rating}}/5 Rating",
+      "rating": "{rating}/5 Rating",
       "noImage": "No Image Available",
-      "description": "Enjoy a wonderful experience at {{name}} with great atmosphere and excellent service."
+      "description": "Enjoy a wonderful experience at {name} with great atmosphere and excellent service."
     },
     "navigation": {
       "back": "Back",
@@ -611,7 +611,7 @@
       "recent": "Recently Added"
     },
     "noRecommendations": "No recommendations available",
-    "noRecommendationsMessage": "We're working on adding amazing recommendations for {{category}}. Check back soon!",
+    "noRecommendationsMessage": "We're working on adding amazing recommendations for {category}. Check back soon!",
     "viewAllRecommendations": "View All Recommendations",
     "browsePlaces": "Browse Places",
     "breadcrumb": {

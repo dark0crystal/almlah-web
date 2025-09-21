@@ -110,7 +110,7 @@ export async function requireAuth(redirectPath?: string): Promise<void> {
 }
 
 // Permission-based access control
-export async function requirePermission(permission: string, redirectPath?: string): Promise<void> {
+export async function requirePermission(permission: string): Promise<void> {
   const token = await getServerAuthToken();
   
   if (!token) {
@@ -124,7 +124,7 @@ export async function requirePermission(permission: string, redirectPath?: strin
   }
 }
 
-export async function requireAnyPermission(permissions: string[], redirectPath?: string): Promise<void> {
+export async function requireAnyPermission(permissions: string[]): Promise<void> {
   const token = await getServerAuthToken();
   
   if (!token) {
@@ -138,7 +138,7 @@ export async function requireAnyPermission(permissions: string[], redirectPath?:
   }
 }
 
-export async function requireAnyRole(roles: string[], redirectPath?: string): Promise<void> {
+export async function requireAnyRole(roles: string[]): Promise<void> {
   const token = await getServerAuthToken();
   
   if (!token) {

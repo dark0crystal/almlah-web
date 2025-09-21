@@ -10,7 +10,6 @@ export default async function ManageCategoriesLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const currentPath = `/dashboard/admin/manage-categories`;
   
   try {
     // Require category management permissions
@@ -18,7 +17,7 @@ export default async function ManageCategoriesLayout({
       'can_view_category', 
       'can_create_category', 
       'can_manage_category'
-    ], currentPath);
+    ]);
     
     return (
       <div className="manage-categories-layout" style={{backgroundColor: '#f3f3eb'}}>

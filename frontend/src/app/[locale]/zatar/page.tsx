@@ -149,7 +149,7 @@ export default function ZatarPage() {
       <div className="px-4 mb-4 w-full max-w-md mx-auto">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm text-gray-700 font-zatar">
-            {t('step', { step: state.step })}
+{t('step', { step: state.step })}
           </span>
           <span className="text-sm text-gray-700 font-zatar">{Math.round((state.step / 4) * 100)}%</span>
         </div>
@@ -289,18 +289,27 @@ export default function ZatarPage() {
 
                   <div className="mb-4">
                     <div className="bg-gray-100 h-32 flex items-center justify-center relative rounded-lg overflow-hidden border-2 border-gray-300">
-                      {(state.recommendation.image_urls && state.recommendation.image_urls.length > 0) || state.recommendation.image_url ? (
-                        <ImageCarousel 
-                          images={state.recommendation.image_urls || (state.recommendation.image_url ? [state.recommendation.image_url] : [])}
-                          alt={state.recommendation.name}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      ) : (
-                        <div className="text-center text-gray-400">
-                          <div className="text-4xl mb-2">🍽️</div>
-                          <p className="text-xs font-zatar">{t('result.noImage')}</p>
-                        </div>
-                      )}
+                      {(() => {
+                        // Prioritize image_urls array, fallback to single image_url
+                        const images = (state.recommendation.image_urls && state.recommendation.image_urls.length > 0) 
+                          ? state.recommendation.image_urls 
+                          : state.recommendation.image_url 
+                            ? [state.recommendation.image_url] 
+                            : [];
+                        
+                        return images.length > 0 ? (
+                          <ImageCarousel 
+                            images={images}
+                            alt={state.recommendation.name}
+                            className="w-full h-full"
+                          />
+                        ) : (
+                          <div className="text-center text-gray-400">
+                            <div className="text-4xl mb-2">🍽️</div>
+                            <p className="text-xs font-zatar">{t('result.noImage')}</p>
+                          </div>
+                        );
+                      })()}
                       
                       {(() => {
                         const isOpen = isRestaurantOpen(state.recommendation.opening_time, state.recommendation.closing_time);

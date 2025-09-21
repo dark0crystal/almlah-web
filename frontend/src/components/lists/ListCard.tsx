@@ -34,10 +34,14 @@ export default function ListCard({ list }: ListCardProps) {
           
           {/* Text overlay at bottom */}
           <div className={`absolute bottom-0 ${locale === 'ar' ? 'right-0' : 'left-0'} p-3 max-w-[80%]`}>
-            <h3 className="mb-1 leading-tight">
-              <span className="bg-yellow-400 text-black font-bold text-xl px-px py-1 shadow-lg inline-block whitespace-nowrap overflow-hidden text-ellipsis">
-                {locale === 'ar' ? list.title_ar : list.title_en}
-              </span>
+            <h3 className="mb-1 leading-tight font-semibold text-xl shadow-lg" style={{
+              backgroundColor: '#fce7a1', 
+              display: 'inline',
+              padding: '2px 4px',
+              boxDecorationBreak: 'clone',
+              WebkitBoxDecorationBreak: 'clone'
+            }}>
+              {locale === 'ar' ? list.title_ar : list.title_en}
             </h3>
           </div>
         </div>

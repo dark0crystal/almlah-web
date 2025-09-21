@@ -3,13 +3,31 @@ import createNextIntlPlugin from 'next-intl/plugin';
  
 const nextConfig: NextConfig = {
     images: {
-    domains: [
-      'pehoskkfpodrfzmqohii.supabase.co',
-      'lh3.googleusercontent.com',
-      'maps.googleapis.com',
-      'images.unsplash.com',
-      'localhost',
-      '127.0.0.1'
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'pehoskkfpodrfzmqohii.supabase.co',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'maps.googleapis.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+      {
+        protocol: 'http',
+        hostname: '127.0.0.1',
+      }
     ],
   },
   async headers() {
@@ -31,5 +49,5 @@ const nextConfig: NextConfig = {
   },
 };
  
-const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 export default withNextIntl(nextConfig);

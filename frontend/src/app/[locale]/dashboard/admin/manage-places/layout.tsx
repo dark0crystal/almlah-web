@@ -10,7 +10,6 @@ export default async function ManagePlacesLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const currentPath = `/dashboard/admin/manage-places`;
   
   try {
     // Require place management permissions
@@ -18,7 +17,7 @@ export default async function ManagePlacesLayout({
       'can_view_place', 
       'can_create_place', 
       'can_manage_place'
-    ], currentPath);
+    ]);
     
     return (
       <div className="manage-places-layout" style={{backgroundColor: '#f3f3eb'}}>
