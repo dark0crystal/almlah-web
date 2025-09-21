@@ -36,6 +36,9 @@ type AppConfig struct {
 	SupabaseServiceRoleKey  string
 	SupabaseStorageBucket   string
 
+	// Redis configuration
+	RedisURL                string
+
 }
 
 func SetupEnv() (cfg AppConfig, err error) {
@@ -109,6 +112,9 @@ func SetupEnv() (cfg AppConfig, err error) {
 		SupabaseURL:             getEnv("SUPABASE_URL", ""),
 		SupabaseServiceRoleKey:  getEnv("SUPABASE_SERVICE_ROLE_KEY", ""),
 		SupabaseStorageBucket:   getEnv("SUPABASE_STORAGE_BUCKET", ""),
+
+		// Redis configuration
+		RedisURL:                getEnv("REDIS_URL", ""),
 	}, nil
 }
 

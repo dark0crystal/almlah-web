@@ -15,7 +15,7 @@ func StartServer(cfg config.AppConfig) {
 	// Initialize database
 	config.ConnectDB(cfg.DatabaseURL)
 	config.MigrateDB()
-	config.InitializeRedis("rediss://default:AcbTAAIncDE3ZjQ4MmNjZTk5MTY0YzY3ODc4NTczODM5NjA3YmI4MXAxNTA4OTk@touching-sawfish-50899.upstash.io:6379")
+	config.InitializeRedis(cfg.RedisURL)
 
 	// Initialize auth configuration in services
 	if err := services.InitAuthConfig(); err != nil {
