@@ -478,3 +478,29 @@ body {
 .paper-input:focus {
   border-bottom: 2px solid #3498db;
 }
+
+/* Star spin animation for zatar - rotates ±50 degrees */
+@keyframes spin-star {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(50deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(-50deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.animate-spin-custom {
+  animation: spin-star 1s ease-in-out;
+}
+
+/* Star attention-grabbing animation - rotates ±40 degrees continuously */
+@keyframes spin-attract {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(40deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(-40deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.animate-spin-attract {
+  animation: spin-attract 2s ease-in-out infinite;
+}
