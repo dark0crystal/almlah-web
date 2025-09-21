@@ -151,7 +151,7 @@ export default function PostCardsWrapper({
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    const cardWidth = 300; // Approximate card width + gap
+    const cardWidth = 288; // Responsive card width (md:w-80 = 320px - gap) + gap
     const scrollAmount = cardWidth * 2; // Scroll 2 cards at a time
     
     container.scrollTo({
@@ -167,7 +167,7 @@ export default function PostCardsWrapper({
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    const cardWidth = 300; // Approximate card width + gap
+    const cardWidth = 288; // Responsive card width (md:w-80 = 320px - gap) + gap
     const scrollAmount = cardWidth * 2; // Scroll 2 cards at a time
     const maxScrollLeft = container.scrollWidth - container.clientWidth;
     
@@ -274,7 +274,7 @@ export default function PostCardsWrapper({
     return (
       <div className="py-8" style={{ width: '88vw' }} data-posts-wrapper>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">{displayTitle}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{displayTitle}</h2>
         </div>
         
         {/* Loading skeleton */}
@@ -300,7 +300,7 @@ export default function PostCardsWrapper({
     return (
       <div className="py-8" style={{ width: '88vw' }} data-posts-wrapper>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">{displayTitle}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{displayTitle}</h2>
         </div>
         
         <div className="text-center py-12">
@@ -330,7 +330,7 @@ export default function PostCardsWrapper({
     return (
       <div className="py-8" style={{ width: '88vw' }} data-posts-wrapper>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">{displayTitle}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{displayTitle}</h2>
         </div>
         
         <div className="text-center py-12">
@@ -356,7 +356,7 @@ export default function PostCardsWrapper({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{displayTitle}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{displayTitle}</h2>
         </div>
         
         {/* Navigation Buttons */}

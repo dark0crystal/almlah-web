@@ -33,7 +33,7 @@ export default function ListsCarousel() {
     return (
       <section className="w-[88vw]">
         <div className={`mb-8 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
             {locale === 'ar' ? 'قوائـم الـمـلاح' : 'Almlah Lists'}
           </h2>
         </div>
@@ -50,7 +50,7 @@ export default function ListsCarousel() {
     return (
       <section className="w-[88vw]">
         <div className={`mb-8 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
             {locale === 'ar' ? 'قوائـم الـمـلاح' : 'Almlah Lists'}
           </h2>
         </div>
@@ -67,7 +67,7 @@ export default function ListsCarousel() {
     return (
       <section className="w-[88vw]">
         <div className={`mb-8 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
             {locale === 'ar' ? 'قوائـم الـمـلاح' : 'Almlah Lists'}
           </h2>
         </div>
@@ -84,7 +84,7 @@ export default function ListsCarousel() {
     <section className="w-[88vw]">
       {/* Section Header */}
       <div className={`mb-8 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
-        <h2 className="text-2xl font-bold text-gray-900 mb-3">
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
           {locale === 'ar' ? 'قوائـم الـمـلاح' : 'Almlah Lists'}
         </h2>
       </div>

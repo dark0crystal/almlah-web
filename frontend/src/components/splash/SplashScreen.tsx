@@ -35,7 +35,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       const screenWidth = window.innerWidth || 1200;
       
       // Calculate vertical texts needed (responsive line height)
-      const lineHeight = screenWidth < 640 ? 60 : screenWidth < 768 ? 85 : 120; // includes font + margin
+      const lineHeight = screenWidth < 640 ? 80 : screenWidth < 768 ? 110 : 150; // includes font + margin
       const textsNeeded = Math.ceil(screenHeight / lineHeight);
       setRepeatedTexts(Array.from({ length: textsNeeded }, () => text));
       
@@ -110,9 +110,9 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                     : 'opacity-0 translate-y-4'
                 }`}
                 style={{
-                  fontSize: window.innerWidth < 640 ? '40px' : window.innerWidth < 768 ? '60px' : '80px',
-                  lineHeight: window.innerWidth < 640 ? '45px' : window.innerWidth < 768 ? '65px' : '90px',
-                  marginBottom: window.innerWidth < 640 ? '15px' : window.innerWidth < 768 ? '20px' : '30px',
+                  fontSize: window.innerWidth < 640 ? '35px' : window.innerWidth < 768 ? '55px' : '75px',
+                  lineHeight: window.innerWidth < 640 ? '40px' : window.innerWidth < 768 ? '60px' : '80px',
+                  marginBottom: window.innerWidth < 640 ? '25px' : window.innerWidth < 768 ? '35px' : '45px',
                   color: '#f6bf0c',
                   transitionDelay: `${index * 50 + columnIndex * 16}ms`
                 }}
@@ -123,6 +123,21 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           </div>
         ))}
         
+      </div>
+
+      {/* Bottom Text Labels */}
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center space-y-2">
+        <div className="text-center">
+          <p className="text-sm font-medium text-gray-700 opacity-80">
+            {locale === 'ar' ? 'اكتشف عُمان' : 'Discover Oman'}
+          </p>
+          <p className="text-xs text-gray-600 opacity-70">
+            {locale === 'ar' ? 'دليلك السياحي الشامل' : 'Your Complete Tourism Guide'}
+          </p>
+          <p className="text-xs text-gray-500 opacity-60 mt-1">
+            {locale === 'ar' ? 'الثقافة • الطبيعة • التراث' : 'Culture • Nature • Heritage'}
+          </p>
+        </div>
       </div>
 
       {/* Skip Button */}

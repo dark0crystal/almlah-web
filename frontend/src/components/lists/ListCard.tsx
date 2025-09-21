@@ -19,7 +19,7 @@ export default function ListCard({ list }: ListCardProps) {
   
   return (
     <div 
-      className="flex-shrink-0 w-80 h-56 bg-white rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer p-2"
+      className="flex-shrink-0 w-64 sm:w-72 md:w-80 h-56 bg-white rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer p-2"
       onClick={handleClick}
     >
       <div className="h-full w-full rounded-3xl overflow-hidden flex flex-col">

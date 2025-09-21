@@ -2,6 +2,9 @@
 import { StaticImageData } from 'next/image';
 import rb3 from "../../../../public/rb3.png";
 import chai from "../../../../public/chai.png"
+import sign from "../../../../public/pngs/sign.png"
+import tower from "../../../../public/pngs/tower.png"
+import camera from "../../../../public/pngs/camera.png"
 // Import other images from your public folder
 // import finjanImage from "../../../../public/finjan.png";
 // import riyadhImage from "../../../../public/riyadh.png";
@@ -29,7 +32,7 @@ export const categoriesData: CategoryData[] = [
     subtitle: "استكشف الوجهات",
     icon: "🏛️",
     bgColor: "bg-gradient-to-br from-orange-400 to-pink-400",
-    bgImage: rb3,
+    bgImage: tower,
     slug: "tourism",
     href: "/places?category=tourism"
   },
@@ -54,7 +57,7 @@ export const categoriesData: CategoryData[] = [
     subtitle: "استكشف عُمان",
     icon: "🗺️",
     bgColor: "bg-gradient-to-br from-blue-500 to-cyan-600",
-    bgImage: chai,
+    bgImage: sign,
     href: "/destinations"
   },
   {
@@ -62,7 +65,7 @@ export const categoriesData: CategoryData[] = [
     subtitle: "معرض الصور",
     icon: "📸",
     bgColor: "bg-gradient-to-br from-pink-500 to-rose-600",
-    bgImage: chai,
+    bgImage: camera,
     href: "/the-gallery"
   },
   {
@@ -86,7 +89,7 @@ export const categoriesData: CategoryData[] = [
     subtitle: "تعرف علينا",
     icon: "ℹ️",
     bgColor: "bg-gradient-to-br from-gray-500 to-slate-600",
-    bgImage: chai,
+    bgImage: rb3,
     href: "/about-us"
   },
 ];
