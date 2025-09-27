@@ -6,9 +6,6 @@ import (
 	"almlah/internals/services"
 	"almlah/internals/utils"
 	"net/http"
-	"fmt"
-	"almlah/internals/cache"
-
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -68,11 +65,7 @@ func (h *ImageHandler) UploadGovernateImages(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	// 🔧 REDIS CACHE: Invalidate related caches after successful upload
-	go func() {
-		cache.Delete(fmt.Sprintf("governate_images_%s", governateId.String()))
-		cache.Delete(fmt.Sprintf("governate_%s", governateId.String()))
-	}()
+	// NO CACHING - Direct database access only
 
 	return ctx.Status(http.StatusCreated).JSON(utils.SuccessResponse("Images uploaded successfully", response))
 }
@@ -84,35 +77,16 @@ func (h *ImageHandler) GetGovernateImages(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid governate ID"))
 	}
 
-	// 🔧 REDIS CACHE: Try cache first
-	cacheKey := fmt.Sprintf("governate_images_%s", governateId.String())
-	var images []dto.GovernateImageResponse
-	
-	if err := cache.Get(cacheKey, &images); err == nil {
-		ctx.Set("X-Cache", "HIT")
-		return ctx.JSON(utils.SuccessResponse("Images retrieved successfully", images))
-	}
-
-	// 🔄 ORIGINAL: Call service
-	images, err = services.GetGovernateImages(governateId)
+	// Direct database access - NO CACHING
+	images, err := services.GetGovernateImages(governateId)
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(utils.ErrorResponse(err.Error()))
 	}
-
-	// 🔧 REDIS CACHE: Store in cache (background, doesn't block response)
-	go cache.Set(cacheKey, images, cache.LongTTL)
-	ctx.Set("X-Cache", "MISS")
 
 	return ctx.JSON(utils.SuccessResponse("Images retrieved successfully", images))
 }
 
 func (h *ImageHandler) UpdateGovernateImage(ctx *fiber.Ctx) error {
-	governateIdStr := ctx.Params("governateId")
-	governateId, err := uuid.Parse(governateIdStr)
-	if err != nil {
-		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid governate ID"))
-	}
-
 	imageIdStr := ctx.Params("imageId")
 	imageId, err := uuid.Parse(imageIdStr)
 	if err != nil {
@@ -135,22 +109,12 @@ func (h *ImageHandler) UpdateGovernateImage(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	// 🔧 REDIS CACHE: Invalidate related caches after successful update
-	go func() {
-		cache.Delete(fmt.Sprintf("governate_images_%s", governateId.String()))
-		cache.Delete(fmt.Sprintf("governate_%s", governateId.String()))
-	}()
+	// NO CACHING - Direct database access only
 
 	return ctx.JSON(utils.SuccessResponse("Image updated successfully", image))
 }
 
 func (h *ImageHandler) DeleteGovernateImage(ctx *fiber.Ctx) error {
-	governateIdStr := ctx.Params("governateId")
-	governateId, err := uuid.Parse(governateIdStr)
-	if err != nil {
-		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse("Invalid governate ID"))
-	}
-
 	imageIdStr := ctx.Params("imageId")
 	imageId, err := uuid.Parse(imageIdStr)
 	if err != nil {
@@ -168,11 +132,7 @@ func (h *ImageHandler) DeleteGovernateImage(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	// 🔧 REDIS CACHE: Invalidate related caches after successful deletion
-	go func() {
-		cache.Delete(fmt.Sprintf("governate_images_%s", governateId.String()))
-		cache.Delete(fmt.Sprintf("governate_%s", governateId.String()))
-	}()
+	// NO CACHING - Direct database access only
 
 	return ctx.JSON(utils.SuccessResponse("Image deleted successfully", nil))
 }

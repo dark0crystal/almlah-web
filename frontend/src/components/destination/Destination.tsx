@@ -42,15 +42,61 @@ const fetchGovernoratesFromAPI = async () => {
   }
 };
 
+// Helper function to parse gallery images from JSON string
+const parseGalleryImages = (galleryImagesJson: string | undefined): GovernorateImage[] => {
+  if (!galleryImagesJson) {
+    return [];
+  }
+  
+  try {
+    const parsed = JSON.parse(galleryImagesJson);
+    if (Array.isArray(parsed)) {
+      return parsed.map((img: {url?: string; image_url?: string; is_primary?: boolean}, index: number) => ({
+        id: index,
+        url: img.url || img.image_url,
+        image_url: img.url || img.image_url,
+        is_primary: img.is_primary || index === 0
+      }));
+    }
+  } catch (error) {
+    console.error('Error parsing gallery images:', error);
+  }
+  
+  return [];
+};
+
 // Function to get primary image from governorate images
-const getPrimaryImage = (images: GovernorateImage[] | undefined): string | null => {
-  if (!images || !Array.isArray(images) || images.length === 0) {
+const getPrimaryImage = (gov: GovernorateData): string | null => {
+  console.log('🖼️ getPrimaryImage called for governorate:', gov.name_en || gov.name_ar);
+  
+  let images: GovernorateImage[] = [];
+  
+  // First try to get images from the structured images array
+  if (gov.images && Array.isArray(gov.images) && gov.images.length > 0) {
+    console.log('✅ Using structured images array:', gov.images);
+    images = gov.images;
+  } 
+  // Fallback to gallery_images JSON field
+  else if (gov.gallery_images) {
+    console.log('📝 Using gallery_images JSON field:', gov.gallery_images);
+    images = parseGalleryImages(gov.gallery_images);
+  } else {
+    console.log('❌ No images found in either field');
+  }
+  
+  if (!images || images.length === 0) {
+    console.log('❌ No images after parsing');
     return null;
   }
   
+  console.log('📸 Available images:', images);
+  
   // Find primary image or use first image
   const primaryImage = images.find(img => img.is_primary) || images[0];
-  return primaryImage?.url || primaryImage?.image_url || null;
+  const finalUrl = primaryImage?.url || primaryImage?.image_url || null;
+  
+  console.log('🎯 Selected image URL:', finalUrl);
+  return finalUrl;
 };
 
 // Function to transform API data to component format
@@ -59,7 +105,7 @@ const transformGovernorateData = (governorates: GovernorateData[], locale: strin
     id: gov.id,
     name: locale === 'ar' ? gov.name_ar : gov.name_en,
     category: locale === 'ar' ? gov.subtitle_ar : gov.subtitle_en,
-    image: getPrimaryImage(gov.images),
+    image: getPrimaryImage(gov), // Pass the whole governorate object
     coordinates: {
       x: gov.longitude ? ((gov.longitude + 180) * 100) / 360 : 50 + (index * 5),
       y: gov.latitude ? ((90 - gov.latitude) * 100) / 180 : 50 + (index * 3)
@@ -86,7 +132,14 @@ export default function Destination() {
         setError(null);
         
         const governorates = await fetchGovernoratesFromAPI();
+        console.log('🏛️ GOVERNORATE API RESPONSE:', governorates);
+        console.log('🏛️ First governorate:', governorates[0]);
+        console.log('🏛️ First governorate images field:', governorates[0]?.images);
+        console.log('🏛️ First governorate gallery_images field:', governorates[0]?.gallery_images);
+        
         const transformedData = transformGovernorateData(governorates, locale);
+        console.log('🎯 TRANSFORMED DATA:', transformedData);
+        console.log('🎯 First destination image URL:', transformedData[0]?.image);
         
         setDestinationList(transformedData);
       } catch (error) {

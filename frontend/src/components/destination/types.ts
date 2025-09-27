@@ -18,6 +18,7 @@ export interface GovernorateData {
   wilayah_count?: number;
   place_count?: number;
   images?: GovernorateImage[];
+  gallery_images?: string; // JSON string field for legacy support
 }
 
 export interface DestinationCoordinates {
