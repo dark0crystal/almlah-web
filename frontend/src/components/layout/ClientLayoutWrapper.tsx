@@ -7,6 +7,7 @@ import { FirstVisitModal } from '@/components/modals/FirstVisitModal';
 import { useFirstVisit } from '@/hooks/useFirstVisit';
 import { AuthInitializer } from '@/components/auth/AuthInitializer';
 import { Car } from '@/types';
+import FloatingWelcomeCard from '@/components/FloatingWelcomeCard';
 
 interface ClientLayoutWrapperProps {
   children: React.ReactNode;
@@ -18,11 +19,16 @@ export default function ClientLayoutWrapper({ children, navbar }: ClientLayoutWr
   const isMainPage = pathname === '/ar' || pathname === '/en' || pathname === '/';
   const isDashboardPage = pathname.includes('/dashboard');
   const [showSplash, setShowSplash] = useState(isMainPage);
+  const [showWelcomeCard, setShowWelcomeCard] = useState(false);
   const { isFirstVisit, isLoading, markAsVisited } = useFirstVisit();
 
   const handleSplashComplete = () => {
     setShowSplash(false);
     console.log('Splash complete, isFirstVisit:', isFirstVisit, 'isLoading:', isLoading);
+    // Show welcome card for returning users after splash
+    if (!isFirstVisit && !isLoading) {
+      setShowWelcomeCard(true);
+    }
   };
 
   const handleCarSelect = (car: Car) => {
@@ -36,10 +42,25 @@ export default function ClientLayoutWrapper({ children, navbar }: ClientLayoutWr
     markAsVisited();
   };
 
+  const handleWelcomeCardClose = () => {
+    setShowWelcomeCard(false);
+  };
+
   // Debug logging
   useEffect(() => {
     console.log('ClientLayoutWrapper - isFirstVisit changed:', isFirstVisit, 'isLoading:', isLoading);
   }, [isFirstVisit, isLoading]);
+
+  // Show welcome card for users visiting any page (except dashboard) for the first time
+  useEffect(() => {
+    if (!isLoading && !isDashboardPage && !showSplash) {
+      // Check if user has seen the welcome card before (persistent across sessions)
+      const hasSeenWelcomeCard = localStorage.getItem('hasSeenWelcomeCard');
+      if (hasSeenWelcomeCard !== 'true') {
+        setShowWelcomeCard(true);
+      }
+    }
+  }, [isLoading, isDashboardPage, showSplash]);
 
   // Show splash screen only on main page
   if (showSplash && isMainPage) {
@@ -66,6 +87,11 @@ export default function ClientLayoutWrapper({ children, navbar }: ClientLayoutWr
         onClose={handleModalClose}
         onCarSelect={handleCarSelect}
       />
+
+      {/* Welcome card for returning users */}
+      {showWelcomeCard && (
+        <FloatingWelcomeCard onClose={handleWelcomeCardClose} />
+      )}
     </AuthInitializer>
   );
 }

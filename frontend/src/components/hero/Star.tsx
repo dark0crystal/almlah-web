@@ -92,7 +92,7 @@ export default function Star({ onRotationChange }: StarProps) {
       
       {/* Rapid Click Text */}
       {showText && (
-        <div className="absolute -top-12 sm:-top-16 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-black px-2 py-1 sm:px-4 sm:py-2 rounded-lg shadow-lg text-xs sm:text-sm font-bold whitespace-nowrap">
+        <div className="absolute -top-16 sm:-top-20 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-black px-3 py-2 sm:px-6 sm:py-3 rounded-lg shadow-lg text-base sm:text-lg md:text-xl font-bold whitespace-nowrap">
           {textMessage}
         </div>
       )}

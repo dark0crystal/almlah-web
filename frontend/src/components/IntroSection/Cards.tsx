@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import samhah from "../../../public/samhah.png"
+import samhah from "../../../public/patats.png"
 
 // Card1.tsx - Wide Card (Top)
 export function WideCard() {
@@ -25,13 +25,12 @@ export function WideCard() {
       </div>
 
       {/* Image at bottom */}
-      <div className="absolute bottom-0 left-8 z-20">
+      <div className="absolute bottom-0 left-8 z-20 w-[120px] h-[90px] sm:w-[150px] sm:h-[110px] md:w-[180px] md:h-[135px] lg:w-[220px] lg:h-[165px]">
         <Image
           src={samhah}
           alt="Content image"
-          width={80}
-          height={60}
-          className="md:w-[100px] md:h-[70px] lg:w-[120px] lg:h-[80px] object-cover rounded-t-xl"
+          fill
+          className="object-contain rounded-t-xl"
         />
       </div>
 

@@ -21,7 +21,7 @@ const Galleries: React.FC = () => {
 
   return (
     <div className="relative">
-      <div className="relative z-10 mix-blend-difference">
+      <div className="relative z-10 md:mix-blend-difference">
         <Projects setActiveMenu={setActiveMenu} />
       </div>
       <div className="fixed top-0 left-0 w-full h-screen -z-10 ">

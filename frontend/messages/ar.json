@@ -214,6 +214,7 @@
     "tourism": "الأماكن السياحية",
     "foodBeverages": "الأطعمة والمشروبات",
     "entertainment": "الترفيه",
+    "restaurants": "المطاعم",
     "tourism_title": "الأماكن السياحية",
     "food_beverages_title": "الأطعمة والمشروبات",
     "entertainment_title": "الترفيه"
@@ -308,7 +309,7 @@
     }
   },
   "firstVisitModal": {
-    "welcome": "أهلاً وسهلاً بك في الملاح!",
+    "welcome": "أهلاً وسهلاً بك في الـملاح",
     "subtitle": "اختر مركبتك المفضلة لاستكشاف عُمان",
     "selectedVehicle": "المركبة المختارة",
     "continue": "متابعة"

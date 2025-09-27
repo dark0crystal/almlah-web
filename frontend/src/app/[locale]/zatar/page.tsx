@@ -197,7 +197,7 @@ export default function ZatarPage() {
                     <p className="leading-8">
                       {t('welcome.description')}
                     </p>
-                    <p className="text-sm font-zatar italic" style={{ color: '#fce7a1' }}>
+                    <p className="text-base sm:text-lg md:text-xl font-zatar italic" style={{ color: '#f6bf0c' }}>
                       {t('welcome.tagline')}
                     </p>
                   </div>

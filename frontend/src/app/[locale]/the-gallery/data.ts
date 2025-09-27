@@ -16,8 +16,8 @@ export const projects = [
       src: "/gallery-alkhalil/img17.jpg"
     },
     {
-      title: "رالي داكار السعودي",
-      src: "/gallery-alkhalil/img3.jpg"
+      title: "سمكة المهرج / Clownfish",
+      src: "/gallery-alkhalil/img22.jpeg"
     },
     {
       title: "معزوفة الليل  / Symphony of the night ",
@@ -28,12 +28,12 @@ export const projects = [
       src: "/gallery-alkhalil/img18.jpg"
     },
     {
-      title: "المرموقة / SQU",
-      src: "/gallery-alkhalil/img12.jpg"
+      title: "شرفة / verandah",
+      src: "/gallery-alkhalil/img21.jpeg"
     },
     {
-      title: "أرشيفية من البوسنة",
-      src: "/gallery-alkhalil/img3.jpg"
+      title: "بحيرات الصفا",
+      src: "/gallery-alkhalil/img1.jpg"
     },
     {
       title: "عظمة",

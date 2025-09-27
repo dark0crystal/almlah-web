@@ -1,6 +1,6 @@
 "use client"
 import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useTranslations } from 'next-intl';
 // import { MapPin } from "lucide-react";
 import PlacesCardsWrapper from "./PlacesCardsWrapper";
@@ -14,11 +14,31 @@ import { CATEGORY_IDS, type CategoryType } from "@/services/placesApi";
  * Now includes governate filtering, proper localization, and category support
  */
 export default function Places() {
-  const categoryType: CategoryType = "TOURISM"; // Default category type
   const params = useParams();
+  const searchParams = useSearchParams();
   const locale = (params?.locale as string) || 'en';
   const t = useTranslations('places');
   const categoryTranslations = useTranslations('categories');
+  
+  // Get category from URL search params, default to TOURISM
+  const getCategoryFromUrl = (): CategoryType => {
+    const categoryParam = searchParams.get('category');
+    if (!categoryParam) return "TOURISM";
+    
+    // Map URL category names to our category types
+    const categoryMap: Record<string, CategoryType> = {
+      'tourism': 'TOURISM',
+      'restaurants': 'RESTAURANTS', 
+      'food-beverages': 'FOOD_BEVERAGES',
+      'entertainment': 'ENTERTAINMENT',
+      'hiking': 'TOURISM', // Map hiking to tourism for now
+      'recipes': 'FOOD_BEVERAGES' // Map recipes to food & beverages
+    };
+    
+    return categoryMap[categoryParam] || "TOURISM";
+  };
+  
+  const categoryType: CategoryType = getCategoryFromUrl();
   
   
   // State for sharing filters between components
@@ -67,7 +87,13 @@ export default function Places() {
   const getPlacesToVisitText = () => {
     switch (categoryType) {
       case 'TOURISM':
-        return categoryTranslations('tourism'); // "Tourism Places"
+        return categoryTranslations('tourism');
+      case 'RESTAURANTS':
+        return categoryTranslations('restaurants') || t('restaurants');
+      case 'FOOD_BEVERAGES':
+        return categoryTranslations('foodBeverages') || 'الأطعمة والمشروبات';
+      case 'ENTERTAINMENT':
+        return categoryTranslations('entertainment') || 'الترفيه';
       default:
         return t('title'); // "Places to Visit"
     }

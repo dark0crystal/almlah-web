@@ -45,6 +45,26 @@ export default function Footer() {
                   {t('restaurants')}
                 </Link>
               </li>
+              <li>
+                <Link href="/destinations" className="text-gray-600 hover:text-gray-800 transition-colors text-sm sm:text-base">
+                  {t('destinations')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/the-gallery" className="text-gray-600 hover:text-gray-800 transition-colors text-sm sm:text-base">
+                  معرض الصور
+                </Link>
+              </li>
+              <li>
+                <Link href="/about-us" className="text-gray-600 hover:text-gray-800 transition-colors text-sm sm:text-base">
+                  من نحن
+                </Link>
+              </li>
+              <li>
+                <Link href="/zatar" className="text-gray-600 hover:text-gray-800 transition-colors text-sm sm:text-base">
+                  زعتر
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -55,19 +75,24 @@ export default function Footer() {
             </h3>
             <ul className="space-y-1 sm:space-y-2">
               <li>
-                <a href="#" className="text-gray-600 hover:text-gray-800 transition-colors text-sm sm:text-base">
+                <Link href="/places?category=tourism" className="text-gray-600 hover:text-gray-800 transition-colors text-sm sm:text-base">
                   {t('tourism')}
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-600 hover:text-gray-800 transition-colors text-sm sm:text-base">
+                <Link href="/places?category=hiking" className="text-gray-600 hover:text-gray-800 transition-colors text-sm sm:text-base">
                   {t('hiking')}
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-600 hover:text-gray-800 transition-colors text-sm sm:text-base">
+                <Link href="/places?category=recipes" className="text-gray-600 hover:text-gray-800 transition-colors text-sm sm:text-base">
                   {t('recipes')}
-                </a>
+                </Link>
+              </li>
+              <li>
+                <Link href="/dishes-map" className="text-gray-600 hover:text-gray-800 transition-colors text-sm sm:text-base">
+                  خريطة الأطباق
+                </Link>
               </li>
             </ul>
           </div>
@@ -80,15 +105,15 @@ export default function Footer() {
               © 2025 {brandT('brand')}. {t('rightsReserved')}
             </div>
             <div className="flex flex-wrap justify-center sm:justify-end gap-4 sm:gap-6 text-xs sm:text-sm">
-              <a href="#" className="text-gray-600 hover:text-gray-800 transition-colors">
+              <Link href="/privacy-policy" className="text-gray-600 hover:text-gray-800 transition-colors">
                 {t('privacyPolicy')}
-              </a>
-              <a href="#" className="text-gray-600 hover:text-gray-800 transition-colors">
+              </Link>
+              <Link href="/terms-of-use" className="text-gray-600 hover:text-gray-800 transition-colors">
                 {t('termsOfUse')}
-              </a>
-              <a href="#" className="text-gray-600 hover:text-gray-800 transition-colors">
+              </Link>
+              <Link href="/contact-us" className="text-gray-600 hover:text-gray-800 transition-colors">
                 {t('contactUs')}
-              </a>
+              </Link>
             </div>
           </div>
         </div>
