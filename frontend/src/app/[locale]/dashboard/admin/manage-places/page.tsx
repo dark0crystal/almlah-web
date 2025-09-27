@@ -893,7 +893,7 @@ export default function ManagePlaces() {
 
   const handleCreate = () => {
     // Navigate to place creation page
-    window.location.href = '/places/new';
+    window.location.href = '/dashboard/admin/manage-places/new';
   };
 
   const hasActiveFilters = searchQuery || selectedCategory || selectedGovernate;

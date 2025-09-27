@@ -13,7 +13,7 @@ export default function AboutUs() {
   };
 
   return (
-    <main className="flex w-full h-screen items-center justify-center bg-black relative">
+    <main className="flex w-full h-[92vh] items-center justify-center bg-black relative">
       <Text />
       <Scene />
       {imageVisible && (
