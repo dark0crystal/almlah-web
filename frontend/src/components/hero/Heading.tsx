@@ -50,7 +50,7 @@ export default function Heading() {
                     className="object-cover"
                   />
                 </div>
-                <span>إلـي حــافظ الـبلاد</span>
+                <span>إلّـي حــافظ الـبلاد</span>
               </div>
               <div className="flex items-center justify-center gap-4 flex-wrap">
                 <span>من شـمالهــا لــجنوبهــا</span>
