@@ -77,7 +77,7 @@ GOOGLE_CLIENT_ID=767910488274-5gh55igkgvi21uarbd461dubq7l8l262.apps.googleuserco
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 GOOGLE_REDIRECT_URL=https://api.almlah.com/api/v1/auth/google/callback
 FRONTEND_URL=https://almlah.com
-GOOGLE_MAPS_API_KEY=AIzaSyBUxLKRFGzQm6LisWYqDby-H-YsacK47j0
+GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY
 SUPABASE_URL=https://jeyypngrycucoystlmft.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 SUPABASE_STORAGE_BUCKET=media-bucket
@@ -90,13 +90,13 @@ In Vercel Dashboard → Frontend Project → Settings → Environment Variables:
 ```bash
 NEXT_PUBLIC_API_HOST=https://api.almlah.com
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=767910488274-5gh55igkgvi21uarbd461dubq7l8l262.apps.googleusercontent.com
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyBUxLKRFGzQm6LisWYqDby-H-YsacK47j0
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY
 NEXT_PUBLIC_SUPABASE_URL=https://jeyypngrycucoystlmft.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 NEXT_PUBLIC_STORAGE_BUCKET=media-bucket
 NEXT_PUBLIC_APP_NAME=Almlah
 NEXT_PUBLIC_APP_VERSION=1.0.0
-NEXT_PUBLIC_MAPBOX_ACCESS_TOCKEN=pk.eyJ1IjoiYWxtbGFoIiwiYSI6ImNtZGo1YXUx...
+NEXT_PUBLIC_MAPBOX_ACCESS_TOCKEN=YOUR_MAPBOX_ACCESS_TOKEN
 ```
 
 ### **Step 4: Configure Custom Domains**

@@ -70,19 +70,19 @@ Google Maps requires billing to be enabled:
 ### Step 7: Get Your API Key
 Your API key will look like:
 ```
-AIzaSyBUxLKRFGzQm6LisWYqDby-H-YsacK47j0
+YOUR_GOOGLE_MAPS_API_KEY
 ```
 
 ### Step 8: Update Your Environment Variables
 
 **Backend (.env):**
 ```bash
-GOOGLE_MAPS_API_KEY=AIzaSyB...your-actual-key-here
+GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY
 ```
 
 **Frontend (.env and .env.production):**
 ```bash
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyB...your-actual-key-here
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY
 ```
 
 ## 🔧 Usage in Your App
@@ -127,7 +127,7 @@ For a typical small-medium app, you'll likely stay within free limits.
 
 Looking at your current `.env` file, you already have:
 ```
-GOOGLE_MAP_API_KEY="AIzaSyBUxLKRFGzQm6LisWYqDby-H-YsacK47j0"
+GOOGLE_MAP_API_KEY="YOUR_GOOGLE_MAPS_API_KEY"
 ```
 
 **This might be:**

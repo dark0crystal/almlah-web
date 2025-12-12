@@ -95,12 +95,12 @@ DATABASE_URL=postgresql://postgres.jeyypngrycucoystlmft:[PASSWORD]@aws-0-us-east
 
 # Supabase (for storage)
 SUPABASE_URL=https://jeyypngrycucoystlmft.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
 SUPABASE_STORAGE_BUCKET=media-bucket
 
 # Other configs
 FRONTEND_URL=https://almlah.com
-GOOGLE_MAPS_API_KEY=AIzaSyBUxLKRFGzQm6LisWYqDby-H-YsacK47j0
+GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY
 ```
 
 ## 🔍 Finding Your Database Password
