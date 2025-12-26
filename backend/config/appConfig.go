@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 
@@ -63,25 +64,28 @@ func SetupEnv() (cfg AppConfig, err error) {
 		return AppConfig{}, errors.New("DATABASE_URL env variable not found")
 	}
 
-	// Debug: Print first 50 characters of DATABASE_URL (hide password)
-	if len(databaseURL) > 50 {
-		log.Printf("DATABASE_URL loaded: %s...", databaseURL[:50])
-	} else {
-		log.Printf("DATABASE_URL loaded: %s", databaseURL)
-	}
+	// Only log that database URL is set (don't expose the actual URL)
+	log.Println("Database URL configured")
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if len(jwtSecret) < 1 {
-		jwtSecret = "default-secret-key" // fallback
-		log.Println("Warning: Using default JWT secret. Set JWT_SECRET environment variable for production!")
+		return AppConfig{}, errors.New("JWT_SECRET env variable is required and must be set")
 	}
 
-	// Validate Google OAuth configuration
+	// Validate JWT secret strength in production
+	if os.Getenv("APP_ENV") != "dev" && len(jwtSecret) < 32 {
+		return AppConfig{}, errors.New("JWT_SECRET must be at least 32 characters long in production")
+	}
+
+	// Validate Google OAuth configuration (optional, only warn if not set)
 	googleClientID := os.Getenv("GOOGLE_CLIENT_ID")
 	if len(googleClientID) < 1 {
 		log.Println("Warning: GOOGLE_CLIENT_ID not set. Google OAuth will not work!")
-	} else {
-		log.Println("Google OAuth Client ID loaded successfully")
+	}
+
+	// Validate environment configuration
+	if err := validateEnvironment(); err != nil {
+		return AppConfig{}, err
 	}
 
 	return AppConfig{
@@ -124,4 +128,37 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+// validateEnvironment validates critical environment variables
+func validateEnvironment() error {
+	appEnv := os.Getenv("APP_ENV")
+	
+	// In production, ensure critical variables are set
+	if appEnv != "dev" && appEnv != "development" {
+		requiredVars := []string{
+			"JWT_SECRET",
+			"DATABASE_URL",
+			"HTTP_PORT",
+		}
+		
+		var missing []string
+		for _, v := range requiredVars {
+			if os.Getenv(v) == "" {
+				missing = append(missing, v)
+			}
+		}
+		
+		if len(missing) > 0 {
+			return fmt.Errorf("missing required environment variables in production: %v", missing)
+		}
+		
+		// Validate JWT secret strength
+		jwtSecret := os.Getenv("JWT_SECRET")
+		if len(jwtSecret) < 32 {
+			return errors.New("JWT_SECRET must be at least 32 characters long in production")
+		}
+	}
+	
+	return nil
 }

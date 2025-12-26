@@ -8,7 +8,9 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_HOST || 'http://localhost:9000'
 export async function getServerAuthToken(): Promise<string | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get('authToken')?.value || null;
-  console.log('🍪 Server token:', token ? 'Found' : 'Not found');
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🍪 Server token:', token ? 'Found' : 'Not found');
+  }
   return token;
 }
 
@@ -19,7 +21,9 @@ export function getClientAuthToken(): string | null {
   // Check localStorage first
   const localToken = localStorage.getItem('authToken');
   if (localToken) {
-    console.log('💾 Client localStorage token: Found');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('💾 Client localStorage token: Found');
+    }
     return localToken;
   }
   
@@ -30,11 +34,15 @@ export function getClientAuthToken(): string | null {
     ?.split('=')[1];
     
   if (cookieToken) {
-    console.log('🍪 Client cookie token: Found');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🍪 Client cookie token: Found');
+    }
     return cookieToken;
   }
   
-  console.log('❌ No client token found');
+  if (process.env.NODE_ENV === 'development') {
+    console.log('❌ No client token found');
+  }
   return null;
 }
 
@@ -46,10 +54,14 @@ export async function verifyToken(token: string): Promise<boolean> {
       cache: 'no-store',
     });
     
-    console.log('🔍 Token verification:', response.ok ? 'Valid' : 'Invalid');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 Token verification:', response.ok ? 'Valid' : 'Invalid');
+    }
     return response.ok;
   } catch (error) {
-    console.error('❌ Token verification failed:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('❌ Token verification failed:', error);
+    }
     return false;
   }
 }
@@ -93,7 +105,9 @@ export async function requireAuth(redirectPath?: string): Promise<void> {
   const token = await getServerAuthToken();
   
   if (!token) {
-    console.log('❌ No token found, redirecting to login');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('❌ No token found, redirecting to login');
+    }
     const loginUrl = redirectPath ? `/auth/login?redirect=${encodeURIComponent(redirectPath)}` : '/auth/login';
     redirect(loginUrl);
   }
@@ -101,12 +115,16 @@ export async function requireAuth(redirectPath?: string): Promise<void> {
   const isValid = await verifyToken(token);
   
   if (!isValid) {
-    console.log('❌ Invalid token, redirecting to login');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('❌ Invalid token, redirecting to login');
+    }
     const loginUrl = redirectPath ? `/auth/login?redirect=${encodeURIComponent(redirectPath)}` : '/auth/login';
     redirect(loginUrl);
   }
 
-  console.log('✅ Authentication successful');
+  if (process.env.NODE_ENV === 'development') {
+    console.log('✅ Authentication successful');
+  }
 }
 
 // Permission-based access control

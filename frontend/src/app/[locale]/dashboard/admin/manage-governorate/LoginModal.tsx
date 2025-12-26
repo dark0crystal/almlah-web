@@ -8,8 +8,11 @@ interface LoginModalProps {
   onLogin: (token: string) => void;
 }
 
+// Get API host from environment
+const API_HOST = process.env.NEXT_PUBLIC_API_HOST || 'http://localhost:9000';
+
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => {
-  const [credentials, setCredentials] = useState({ username: '', password: '' });
+  const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -19,24 +22,45 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
     setError('');
     
     try {
-      // Mock login for demo - replace with your actual authentication logic
-      if (credentials.username === 'admin' && credentials.password === 'password') {
-        const mockToken = 'mock-jwt-token-12345';
-        localStorage.setItem('authToken', mockToken);
-        onLogin(mockToken);
+      // Call backend authentication API
+      const response = await fetch(`${API_HOST}/api/v1/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: credentials.email,
+          password: credentials.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setError(data.error || 'Invalid email or password');
+        return;
+      }
+
+      if (data.data && data.data.token) {
+        // Store token in localStorage
+        localStorage.setItem('authToken', data.data.token);
+        onLogin(data.data.token);
         onClose();
       } else {
-        setError('Invalid username or password');
+        setError('Invalid response from server');
       }
-    } catch {
+    } catch (err) {
       setError('Login failed. Please try again.');
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Login error:', err);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleClose = () => {
-    setCredentials({ username: '', password: '' });
+    setCredentials({ email: '', password: '' });
     setError('');
     onClose();
   };
@@ -62,12 +86,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Username
+              Email
             </label>
             <input
-              type="text"
-              value={credentials.username}
-              onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
+              type="email"
+              value={credentials.email}
+              onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
@@ -104,14 +128,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
             </button>
           </div>
         </form>
-
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-          <p className="text-blue-700 text-sm">
-            <strong>Demo credentials:</strong><br />
-            Username: admin<br />
-            Password: password
-          </p>
-        </div>
       </div>
     </div>
   );

@@ -56,13 +56,17 @@ const setToken = (token: string) => {
   const maxAge = 7 * 24 * 60 * 60; // 7 days
   document.cookie = `authToken=${token}; path=/; max-age=${maxAge}; samesite=lax`;
   
-  console.log('✅ Token stored in localStorage and cookie');
+  if (process.env.NODE_ENV === 'development') {
+    console.log('✅ Token stored in localStorage and cookie');
+  }
 };
 
 const removeToken = () => {
   localStorage.removeItem('authToken');
   document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-  console.log('🗑️ Token removed from localStorage and cookie');
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🗑️ Token removed from localStorage and cookie');
+  }
 };
 
 const getToken = (): string | null => {
@@ -71,7 +75,9 @@ const getToken = (): string | null => {
   // Check localStorage first
   const localToken = localStorage.getItem('authToken');
   if (localToken) {
-    console.log('💾 Token found in localStorage');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('💾 Token found in localStorage');
+    }
     return localToken;
   }
   
@@ -82,13 +88,17 @@ const getToken = (): string | null => {
     ?.split('=')[1];
     
   if (cookieToken) {
-    console.log('🍪 Token found in cookies');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🍪 Token found in cookies');
+    }
     // If found in cookies but not localStorage, sync it
     localStorage.setItem('authToken', cookieToken);
     return cookieToken;
   }
   
-  console.log('❌ No token found in localStorage or cookies');
+  if (process.env.NODE_ENV === 'development') {
+    console.log('❌ No token found in localStorage or cookies');
+  }
   return null;
 };
 

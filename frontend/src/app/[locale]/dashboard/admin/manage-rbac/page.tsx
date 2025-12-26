@@ -1230,7 +1230,9 @@ export default function RBACManagement() {
   const handleLogin = (token: string) => {
     setIsAuthenticated(true);
     localStorage.setItem('authToken', token);
-    console.log('Token stored:', token);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Token stored');
+    }
     loadData();
   };
 

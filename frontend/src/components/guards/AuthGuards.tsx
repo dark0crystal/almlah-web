@@ -87,12 +87,16 @@ export const PageGuard = ({
       const hasCookieToken = typeof window !== 'undefined' && document.cookie.includes('authToken=');
       
       if (!hasLocalToken && !hasCookieToken) {
-        console.log('❌ No authToken found in localStorage or cookies');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('❌ No authToken found in localStorage or cookies');
+        }
         router.push(redirectTo);
         return;
       }
       
-      console.log('✅ authToken found, checking authentication');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ authToken found, checking authentication');
+      }
       await checkAuth();
     };
     

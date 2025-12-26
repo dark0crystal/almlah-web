@@ -32,13 +32,16 @@ func NewSupabaseService() *SupabaseService {
 	apiKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
 	bucketName := os.Getenv("SUPABASE_STORAGE_BUCKET")
 	
-	fmt.Printf("🔧 Supabase Config Debug:\n")
-	fmt.Printf("   - URL: %s\n", baseURL)
-	fmt.Printf("   - API Key: %s...%s (length: %d)\n", 
-		func() string { if len(apiKey) > 8 { return apiKey[:8] } else { return apiKey } }(),
-		func() string { if len(apiKey) > 8 { return apiKey[len(apiKey)-8:] } else { return "" } }(),
-		len(apiKey))
-	fmt.Printf("   - Bucket: %s\n", bucketName)
+	// Only log configuration status in development mode
+	if os.Getenv("APP_ENV") == "dev" {
+		fmt.Printf("🔧 Supabase Config:\n")
+		fmt.Printf("   - URL: %s\n", baseURL)
+		fmt.Printf("   - API Key: %s\n", func() string { 
+			if apiKey != "" { return "Set" } 
+			return "Not Set" 
+		}())
+		fmt.Printf("   - Bucket: %s\n", bucketName)
+	}
 	
 	return &SupabaseService{
 		baseURL:    baseURL,
